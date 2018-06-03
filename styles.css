@@ -1,0 +1,28 @@
+.word-container {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+
+.word-container input {
+    margin-right: 10px;
+}
+
+.solve-button {
+    margin-left: 20px;
+}
+
+table.table.solution-table {
+    width: auto;
+}
+
+table.table.no-further-progress-table {
+    width: auto;
+}
+
+div.log-container {
+    max-height: 300px;
+    overflow: auto;
+    border: 2px solid #dddddd;
+    padding: 2px;
+}

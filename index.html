@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Parkrun stopwatch comparison/merging</title>
+  <link rel="stylesheet" href="bootstrap.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="parkrun-stopwatch" class="main-content container"></div>
+<script src="parkrun-stopwatch.js"></script>
+<script>
+var app = Elm.ParkrunStopwatch.embed(document.getElementById("parkrun-stopwatch"));
+
+function handleLoad(files) {
+  if (typeof files === "undefined") {
+    // Sorry, IE9 users, can't help you here.
+    alert("Sorry, this feature doesn't work in your browser.  Please try another browser.");
+    return;
+  }
+
+  for (var index = 0; index < files.length; index += 1) {
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      app.ports.fileDrop.send(e.target.result);
+    };
+
+    reader.readAsText(files[index], "UTF-8");
+  }
+}
+
+// The following functions have been adapted from
+// https://developer.mozilla.org/en-US/docs/Using_files_from_web_applications#Selecting_files_using_drag_and_drop
+function stopDefaultBehaviour(e) {
+  e.stopPropagation();
+  e.preventDefault();
+}
+
+function drop(e) {
+  stopDefaultBehaviour(e);
+  handleLoad(e.dataTransfer.files);
+}
+
+var dropzone = document.getElementById("parkrun-stopwatch");
+dropzone.addEventListener("dragenter", stopDefaultBehaviour, false);
+dropzone.addEventListener("dragover", stopDefaultBehaviour, false);
+dropzone.addEventListener("drop", drop, false);
+
+</script>
+
+</body>
+</html>
