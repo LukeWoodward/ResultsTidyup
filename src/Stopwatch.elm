@@ -13,6 +13,16 @@ type Stopwatch
     = StopwatchData (List Int)
 
 
+binaryRegex : Regex
+binaryRegex =
+    regex "[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]"
+
+
+isPossibleBinary : String -> Bool
+isPossibleBinary fileText =
+    Regex.contains binaryRegex fileText
+
+
 lineSplitRegex : Regex
 lineSplitRegex =
     regex "[\\r\\n]+"
@@ -64,11 +74,15 @@ failIfNoResults results =
 
 readStopwatchData : String -> Result Error Stopwatch
 readStopwatchData text =
-    text
-        |> splitLines
-        |> List.filter (not << String.isEmpty)
-        |> List.filter filterIgnorableLines
-        |> List.map readLine
-        |> Result.Extra.combine
-        |> Result.andThen failIfNoResults
-        |> Result.map StopwatchData
+    if isPossibleBinary text then
+        Error "BINARY_FILE" "File appears to be a binary file"
+            |> Err
+    else
+        text
+            |> splitLines
+            |> List.filter (not << String.isEmpty)
+            |> List.filter filterIgnorableLines
+            |> List.map readLine
+            |> Result.Extra.combine
+            |> Result.andThen failIfNoResults
+            |> Result.map StopwatchData

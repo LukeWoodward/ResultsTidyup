@@ -50,6 +50,10 @@ suite =
                 \() ->
                     readStopwatchData ""
                         |> expectError "NO_RESULTS"
+            , test "readStopwatchData of a string containing binary data is not a valid list of results" <|
+                \() ->
+                    readStopwatchData "\x00\x00\x00Z\x01j\x07\x00\x03\x00$\x00"
+                        |> expectError "BINARY_FILE"
             , test "readStopwatchData of a string with too many parts is not a valid list of results" <|
                 \() ->
                     readStopwatchData "1,01/01/2001 04:17,04:17,some extra nonsense"
