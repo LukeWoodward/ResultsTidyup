@@ -46,18 +46,6 @@ suite =
                 \() ->
                     readStopwatchData (String.Extra.replace "\n" "\n\n" sampleData)
                         |> Expect.equal (Ok expectedParsedSampleData)
-            , test "readStopwatchData of a string without hours is a valid list of results" <|
-                \() ->
-                    readStopwatchData "1,01/01/2001 04:17,04:17"
-                        |> Expect.equal (Ok (StopwatchData [ 4 * 60 + 17 ]))
-            , test "readStopwatchData of a string with single-digit minutes field is a valid list of results" <|
-                \() ->
-                    readStopwatchData "1,01/01/2001 4:17,4:17"
-                        |> Expect.equal (Ok (StopwatchData [ 4 * 60 + 17 ]))
-            , test "readStopwatchData of a string with single-digit seconds field is a valid list of results" <|
-                \() ->
-                    readStopwatchData "1,01/01/2001 04:9,04:9"
-                        |> Expect.equal (Ok (StopwatchData [ 4 * 60 + 9 ]))
             , test "readStopwatchData of an empty string is not a valid list of results" <|
                 \() ->
                     readStopwatchData ""
@@ -74,14 +62,6 @@ suite =
                 \() ->
                     readStopwatchData "1,01/01/2001 04:17,nonsense"
                         |> expectError "UNRECOGNISED_TIME"
-            , test "readStopwatchData of a string with a minutes value too large is not a valid list of results" <|
-                \() ->
-                    readStopwatchData "1,01/01/2001 00:60:17,00:60:17"
-                        |> expectError "MINUTES_TOO_LARGE"
-            , test "readStopwatchData of a string with a seconds value too large is not a valid list of results" <|
-                \() ->
-                    readStopwatchData "1,01/01/2001 00:05:60,00:05:60"
-                        |> expectError "SECONDS_TOO_LARGE"
             , test "readStopwatchData of a multi-line string with an invalid value on one line is not a valid list of results" <|
                 \() ->
                     readStopwatchData (String.Extra.replace "00:07:44" "nonsense" sampleData)
