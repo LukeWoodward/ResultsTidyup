@@ -1,4 +1,4 @@
-module TimeHandling exposing (parseTime)
+module TimeHandling exposing (parseTime, formatTime)
 
 import Regex exposing (Regex, regex, HowMany(..))
 import Error exposing (Error)
@@ -56,3 +56,39 @@ parseTime timeString =
         _ ->
             Error "UNRECOGNISED_TIME" ("Time '" ++ timeString ++ "' was not recognised")
                 |> Err
+
+
+formatToTwoChars : Int -> String
+formatToTwoChars number =
+    if number < 9 then
+        "0" ++ (toString number)
+    else
+        toString number
+
+
+formatTime : Int -> String
+formatTime timeInSeconds =
+    if timeInSeconds < 0 then
+        "-" ++ formatTime -timeInSeconds
+    else
+        let
+            seconds : Int
+            seconds =
+                timeInSeconds % 60
+
+            minutes : Int
+            minutes =
+                (timeInSeconds // 60) % 60
+
+            hours : Int
+            hours =
+                timeInSeconds // 3600
+
+            minsAndSecs : String
+            minsAndSecs =
+                (formatToTwoChars minutes) ++ ":" ++ (formatToTwoChars seconds)
+        in
+            if hours == 0 then
+                minsAndSecs
+            else
+                (toString hours) ++ ":" ++ minsAndSecs

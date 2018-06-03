@@ -4,7 +4,7 @@ import Expect
 import Test exposing (describe, test, Test)
 import Stopwatch exposing (..)
 import Errors exposing (expectError)
-import TimeHandling exposing (parseTime)
+import TimeHandling exposing (parseTime, formatTime)
 
 
 suite : Test
@@ -39,5 +39,43 @@ suite =
                 \() ->
                     parseTime "00:05:60"
                         |> expectError "SECONDS_TOO_LARGE"
+            ]
+        , describe "formatTime tests"
+            [ test "formatTime of zero is correct" <|
+                \() ->
+                    formatTime 0
+                        |> Expect.equal "00:00"
+            , test "formatTime of one second is correct" <|
+                \() ->
+                    formatTime 1
+                        |> Expect.equal "00:01"
+            , test "formatTime of ten seconds is correct" <|
+                \() ->
+                    formatTime 10
+                        |> Expect.equal "00:10"
+            , test "formatTime of one minute is correct" <|
+                \() ->
+                    formatTime 60
+                        |> Expect.equal "01:00"
+            , test "formatTime of ten minutes is correct" <|
+                \() ->
+                    formatTime (10 * 60)
+                        |> Expect.equal "10:00"
+            , test "formatTime of one hour is correct" <|
+                \() ->
+                    formatTime (60 * 60)
+                        |> Expect.equal "1:00:00"
+            , test "formatTime of ten hours is correct" <|
+                \() ->
+                    formatTime (10 * 60 * 60)
+                        |> Expect.equal "10:00:00"
+            , test "formatTime of some other time is correct" <|
+                \() ->
+                    formatTime (49 * 60 * 60 + 37 * 60 + 19)
+                        |> Expect.equal "49:37:19"
+            , test "formatTime of a negative time is correct" <|
+                \() ->
+                    formatTime -(49 * 60 * 60 + 37 * 60 + 19)
+                        |> Expect.equal "-49:37:19"
             ]
         ]
