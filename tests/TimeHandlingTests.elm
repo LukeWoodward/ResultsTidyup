@@ -49,6 +49,10 @@ suite =
                 \() ->
                     formatTime 1
                         |> Expect.equal "00:01"
+            , test "formatTime of nine seconds is correct" <|
+                \() ->
+                    formatTime 9
+                        |> Expect.equal "00:09"
             , test "formatTime of ten seconds is correct" <|
                 \() ->
                     formatTime 10
@@ -57,6 +61,10 @@ suite =
                 \() ->
                     formatTime 60
                         |> Expect.equal "01:00"
+            , test "formatTime of nine minutes is correct" <|
+                \() ->
+                    formatTime (9 * 60)
+                        |> Expect.equal "09:00"
             , test "formatTime of ten minutes is correct" <|
                 \() ->
                     formatTime (10 * 60)

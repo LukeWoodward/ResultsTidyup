@@ -60,7 +60,7 @@ parseTime timeString =
 
 formatToTwoChars : Int -> String
 formatToTwoChars number =
-    if number < 9 then
+    if number < 10 then
         "0" ++ (toString number)
     else
         toString number
