@@ -37,14 +37,20 @@ merge maxNearMatchDistance times1 times2 =
                     if first1 < first2 - maxNearMatchDistance then
                         Watch1Only first1 :: (createTimes rest1 sortedTimes2)
                     else if first2 - maxNearMatchDistance <= first1 && first1 < first2 then
-                        if List.any (\n -> Set.member n times1AsSet) (List.range (first1 + 1) first2) then
+                        if List.any (\n -> Set.member n times1AsSet) (List.range (first1 + 1) first2)
+                                && not (List.any (\n -> Set.member n times2AsSet) (List.range (first2 + 1) (first2 + maxNearMatchDistance))) then
+                            -- The times match within the interval but there's a nearer time next
+                            -- on stopwatch 1 and the next time on stopwatch 2 isn't particularly near.
+                            -- So it's likely that this time is on watch 1 only and the time on watch 2
+                            -- will match a nearer time on watch 1.                            
                             Watch1Only first1 :: (createTimes rest1 sortedTimes2)
                         else
                             NearMatch first1 first2 :: (createTimes rest1 rest2)
                     else if first1 == first2 then
                         ExactMatch first1 :: (createTimes rest1 rest2)
                     else if first2 < first1 && first1 <= first2 + maxNearMatchDistance then
-                        if List.any (\n -> Set.member n times2AsSet) (List.range (first2 + 1) first1) then
+                        if List.any (\n -> Set.member n times2AsSet) (List.range (first2 + 1) first1)
+                                && not (List.any (\n -> Set.member n times1AsSet) (List.range (first1 + 1) (first1 + maxNearMatchDistance)))  then
                             Watch2Only first2 :: (createTimes sortedTimes1 rest2)
                         else
                             NearMatch first1 first2 :: (createTimes rest1 rest2)
