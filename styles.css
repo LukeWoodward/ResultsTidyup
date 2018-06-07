@@ -1,28 +1,11 @@
-.word-container {
-    padding-top: 5px;
-    padding-bottom: 5px;
+td.exact-match {
+    background-color: #ccffcc;
 }
 
-
-.word-container input {
-    margin-right: 10px;
+td.near-match {
+    background-color: #ffffcc;
 }
 
-.solve-button {
-    margin-left: 20px;
-}
-
-table.table.solution-table {
-    width: auto;
-}
-
-table.table.no-further-progress-table {
-    width: auto;
-}
-
-div.log-container {
-    max-height: 300px;
-    overflow: auto;
-    border: 2px solid #dddddd;
-    padding: 2px;
+td.mismatch {
+    background-color: #ffcccc;
 }
