@@ -17,3 +17,11 @@ table.table.stopwatch-times {
 table.table.stopwatch-times > tbody > tr > td {
     text-align: right;
 }
+
+td.empty-cell {
+    color: #dddddd;
+}
+
+label.stopwatch-time-label {
+    font-weight: initial;
+}

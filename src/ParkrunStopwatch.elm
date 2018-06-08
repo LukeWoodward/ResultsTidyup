@@ -1,9 +1,11 @@
 module ParkrunStopwatch exposing (..)
 
-import Html exposing (Html, program, div, text, table, tbody, thead, tr, td, th, h1, input)
-import Html.Attributes exposing (class, checked, type_)
+import Html exposing (Html, program, div, text, table, tbody, thead, tr, td, th, h1, input, label)
+import Html.Attributes exposing (class, checked, type_, id, for)
+import Html.Events exposing (onClick)
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
 import Merger exposing (merge, MergeEntry(..))
+import MergedTable exposing (MergedTableRow, generateInitialTable, toggleRowInTable)
 import TimeHandling exposing (formatTime)
 import Ports exposing (fileDrop)
 
@@ -27,15 +29,21 @@ main =
 -- Model, Update, View.
 
 
+type Stopwatches
+    = None
+    | Single (List Int)
+    | Double (List MergedTableRow)
+
+
 type alias Model =
-    { stopwatches : List Stopwatch
+    { stopwatches : Stopwatches
     , lastError : Maybe String
     }
-
-
+    
+    
 initModel : Model
 initModel =
-    { stopwatches = []
+    { stopwatches = None
     , lastError = Nothing
     }
 
@@ -47,25 +55,64 @@ init =
 
 type Msg
     = FileDropped String
+    | ToggleTableRow Int
 
 
+handleFileDrop : String -> Model -> Model
+handleFileDrop fileText model =
+    case readStopwatchData fileText of
+        Ok (StopwatchData newStopwatch) ->
+            let
+                newStopwatches = 
+                    case model.stopwatches of
+                        None ->
+                            Single newStopwatch
+                            
+                        Single firstStopwatch ->
+                            let
+                                mergedDetails : List MergeEntry
+                                mergedDetails = merge maxNearMatchDistance firstStopwatch newStopwatch
+                                
+                                mergedTable : List MergedTableRow
+                                mergedTable = generateInitialTable mergedDetails
+                            in
+                                Double mergedTable
+                            
+                        Double _ ->
+                            model.stopwatches
+            in
+                { model
+                    | stopwatches = newStopwatches
+                    , lastError = Nothing
+                }
+
+        Err error ->
+            { model | lastError = Just error.message }
+
+
+toggleTableRow : Int -> Model -> Model
+toggleTableRow index model =
+    case model.stopwatches of
+        None ->
+            model
+            
+        Single _ ->
+            model
+        
+        Double currentMergedTable ->
+            { model |
+                stopwatches = Double (toggleRowInTable index currentMergedTable)
+            }
+            
+    
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         FileDropped fileText ->
-            case readStopwatchData fileText of
-                Ok stopwatch ->
-                    ( { model
-                        | stopwatches = model.stopwatches ++ [ stopwatch ]
-                        , lastError = Nothing
-                      }
-                    , Cmd.none
-                    )
-
-                Err error ->
-                    ( { model | lastError = Just error.message }
-                    , Cmd.none
-                    )
+            ( handleFileDrop fileText model, Cmd.none )
+            
+        ToggleTableRow index ->
+            ( toggleTableRow index model, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -85,18 +132,18 @@ errorView maybeString =
             []
 
 
-noStopwatchesUploadedMessage : List Stopwatch -> List (Html a)
+noStopwatchesUploadedMessage : Stopwatches -> List (Html a)
 noStopwatchesUploadedMessage stopwatches =
     case stopwatches of
-        [] ->
+        None ->
             [ div [ class "alert alert-info" ]
                 [ text "No stopwatch files have been uploaded" ]
             ]
-        [_] ->
+        Single _ ->
             [ div [ class "alert alert-info" ]
                 [ text "Please upload another stopwatch file to enable comparison/merging" ]
             ]
-        _ ->
+        Double _ ->
             []
             
 
@@ -117,14 +164,46 @@ stopwatchRow index time =
         , cell (formatTime time)
         ]
 
-        
-mergedStopwatchRow : Int -> MergeEntry -> Html a
-mergedStopwatchRow index entry =
+    
+emptyNumberCell : Html a
+emptyNumberCell =
+    td [ class "empty-cell"] [ text "\x2013" ]
+
+
+checkboxCell : Int -> Int -> Bool -> Html Msg
+checkboxCell time index included =
+    let
+        idText : String
+        idText = "toggle_checkbox_" ++ (toString index)
+    in
+        td
+            [ class "mismatch" ]
+            [ input
+                [ type_ "checkbox"
+                , checked included
+                , id idText
+                , onClick (ToggleTableRow index)
+                ]
+                []
+            , label 
+                [ for idText
+                , class "stopwatch-time-label"
+                ]
+                [ text (formatTime time) ]
+            ]
+    
+mergedStopwatchRow : MergedTableRow -> Html Msg
+mergedStopwatchRow row =
     let
         indexCell =
-            cell (toString (index + 1))
+            case row.rowNumber of
+                Just num ->
+                    cell (toString num)
+                    
+                Nothing ->
+                    emptyNumberCell
     in
-        case entry of
+        case row.entry of
             ExactMatch time ->
                 tr
                     []
@@ -145,7 +224,7 @@ mergedStopwatchRow index entry =
                 tr
                     []
                     [ indexCell
-                    , timeCell "mismatch" time1
+                    , checkboxCell time1 row.index row.included
                     , cell ""
                     ]
                     
@@ -154,7 +233,7 @@ mergedStopwatchRow index entry =
                     []
                     [ indexCell
                     , cell ""
-                    , timeCell "mismatch" time2
+                    , checkboxCell time2 row.index row.included
                     ]
 
                     
@@ -173,33 +252,29 @@ tableHeaders headerTexts =
         ]
 
                     
-stopwatchView : List Stopwatch -> List (Html a)
+stopwatchView : Stopwatches -> List (Html Msg)
 stopwatchView stopwatches =
     case stopwatches of
-        [] ->
+        None ->
             []
 
-        StopwatchData data :: [] ->
+        Single stopwatchTimes ->
             [ table
                 [ class "table stopwatch-times" ]
                 [ tableHeaders [ "Position", "Stopwatch 1" ]
-                , tbody [] (List.indexedMap stopwatchRow data)
+                , tbody [] (List.indexedMap stopwatchRow stopwatchTimes)
                 ]
             ]
             
-        StopwatchData data1 :: StopwatchData data2 :: _ ->
-            let 
-                mergedData =
-                    merge maxNearMatchDistance data1 data2
-            in
-                [ table
-                    [ class "table stopwatch-times" ]
-                    [ tableHeaders [ "Position", "Stopwatch 1", "Stopwatch 2" ]
-                    , tbody
-                        [] 
-                        (List.indexedMap mergedStopwatchRow mergedData)
-                    ]
+        Double mergedTable ->
+            [ table
+                [ class "table stopwatch-times" ]
+                [ tableHeaders [ "Position", "Stopwatch 1", "Stopwatch 2" ]
+                , tbody
+                    [] 
+                    (List.map mergedStopwatchRow mergedTable)
                 ]
+            ]
 
 
 view : Model -> Html Msg
