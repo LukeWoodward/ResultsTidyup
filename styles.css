@@ -9,3 +9,11 @@ td.near-match {
 td.mismatch {
     background-color: #ffcccc;
 }
+
+table.table.stopwatch-times {
+    width: auto;
+}
+
+table.table.stopwatch-times > tbody > tr > td {
+    text-align: right;
+}

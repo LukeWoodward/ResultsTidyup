@@ -1,9 +1,9 @@
 module ParkrunStopwatch exposing (..)
 
-import Html exposing (Html, program, div, text, table, tbody, thead, tr, td, th, h1)
-import Html.Attributes exposing (class)
+import Html exposing (Html, program, div, text, table, tbody, thead, tr, td, th, h1, input)
+import Html.Attributes exposing (class, checked, type_)
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
-import Merger exposing (merge, MergeEntry(..))
+import Merger exposing (merge, MergeEntry(..), SingleTime, Inclusion(..))
 import TimeHandling exposing (formatTime)
 import Ports exposing (fileDrop)
 
@@ -109,6 +109,16 @@ timeCell : String -> Int -> Html a
 timeCell className time =
     td [ class className] [ text (formatTime time) ]
     
+    
+checkboxTimeCell : String -> SingleTime -> Html a
+checkboxTimeCell className time =
+    td
+        [ class className ]
+        [ input [ type_ "checkbox", checked (time.included == Included) ] []
+        , text (formatTime time.time)
+        ]
+
+    
 stopwatchRow : Int -> Int -> Html a
 stopwatchRow index time =
     tr []
@@ -144,7 +154,7 @@ mergedStopwatchRow index entry =
                 tr
                     []
                     [ indexCell
-                    , timeCell "mismatch" time1
+                    , checkboxTimeCell "mismatch" time1
                     , cell ""
                     ]
                     
@@ -153,7 +163,7 @@ mergedStopwatchRow index entry =
                     []
                     [ indexCell
                     , cell ""
-                    , timeCell "mismatch" time2
+                    , checkboxTimeCell "mismatch" time2
                     ]
 
                     
@@ -180,7 +190,7 @@ stopwatchView stopwatches =
 
         StopwatchData data :: [] ->
             [ table
-                [ class "table condensed-table" ]
+                [ class "table stopwatch-times" ]
                 [ tableHeaders [ "Position", "Stopwatch 1" ]
                 , tbody [] (List.indexedMap stopwatchRow data)
                 ]
@@ -192,7 +202,7 @@ stopwatchView stopwatches =
                     merge maxNearMatchDistance data1 data2
             in
                 [ table
-                    [ class "table condensed-table" ]
+                    [ class "table stopwatch-times" ]
                     [ tableHeaders [ "Position", "Stopwatch 1", "Stopwatch 2" ]
                     , tbody
                         [] 
