@@ -3,7 +3,7 @@ module ParkrunStopwatch exposing (..)
 import Html exposing (Html, program, div, text, table, tbody, thead, tr, td, th, h1, input)
 import Html.Attributes exposing (class, checked, type_)
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
-import Merger exposing (merge, MergeEntry(..), SingleTime, Inclusion(..))
+import Merger exposing (merge, MergeEntry(..))
 import TimeHandling exposing (formatTime)
 import Ports exposing (fileDrop)
 
@@ -108,15 +108,6 @@ cell contents =
 timeCell : String -> Int -> Html a
 timeCell className time =
     td [ class className] [ text (formatTime time) ]
-    
-    
-checkboxTimeCell : String -> SingleTime -> Html a
-checkboxTimeCell className time =
-    td
-        [ class className ]
-        [ input [ type_ "checkbox", checked (time.included == Included) ] []
-        , text (formatTime time.time)
-        ]
 
     
 stopwatchRow : Int -> Int -> Html a
@@ -154,7 +145,7 @@ mergedStopwatchRow index entry =
                 tr
                     []
                     [ indexCell
-                    , checkboxTimeCell "mismatch" time1
+                    , timeCell "mismatch" time1
                     , cell ""
                     ]
                     
@@ -163,7 +154,7 @@ mergedStopwatchRow index entry =
                     []
                     [ indexCell
                     , cell ""
-                    , checkboxTimeCell "mismatch" time2
+                    , timeCell "mismatch" time2
                     ]
 
                     
