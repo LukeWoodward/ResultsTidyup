@@ -3,9 +3,12 @@ module ParkrunStopwatch exposing (..)
 import Html exposing (Html, program, div, text, table, tbody, thead, tr, td, th, h1, input, label)
 import Html.Attributes exposing (class, checked, type_, id, for)
 import Html.Events exposing (onClick)
+import Regex exposing (Regex, regex)
+import Error exposing (Error)
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
 import Merger exposing (merge, MergeEntry(..))
 import MergedTable exposing (MergedTableRow, generateInitialTable, toggleRowInTable)
+import NumberChecker exposing (NumberCheckerEntry, AnnotatedNumberCheckerEntry, parseNumberCheckerFile, annotate)
 import TimeHandling exposing (formatTime)
 import Ports exposing (fileDrop)
 
@@ -38,6 +41,7 @@ type Stopwatches
 type alias Model =
     { stopwatches : Stopwatches
     , lastError : Maybe String
+    , numberCheckerEntries : List AnnotatedNumberCheckerEntry
     }
 
 
@@ -45,6 +49,7 @@ initModel : Model
 initModel =
     { stopwatches = None
     , lastError = Nothing
+    , numberCheckerEntries = []
     }
 
 
@@ -92,10 +97,41 @@ handleStopwatchFileDrop fileText model =
             { model | lastError = Just error.message }
 
 
+numberCheckerRegex : Regex
+numberCheckerRegex =
+    regex "^[0-9\x0D\n,]+$"
+
+
+isPossibleNumberCheckerFile : String -> Bool
+isPossibleNumberCheckerFile fileText =
+    Regex.contains numberCheckerRegex fileText
+
+
+handleNumberCheckerFileDrop : String -> Model -> Model
+handleNumberCheckerFileDrop fileText model =
+    let
+        result : Result Error (List NumberCheckerEntry)
+        result =
+            parseNumberCheckerFile fileText
+    in
+        case result of
+            Ok entries ->
+                { model
+                    | numberCheckerEntries = annotate entries
+                }
+
+            Err error ->
+                { model
+                    | lastError = Just error.message
+                }
+
+
 handleFileDrop : String -> Model -> Model
 handleFileDrop fileText model =
     if String.contains "STARTOFEVENT" fileText then
         handleStopwatchFileDrop fileText model
+    else if isPossibleNumberCheckerFile fileText then
+        handleNumberCheckerFileDrop fileText model
     else
         { model
             | lastError = Just "Unrecognised file dropped"
@@ -166,9 +202,30 @@ cell contents =
     td [] [ text contents ]
 
 
+intCell : Int -> Html a
+intCell contents =
+    cell (toString contents)
+
+
 timeCell : String -> Int -> Html a
 timeCell className time =
     td [ class className ] [ text (formatTime time) ]
+
+
+deltaCell : Int -> Html a
+deltaCell delta =
+    if delta == 0 then
+        td [] []
+    else
+        let
+            stringDelta : String
+            stringDelta =
+                if delta > 0 then
+                    "+" ++ (toString delta)
+                else
+                    toString delta
+        in
+            td [ class "nonzero-delta" ] [ text stringDelta ]
 
 
 stopwatchRow : Int -> Int -> Html a
@@ -293,6 +350,31 @@ stopwatchView stopwatches =
             ]
 
 
+numberCheckerRow : AnnotatedNumberCheckerEntry -> Html a
+numberCheckerRow entry =
+    tr
+        []
+        [ intCell entry.stopwatch1
+        , deltaCell entry.stopwatch1Delta
+        , intCell entry.stopwatch2
+        , deltaCell entry.stopwatch2Delta
+        , intCell entry.finishTokens
+        , deltaCell entry.finishTokensDelta
+        ]
+
+
+numberCheckerView : List AnnotatedNumberCheckerEntry -> List (Html a)
+numberCheckerView entries =
+    [ table
+        [ class "table number-checker-table" ]
+        [ tableHeaders [ "Stopwatch 1", "+/-", "Stopwatch 2", "+/-", "Finish tokens", "+/-" ]
+        , tbody
+            []
+            (List.map numberCheckerRow entries)
+        ]
+    ]
+
+
 view : Model -> Html Msg
 view model =
     div
@@ -301,4 +383,5 @@ view model =
             :: (errorView model.lastError)
             ++ (noStopwatchesUploadedMessage model.stopwatches)
             ++ (stopwatchView model.stopwatches)
+            ++ (numberCheckerView model.numberCheckerEntries)
         )

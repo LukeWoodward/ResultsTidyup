@@ -10,16 +10,22 @@ td.mismatch {
     background-color: #ffcccc;
 }
 
-table.table.stopwatch-times {
+table.table.stopwatch-times, table.table.number-checker-table {
     width: auto;
+    float: left;
 }
 
-table.table.stopwatch-times > tbody > tr > td {
+table.table.stopwatch-times > tbody > tr > td, table.table.number-checker-table > tbody > tr > td {
     text-align: right;
 }
 
 td.empty-cell {
     color: #dddddd;
+}
+
+td.nonzero-delta {
+    color: red;
+    font-weight: bold;
 }
 
 label.stopwatch-time-label {
