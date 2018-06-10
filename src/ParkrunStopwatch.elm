@@ -58,8 +58,8 @@ type Msg
     | ToggleTableRow Int
 
 
-handleFileDrop : String -> Model -> Model
-handleFileDrop fileText model =
+handleStopwatchFileDrop : String -> Model -> Model
+handleStopwatchFileDrop fileText model =
     case readStopwatchData fileText of
         Ok (StopwatchData newStopwatch) ->
             let
@@ -90,6 +90,16 @@ handleFileDrop fileText model =
 
         Err error ->
             { model | lastError = Just error.message }
+
+
+handleFileDrop : String -> Model -> Model
+handleFileDrop fileText model =
+    if String.contains "STARTOFEVENT" fileText then
+        handleStopwatchFileDrop fileText model
+    else
+        { model
+            | lastError = Just "Unrecognised file dropped"
+        }
 
 
 toggleTableRow : Int -> Model -> Model
