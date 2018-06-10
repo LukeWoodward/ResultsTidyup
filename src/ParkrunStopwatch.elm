@@ -1,6 +1,6 @@
 module ParkrunStopwatch exposing (..)
 
-import Html exposing (Html, program, div, text, table, tbody, thead, tr, td, th, h1, input, label)
+import Html exposing (Html, program, div, text, table, tbody, thead, tr, td, th, h1, h3, input, label)
 import Html.Attributes exposing (class, checked, type_, id, for)
 import Html.Events exposing (onClick)
 import Regex exposing (Regex, regex)
@@ -168,33 +168,30 @@ subscriptions model =
     fileDrop FileDropped
 
 
-errorView : Maybe String -> List (Html a)
+errorView : Maybe String -> Html a
 errorView maybeString =
     case maybeString of
         Just string ->
-            [ div [ class "alert alert-danger" ]
+            div [ class "alert alert-danger" ]
                 [ text ("Unable to read in the stopwatch data: " ++ string) ]
-            ]
 
         Nothing ->
-            []
+            text ""
 
 
-noStopwatchesUploadedMessage : Stopwatches -> List (Html a)
+noStopwatchesUploadedMessage : Stopwatches -> Html a
 noStopwatchesUploadedMessage stopwatches =
     case stopwatches of
         None ->
-            [ div [ class "alert alert-info" ]
+            div [ class "alert alert-info" ]
                 [ text "No stopwatch files have been uploaded" ]
-            ]
 
         Single _ ->
-            [ div [ class "alert alert-info" ]
+            div [ class "alert alert-info" ]
                 [ text "Please upload another stopwatch file to enable comparison/merging" ]
-            ]
 
         Double _ ->
-            []
+            text ""
 
 
 cell : String -> Html a
@@ -215,7 +212,7 @@ timeCell className time =
 deltaCell : Int -> Html a
 deltaCell delta =
     if delta == 0 then
-        td [] []
+        td [ class "zero-delta" ] [ text "0" ]
     else
         let
             stringDelta : String
@@ -223,7 +220,7 @@ deltaCell delta =
                 if delta > 0 then
                     "+" ++ (toString delta)
                 else
-                    toString delta
+                    "−" ++ (toString -delta)
         in
             td [ class "nonzero-delta" ] [ text stringDelta ]
 
@@ -325,29 +322,36 @@ tableHeaders headerTexts =
         ]
 
 
-stopwatchView : Stopwatches -> List (Html Msg)
-stopwatchView stopwatches =
+stopwatchTable : Stopwatches -> Html Msg
+stopwatchTable stopwatches =
     case stopwatches of
         None ->
-            []
+            text ""
 
         Single stopwatchTimes ->
-            [ table
-                [ class "table stopwatch-times" ]
+            table
+                [ class "table table-condensed table-bordered stopwatch-times" ]
                 [ tableHeaders [ "Position", "Stopwatch 1" ]
                 , tbody [] (List.indexedMap stopwatchRow stopwatchTimes)
                 ]
-            ]
 
         Double mergedTable ->
-            [ table
-                [ class "table stopwatch-times" ]
+            table
+                [ class "table table-condensed table-bordered stopwatch-times" ]
                 [ tableHeaders [ "Position", "Stopwatch 1", "Stopwatch 2" ]
                 , tbody
                     []
                     (List.map mergedStopwatchRow mergedTable)
                 ]
-            ]
+
+
+stopwatchesView : Stopwatches -> Html Msg
+stopwatchesView stopwatches =
+    div [ class "stopwatch-view" ]
+        [ h3 [] [ text "Stopwatches" ]
+        , noStopwatchesUploadedMessage stopwatches
+        , stopwatchTable stopwatches
+        ]
 
 
 numberCheckerRow : AnnotatedNumberCheckerEntry -> Html a
@@ -363,25 +367,41 @@ numberCheckerRow entry =
         ]
 
 
-numberCheckerView : List AnnotatedNumberCheckerEntry -> List (Html a)
-numberCheckerView entries =
-    [ table
-        [ class "table number-checker-table" ]
-        [ tableHeaders [ "Stopwatch 1", "+/-", "Stopwatch 2", "+/-", "Finish tokens", "+/-" ]
+noNumberCheckerData : Html a
+noNumberCheckerData =
+    div [ class "alert alert-info" ]
+        [ text "No number-checker data has been loaded" ]
+
+
+numberCheckerTable : List AnnotatedNumberCheckerEntry -> Html a
+numberCheckerTable entries =
+    table
+        [ class "table table-bordered number-checker-table" ]
+        [ tableHeaders [ "Stopwatch 1", "+/−", "Stopwatch 2", "+/−", "Finish tokens", "+/−" ]
         , tbody
             []
             (List.map numberCheckerRow entries)
         ]
-    ]
+
+
+numberCheckerView : List AnnotatedNumberCheckerEntry -> Html a
+numberCheckerView entries =
+    div
+        [ class "number-checker-view" ]
+        [ h3 [] [ text "Number checker" ]
+        , if List.isEmpty entries then
+            noNumberCheckerData
+          else
+            numberCheckerTable entries
+        ]
 
 
 view : Model -> Html Msg
 view model =
     div
         []
-        (h1 [] [ text "Parkrun stopwatch comparison/merging" ]
-            :: (errorView model.lastError)
-            ++ (noStopwatchesUploadedMessage model.stopwatches)
-            ++ (stopwatchView model.stopwatches)
-            ++ (numberCheckerView model.numberCheckerEntries)
-        )
+        [ h1 [] [ text "Parkrun stopwatch comparison/merging" ]
+        , errorView model.lastError
+        , stopwatchesView model.stopwatches
+        , numberCheckerView model.numberCheckerEntries
+        ]

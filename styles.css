@@ -10,9 +10,17 @@ td.mismatch {
     background-color: #ffcccc;
 }
 
+div.stopwatch-view, div.number-checker-view {
+    float: left;
+    padding: 10px;
+}
+
+div.number-checker-view {
+    margin-left: 50px;
+}
+
 table.table.stopwatch-times, table.table.number-checker-table {
     width: auto;
-    float: left;
 }
 
 table.table.stopwatch-times > tbody > tr > td, table.table.number-checker-table > tbody > tr > td {
@@ -23,8 +31,15 @@ td.empty-cell {
     color: #dddddd;
 }
 
+td.zero-delta {
+    color: white;
+    background-color: #008000;
+    font-weight: bold;
+}
+
 td.nonzero-delta {
-    color: red;
+    color: white;
+    background-color: red;
     font-weight: bold;
 }
 
