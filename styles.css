@@ -18,12 +18,21 @@ div.number-checker-view {
     margin-left: 50px;
 }
 
+table.table.stopwatch-times {
+    float: left;
+}
+
 table.table.stopwatch-times, table.table.number-checker-table {
     width: auto;
 }
 
 table.table.stopwatch-times > tbody > tr > td, table.table.number-checker-table > tbody > tr > td {
     text-align: right;
+}
+
+div.stopwatch-buttons {
+    padding: 0 15px 0 15px;
+    float: left;
 }
 
 td.empty-cell {

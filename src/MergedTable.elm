@@ -1,4 +1,4 @@
-module MergedTable exposing (MergedTableRow, generateInitialTable, toggleRowInTable, deleteStopwatchFromTable)
+module MergedTable exposing (MergedTableRow, generateInitialTable, toggleRowInTable, deleteStopwatchFromTable, flipTable)
 
 import DataStructures exposing (WhichStopwatch(..))
 import Merger exposing (MergeEntry(..))
@@ -110,3 +110,24 @@ deleteTimeFromRow which row =
 deleteStopwatchFromTable : WhichStopwatch -> List MergedTableRow -> List Int
 deleteStopwatchFromTable whichToDelete mergedRows =
     List.filterMap (deleteTimeFromRow whichToDelete) mergedRows
+
+
+flipRow : MergedTableRow -> MergedTableRow
+flipRow row =
+    case row.entry of
+        ExactMatch _ ->
+            row
+
+        NearMatch time1 time2 ->
+            { row | entry = NearMatch time2 time1 }
+
+        Watch1Only time ->
+            { row | entry = Watch2Only time }
+
+        Watch2Only time ->
+            { row | entry = Watch1Only time }
+
+
+flipTable : List MergedTableRow -> List MergedTableRow
+flipTable =
+    List.map flipRow

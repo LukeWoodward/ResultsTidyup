@@ -1,13 +1,13 @@
 module ParkrunStopwatch exposing (..)
 
-import Html exposing (Html, program, div, text, table, tbody, thead, tr, td, th, h1, h3, input, label, br, button)
+import Html exposing (Html, program, div, text, table, tbody, thead, tr, td, th, h1, h3, input, label, br, button, small)
 import Html.Attributes exposing (class, checked, type_, id, for)
 import Html.Events exposing (onClick)
 import Regex exposing (Regex, regex)
 import Error exposing (Error)
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
 import Merger exposing (merge, MergeEntry(..))
-import MergedTable exposing (MergedTableRow, generateInitialTable, toggleRowInTable, deleteStopwatchFromTable)
+import MergedTable exposing (MergedTableRow, generateInitialTable, toggleRowInTable, deleteStopwatchFromTable, flipTable)
 import NumberChecker exposing (NumberCheckerEntry, AnnotatedNumberCheckerEntry, parseNumberCheckerFile, annotate)
 import DataStructures exposing (WhichStopwatch(..))
 import TimeHandling exposing (formatTime)
@@ -63,6 +63,7 @@ type Msg
     = FileDropped DroppedFile
     | ToggleTableRow Int
     | DeleteStopwatch WhichStopwatch
+    | FlipStopwatches
 
 
 hasFileAlreadyBeenUploaded : String -> Stopwatches -> Bool
@@ -203,6 +204,21 @@ deleteStopwatch which model =
                 }
 
 
+flipStopwatches : Model -> Model
+flipStopwatches model =
+    case model.stopwatches of
+        None ->
+            model
+
+        Single _ _ ->
+            model
+
+        Double filename1 filename2 mergedRows ->
+            { model
+                | stopwatches = Double filename2 filename1 (flipTable mergedRows)
+            }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -214,6 +230,9 @@ update msg model =
 
         DeleteStopwatch which ->
             ( deleteStopwatch which model, Cmd.none )
+
+        FlipStopwatches ->
+            ( flipStopwatches model, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -469,12 +488,34 @@ stopwatchTable stopwatches =
                 ]
 
 
+stopwatchButtonsContent : Stopwatches -> List (Html Msg)
+stopwatchButtonsContent stopwatches =
+    case stopwatches of
+        None ->
+            []
+
+        Single _ _ ->
+            []
+
+        Double _ _ _ ->
+            [ button
+                [ class "btn btn-primary btn-large"
+                , onClick FlipStopwatches
+                ]
+                [ text "Flip"
+                , br [] []
+                , small [] [ text "stopwatches" ]
+                ]
+            ]
+
+
 stopwatchesView : Stopwatches -> Html Msg
 stopwatchesView stopwatches =
     div [ class "stopwatch-view" ]
         [ h3 [] [ text "Stopwatches" ]
         , stopwatchInfoMessage stopwatches
         , stopwatchTable stopwatches
+        , div [ class "stopwatch-buttons" ] (stopwatchButtonsContent stopwatches)
         ]
 
 
