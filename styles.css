@@ -46,3 +46,7 @@ td.nonzero-delta {
 label.stopwatch-time-label {
     font-weight: initial;
 }
+
+th.stopwatch-header {
+    text-align: center;
+}

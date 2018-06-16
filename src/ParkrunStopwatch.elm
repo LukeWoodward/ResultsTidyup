@@ -1,14 +1,15 @@
 module ParkrunStopwatch exposing (..)
 
-import Html exposing (Html, program, div, text, table, tbody, thead, tr, td, th, h1, h3, input, label)
+import Html exposing (Html, program, div, text, table, tbody, thead, tr, td, th, h1, h3, input, label, br, button)
 import Html.Attributes exposing (class, checked, type_, id, for)
 import Html.Events exposing (onClick)
 import Regex exposing (Regex, regex)
 import Error exposing (Error)
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
 import Merger exposing (merge, MergeEntry(..))
-import MergedTable exposing (MergedTableRow, generateInitialTable, toggleRowInTable)
+import MergedTable exposing (MergedTableRow, generateInitialTable, toggleRowInTable, deleteStopwatchFromTable)
 import NumberChecker exposing (NumberCheckerEntry, AnnotatedNumberCheckerEntry, parseNumberCheckerFile, annotate)
+import DataStructures exposing (WhichStopwatch(..))
 import TimeHandling exposing (formatTime)
 import Ports exposing (fileDrop)
 
@@ -61,6 +62,7 @@ init =
 type Msg
     = FileDropped String
     | ToggleTableRow Int
+    | DeleteStopwatch WhichStopwatch
 
 
 handleStopwatchFileDrop : String -> Model -> Model
@@ -153,6 +155,26 @@ toggleTableRow index model =
             }
 
 
+deleteStopwatch : WhichStopwatch -> Model -> Model
+deleteStopwatch which model =
+    case ( model.stopwatches, which ) of
+        ( None, _ ) ->
+            model
+
+        ( Single _, StopwatchOne ) ->
+            { model | stopwatches = None }
+
+        ( Single _, StopwatchTwo ) ->
+            model
+
+        ( Double mergedRows, _ ) ->
+            { model
+                | stopwatches =
+                    deleteStopwatchFromTable which mergedRows
+                        |> Single
+            }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -161,6 +183,9 @@ update msg model =
 
         ToggleTableRow index ->
             ( toggleTableRow index model, Cmd.none )
+
+        DeleteStopwatch which ->
+            ( deleteStopwatch which model, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -312,6 +337,51 @@ tableHeader headerText =
     th [] [ text headerText ]
 
 
+type alias TableHeaderButton =
+    { change : Msg
+    , buttonText : String
+    }
+
+
+type alias TableHeaderWithButton =
+    { headerText : String
+    , buttonData : Maybe TableHeaderButton
+    }
+
+
+deleteButton : WhichStopwatch -> Maybe TableHeaderButton
+deleteButton which =
+    Just
+        { change = DeleteStopwatch which
+        , buttonText = "Delete "
+        }
+
+
+tableHeaderWithButtons : TableHeaderWithButton -> Html Msg
+tableHeaderWithButtons { headerText, buttonData } =
+    let
+        textElement : Html Msg
+        textElement =
+            text headerText
+    in
+        case buttonData of
+            Just { change, buttonText } ->
+                th
+                    [ class "stopwatch-header" ]
+                    [ button
+                        [ type_ "button"
+                        , onClick change
+                        , class "btn btn-primary btn-xs"
+                        ]
+                        [ text buttonText ]
+                    , br [] []
+                    , textElement
+                    ]
+
+            Nothing ->
+                th [] [ textElement ]
+
+
 tableHeaders : List String -> Html a
 tableHeaders headerTexts =
     thead
@@ -319,6 +389,16 @@ tableHeaders headerTexts =
         [ tr
             []
             (List.map tableHeader headerTexts)
+        ]
+
+
+tableHeadersWithButtons : List TableHeaderWithButton -> Html Msg
+tableHeadersWithButtons headerTexts =
+    thead
+        []
+        [ tr
+            []
+            (List.map tableHeaderWithButtons headerTexts)
         ]
 
 
@@ -331,14 +411,21 @@ stopwatchTable stopwatches =
         Single stopwatchTimes ->
             table
                 [ class "table table-condensed table-bordered stopwatch-times" ]
-                [ tableHeaders [ "Position", "Stopwatch 1" ]
+                [ tableHeadersWithButtons
+                    [ TableHeaderWithButton "Position" Nothing
+                    , TableHeaderWithButton "Stopwatch 1" (deleteButton StopwatchOne)
+                    ]
                 , tbody [] (List.indexedMap stopwatchRow stopwatchTimes)
                 ]
 
         Double mergedTable ->
             table
                 [ class "table table-condensed table-bordered stopwatch-times" ]
-                [ tableHeaders [ "Position", "Stopwatch 1", "Stopwatch 2" ]
+                [ tableHeadersWithButtons
+                    [ TableHeaderWithButton "Position" Nothing
+                    , TableHeaderWithButton "Stopwatch 1" (deleteButton StopwatchOne)
+                    , TableHeaderWithButton "Stopwatch 2" (deleteButton StopwatchTwo)
+                    ]
                 , tbody
                     []
                     (List.map mergedStopwatchRow mergedTable)

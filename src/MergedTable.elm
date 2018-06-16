@@ -1,5 +1,6 @@
-module MergedTable exposing (MergedTableRow, generateInitialTable, toggleRowInTable)
+module MergedTable exposing (MergedTableRow, generateInitialTable, toggleRowInTable, deleteStopwatchFromTable)
 
+import DataStructures exposing (WhichStopwatch(..))
 import Merger exposing (MergeEntry(..))
 
 
@@ -76,3 +77,36 @@ toggleRowInTableInternal toggledIndex currentRowNumber rows =
 toggleRowInTable : Int -> List MergedTableRow -> List MergedTableRow
 toggleRowInTable index rows =
     toggleRowInTableInternal index 1 rows
+
+
+{-| Deletes a time from a row and returns the remaining time, if there is
+still a remaining time.
+-}
+deleteTimeFromRow : WhichStopwatch -> MergedTableRow -> Maybe Int
+deleteTimeFromRow which row =
+    case ( row.entry, which ) of
+        ( ExactMatch time, _ ) ->
+            Just time
+
+        ( NearMatch _ time2, StopwatchOne ) ->
+            Just time2
+
+        ( NearMatch time1 _, StopwatchTwo ) ->
+            Just time1
+
+        ( Watch1Only _, StopwatchOne ) ->
+            Nothing
+
+        ( Watch1Only time1, StopwatchTwo ) ->
+            Just time1
+
+        ( Watch2Only time2, StopwatchOne ) ->
+            Just time2
+
+        ( Watch2Only _, StopwatchTwo ) ->
+            Nothing
+
+
+deleteStopwatchFromTable : WhichStopwatch -> List MergedTableRow -> List Int
+deleteStopwatchFromTable whichToDelete mergedRows =
+    List.filterMap (deleteTimeFromRow whichToDelete) mergedRows
