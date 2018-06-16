@@ -232,8 +232,8 @@ errorView maybeString =
             text ""
 
 
-noStopwatchesUploadedMessage : Stopwatches -> Html a
-noStopwatchesUploadedMessage stopwatches =
+stopwatchInfoMessage : Stopwatches -> Html a
+stopwatchInfoMessage stopwatches =
     let
         message : Maybe String
         message =
@@ -473,7 +473,7 @@ stopwatchesView : Stopwatches -> Html Msg
 stopwatchesView stopwatches =
     div [ class "stopwatch-view" ]
         [ h3 [] [ text "Stopwatches" ]
-        , noStopwatchesUploadedMessage stopwatches
+        , stopwatchInfoMessage stopwatches
         , stopwatchTable stopwatches
         ]
 
