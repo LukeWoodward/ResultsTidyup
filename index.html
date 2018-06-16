@@ -15,6 +15,15 @@
 <script>
 var app = Elm.ParkrunStopwatch.embed(document.getElementById("parkrun-stopwatch"));
 
+function handleSingleFileLoad(file) {
+  var reader = new FileReader();
+  reader.onload = function (e) {
+    app.ports.fileDrop.send({fileName: file.name, fileText: e.target.result});
+  };
+
+  reader.readAsText(file, "UTF-8");
+}
+
 function handleLoad(files) {
   if (typeof files === "undefined") {
     // Sorry, IE9 users, can't help you here.
@@ -23,12 +32,7 @@ function handleLoad(files) {
   }
 
   for (var index = 0; index < files.length; index += 1) {
-    var reader = new FileReader();
-    reader.onload = function (e) {
-      app.ports.fileDrop.send(e.target.result);
-    };
-
-    reader.readAsText(files[index], "UTF-8");
+    handleSingleFileLoad(files[index]);
   }
 }
 

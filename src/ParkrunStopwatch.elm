@@ -11,7 +11,7 @@ import MergedTable exposing (MergedTableRow, generateInitialTable, toggleRowInTa
 import NumberChecker exposing (NumberCheckerEntry, AnnotatedNumberCheckerEntry, parseNumberCheckerFile, annotate)
 import DataStructures exposing (WhichStopwatch(..))
 import TimeHandling exposing (formatTime)
-import Ports exposing (fileDrop)
+import Ports exposing (fileDrop, DroppedFile)
 
 
 maxNearMatchDistance : Int
@@ -35,8 +35,8 @@ main =
 
 type Stopwatches
     = None
-    | Single (List Int)
-    | Double (List MergedTableRow)
+    | Single String (List Int)
+    | Double String String (List MergedTableRow)
 
 
 type alias Model =
@@ -60,40 +60,58 @@ init =
 
 
 type Msg
-    = FileDropped String
+    = FileDropped DroppedFile
     | ToggleTableRow Int
     | DeleteStopwatch WhichStopwatch
 
 
-handleStopwatchFileDrop : String -> Model -> Model
-handleStopwatchFileDrop fileText model =
+hasFileAlreadyBeenUploaded : String -> Stopwatches -> Bool
+hasFileAlreadyBeenUploaded newFileName stopwatches =
+    case stopwatches of
+        None ->
+            False
+
+        Single existingFilename _ ->
+            newFileName == existingFilename
+
+        Double existingFilename1 existingFilename2 _ ->
+            newFileName == existingFilename1 || newFileName == existingFilename2
+
+
+handleStopwatchFileDrop : String -> String -> Model -> Model
+handleStopwatchFileDrop fileName fileText model =
     case readStopwatchData fileText of
         Ok (StopwatchData newStopwatch) ->
-            let
-                newStopwatches =
-                    case model.stopwatches of
-                        None ->
-                            Single newStopwatch
-
-                        Single firstStopwatch ->
-                            let
-                                mergedDetails : List MergeEntry
-                                mergedDetails =
-                                    merge maxNearMatchDistance firstStopwatch newStopwatch
-
-                                mergedTable : List MergedTableRow
-                                mergedTable =
-                                    generateInitialTable mergedDetails
-                            in
-                                Double mergedTable
-
-                        Double _ ->
-                            model.stopwatches
-            in
+            if hasFileAlreadyBeenUploaded fileName model.stopwatches then
                 { model
-                    | stopwatches = newStopwatches
-                    , lastError = Nothing
+                    | lastError = Just ("File '" ++ fileName ++ "' has already been uploaded")
                 }
+            else
+                let
+                    newStopwatches =
+                        case model.stopwatches of
+                            None ->
+                                Single fileName newStopwatch
+
+                            Single existingFilename firstStopwatch ->
+                                let
+                                    mergedDetails : List MergeEntry
+                                    mergedDetails =
+                                        merge maxNearMatchDistance firstStopwatch newStopwatch
+
+                                    mergedTable : List MergedTableRow
+                                    mergedTable =
+                                        generateInitialTable mergedDetails
+                                in
+                                    Double existingFilename fileName mergedTable
+
+                            Double _ _ _ ->
+                                model.stopwatches
+                in
+                    { model
+                        | stopwatches = newStopwatches
+                        , lastError = Nothing
+                    }
 
         Err error ->
             { model | lastError = Just error.message }
@@ -128,10 +146,10 @@ handleNumberCheckerFileDrop fileText model =
                 }
 
 
-handleFileDrop : String -> Model -> Model
-handleFileDrop fileText model =
+handleFileDrop : String -> String -> Model -> Model
+handleFileDrop fileName fileText model =
     if String.contains "STARTOFEVENT" fileText then
-        handleStopwatchFileDrop fileText model
+        handleStopwatchFileDrop fileName fileText model
     else if isPossibleNumberCheckerFile fileText then
         handleNumberCheckerFileDrop fileText model
     else
@@ -146,12 +164,12 @@ toggleTableRow index model =
         None ->
             model
 
-        Single _ ->
+        Single _ _ ->
             model
 
-        Double currentMergedTable ->
+        Double fileName1 fileName2 currentMergedTable ->
             { model
-                | stopwatches = Double (toggleRowInTable index currentMergedTable)
+                | stopwatches = Double fileName1 fileName2 (toggleRowInTable index currentMergedTable)
             }
 
 
@@ -161,25 +179,35 @@ deleteStopwatch which model =
         ( None, _ ) ->
             model
 
-        ( Single _, StopwatchOne ) ->
+        ( Single _ _, StopwatchOne ) ->
             { model | stopwatches = None }
 
-        ( Single _, StopwatchTwo ) ->
+        ( Single _ _, StopwatchTwo ) ->
             model
 
-        ( Double mergedRows, _ ) ->
-            { model
-                | stopwatches =
-                    deleteStopwatchFromTable which mergedRows
-                        |> Single
-            }
+        ( Double fileName1 fileName2 mergedRows, _ ) ->
+            let
+                fileNameToKeep : String
+                fileNameToKeep =
+                    case which of
+                        StopwatchOne ->
+                            fileName2
+
+                        StopwatchTwo ->
+                            fileName1
+            in
+                { model
+                    | stopwatches =
+                        deleteStopwatchFromTable which mergedRows
+                            |> Single fileNameToKeep
+                }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        FileDropped fileText ->
-            ( handleFileDrop fileText model, Cmd.none )
+        FileDropped { fileName, fileText } ->
+            ( handleFileDrop fileName fileText model, Cmd.none )
 
         ToggleTableRow index ->
             ( toggleTableRow index model, Cmd.none )
@@ -206,17 +234,26 @@ errorView maybeString =
 
 noStopwatchesUploadedMessage : Stopwatches -> Html a
 noStopwatchesUploadedMessage stopwatches =
-    case stopwatches of
-        None ->
-            div [ class "alert alert-info" ]
-                [ text "No stopwatch files have been uploaded" ]
+    let
+        message : Maybe String
+        message =
+            case stopwatches of
+                None ->
+                    Just "No stopwatch files have been uploaded"
 
-        Single _ ->
-            div [ class "alert alert-info" ]
-                [ text "Please upload another stopwatch file to enable comparison/merging" ]
+                Single _ _ ->
+                    Just "Please upload another stopwatch file to enable comparison/merging"
 
-        Double _ ->
-            text ""
+                Double _ _ _ ->
+                    Nothing
+    in
+        case message of
+            Just messageText ->
+                div [ class "alert alert-info" ]
+                    [ text messageText ]
+
+            Nothing ->
+                text ""
 
 
 cell : String -> Html a
@@ -408,7 +445,7 @@ stopwatchTable stopwatches =
         None ->
             text ""
 
-        Single stopwatchTimes ->
+        Single _ stopwatchTimes ->
             table
                 [ class "table table-condensed table-bordered stopwatch-times" ]
                 [ tableHeadersWithButtons
@@ -418,7 +455,7 @@ stopwatchTable stopwatches =
                 , tbody [] (List.indexedMap stopwatchRow stopwatchTimes)
                 ]
 
-        Double mergedTable ->
+        Double _ _ mergedTable ->
             table
                 [ class "table table-condensed table-bordered stopwatch-times" ]
                 [ tableHeadersWithButtons

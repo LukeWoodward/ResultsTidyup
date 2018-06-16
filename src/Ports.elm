@@ -1,4 +1,10 @@
 port module Ports exposing (..)
 
 
-port fileDrop : (String -> msg) -> Sub msg
+type alias DroppedFile =
+    { fileName : String
+    , fileText : String
+    }
+
+
+port fileDrop : (DroppedFile -> msg) -> Sub msg
