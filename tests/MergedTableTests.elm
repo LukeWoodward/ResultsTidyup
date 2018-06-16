@@ -30,16 +30,16 @@ entry4 =
 
 sampleMergedTable : List MergedTableRow
 sampleMergedTable =
-    [ MergedTableRow 0 (Just 1) entry1 True
-    , MergedTableRow 1 (Just 2) entry2 True
-    , MergedTableRow 2 (Just 3) entry3 True
-    , MergedTableRow 3 (Just 4) entry4 True
+    [ MergedTableRow 0 (Just 1) entry1 True noUnderlines
+    , MergedTableRow 1 (Just 2) entry2 True noUnderlines
+    , MergedTableRow 2 (Just 3) entry3 True noUnderlines
+    , MergedTableRow 3 (Just 4) entry4 True noUnderlines
     ]
 
 
 wrapEntry : MergeEntry -> MergedTableRow
 wrapEntry entry =
-    MergedTableRow 0 (Just 1) entry True
+    MergedTableRow 0 (Just 1) entry True noUnderlines
 
 
 suite : Test
@@ -53,7 +53,7 @@ suite =
             , test "generates singleton table from single list of merge entries" <|
                 \() ->
                     generateInitialTable [ entry1 ]
-                        |> Expect.equal [ MergedTableRow 0 (Just 1) entry1 True ]
+                        |> Expect.equal [ MergedTableRow 0 (Just 1) entry1 True noUnderlines ]
             , test "generates table with three rows from list of three merge entries" <|
                 \() ->
                     generateInitialTable [ entry1, entry2, entry3, entry4 ]
@@ -72,28 +72,28 @@ suite =
                 \() ->
                     toggleRowInTable 3 sampleMergedTable
                         |> Expect.equal
-                            [ MergedTableRow 0 (Just 1) entry1 True
-                            , MergedTableRow 1 (Just 2) entry2 True
-                            , MergedTableRow 2 (Just 3) entry3 True
-                            , MergedTableRow 3 Nothing entry4 False
+                            [ MergedTableRow 0 (Just 1) entry1 True noUnderlines
+                            , MergedTableRow 1 (Just 2) entry2 True noUnderlines
+                            , MergedTableRow 2 (Just 3) entry3 True noUnderlines
+                            , MergedTableRow 3 Nothing entry4 False noUnderlines
                             ]
             , test "toggles out watch-2-only row and renumbers remaining rows" <|
                 \() ->
                     toggleRowInTable 2 sampleMergedTable
                         |> Expect.equal
-                            [ MergedTableRow 0 (Just 1) entry1 True
-                            , MergedTableRow 1 (Just 2) entry2 True
-                            , MergedTableRow 2 Nothing entry3 False
-                            , MergedTableRow 3 (Just 3) entry4 True
+                            [ MergedTableRow 0 (Just 1) entry1 True noUnderlines
+                            , MergedTableRow 1 (Just 2) entry2 True noUnderlines
+                            , MergedTableRow 2 Nothing entry3 False noUnderlines
+                            , MergedTableRow 3 (Just 3) entry4 True noUnderlines
                             ]
             , test "toggles back in watch-1-only row" <|
                 \() ->
                     let
                         previousData =
-                            [ MergedTableRow 0 (Just 1) entry1 True
-                            , MergedTableRow 1 (Just 2) entry2 True
-                            , MergedTableRow 2 (Just 3) entry3 True
-                            , MergedTableRow 3 Nothing entry4 False
+                            [ MergedTableRow 0 (Just 1) entry1 True noUnderlines
+                            , MergedTableRow 1 (Just 2) entry2 True noUnderlines
+                            , MergedTableRow 2 (Just 3) entry3 True noUnderlines
+                            , MergedTableRow 3 Nothing entry4 False noUnderlines
                             ]
                     in
                         toggleRowInTable 3 previousData
@@ -102,10 +102,10 @@ suite =
                 \() ->
                     let
                         previousData =
-                            [ MergedTableRow 0 (Just 1) entry1 True
-                            , MergedTableRow 1 (Just 2) entry2 True
-                            , MergedTableRow 2 Nothing entry3 False
-                            , MergedTableRow 3 (Just 3) entry4 True
+                            [ MergedTableRow 0 (Just 1) entry1 True noUnderlines
+                            , MergedTableRow 1 (Just 2) entry2 True noUnderlines
+                            , MergedTableRow 2 Nothing entry3 False noUnderlines
+                            , MergedTableRow 3 (Just 3) entry4 True noUnderlines
                             ]
                     in
                         toggleRowInTable 2 previousData

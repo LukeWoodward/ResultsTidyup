@@ -39,6 +39,10 @@ td.empty-cell {
     color: #dddddd;
 }
 
+.table-bordered > tbody > tr > td.underlined {
+    border-bottom: 5px solid black;
+}
+
 td.zero-delta {
     color: white;
     background-color: #008000;

@@ -1,7 +1,31 @@
-module MergedTable exposing (MergedTableRow, generateInitialTable, toggleRowInTable, deleteStopwatchFromTable, flipTable)
+module MergedTable
+    exposing
+        ( MergedTableRow
+        , Underlines
+        , noUnderlines
+        , generateInitialTable
+        , toggleRowInTable
+        , deleteStopwatchFromTable
+        , flipTable
+        , underlineTable
+        )
 
 import DataStructures exposing (WhichStopwatch(..))
 import Merger exposing (MergeEntry(..))
+import NumberChecker exposing (AnnotatedNumberCheckerEntry)
+import Set exposing (Set)
+
+
+type alias Underlines =
+    { position : Bool
+    , stopwatch1 : Bool
+    , stopwatch2 : Bool
+    }
+
+
+noUnderlines : Underlines
+noUnderlines =
+    Underlines False False False
 
 
 type alias MergedTableRow =
@@ -9,12 +33,13 @@ type alias MergedTableRow =
     , rowNumber : Maybe Int
     , entry : MergeEntry
     , included : Bool
+    , underlines : Underlines
     }
 
 
 createInitialTableRow : Int -> MergeEntry -> MergedTableRow
 createInitialTableRow index entry =
-    MergedTableRow index (Just (index + 1)) entry True
+    MergedTableRow index (Just (index + 1)) entry True noUnderlines
 
 
 generateInitialTable : List MergeEntry -> List MergedTableRow
@@ -131,3 +156,97 @@ flipRow row =
 flipTable : List MergedTableRow -> List MergedTableRow
 flipTable =
     List.map flipRow
+
+
+type alias NumberSets =
+    { stopwatch1 : Set Int
+    , stopwatch2 : Set Int
+    , finishTokens : Set Int
+    }
+
+
+underlineTableInternal : NumberSets -> Int -> Int -> Int -> List MergedTableRow -> List MergedTableRow
+underlineTableInternal numberSets sw1Posn sw2Posn ftoksPosn mergedRows =
+    case mergedRows of
+        [] ->
+            []
+
+        firstRow :: restRows ->
+            let
+                nextSw1Posn : Int
+                nextSw1Posn =
+                    case firstRow.entry of
+                        ExactMatch _ ->
+                            sw1Posn + 1
+
+                        NearMatch _ _ ->
+                            sw1Posn + 1
+
+                        Watch1Only _ ->
+                            sw1Posn + 1
+
+                        Watch2Only _ ->
+                            sw1Posn
+
+                nextSw2Posn : Int
+                nextSw2Posn =
+                    case firstRow.entry of
+                        ExactMatch _ ->
+                            sw2Posn + 1
+
+                        NearMatch _ _ ->
+                            sw2Posn + 1
+
+                        Watch1Only _ ->
+                            sw2Posn
+
+                        Watch2Only _ ->
+                            sw2Posn + 1
+
+                nextFtoksPosn : Int
+                nextFtoksPosn =
+                    if firstRow.included then
+                        ftoksPosn + 1
+                    else
+                        ftoksPosn
+
+                newUnderlines : Underlines
+                newUnderlines =
+                    { stopwatch1 = nextSw1Posn > sw1Posn && Set.member nextSw1Posn numberSets.stopwatch1
+                    , stopwatch2 = nextSw2Posn > sw2Posn && Set.member nextSw2Posn numberSets.stopwatch2
+                    , position = nextFtoksPosn > ftoksPosn && Set.member nextFtoksPosn numberSets.finishTokens
+                    }
+
+                underlinedFirstRow : MergedTableRow
+                underlinedFirstRow =
+                    { firstRow | underlines = newUnderlines }
+
+                underlinedRestRows : List MergedTableRow
+                underlinedRestRows =
+                    underlineTableInternal numberSets nextSw1Posn nextSw2Posn nextFtoksPosn restRows
+            in
+                underlinedFirstRow :: underlinedRestRows
+
+
+underlineTable : List AnnotatedNumberCheckerEntry -> List MergedTableRow -> List MergedTableRow
+underlineTable numberCheckerEntries mergedRows =
+    let
+        stopwatch1Numbers : Set Int
+        stopwatch1Numbers =
+            numberCheckerEntries
+                |> List.map .stopwatch1
+                |> Set.fromList
+
+        stopwatch2Numbers : Set Int
+        stopwatch2Numbers =
+            numberCheckerEntries
+                |> List.map .stopwatch2
+                |> Set.fromList
+
+        finishTokensNumbers : Set Int
+        finishTokensNumbers =
+            numberCheckerEntries
+                |> List.map .finishTokens
+                |> Set.fromList
+    in
+        underlineTableInternal (NumberSets stopwatch1Numbers stopwatch2Numbers finishTokensNumbers) 0 0 0 mergedRows

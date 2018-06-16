@@ -7,7 +7,7 @@ import Regex exposing (Regex, regex)
 import Error exposing (Error)
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
 import Merger exposing (merge, MergeEntry(..))
-import MergedTable exposing (MergedTableRow, generateInitialTable, toggleRowInTable, deleteStopwatchFromTable, flipTable)
+import MergedTable exposing (MergedTableRow, generateInitialTable, toggleRowInTable, deleteStopwatchFromTable, flipTable, underlineTable)
 import NumberChecker exposing (NumberCheckerEntry, AnnotatedNumberCheckerEntry, parseNumberCheckerFile, annotate)
 import DataStructures exposing (WhichStopwatch(..))
 import TimeHandling exposing (formatTime)
@@ -79,6 +79,22 @@ hasFileAlreadyBeenUploaded newFileName stopwatches =
             newFileName == existingFilename1 || newFileName == existingFilename2
 
 
+underlineStopwatches : Stopwatches -> List AnnotatedNumberCheckerEntry -> Stopwatches
+underlineStopwatches stopwatches numberCheckerEntries =
+    if List.isEmpty numberCheckerEntries then
+        stopwatches
+    else
+        case stopwatches of
+            None ->
+                stopwatches
+
+            Single _ _ ->
+                stopwatches
+
+            Double fileName1 fileName2 mergedTable ->
+                Double fileName1 fileName2 (underlineTable numberCheckerEntries mergedTable)
+
+
 handleStopwatchFileDrop : String -> String -> Model -> Model
 handleStopwatchFileDrop fileName fileText model =
     case readStopwatchData fileText of
@@ -110,7 +126,7 @@ handleStopwatchFileDrop fileName fileText model =
                                 model.stopwatches
                 in
                     { model
-                        | stopwatches = newStopwatches
+                        | stopwatches = underlineStopwatches newStopwatches model.numberCheckerEntries
                         , lastError = Nothing
                     }
 
@@ -137,9 +153,15 @@ handleNumberCheckerFileDrop fileText model =
     in
         case result of
             Ok entries ->
-                { model
-                    | numberCheckerEntries = annotate entries
-                }
+                let
+                    annotatedEntries : List AnnotatedNumberCheckerEntry
+                    annotatedEntries =
+                        annotate entries
+                in
+                    { model
+                        | numberCheckerEntries = annotatedEntries
+                        , stopwatches = underlineStopwatches model.stopwatches annotatedEntries
+                    }
 
             Err error ->
                 { model
@@ -169,9 +191,16 @@ toggleTableRow index model =
             model
 
         Double fileName1 fileName2 currentMergedTable ->
-            { model
-                | stopwatches = Double fileName1 fileName2 (toggleRowInTable index currentMergedTable)
-            }
+            let
+                newMergedTable : List MergedTableRow
+                newMergedTable =
+                    currentMergedTable
+                        |> toggleRowInTable index
+                        |> underlineTable model.numberCheckerEntries
+            in
+                { model
+                    | stopwatches = Double fileName1 fileName2 newMergedTable
+                }
 
 
 deleteStopwatch : WhichStopwatch -> Model -> Model
@@ -214,9 +243,16 @@ flipStopwatches model =
             model
 
         Double filename1 filename2 mergedRows ->
-            { model
-                | stopwatches = Double filename2 filename1 (flipTable mergedRows)
-            }
+            let
+                newStopwatches : List MergedTableRow
+                newStopwatches =
+                    mergedRows
+                        |> flipTable
+                        |> underlineTable model.numberCheckerEntries
+            in
+                { model
+                    | stopwatches = Double filename2 filename1 newStopwatches
+                }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -275,19 +311,35 @@ stopwatchInfoMessage stopwatches =
                 text ""
 
 
-cell : String -> Html a
-cell contents =
-    td [] [ text contents ]
+cell : String -> Bool -> Html a
+cell contents underlined =
+    let
+        attributes : List (Html.Attribute a)
+        attributes =
+            if underlined then
+                [ class "underlined" ]
+            else
+                []
+    in
+        td attributes [ text contents ]
 
 
 intCell : Int -> Html a
 intCell contents =
-    cell (toString contents)
+    cell (toString contents) False
 
 
-timeCell : String -> Int -> Html a
-timeCell className time =
-    td [ class className ] [ text (formatTime time) ]
+timeCell : String -> Int -> Bool -> Html a
+timeCell className time underlined =
+    let
+        adjustedClassName : String
+        adjustedClassName =
+            if underlined then
+                className ++ " underlined"
+            else
+                className
+    in
+        td [ class adjustedClassName ] [ text (formatTime time) ]
 
 
 deltaCell : Int -> Html a
@@ -309,8 +361,8 @@ deltaCell delta =
 stopwatchRow : Int -> Int -> Html a
 stopwatchRow index time =
     tr []
-        [ cell (toString (index + 1))
-        , cell (formatTime time)
+        [ cell (toString (index + 1)) False
+        , cell (formatTime time) False
         ]
 
 
@@ -319,15 +371,22 @@ emptyNumberCell =
     td [ class "empty-cell" ] [ text "–" ]
 
 
-checkboxCell : Int -> Int -> Bool -> Html Msg
-checkboxCell time index included =
+checkboxCell : Int -> Int -> Bool -> Bool -> Html Msg
+checkboxCell time index included underlined =
     let
         idText : String
         idText =
             "toggle_checkbox_" ++ (toString index)
+
+        adjustedClassName : String
+        adjustedClassName =
+            if underlined then
+                "mismatch underlined"
+            else
+                "mismatch"
     in
         td
-            [ class "mismatch" ]
+            [ class adjustedClassName ]
             [ input
                 [ type_ "checkbox"
                 , checked included
@@ -349,7 +408,7 @@ mergedStopwatchRow row =
         indexCell =
             case row.rowNumber of
                 Just num ->
-                    cell (toString num)
+                    cell (toString num) row.underlines.position
 
                 Nothing ->
                     emptyNumberCell
@@ -359,32 +418,32 @@ mergedStopwatchRow row =
                 tr
                     []
                     [ indexCell
-                    , timeCell "exact-match" time
-                    , timeCell "exact-match" time
+                    , timeCell "exact-match" time row.underlines.stopwatch1
+                    , timeCell "exact-match" time row.underlines.stopwatch2
                     ]
 
             NearMatch time1 time2 ->
                 tr
                     []
                     [ indexCell
-                    , timeCell "near-match" time1
-                    , timeCell "near-match" time2
+                    , timeCell "near-match" time1 row.underlines.stopwatch1
+                    , timeCell "near-match" time2 row.underlines.stopwatch2
                     ]
 
             Watch1Only time1 ->
                 tr
                     []
                     [ indexCell
-                    , checkboxCell time1 row.index row.included
-                    , cell ""
+                    , checkboxCell time1 row.index row.included row.underlines.stopwatch1
+                    , cell "" False
                     ]
 
             Watch2Only time2 ->
                 tr
                     []
                     [ indexCell
-                    , cell ""
-                    , checkboxCell time2 row.index row.included
+                    , cell "" False
+                    , checkboxCell time2 row.index row.included row.underlines.stopwatch2
                     ]
 
 
