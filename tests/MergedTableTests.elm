@@ -157,4 +157,17 @@ suite =
                     deleteStopwatchFromTable StopwatchTwo (List.map wrapEntry [ entry1, entry2, entry3, entry4 ])
                         |> Expect.equal [ 259, 284, 355 ]
             ]
+        , describe "flipTable tests"
+            [ test "Flips a table of entries" <|
+                \() ->
+                    flipTable (List.map wrapEntry [ entry1, entry2, entry3, entry4 ])
+                        |> Expect.equal
+                            (List.map wrapEntry
+                                [ entry1
+                                , NearMatch 285 284
+                                , Watch1Only 303
+                                , Watch2Only 355
+                                ]
+                            )
+            ]
         ]
