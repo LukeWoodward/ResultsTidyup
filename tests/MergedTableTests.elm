@@ -20,12 +20,12 @@ entry2 =
 
 entry3 : MergeEntry
 entry3 =
-    Watch2Only 303
+    OneWatchOnly StopwatchTwo 303
 
 
 entry4 : MergeEntry
 entry4 =
-    Watch1Only 355
+    OneWatchOnly StopwatchOne 355
 
 
 sampleMergedTable : List MergedTableRow
@@ -132,19 +132,19 @@ suite =
                 \() ->
                     deleteStopwatchFromTable StopwatchTwo [ wrapEntry entry2 ]
                         |> Expect.equal [ 284 ]
-            , test "Deletes stopwatch-one time from single Watch2Only entry" <|
+            , test "Deletes stopwatch-one time from single stopwatch-two-only entry" <|
                 \() ->
                     deleteStopwatchFromTable StopwatchOne [ wrapEntry entry3 ]
                         |> Expect.equal [ 303 ]
-            , test "Deletes stopwatch-two time from single Watch2Only entry" <|
+            , test "Deletes stopwatch-two time from single stopwatch-two-only entry" <|
                 \() ->
                     deleteStopwatchFromTable StopwatchTwo [ wrapEntry entry3 ]
                         |> Expect.equal []
-            , test "Deletes stopwatch-one time from single Watch1Only entry" <|
+            , test "Deletes stopwatch-one time from single stopwatch-one-only entry" <|
                 \() ->
                     deleteStopwatchFromTable StopwatchOne [ wrapEntry entry4 ]
                         |> Expect.equal []
-            , test "Deletes stopwatch-two time from single Watch1Only entry" <|
+            , test "Deletes stopwatch-two time from single stopwatch-one-only entry" <|
                 \() ->
                     deleteStopwatchFromTable StopwatchTwo [ wrapEntry entry4 ]
                         |> Expect.equal [ 355 ]
@@ -165,8 +165,8 @@ suite =
                             (List.map wrapEntry
                                 [ entry1
                                 , NearMatch 285 284
-                                , Watch1Only 303
-                                , Watch2Only 355
+                                , OneWatchOnly StopwatchOne 303
+                                , OneWatchOnly StopwatchTwo 355
                                 ]
                             )
             ]

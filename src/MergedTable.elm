@@ -56,10 +56,7 @@ isSingleTimeRow row =
         NearMatch _ _ ->
             False
 
-        Watch1Only _ ->
-            True
-
-        Watch2Only _ ->
+        OneWatchOnly _ _ ->
             True
 
 
@@ -119,22 +116,26 @@ deleteTimeFromRow which row =
         ( NearMatch time1 _, StopwatchTwo ) ->
             Just time1
 
-        ( Watch1Only _, StopwatchOne ) ->
-            Nothing
-
-        ( Watch1Only time1, StopwatchTwo ) ->
-            Just time1
-
-        ( Watch2Only time2, StopwatchOne ) ->
-            Just time2
-
-        ( Watch2Only _, StopwatchTwo ) ->
-            Nothing
+        ( OneWatchOnly someStopwatch time, _ ) ->
+            if someStopwatch == which then
+                Nothing
+            else
+                Just time
 
 
 deleteStopwatchFromTable : WhichStopwatch -> List MergedTableRow -> List Int
 deleteStopwatchFromTable whichToDelete mergedRows =
     List.filterMap (deleteTimeFromRow whichToDelete) mergedRows
+
+
+flipStopwatch : WhichStopwatch -> WhichStopwatch
+flipStopwatch stopwatch =
+    case stopwatch of
+        StopwatchOne ->
+            StopwatchTwo
+
+        StopwatchTwo ->
+            StopwatchOne
 
 
 flipRow : MergedTableRow -> MergedTableRow
@@ -146,11 +147,8 @@ flipRow row =
         NearMatch time1 time2 ->
             { row | entry = NearMatch time2 time1 }
 
-        Watch1Only time ->
-            { row | entry = Watch2Only time }
-
-        Watch2Only time ->
-            { row | entry = Watch1Only time }
+        OneWatchOnly watch time ->
+            { row | entry = OneWatchOnly (flipStopwatch watch) time }
 
 
 flipTable : List MergedTableRow -> List MergedTableRow
@@ -182,10 +180,10 @@ underlineTableInternal numberSets sw1Posn sw2Posn ftoksPosn mergedRows =
                         NearMatch _ _ ->
                             sw1Posn + 1
 
-                        Watch1Only _ ->
+                        OneWatchOnly StopwatchOne _ ->
                             sw1Posn + 1
 
-                        Watch2Only _ ->
+                        OneWatchOnly StopwatchTwo _ ->
                             sw1Posn
 
                 nextSw2Posn : Int
@@ -197,10 +195,10 @@ underlineTableInternal numberSets sw1Posn sw2Posn ftoksPosn mergedRows =
                         NearMatch _ _ ->
                             sw2Posn + 1
 
-                        Watch1Only _ ->
+                        OneWatchOnly StopwatchOne _ ->
                             sw2Posn
 
-                        Watch2Only _ ->
+                        OneWatchOnly StopwatchTwo _ ->
                             sw2Posn + 1
 
                 nextFtoksPosn : Int

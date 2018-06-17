@@ -437,7 +437,7 @@ mergedStopwatchRow row =
                     , timeCell "near-match" time2 row.underlines.stopwatch2
                     ]
 
-            Watch1Only time1 ->
+            OneWatchOnly StopwatchOne time1 ->
                 tr
                     []
                     [ indexCell
@@ -445,7 +445,7 @@ mergedStopwatchRow row =
                     , cell "" False
                     ]
 
-            Watch2Only time2 ->
+            OneWatchOnly StopwatchTwo time2 ->
                 tr
                     []
                     [ indexCell
