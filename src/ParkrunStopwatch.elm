@@ -378,15 +378,22 @@ checkboxCell time index included underlined =
         idText =
             "toggle_checkbox_" ++ (toString index)
 
-        adjustedClassName : String
-        adjustedClassName =
+        adjustedCellClassName : String
+        adjustedCellClassName =
             if underlined then
                 "mismatch underlined"
             else
                 "mismatch"
+
+        labelClassName : String
+        labelClassName =
+            if included then
+                "stopwatch-time-label"
+            else
+                "stopwatch-time-label excluded"
     in
         td
-            [ class adjustedClassName ]
+            [ class adjustedCellClassName ]
             [ input
                 [ type_ "checkbox"
                 , checked included
@@ -396,7 +403,7 @@ checkboxCell time index included underlined =
                 []
             , label
                 [ for idText
-                , class "stopwatch-time-label"
+                , class labelClassName
                 ]
                 [ text (formatTime time) ]
             ]

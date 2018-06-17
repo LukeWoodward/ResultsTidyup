@@ -30,6 +30,19 @@ table.table.stopwatch-times > tbody > tr > td, table.table.number-checker-table 
     text-align: right;
 }
 
+table.table.stopwatch-times > tbody > tr > td {
+    padding-top: 1px;
+    padding-bottom: 1px;
+}
+
+table.table.stopwatch-times > tbody > tr > td > input[type=checkbox] {
+    margin: 0;
+}
+
+table.table.stopwatch-times > tbody > tr > td > label {
+    margin-bottom: 0;
+}
+
 div.stopwatch-buttons {
     padding: 0 15px 0 15px;
     float: left;
@@ -57,6 +70,11 @@ td.nonzero-delta {
 
 label.stopwatch-time-label {
     font-weight: initial;
+}
+
+label.stopwatch-time-label.excluded {
+    text-decoration: line-through;
+    color: #888888;
 }
 
 th.stopwatch-header {
