@@ -14,6 +14,9 @@
 <script src="parkrun-stopwatch.js"></script>
 <script>
 var app = Elm.ParkrunStopwatch.embed(document.getElementById("parkrun-stopwatch"));
+app.ports.downloadMergedTimesToFile.subscribe(function(fileContents) {
+    saveFile(fileContents.fileName, fileContents.fileText);
+});
 
 function handleSingleFileLoad(file) {
   var reader = new FileReader();
@@ -34,6 +37,23 @@ function handleLoad(files) {
   for (var index = 0; index < files.length; index += 1) {
     handleSingleFileLoad(files[index]);
   }
+}
+
+// Taken from https://stackoverflow.com/a/33542499
+function saveFile(filename, data) {
+    var blob = new Blob([data], {type: 'text/csv'});
+    if (window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveBlob(blob, filename);
+    }
+    else {
+        var elem = window.document.createElement('a');
+        elem.href = window.URL.createObjectURL(blob);
+        elem.download = filename;
+        document.body.appendChild(elem);
+        elem.click();
+        document.body.removeChild(elem);
+        window.URL.revokeObjectURL(elem.href);
+    }
 }
 
 // The following functions have been adapted from

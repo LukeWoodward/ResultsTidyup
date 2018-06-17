@@ -8,12 +8,14 @@ module MergedTable
         , deleteStopwatchFromTable
         , flipTable
         , underlineTable
+        , outputMergedTable
         )
 
 import DataStructures exposing (WhichStopwatch(..))
 import Merger exposing (MergeEntry(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import Set exposing (Set)
+import TimeHandling exposing (formatTimeWithHours)
 
 
 type alias Underlines =
@@ -248,3 +250,57 @@ underlineTable numberCheckerEntries mergedRows =
                 |> Set.fromList
     in
         underlineTableInternal (NumberSets stopwatch1Numbers stopwatch2Numbers finishTokensNumbers) 0 0 0 mergedRows
+
+
+header : List String
+header =
+    [ "STARTOFEVENT,01/01/2001 00:00:00,junsd_stopwatch", "0,01/01/2001 00:00:00" ]
+
+
+footer : String
+footer =
+    "ENDOFEVENT,01/01/2001 01:59:59"
+
+
+formatRow : Int -> Int -> Maybe String
+formatRow rowNumber time =
+    let
+        formattedTime : String
+        formattedTime =
+            formatTimeWithHours time
+    in
+        (toString rowNumber)
+            ++ ",01/01/2001 "
+            ++ formattedTime
+            ++ ","
+            ++ formattedTime
+            |> Just
+
+
+outputMergedRow : MergedTableRow -> Maybe String
+outputMergedRow row =
+    case row.rowNumber of
+        Just rowNum ->
+            case row.entry of
+                ExactMatch time ->
+                    formatRow rowNum time
+
+                NearMatch time1 time2 ->
+                    formatRow rowNum (min time1 time2)
+
+                OneWatchOnly _ time ->
+                    if row.included then
+                        formatRow rowNum time
+                    else
+                        Nothing
+
+        Nothing ->
+            Nothing
+
+
+outputMergedTable : List MergedTableRow -> String
+outputMergedTable mergedRows =
+    header
+        ++ (List.filterMap outputMergedRow mergedRows)
+        ++ [ footer ]
+        |> String.join "\x0D\n"

@@ -5,13 +5,16 @@ import Html.Attributes exposing (class, checked, type_, id, for)
 import Html.Events exposing (onClick)
 import Regex exposing (Regex, regex)
 import Error exposing (Error)
+import Date exposing (Date)
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
 import Merger exposing (merge, MergeEntry(..))
-import MergedTable exposing (MergedTableRow, generateInitialTable, toggleRowInTable, deleteStopwatchFromTable, flipTable, underlineTable)
+import MergedTable exposing (MergedTableRow, generateInitialTable, toggleRowInTable, deleteStopwatchFromTable, flipTable, underlineTable, outputMergedTable)
 import NumberChecker exposing (NumberCheckerEntry, AnnotatedNumberCheckerEntry, parseNumberCheckerFile, annotate)
 import DataStructures exposing (WhichStopwatch(..))
 import TimeHandling exposing (formatTime)
-import Ports exposing (fileDrop, DroppedFile)
+import DateHandling exposing (generateDownloadFilenameDatePart)
+import Task exposing (Task)
+import Ports exposing (fileDrop, InteropFile, downloadMergedTimesToFile)
 
 
 maxNearMatchDistance : Int
@@ -60,10 +63,12 @@ init =
 
 
 type Msg
-    = FileDropped DroppedFile
+    = FileDropped InteropFile
     | ToggleTableRow Int
     | DeleteStopwatch WhichStopwatch
     | FlipStopwatches
+    | GetCurrentDateForDownloadFile
+    | DownloadMergedStopwatchData Date
 
 
 hasFileAlreadyBeenUploaded : String -> Stopwatches -> Bool
@@ -255,6 +260,32 @@ flipStopwatches model =
                 }
 
 
+downloadMergedStopwatchData : Date -> Model -> ( Model, Cmd Msg )
+downloadMergedStopwatchData date model =
+    case model.stopwatches of
+        None ->
+            ( model, Cmd.none )
+
+        Single _ _ ->
+            ( model, Cmd.none )
+
+        Double _ _ mergedTableRows ->
+            let
+                fileContents : String
+                fileContents =
+                    outputMergedTable mergedTableRows
+
+                fileName : String
+                fileName =
+                    "parkrun_timer_" ++ (generateDownloadFilenameDatePart date) ++ ".txt"
+
+                file : InteropFile
+                file =
+                    InteropFile fileName fileContents
+            in
+                ( model, downloadMergedTimesToFile file )
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -269,6 +300,12 @@ update msg model =
 
         FlipStopwatches ->
             ( flipStopwatches model, Cmd.none )
+
+        GetCurrentDateForDownloadFile ->
+            ( model, Task.perform DownloadMergedStopwatchData Date.now )
+
+        DownloadMergedStopwatchData date ->
+            downloadMergedStopwatchData date model
 
 
 subscriptions : Model -> Sub Msg
@@ -571,6 +608,16 @@ stopwatchButtonsContent stopwatches =
                 [ text "Flip"
                 , br [] []
                 , small [] [ text "stopwatches" ]
+                ]
+            , br [] []
+            , br [] []
+            , button
+                [ class "btn btn-primary btn-large"
+                , onClick GetCurrentDateForDownloadFile
+                ]
+                [ text "Download"
+                , br [] []
+                , small [] [ text "merged times" ]
                 ]
             ]
 

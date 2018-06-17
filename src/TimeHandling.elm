@@ -1,4 +1,4 @@
-module TimeHandling exposing (parseTime, formatTime)
+module TimeHandling exposing (parseTime, formatTime, formatTimeWithHours)
 
 import Regex exposing (Regex, regex, HowMany(..))
 import Error exposing (Error)
@@ -58,16 +58,16 @@ parseTime timeString =
                 |> Err
 
 
-formatToTwoChars : Int -> String
-formatToTwoChars number =
+formatToAtLeastTwoChars : Int -> String
+formatToAtLeastTwoChars number =
     if number < 10 then
         "0" ++ (toString number)
     else
         toString number
 
 
-formatTime : Int -> String
-formatTime timeInSeconds =
+formatTimeInternal : Bool -> Int -> String
+formatTimeInternal mustIncludeHours timeInSeconds =
     if timeInSeconds < 0 then
         "-" ++ formatTime -timeInSeconds
     else
@@ -86,9 +86,19 @@ formatTime timeInSeconds =
 
             minsAndSecs : String
             minsAndSecs =
-                (formatToTwoChars minutes) ++ ":" ++ (formatToTwoChars seconds)
+                (formatToAtLeastTwoChars minutes) ++ ":" ++ (formatToAtLeastTwoChars seconds)
         in
-            if hours == 0 then
+            if hours == 0 && not mustIncludeHours then
                 minsAndSecs
             else
-                (toString hours) ++ ":" ++ minsAndSecs
+                (formatToAtLeastTwoChars hours) ++ ":" ++ minsAndSecs
+
+
+formatTime : Int -> String
+formatTime timeInSeconds =
+    formatTimeInternal False timeInSeconds
+
+
+formatTimeWithHours : Int -> String
+formatTimeWithHours timeInSeconds =
+    formatTimeInternal True timeInSeconds

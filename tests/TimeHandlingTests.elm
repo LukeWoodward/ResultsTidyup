@@ -4,7 +4,7 @@ import Expect
 import Test exposing (describe, test, Test)
 import Stopwatch exposing (..)
 import Errors exposing (expectError)
-import TimeHandling exposing (parseTime, formatTime)
+import TimeHandling exposing (parseTime, formatTime, formatTimeWithHours)
 
 
 suite : Test
@@ -72,7 +72,7 @@ suite =
             , test "formatTime of one hour is correct" <|
                 \() ->
                     formatTime (60 * 60)
-                        |> Expect.equal "1:00:00"
+                        |> Expect.equal "01:00:00"
             , test "formatTime of ten hours is correct" <|
                 \() ->
                     formatTime (10 * 60 * 60)
@@ -84,6 +84,52 @@ suite =
             , test "formatTime of a negative time is correct" <|
                 \() ->
                     formatTime -(49 * 60 * 60 + 37 * 60 + 19)
+                        |> Expect.equal "-49:37:19"
+            ]
+        , describe "formatTimeWithHours tests"
+            [ test "formatTimeWithHours of zero is correct" <|
+                \() ->
+                    formatTimeWithHours 0
+                        |> Expect.equal "00:00:00"
+            , test "formatTimeWithHours of one second is correct" <|
+                \() ->
+                    formatTimeWithHours 1
+                        |> Expect.equal "00:00:01"
+            , test "formatTimeWithHours of nine seconds is correct" <|
+                \() ->
+                    formatTimeWithHours 9
+                        |> Expect.equal "00:00:09"
+            , test "formatTimeWithHours of ten seconds is correct" <|
+                \() ->
+                    formatTimeWithHours 10
+                        |> Expect.equal "00:00:10"
+            , test "formatTimeWithHours of one minute is correct" <|
+                \() ->
+                    formatTimeWithHours 60
+                        |> Expect.equal "00:01:00"
+            , test "formatTimeWithHours of nine minutes is correct" <|
+                \() ->
+                    formatTimeWithHours (9 * 60)
+                        |> Expect.equal "00:09:00"
+            , test "formatTimeWithHours of ten minutes is correct" <|
+                \() ->
+                    formatTimeWithHours (10 * 60)
+                        |> Expect.equal "00:10:00"
+            , test "formatTimeWithHours of one hour is correct" <|
+                \() ->
+                    formatTimeWithHours (60 * 60)
+                        |> Expect.equal "01:00:00"
+            , test "formatTimeWithHours of ten hours is correct" <|
+                \() ->
+                    formatTimeWithHours (10 * 60 * 60)
+                        |> Expect.equal "10:00:00"
+            , test "formatTimeWithHours of some other time is correct" <|
+                \() ->
+                    formatTimeWithHours (49 * 60 * 60 + 37 * 60 + 19)
+                        |> Expect.equal "49:37:19"
+            , test "formatTimeWithHours of a negative time is correct" <|
+                \() ->
+                    formatTimeWithHours -(49 * 60 * 60 + 37 * 60 + 19)
                         |> Expect.equal "-49:37:19"
             ]
         ]
