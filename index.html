@@ -12,11 +12,40 @@
 
 <div id="parkrun-stopwatch" class="main-content container"></div>
 <script src="parkrun-stopwatch.js"></script>
+<script src="jquery-3.3.1.js"></script>
 <script>
 var app = Elm.ParkrunStopwatch.embed(document.getElementById("parkrun-stopwatch"));
 app.ports.downloadMergedTimesToFile.subscribe(function(fileContents) {
     saveFile(fileContents.fileName, fileContents.fileText);
 });
+app.ports.getInitialHeight.subscribe(function () {
+    handleResize();
+})
+
+var currentResizeTimeout = null;
+
+var RESIZE_DELAY_MS = 100;
+
+function handleResize() {
+    var body = $("body");
+    var vertMargin = body.outerHeight(true) - body.height();
+    var containerHeight = $(window).height() - vertMargin;
+    var headerHeight = $("#header").outerHeight(true);
+
+    body.height(containerHeight);
+    app.ports.heightUpdated.send(containerHeight - headerHeight);
+    currentResizeTimeout = null;
+}
+
+function handleWindowResize() {
+    if (currentResizeTimeout !== null) {
+        clearTimeout(this.currentResizeTimeout);
+    }
+
+    this.currentResizeTimeout = setTimeout(function() { handleResize(); }, RESIZE_DELAY_MS);
+};
+
+$(window).resize(handleWindowResize);
 
 function handleSingleFileLoad(file) {
   var reader = new FileReader();

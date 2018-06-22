@@ -12,6 +12,7 @@ td.mismatch {
 
 div.stopwatch-view, div.number-checker-view {
     float: left;
+    overflow: auto;
 }
 
 div.number-checker-view {

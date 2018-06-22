@@ -1,7 +1,7 @@
 module ParkrunStopwatch exposing (..)
 
 import Html exposing (Html, program, div, text, table, tbody, thead, tr, td, th, h1, h3, input, label, br, button, small)
-import Html.Attributes exposing (class, checked, type_, id, for)
+import Html.Attributes exposing (class, checked, type_, id, for, style)
 import Html.Events exposing (onClick)
 import Regex exposing (Regex, regex)
 import Error exposing (Error)
@@ -14,7 +14,7 @@ import DataStructures exposing (WhichStopwatch(..))
 import TimeHandling exposing (formatTime)
 import DateHandling exposing (generateDownloadFilenameDatePart)
 import Task exposing (Task)
-import Ports exposing (fileDrop, InteropFile, downloadMergedTimesToFile)
+import Ports exposing (getInitialHeight, fileDrop, InteropFile, downloadMergedTimesToFile, heightUpdated)
 
 
 maxNearMatchDistance : Int
@@ -46,6 +46,7 @@ type alias Model =
     { stopwatches : Stopwatches
     , lastError : Maybe String
     , numberCheckerEntries : List AnnotatedNumberCheckerEntry
+    , lastHeight : Maybe Int
     }
 
 
@@ -54,12 +55,13 @@ initModel =
     { stopwatches = None
     , lastError = Nothing
     , numberCheckerEntries = []
+    , lastHeight = Nothing
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( initModel, Cmd.none )
+    ( initModel, getInitialHeight () )
 
 
 type Msg
@@ -69,6 +71,7 @@ type Msg
     | FlipStopwatches
     | GetCurrentDateForDownloadFile
     | DownloadMergedStopwatchData Date
+    | ContainerHeightChanged Int
 
 
 hasFileAlreadyBeenUploaded : String -> Stopwatches -> Bool
@@ -307,10 +310,16 @@ update msg model =
         DownloadMergedStopwatchData date ->
             downloadMergedStopwatchData date model
 
+        ContainerHeightChanged newHeight ->
+            ( { model | lastHeight = Just newHeight }, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    fileDrop FileDropped
+    Sub.batch
+        [ fileDrop FileDropped
+        , heightUpdated ContainerHeightChanged
+        ]
 
 
 errorView : Maybe String -> Html a
@@ -622,9 +631,19 @@ stopwatchButtonsContent stopwatches =
             ]
 
 
-stopwatchesView : Stopwatches -> Html Msg
-stopwatchesView stopwatches =
-    div [ class "stopwatch-view" ]
+getHeightAttribute : Maybe Int -> List (Html.Attribute a)
+getHeightAttribute lastHeight =
+    case lastHeight of
+        Just someHeight ->
+            [ style [ ( "height", (toString someHeight) ++ "px" ) ] ]
+
+        Nothing ->
+            []
+
+
+stopwatchesView : Stopwatches -> Maybe Int -> Html Msg
+stopwatchesView stopwatches lastHeight =
+    div (class "stopwatch-view" :: getHeightAttribute lastHeight)
         [ h3 [] [ text "Stopwatches" ]
         , stopwatchInfoMessage stopwatches
         , stopwatchTable stopwatches
@@ -662,10 +681,10 @@ numberCheckerTable entries =
         ]
 
 
-numberCheckerView : List AnnotatedNumberCheckerEntry -> Html a
-numberCheckerView entries =
+numberCheckerView : List AnnotatedNumberCheckerEntry -> Maybe Int -> Html a
+numberCheckerView entries lastHeight =
     div
-        [ class "number-checker-view" ]
+        (class "number-checker-view" :: getHeightAttribute lastHeight)
         [ h3 [] [ text "Number checker" ]
         , if List.isEmpty entries then
             noNumberCheckerData
@@ -678,8 +697,8 @@ view : Model -> Html Msg
 view model =
     div
         []
-        [ h1 [] [ text "Parkrun stopwatch comparison/merging" ]
+        [ h1 [ id "header" ] [ text "Parkrun stopwatch comparison/merging" ]
         , errorView model.lastError
-        , stopwatchesView model.stopwatches
-        , numberCheckerView model.numberCheckerEntries
+        , stopwatchesView model.stopwatches model.lastHeight
+        , numberCheckerView model.numberCheckerEntries model.lastHeight
         ]
