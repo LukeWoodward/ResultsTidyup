@@ -2,7 +2,7 @@ module ParkrunStopwatch exposing (..)
 
 import Html exposing (Html, program, div, text, table, tbody, thead, tr, td, th, h1, h3, input, label, br, button, small)
 import Html.Attributes exposing (class, checked, type_, id, for, style)
-import Html.Events exposing (onClick)
+import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Regex exposing (Regex, regex)
 import Error exposing (Error)
 import Date exposing (Date)
@@ -47,6 +47,7 @@ type alias Model =
     , lastError : Maybe String
     , numberCheckerEntries : List AnnotatedNumberCheckerEntry
     , lastHeight : Maybe Int
+    , highlightedNumberCheckerId : Maybe Int
     }
 
 
@@ -56,6 +57,7 @@ initModel =
     , lastError = Nothing
     , numberCheckerEntries = []
     , lastHeight = Nothing
+    , highlightedNumberCheckerId = Nothing
     }
 
 
@@ -72,6 +74,8 @@ type Msg
     | GetCurrentDateForDownloadFile
     | DownloadMergedStopwatchData Date
     | ContainerHeightChanged Int
+    | MouseEnterNumberCheckerRow Int
+    | MouseLeaveNumberCheckerRow Int
 
 
 hasFileAlreadyBeenUploaded : String -> Stopwatches -> Bool
@@ -313,6 +317,22 @@ update msg model =
         ContainerHeightChanged newHeight ->
             ( { model | lastHeight = Just newHeight }, Cmd.none )
 
+        MouseEnterNumberCheckerRow highlightRow ->
+            ( { model | highlightedNumberCheckerId = Just highlightRow }, Cmd.none )
+
+        MouseLeaveNumberCheckerRow unhighlightRow ->
+            let
+                newModel : Model
+                newModel =
+                    if model.highlightedNumberCheckerId == Just unhighlightRow then
+                        { model | highlightedNumberCheckerId = Nothing }
+                    else
+                        -- Ignore an un-highlight command when the row to
+                        -- unhighlight isn't the highlighted one.
+                        model
+            in
+                ( newModel, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -357,19 +377,27 @@ stopwatchInfoMessage stopwatches =
                 text ""
 
 
-numberCheckerUnderlineClass : Int -> String
-numberCheckerUnderlineClass numberCheckerId =
-    "underlined number-checker-row-" ++ (toString numberCheckerId)
+numberCheckerUnderlineClass : Int -> Maybe Int -> String
+numberCheckerUnderlineClass numberCheckerId highlightedNumberCheckerId =
+    let
+        highlightClassPrefix : String
+        highlightClassPrefix =
+            if highlightedNumberCheckerId == Just numberCheckerId then
+                "highlighted "
+            else
+                ""
+    in
+        highlightClassPrefix ++ "underlined number-checker-row-" ++ (toString numberCheckerId)
 
 
-numberCheckerUnderlineAttributes : Maybe String -> Maybe Int -> List (Html.Attribute a)
-numberCheckerUnderlineAttributes className numberCheckerId =
+numberCheckerUnderlineAttributes : Maybe String -> Maybe Int -> Maybe Int -> List (Html.Attribute a)
+numberCheckerUnderlineAttributes className numberCheckerId highlightedNumberCheckerId =
     case ( className, numberCheckerId ) of
         ( Just someClass, Just someNumberCheckerId ) ->
-            [ class (someClass ++ " " ++ (numberCheckerUnderlineClass someNumberCheckerId)) ]
+            [ class (someClass ++ " " ++ (numberCheckerUnderlineClass someNumberCheckerId highlightedNumberCheckerId)) ]
 
         ( Nothing, Just someNumberCheckerId ) ->
-            [ class (numberCheckerUnderlineClass someNumberCheckerId) ]
+            [ class (numberCheckerUnderlineClass someNumberCheckerId highlightedNumberCheckerId) ]
 
         ( Just someClass, Nothing ) ->
             [ class someClass ]
@@ -378,19 +406,19 @@ numberCheckerUnderlineAttributes className numberCheckerId =
             []
 
 
-cell : String -> Maybe Int -> Html a
-cell contents numberCheckerId =
-    td (numberCheckerUnderlineAttributes Nothing numberCheckerId) [ text contents ]
+cell : String -> Maybe Int -> Maybe Int -> Html a
+cell contents numberCheckerId highlightedNumberCheckerId =
+    td (numberCheckerUnderlineAttributes Nothing numberCheckerId highlightedNumberCheckerId) [ text contents ]
 
 
 intCell : Int -> Html a
 intCell contents =
-    cell (toString contents) Nothing
+    cell (toString contents) Nothing Nothing
 
 
-timeCell : String -> Int -> Maybe Int -> Html a
-timeCell className time numberCheckerId =
-    td (numberCheckerUnderlineAttributes (Just className) numberCheckerId) [ text (formatTime time) ]
+timeCell : String -> Int -> Maybe Int -> Maybe Int -> Html a
+timeCell className time numberCheckerId highlightedNumberCheckerId =
+    td (numberCheckerUnderlineAttributes (Just className) numberCheckerId highlightedNumberCheckerId) [ text (formatTime time) ]
 
 
 deltaCell : Int -> Html a
@@ -412,8 +440,8 @@ deltaCell delta =
 stopwatchRow : Int -> Int -> Html a
 stopwatchRow index time =
     tr []
-        [ cell (toString (index + 1)) Nothing
-        , cell (formatTime time) Nothing
+        [ cell (toString (index + 1)) Nothing Nothing
+        , cell (formatTime time) Nothing Nothing
         ]
 
 
@@ -422,8 +450,8 @@ emptyNumberCell =
     td [ class "empty-cell" ] [ text "–" ]
 
 
-checkboxCell : Int -> Int -> Bool -> Maybe Int -> Html Msg
-checkboxCell time index included numberCheckerId =
+checkboxCell : Int -> Int -> Bool -> Maybe Int -> Maybe Int -> Html Msg
+checkboxCell time index included numberCheckerId highlightedNumberCheckerId =
     let
         idText : String
         idText =
@@ -437,7 +465,7 @@ checkboxCell time index included numberCheckerId =
                 "stopwatch-time-label excluded"
     in
         td
-            (numberCheckerUnderlineAttributes (Just "mismatch") numberCheckerId)
+            (numberCheckerUnderlineAttributes (Just "mismatch") numberCheckerId highlightedNumberCheckerId)
             [ input
                 [ type_ "checkbox"
                 , checked included
@@ -453,13 +481,13 @@ checkboxCell time index included numberCheckerId =
             ]
 
 
-mergedStopwatchRow : MergedTableRow -> Html Msg
-mergedStopwatchRow row =
+mergedStopwatchRow : Maybe Int -> MergedTableRow -> Html Msg
+mergedStopwatchRow highlightedNumberCheckerId row =
     let
         indexCell =
             case row.rowNumber of
                 Just num ->
-                    cell (toString num) row.underlines.position
+                    cell (toString num) row.underlines.position highlightedNumberCheckerId
 
                 Nothing ->
                     emptyNumberCell
@@ -469,32 +497,32 @@ mergedStopwatchRow row =
                 tr
                     []
                     [ indexCell
-                    , timeCell "exact-match" time row.underlines.stopwatch1
-                    , timeCell "exact-match" time row.underlines.stopwatch2
+                    , timeCell "exact-match" time row.underlines.stopwatch1 highlightedNumberCheckerId
+                    , timeCell "exact-match" time row.underlines.stopwatch2 highlightedNumberCheckerId
                     ]
 
             NearMatch time1 time2 ->
                 tr
                     []
                     [ indexCell
-                    , timeCell "near-match" time1 row.underlines.stopwatch1
-                    , timeCell "near-match" time2 row.underlines.stopwatch2
+                    , timeCell "near-match" time1 row.underlines.stopwatch1 highlightedNumberCheckerId
+                    , timeCell "near-match" time2 row.underlines.stopwatch2 highlightedNumberCheckerId
                     ]
 
             OneWatchOnly StopwatchOne time1 ->
                 tr
                     []
                     [ indexCell
-                    , checkboxCell time1 row.index row.included row.underlines.stopwatch1
-                    , cell "" Nothing
+                    , checkboxCell time1 row.index row.included row.underlines.stopwatch1 highlightedNumberCheckerId
+                    , cell "" Nothing Nothing
                     ]
 
             OneWatchOnly StopwatchTwo time2 ->
                 tr
                     []
                     [ indexCell
-                    , cell "" Nothing
-                    , checkboxCell time2 row.index row.included row.underlines.stopwatch2
+                    , cell "" Nothing Nothing
+                    , checkboxCell time2 row.index row.included row.underlines.stopwatch2 highlightedNumberCheckerId
                     ]
 
 
@@ -568,8 +596,8 @@ tableHeadersWithButtons headerTexts =
         ]
 
 
-stopwatchTable : Stopwatches -> Html Msg
-stopwatchTable stopwatches =
+stopwatchTable : Stopwatches -> Maybe Int -> Html Msg
+stopwatchTable stopwatches highlightedNumberCheckerId =
     case stopwatches of
         None ->
             text ""
@@ -594,7 +622,7 @@ stopwatchTable stopwatches =
                     ]
                 , tbody
                     []
-                    (List.map mergedStopwatchRow mergedTable)
+                    (List.map (mergedStopwatchRow highlightedNumberCheckerId) mergedTable)
                 ]
 
 
@@ -639,20 +667,22 @@ getHeightAttribute lastHeight =
             []
 
 
-stopwatchesView : Stopwatches -> Maybe Int -> Html Msg
-stopwatchesView stopwatches lastHeight =
+stopwatchesView : Stopwatches -> Maybe Int -> Maybe Int -> Html Msg
+stopwatchesView stopwatches lastHeight highlightedNumberCheckerId =
     div (class "stopwatch-view" :: getHeightAttribute lastHeight)
         [ h3 [] [ text "Stopwatches" ]
         , stopwatchInfoMessage stopwatches
-        , stopwatchTable stopwatches
+        , stopwatchTable stopwatches highlightedNumberCheckerId
         , div [ class "stopwatch-buttons" ] (stopwatchButtonsContent stopwatches)
         ]
 
 
-numberCheckerRow : AnnotatedNumberCheckerEntry -> Html a
+numberCheckerRow : AnnotatedNumberCheckerEntry -> Html Msg
 numberCheckerRow entry =
     tr
-        []
+        [ onMouseEnter (MouseEnterNumberCheckerRow entry.entryNumber)
+        , onMouseLeave (MouseLeaveNumberCheckerRow entry.entryNumber)
+        ]
         [ intCell entry.stopwatch1
         , deltaCell entry.stopwatch1Delta
         , intCell entry.stopwatch2
@@ -668,10 +698,10 @@ noNumberCheckerData =
         [ text "No number-checker data has been loaded" ]
 
 
-numberCheckerTable : List AnnotatedNumberCheckerEntry -> Html a
+numberCheckerTable : List AnnotatedNumberCheckerEntry -> Html Msg
 numberCheckerTable entries =
     table
-        [ class "table table-bordered number-checker-table" ]
+        [ class "table table-bordered table-hover number-checker-table" ]
         [ tableHeaders [ "Stopwatch 1", "+/−", "Stopwatch 2", "+/−", "Finish tokens", "+/−" ]
         , tbody
             []
@@ -679,7 +709,7 @@ numberCheckerTable entries =
         ]
 
 
-numberCheckerView : List AnnotatedNumberCheckerEntry -> Maybe Int -> Html a
+numberCheckerView : List AnnotatedNumberCheckerEntry -> Maybe Int -> Html Msg
 numberCheckerView entries lastHeight =
     div
         (class "number-checker-view" :: getHeightAttribute lastHeight)
@@ -697,6 +727,6 @@ view model =
         []
         [ h1 [ id "header" ] [ text "Parkrun stopwatch comparison/merging" ]
         , errorView model.lastError
-        , stopwatchesView model.stopwatches model.lastHeight
+        , stopwatchesView model.stopwatches model.lastHeight model.highlightedNumberCheckerId
         , numberCheckerView model.numberCheckerEntries model.lastHeight
         ]

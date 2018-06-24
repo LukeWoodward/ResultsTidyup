@@ -57,6 +57,10 @@ td.empty-cell {
     border-bottom: 5px solid black;
 }
 
+.table-bordered > tbody > tr > td.underlined.highlighted {
+    border-bottom: 10px solid black;
+}
+
 td.zero-delta {
     color: white;
     background-color: #008000;
