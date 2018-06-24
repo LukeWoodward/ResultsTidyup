@@ -79,35 +79,35 @@ suite =
             , test "annotates a single-element list with no differences with zeroes" <|
                 \() ->
                     annotate [ NumberCheckerEntry 7 7 7 ]
-                        |> Expect.equal [ AnnotatedNumberCheckerEntry 7 0 7 0 7 0 ]
+                        |> Expect.equal [ AnnotatedNumberCheckerEntry 1 7 0 7 0 7 0 ]
             , test "annotates a single-element list with a possibly-too-large finish tokens count as a delta with that" <|
                 \() ->
                     annotate [ NumberCheckerEntry 7 7 8 ]
-                        |> Expect.equal [ AnnotatedNumberCheckerEntry 7 0 7 0 8 1 ]
+                        |> Expect.equal [ AnnotatedNumberCheckerEntry 1 7 0 7 0 8 1 ]
             , test "annotates a single-element list with a possibly-too-small finish tokens count as a delta with that" <|
                 \() ->
                     annotate [ NumberCheckerEntry 7 7 6 ]
-                        |> Expect.equal [ AnnotatedNumberCheckerEntry 7 0 7 0 6 -1 ]
+                        |> Expect.equal [ AnnotatedNumberCheckerEntry 1 7 0 7 0 6 -1 ]
             , test "annotates a single-element list with a possibly-too-large stopwatch-1 count as a delta with that" <|
                 \() ->
                     annotate [ NumberCheckerEntry 9 7 7 ]
-                        |> Expect.equal [ AnnotatedNumberCheckerEntry 9 2 7 0 7 0 ]
+                        |> Expect.equal [ AnnotatedNumberCheckerEntry 1 9 2 7 0 7 0 ]
             , test "annotates a single-element list with a possibly-too-small stopwatch-1 count as a delta with that" <|
                 \() ->
                     annotate [ NumberCheckerEntry 4 7 7 ]
-                        |> Expect.equal [ AnnotatedNumberCheckerEntry 4 -3 7 0 7 0 ]
+                        |> Expect.equal [ AnnotatedNumberCheckerEntry 1 4 -3 7 0 7 0 ]
             , test "annotates a single-element list with a possibly-too-large stopwatch-2 count as a delta with that" <|
                 \() ->
                     annotate [ NumberCheckerEntry 7 8 7 ]
-                        |> Expect.equal [ AnnotatedNumberCheckerEntry 7 0 8 1 7 0 ]
+                        |> Expect.equal [ AnnotatedNumberCheckerEntry 1 7 0 8 1 7 0 ]
             , test "annotates a single-element list with a possibly-too-small stopwatch-2 count as a delta with that" <|
                 \() ->
                     annotate [ NumberCheckerEntry 7 5 7 ]
-                        |> Expect.equal [ AnnotatedNumberCheckerEntry 7 0 5 -2 7 0 ]
+                        |> Expect.equal [ AnnotatedNumberCheckerEntry 1 7 0 5 -2 7 0 ]
             , test "annotates a single-element list with all values different as relative to the finish tokens" <|
                 \() ->
                     annotate [ NumberCheckerEntry 7 8 9 ]
-                        |> Expect.equal [ AnnotatedNumberCheckerEntry 7 -2 8 -1 9 0 ]
+                        |> Expect.equal [ AnnotatedNumberCheckerEntry 1 7 -2 8 -1 9 0 ]
             , test "annotates a three-element list with no differences with zeroes" <|
                 \() ->
                     annotate
@@ -116,9 +116,9 @@ suite =
                         , NumberCheckerEntry 26 26 26
                         ]
                         |> Expect.equal
-                            [ AnnotatedNumberCheckerEntry 7 0 7 0 7 0
-                            , AnnotatedNumberCheckerEntry 15 0 15 0 15 0
-                            , AnnotatedNumberCheckerEntry 26 0 26 0 26 0
+                            [ AnnotatedNumberCheckerEntry 1 7 0 7 0 7 0
+                            , AnnotatedNumberCheckerEntry 2 15 0 15 0 15 0
+                            , AnnotatedNumberCheckerEntry 3 26 0 26 0 26 0
                             ]
             , test "annotates a three-element list with some differences" <|
                 \() ->
@@ -129,10 +129,10 @@ suite =
                         , NumberCheckerEntry 34 32 34
                         ]
                         |> Expect.equal
-                            [ AnnotatedNumberCheckerEntry 7 0 6 -1 7 0
-                            , AnnotatedNumberCheckerEntry 18 1 16 0 17 0
-                            , AnnotatedNumberCheckerEntry 29 0 27 0 29 1
-                            , AnnotatedNumberCheckerEntry 34 0 32 0 34 0
+                            [ AnnotatedNumberCheckerEntry 1 7 0 6 -1 7 0
+                            , AnnotatedNumberCheckerEntry 2 18 1 16 0 17 0
+                            , AnnotatedNumberCheckerEntry 3 29 0 27 0 29 1
+                            , AnnotatedNumberCheckerEntry 4 34 0 32 0 34 0
                             ]
             ]
         ]

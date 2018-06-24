@@ -14,20 +14,20 @@ module MergedTable
 import DataStructures exposing (WhichStopwatch(..))
 import Merger exposing (MergeEntry(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
-import Set exposing (Set)
+import Dict exposing (Dict)
 import TimeHandling exposing (formatTimeWithHours)
 
 
 type alias Underlines =
-    { position : Bool
-    , stopwatch1 : Bool
-    , stopwatch2 : Bool
+    { position : Maybe Int
+    , stopwatch1 : Maybe Int
+    , stopwatch2 : Maybe Int
     }
 
 
 noUnderlines : Underlines
 noUnderlines =
-    Underlines False False False
+    Underlines Nothing Nothing Nothing
 
 
 type alias MergedTableRow =
@@ -158,15 +158,28 @@ flipTable =
     List.map flipRow
 
 
-type alias NumberSets =
-    { stopwatch1 : Set Int
-    , stopwatch2 : Set Int
-    , finishTokens : Set Int
+
+-- Each dictionary maps an index within the stopwatch-1, stopwatch-2 and
+-- finish-tokens positions to the number-checker entry ID associated.
+
+
+type alias NumberDicts =
+    { stopwatch1 : Dict Int Int
+    , stopwatch2 : Dict Int Int
+    , finishTokens : Dict Int Int
     }
 
 
-underlineTableInternal : NumberSets -> Int -> Int -> Int -> List MergedTableRow -> List MergedTableRow
-underlineTableInternal numberSets sw1Posn sw2Posn ftoksPosn mergedRows =
+getNextEntry : Int -> Int -> Dict Int Int -> Maybe Int
+getNextEntry currentPosn nextPosn numberDict =
+    if nextPosn > currentPosn then
+        Dict.get nextPosn numberDict
+    else
+        Nothing
+
+
+underlineTableInternal : NumberDicts -> Int -> Int -> Int -> List MergedTableRow -> List MergedTableRow
+underlineTableInternal numberDicts sw1Posn sw2Posn ftoksPosn mergedRows =
     case mergedRows of
         [] ->
             []
@@ -212,9 +225,9 @@ underlineTableInternal numberSets sw1Posn sw2Posn ftoksPosn mergedRows =
 
                 newUnderlines : Underlines
                 newUnderlines =
-                    { stopwatch1 = nextSw1Posn > sw1Posn && Set.member nextSw1Posn numberSets.stopwatch1
-                    , stopwatch2 = nextSw2Posn > sw2Posn && Set.member nextSw2Posn numberSets.stopwatch2
-                    , position = nextFtoksPosn > ftoksPosn && Set.member nextFtoksPosn numberSets.finishTokens
+                    { stopwatch1 = getNextEntry sw1Posn nextSw1Posn numberDicts.stopwatch1
+                    , stopwatch2 = getNextEntry sw2Posn nextSw2Posn numberDicts.stopwatch2
+                    , position = getNextEntry ftoksPosn nextFtoksPosn numberDicts.finishTokens
                     }
 
                 underlinedFirstRow : MergedTableRow
@@ -223,33 +236,39 @@ underlineTableInternal numberSets sw1Posn sw2Posn ftoksPosn mergedRows =
 
                 underlinedRestRows : List MergedTableRow
                 underlinedRestRows =
-                    underlineTableInternal numberSets nextSw1Posn nextSw2Posn nextFtoksPosn restRows
+                    underlineTableInternal numberDicts nextSw1Posn nextSw2Posn nextFtoksPosn restRows
             in
                 underlinedFirstRow :: underlinedRestRows
+
+
+createMappingDict : List Int -> Dict Int Int
+createMappingDict nums =
+    List.indexedMap (\index num -> ( num, index + 1 )) nums
+        |> Dict.fromList
 
 
 underlineTable : List AnnotatedNumberCheckerEntry -> List MergedTableRow -> List MergedTableRow
 underlineTable numberCheckerEntries mergedRows =
     let
-        stopwatch1Numbers : Set Int
+        stopwatch1Numbers : Dict Int Int
         stopwatch1Numbers =
             numberCheckerEntries
                 |> List.map .stopwatch1
-                |> Set.fromList
+                |> createMappingDict
 
-        stopwatch2Numbers : Set Int
+        stopwatch2Numbers : Dict Int Int
         stopwatch2Numbers =
             numberCheckerEntries
                 |> List.map .stopwatch2
-                |> Set.fromList
+                |> createMappingDict
 
-        finishTokensNumbers : Set Int
+        finishTokensNumbers : Dict Int Int
         finishTokensNumbers =
             numberCheckerEntries
                 |> List.map .finishTokens
-                |> Set.fromList
+                |> createMappingDict
     in
-        underlineTableInternal (NumberSets stopwatch1Numbers stopwatch2Numbers finishTokensNumbers) 0 0 0 mergedRows
+        underlineTableInternal (NumberDicts stopwatch1Numbers stopwatch2Numbers finishTokensNumbers) 0 0 0 mergedRows
 
 
 header : List String

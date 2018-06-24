@@ -357,35 +357,40 @@ stopwatchInfoMessage stopwatches =
                 text ""
 
 
-cell : String -> Bool -> Html a
-cell contents underlined =
-    let
-        attributes : List (Html.Attribute a)
-        attributes =
-            if underlined then
-                [ class "underlined" ]
-            else
-                []
-    in
-        td attributes [ text contents ]
+numberCheckerUnderlineClass : Int -> String
+numberCheckerUnderlineClass numberCheckerId =
+    "underlined number-checker-row-" ++ (toString numberCheckerId)
+
+
+numberCheckerUnderlineAttributes : Maybe String -> Maybe Int -> List (Html.Attribute a)
+numberCheckerUnderlineAttributes className numberCheckerId =
+    case ( className, numberCheckerId ) of
+        ( Just someClass, Just someNumberCheckerId ) ->
+            [ class (someClass ++ " " ++ (numberCheckerUnderlineClass someNumberCheckerId)) ]
+
+        ( Nothing, Just someNumberCheckerId ) ->
+            [ class (numberCheckerUnderlineClass someNumberCheckerId) ]
+
+        ( Just someClass, Nothing ) ->
+            [ class someClass ]
+
+        ( Nothing, Nothing ) ->
+            []
+
+
+cell : String -> Maybe Int -> Html a
+cell contents numberCheckerId =
+    td (numberCheckerUnderlineAttributes Nothing numberCheckerId) [ text contents ]
 
 
 intCell : Int -> Html a
 intCell contents =
-    cell (toString contents) False
+    cell (toString contents) Nothing
 
 
-timeCell : String -> Int -> Bool -> Html a
-timeCell className time underlined =
-    let
-        adjustedClassName : String
-        adjustedClassName =
-            if underlined then
-                className ++ " underlined"
-            else
-                className
-    in
-        td [ class adjustedClassName ] [ text (formatTime time) ]
+timeCell : String -> Int -> Maybe Int -> Html a
+timeCell className time numberCheckerId =
+    td (numberCheckerUnderlineAttributes (Just className) numberCheckerId) [ text (formatTime time) ]
 
 
 deltaCell : Int -> Html a
@@ -407,8 +412,8 @@ deltaCell delta =
 stopwatchRow : Int -> Int -> Html a
 stopwatchRow index time =
     tr []
-        [ cell (toString (index + 1)) False
-        , cell (formatTime time) False
+        [ cell (toString (index + 1)) Nothing
+        , cell (formatTime time) Nothing
         ]
 
 
@@ -417,19 +422,12 @@ emptyNumberCell =
     td [ class "empty-cell" ] [ text "–" ]
 
 
-checkboxCell : Int -> Int -> Bool -> Bool -> Html Msg
-checkboxCell time index included underlined =
+checkboxCell : Int -> Int -> Bool -> Maybe Int -> Html Msg
+checkboxCell time index included numberCheckerId =
     let
         idText : String
         idText =
             "toggle_checkbox_" ++ (toString index)
-
-        adjustedCellClassName : String
-        adjustedCellClassName =
-            if underlined then
-                "mismatch underlined"
-            else
-                "mismatch"
 
         labelClassName : String
         labelClassName =
@@ -439,7 +437,7 @@ checkboxCell time index included underlined =
                 "stopwatch-time-label excluded"
     in
         td
-            [ class adjustedCellClassName ]
+            (numberCheckerUnderlineAttributes (Just "mismatch") numberCheckerId)
             [ input
                 [ type_ "checkbox"
                 , checked included
@@ -488,14 +486,14 @@ mergedStopwatchRow row =
                     []
                     [ indexCell
                     , checkboxCell time1 row.index row.included row.underlines.stopwatch1
-                    , cell "" False
+                    , cell "" Nothing
                     ]
 
             OneWatchOnly StopwatchTwo time2 ->
                 tr
                     []
                     [ indexCell
-                    , cell "" False
+                    , cell "" Nothing
                     , checkboxCell time2 row.index row.included row.underlines.stopwatch2
                     ]
 

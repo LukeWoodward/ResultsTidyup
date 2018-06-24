@@ -12,7 +12,8 @@ type alias NumberCheckerEntry =
 
 
 type alias AnnotatedNumberCheckerEntry =
-    { stopwatch1 : Int
+    { entryNumber : Int
+    , stopwatch1 : Int
     , stopwatch1Delta : Int
     , stopwatch2 : Int
     , stopwatch2Delta : Int
@@ -92,19 +93,23 @@ parseNumberCheckerFile fileText =
         |> Result.map sortNumberCheckerEntries
 
 
-annotateEntry : NumberCheckerEntry -> Int -> Int -> Int -> AnnotatedNumberCheckerEntry
-annotateEntry { stopwatch1, stopwatch2, finishTokens } stopwatch1Diff stopwatch2Diff finishTokensDiff =
-    AnnotatedNumberCheckerEntry stopwatch1 stopwatch1Diff stopwatch2 stopwatch2Diff finishTokens finishTokensDiff
+annotateEntry : NumberCheckerEntry -> Int -> Int -> Int -> Int -> AnnotatedNumberCheckerEntry
+annotateEntry { stopwatch1, stopwatch2, finishTokens } entryNumber stopwatch1Diff stopwatch2Diff finishTokensDiff =
+    AnnotatedNumberCheckerEntry entryNumber stopwatch1 stopwatch1Diff stopwatch2 stopwatch2Diff finishTokens finishTokensDiff
 
 
-annotateInternal : NumberCheckerEntry -> List NumberCheckerEntry -> List AnnotatedNumberCheckerEntry
-annotateInternal previousEntry entries =
+annotateInternal : Int -> NumberCheckerEntry -> List NumberCheckerEntry -> List AnnotatedNumberCheckerEntry
+annotateInternal previousRowNumber previousEntry entries =
     case entries of
         [] ->
             []
 
         firstEntry :: rest ->
             let
+                thisRowNumber : Int
+                thisRowNumber =
+                    previousRowNumber + 1
+
                 stopwatch1Diff : Int
                 stopwatch1Diff =
                     firstEntry.stopwatch1 - previousEntry.stopwatch1
@@ -121,21 +126,21 @@ annotateInternal previousEntry entries =
                 firstAnnotatedEntry =
                     if stopwatch1Diff == stopwatch2Diff && stopwatch1Diff == finishTokensDiff then
                         -- Most common case: all agree
-                        annotateEntry firstEntry 0 0 0
+                        annotateEntry firstEntry thisRowNumber 0 0 0
                     else if stopwatch1Diff == stopwatch2Diff then
                         -- Finish tokens looks to be off...
-                        annotateEntry firstEntry 0 0 (finishTokensDiff - stopwatch1Diff)
+                        annotateEntry firstEntry thisRowNumber 0 0 (finishTokensDiff - stopwatch1Diff)
                     else
                         -- Anything else: take finish tokens to be authoritative
-                        annotateEntry firstEntry (stopwatch1Diff - finishTokensDiff) (stopwatch2Diff - finishTokensDiff) 0
+                        annotateEntry firstEntry thisRowNumber (stopwatch1Diff - finishTokensDiff) (stopwatch2Diff - finishTokensDiff) 0
 
                 restAnnotatedEntries : List AnnotatedNumberCheckerEntry
                 restAnnotatedEntries =
-                    annotateInternal firstEntry rest
+                    annotateInternal thisRowNumber firstEntry rest
             in
                 firstAnnotatedEntry :: restAnnotatedEntries
 
 
 annotate : List NumberCheckerEntry -> List AnnotatedNumberCheckerEntry
 annotate entries =
-    annotateInternal (NumberCheckerEntry 0 0 0) entries
+    annotateInternal 0 (NumberCheckerEntry 0 0 0) entries
