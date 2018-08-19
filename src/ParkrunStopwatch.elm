@@ -76,6 +76,7 @@ type Msg
     | ContainerHeightChanged Int
     | MouseEnterNumberCheckerRow Int
     | MouseLeaveNumberCheckerRow Int
+    | DeleteNumberCheckerRow Int
 
 
 hasFileAlreadyBeenUploaded : String -> Stopwatches -> Bool
@@ -333,6 +334,32 @@ update msg model =
             in
                 ( newModel, Cmd.none )
 
+        DeleteNumberCheckerRow entryNumber ->
+            let
+                newNumberCheckerEntries : List AnnotatedNumberCheckerEntry
+                newNumberCheckerEntries =
+                    List.filter (\e -> e.entryNumber /= entryNumber) model.numberCheckerEntries
+            in
+                case model.stopwatches of
+                    Double filename1 filename2 oldMergedTable ->
+                        let
+                            newMergedTable : List MergedTableRow
+                            newMergedTable =
+                                underlineTable newNumberCheckerEntries oldMergedTable
+                        in
+                            ( { model
+                                | numberCheckerEntries = newNumberCheckerEntries
+                                , stopwatches = Double filename1 filename2 newMergedTable
+                              }
+                            , Cmd.none
+                            )
+
+                    Single _ _ ->
+                        ( { model | numberCheckerEntries = newNumberCheckerEntries }, Cmd.none )
+
+                    None ->
+                        ( { model | numberCheckerEntries = newNumberCheckerEntries }, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -442,6 +469,19 @@ stopwatchRow index time =
     tr []
         [ cell (toString (index + 1)) Nothing Nothing
         , cell (formatTime time) Nothing Nothing
+        ]
+
+
+deleteNumberCheckerEntryButtonCell : Int -> Html Msg
+deleteNumberCheckerEntryButtonCell entryNumber =
+    td
+        [ class "delete-button-cell" ]
+        [ button
+            [ type_ "button"
+            , class "btn btn-primary btn-xs"
+            , onClick (DeleteNumberCheckerRow entryNumber)
+            ]
+            [ text "Delete " ]
         ]
 
 
@@ -689,6 +729,7 @@ numberCheckerRow entry =
         , deltaCell entry.stopwatch2Delta
         , intCell entry.finishTokens
         , deltaCell entry.finishTokensDelta
+        , deleteNumberCheckerEntryButtonCell entry.entryNumber
         ]
 
 
@@ -702,7 +743,7 @@ numberCheckerTable : List AnnotatedNumberCheckerEntry -> Html Msg
 numberCheckerTable entries =
     table
         [ class "table table-bordered table-hover number-checker-table" ]
-        [ tableHeaders [ "Stopwatch 1", "+/−", "Stopwatch 2", "+/−", "Finish tokens", "+/−" ]
+        [ tableHeaders [ "Stopwatch 1", "+/−", "Stopwatch 2", "+/−", "Finish tokens", "+/−", "" ]
         , tbody
             []
             (List.map numberCheckerRow entries)
