@@ -85,3 +85,8 @@ label.stopwatch-time-label.excluded {
 th.stopwatch-header {
     text-align: center;
 }
+
+.table>tbody>tr>td.delete-button-cell {
+    padding: 4px;
+    vertical-align: middle;
+}
