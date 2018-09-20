@@ -1,11 +1,12 @@
 module ParkrunStopwatch exposing (..)
 
-import Html exposing (Html, program, div, text, table, tbody, thead, tr, td, th, h1, h3, input, label, br, button, small)
+import Html exposing (Html, div, text, table, tbody, thead, tr, td, th, h1, h3, input, label, br, button, small)
+import Browser
 import Html.Attributes exposing (class, checked, type_, id, for, style)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
-import Regex exposing (Regex, regex)
+import Regex exposing (Regex)
 import Error exposing (Error)
-import Date exposing (Date)
+import Time exposing (Posix, Zone)
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
 import Merger exposing (merge, MergeEntry(..))
 import MergedTable exposing (MergedTableRow, generateInitialTable, toggleRowInTable, deleteStopwatchFromTable, flipTable, underlineTable, outputMergedTable)
@@ -22,10 +23,10 @@ maxNearMatchDistance =
     1
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
-        { init = init
+    Browser.element
+        { init = \() -> init
         , update = update
         , view = view
         , subscriptions = subscriptions
@@ -72,7 +73,7 @@ type Msg
     | DeleteStopwatch WhichStopwatch
     | FlipStopwatches
     | GetCurrentDateForDownloadFile
-    | DownloadMergedStopwatchData Date
+    | DownloadMergedStopwatchData Zone Posix
     | ContainerHeightChanged Int
     | MouseEnterNumberCheckerRow Int
     | MouseLeaveNumberCheckerRow Int
@@ -149,7 +150,8 @@ handleStopwatchFileDrop fileName fileText model =
 
 numberCheckerRegex : Regex
 numberCheckerRegex =
-    regex "^[0-9\x0D\n,]+$"
+    Regex.fromString "^[0-9\r\n,]+$"
+        |> Maybe.withDefault Regex.never
 
 
 isPossibleNumberCheckerFile : String -> Bool
@@ -268,8 +270,8 @@ flipStopwatches model =
                 }
 
 
-downloadMergedStopwatchData : Date -> Model -> ( Model, Cmd Msg )
-downloadMergedStopwatchData date model =
+downloadMergedStopwatchData : Zone -> Posix -> Model -> ( Model, Cmd Msg )
+downloadMergedStopwatchData zone time model =
     case model.stopwatches of
         None ->
             ( model, Cmd.none )
@@ -285,7 +287,7 @@ downloadMergedStopwatchData date model =
 
                 fileName : String
                 fileName =
-                    "parkrun_timer_" ++ (generateDownloadFilenameDatePart date) ++ ".txt"
+                    "parkrun_timer_" ++ (generateDownloadFilenameDatePart zone time) ++ ".txt"
 
                 file : InteropFile
                 file =
@@ -310,10 +312,12 @@ update msg model =
             ( flipStopwatches model, Cmd.none )
 
         GetCurrentDateForDownloadFile ->
-            ( model, Task.perform DownloadMergedStopwatchData Date.now )
+            ( model
+            ,  Task.perform identity (Task.map2 DownloadMergedStopwatchData Time.here Time.now)
+            )
 
-        DownloadMergedStopwatchData date ->
-            downloadMergedStopwatchData date model
+        DownloadMergedStopwatchData zone time ->
+            downloadMergedStopwatchData zone time model
 
         ContainerHeightChanged newHeight ->
             ( { model | lastHeight = Just newHeight }, Cmd.none )
@@ -414,7 +418,7 @@ numberCheckerUnderlineClass numberCheckerId highlightedNumberCheckerId =
             else
                 ""
     in
-        highlightClassPrefix ++ "underlined number-checker-row-" ++ (toString numberCheckerId)
+        highlightClassPrefix ++ "underlined number-checker-row-" ++ (String.fromInt numberCheckerId)
 
 
 numberCheckerUnderlineAttributes : Maybe String -> Maybe Int -> Maybe Int -> List (Html.Attribute a)
@@ -440,7 +444,7 @@ cell contents numberCheckerId highlightedNumberCheckerId =
 
 intCell : Int -> Html a
 intCell contents =
-    cell (toString contents) Nothing Nothing
+    cell (String.fromInt contents) Nothing Nothing
 
 
 timeCell : String -> Int -> Maybe Int -> Maybe Int -> Html a
@@ -457,9 +461,9 @@ deltaCell delta =
             stringDelta : String
             stringDelta =
                 if delta > 0 then
-                    "+" ++ (toString delta)
+                    "+" ++ (String.fromInt delta)
                 else
-                    "−" ++ (toString -delta)
+                    "−" ++ (String.fromInt -delta)
         in
             td [ class "nonzero-delta" ] [ text stringDelta ]
 
@@ -467,7 +471,7 @@ deltaCell delta =
 stopwatchRow : Int -> Int -> Html a
 stopwatchRow index time =
     tr []
-        [ cell (toString (index + 1)) Nothing Nothing
+        [ cell (String.fromInt (index + 1)) Nothing Nothing
         , cell (formatTime time) Nothing Nothing
         ]
 
@@ -495,7 +499,7 @@ checkboxCell time index included numberCheckerId highlightedNumberCheckerId =
     let
         idText : String
         idText =
-            "toggle_checkbox_" ++ (toString index)
+            "toggle_checkbox_" ++ (String.fromInt index)
 
         labelClassName : String
         labelClassName =
@@ -527,7 +531,7 @@ mergedStopwatchRow highlightedNumberCheckerId row =
         indexCell =
             case row.rowNumber of
                 Just num ->
-                    cell (toString num) row.underlines.position highlightedNumberCheckerId
+                    cell (String.fromInt num) row.underlines.position highlightedNumberCheckerId
 
                 Nothing ->
                     emptyNumberCell
@@ -701,7 +705,7 @@ getHeightAttribute : Maybe Int -> List (Html.Attribute a)
 getHeightAttribute lastHeight =
     case lastHeight of
         Just someHeight ->
-            [ style [ ( "height", (toString someHeight) ++ "px" ) ] ]
+            [ style "height" (String.fromInt someHeight ++ "px")  ]
 
         Nothing ->
             []

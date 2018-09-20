@@ -36,11 +36,11 @@ suite =
                         |> Expect.equal (Ok expectedParsedSampleData)
             , test "readStopwatchData of a valid multi-line string with CRLF line-endings is a valid list of results" <|
                 \() ->
-                    readStopwatchData (String.Extra.replace "\n" "\x0D\n" sampleData)
+                    readStopwatchData (String.Extra.replace "\n" "\r\n" sampleData)
                         |> Expect.equal (Ok expectedParsedSampleData)
             , test "readStopwatchData of a valid multi-line string with CR line-endings is a valid list of results" <|
                 \() ->
-                    readStopwatchData (String.Extra.replace "\n" "\x0D" sampleData)
+                    readStopwatchData (String.Extra.replace "\n" "\r" sampleData)
                         |> Expect.equal (Ok expectedParsedSampleData)
             , test "readStopwatchData of a valid multi-line string with blank lines is a valid list of results" <|
                 \() ->
@@ -52,7 +52,7 @@ suite =
                         |> expectError "NO_RESULTS"
             , test "readStopwatchData of a string containing binary data is not a valid list of results" <|
                 \() ->
-                    readStopwatchData "\x00\x00\x00Z\x01j\x07\x00\x03\x00$\x00"
+                    readStopwatchData "\u{0000}\u{0000}\u{0000}Z\u{0001}j\u{0007}\u{0000}\u{0003}\u{0000}$\u{0000}"
                         |> expectError "BINARY_FILE"
             , test "readStopwatchData of a string with too many parts is not a valid list of results" <|
                 \() ->

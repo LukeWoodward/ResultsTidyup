@@ -10,11 +10,14 @@
 </head>
 <body>
 
-<div id="parkrun-stopwatch" class="main-content container"></div>
+<div id="parkrun-stopwatch-container" class="main-content container">
+  <div id="parkrun-stopwatch"></div>
+</div>
+
 <script src="parkrun-stopwatch.js"></script>
 <script src="jquery-3.3.1.js"></script>
 <script>
-var app = Elm.ParkrunStopwatch.embed(document.getElementById("parkrun-stopwatch"));
+var app = Elm.ParkrunStopwatch.init({node: document.getElementById("parkrun-stopwatch")});
 app.ports.downloadMergedTimesToFile.subscribe(function(fileContents) {
     saveFile(fileContents.fileName, fileContents.fileText);
 });
@@ -97,7 +100,7 @@ function drop(e) {
   handleLoad(e.dataTransfer.files);
 }
 
-var dropzone = document.getElementById("parkrun-stopwatch");
+var dropzone = document.getElementById("parkrun-stopwatch-container");
 dropzone.addEventListener("dragenter", stopDefaultBehaviour, false);
 dropzone.addEventListener("dragover", stopDefaultBehaviour, false);
 dropzone.addEventListener("drop", drop, false);

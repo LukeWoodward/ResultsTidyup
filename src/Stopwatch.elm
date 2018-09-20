@@ -1,7 +1,7 @@
 module Stopwatch exposing (Stopwatch(..), readStopwatchData)
 
 import Error exposing (Error)
-import Regex exposing (regex, Regex, HowMany(AtMost, All))
+import Regex exposing (Regex)
 import Result.Extra
 import TimeHandling exposing (parseTime)
 
@@ -15,7 +15,8 @@ type Stopwatch
 
 binaryRegex : Regex
 binaryRegex =
-    regex "[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]"
+    Regex.fromString "[\u{0000}-\u{0008}\u{000B}\u{000C}\u{000E}-\u{001F}\u{007F}]"
+        |> Maybe.withDefault Regex.never
 
 
 isPossibleBinary : String -> Bool
@@ -25,12 +26,13 @@ isPossibleBinary fileText =
 
 lineSplitRegex : Regex
 lineSplitRegex =
-    regex "[\\r\\n]+"
+    Regex.fromString "[\\r\\n]+"
+        |> Maybe.withDefault Regex.never
 
 
 splitLines : String -> List String
 splitLines text =
-    Regex.split All lineSplitRegex text
+    Regex.split lineSplitRegex text
 
 
 ignorableLinePrefixes : List String

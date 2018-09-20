@@ -1,19 +1,19 @@
 module DateHandling exposing (generateDownloadFilenameDatePart)
 
-import Date exposing (Date, Month(..))
+import Time exposing (Posix, Zone, Month(..))
 
 
 formatToAtLeastTwoChars : Int -> String
 formatToAtLeastTwoChars number =
     if number < 10 then
-        "0" ++ (toString number)
+        "0" ++ (String.fromInt number)
     else
-        toString number
+        String.fromInt number
 
 
-getMonthNumber : Date -> Int
-getMonthNumber date =
-    case Date.month date of
+getMonthNumber : Zone -> Posix -> Int
+getMonthNumber zone time =
+    case Time.toMonth zone time of
         Jan ->
             1
 
@@ -51,14 +51,14 @@ getMonthNumber date =
             12
 
 
-generateDownloadFilenameDatePart : Date -> String
-generateDownloadFilenameDatePart date =
-    [ Date.day date
-    , getMonthNumber date
-    , Date.year date
-    , Date.hour date
-    , Date.minute date
-    , Date.second date
+generateDownloadFilenameDatePart : Zone -> Posix -> String
+generateDownloadFilenameDatePart zone time =
+    [ Time.toDay zone time
+    , getMonthNumber zone time 
+    , Time.toYear zone time
+    , Time.toHour zone time
+    , Time.toMinute zone time
+    , Time.toSecond zone time
     ]
         |> List.map formatToAtLeastTwoChars
         |> String.join ""

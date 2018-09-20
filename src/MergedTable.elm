@@ -288,7 +288,7 @@ formatRow rowNumber time =
         formattedTime =
             formatTimeWithHours time
     in
-        (toString rowNumber)
+        (String.fromInt rowNumber)
             ++ ",01/01/2001 "
             ++ formattedTime
             ++ ","
@@ -322,4 +322,4 @@ outputMergedTable mergedRows =
     header
         ++ (List.filterMap outputMergedRow mergedRows)
         ++ [ footer ]
-        |> String.join "\x0D\n"
+        |> String.join "\r\n"

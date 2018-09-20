@@ -1,5 +1,6 @@
 module NumberChecker exposing (NumberCheckerEntry, AnnotatedNumberCheckerEntry, parseNumberCheckerFile, annotate)
 
+import Maybe.Extra
 import Result.Extra
 import Error exposing (Error)
 
@@ -31,14 +32,14 @@ parseNumberCheckerFileLine line =
                 |> String.split ","
                 |> List.map String.trim
 
-        numbers : Result String (List Int)
+        numbers : Maybe (List Int)
         numbers =
             bits
                 |> List.map String.toInt
-                |> Result.Extra.combine
+                |> Maybe.Extra.combine
     in
         case numbers of
-            Ok [ sw1, sw2, ftoks ] ->
+            Just [ sw1, sw2, ftoks ] ->
                 if sw1 > 0 && sw2 > 0 && ftoks > 0 then
                     NumberCheckerEntry sw1 sw2 ftoks
                         |> Ok
@@ -46,21 +47,21 @@ parseNumberCheckerFileLine line =
                     Error
                         "ZERO_OR_NEGATIVE_ENTRY"
                         ("One or more numbers read from the line '"
-                            ++ (toString line)
+                            ++ line
                             ++ "' was zero or negative"
                         )
                         |> Err
 
-            Ok someOtherList ->
+            Just someOtherList ->
                 Error
                     "WRONG_PART_COUNT"
                     ("Unexpected number of parts: expected three, got "
-                        ++ (toString (List.length someOtherList))
+                        ++ (String.fromInt (List.length someOtherList))
                         ++ " instead"
                     )
                     |> Err
 
-            Err _ ->
+            Nothing ->
                 Error
                     "INVALID_NUMBER"
                     ("Unrecognised numeric value in line '" ++ line ++ "'")

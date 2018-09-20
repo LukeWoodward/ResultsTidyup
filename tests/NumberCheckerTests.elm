@@ -29,7 +29,7 @@ suite =
                             )
             , test "reads two entries from two valid lines ignoring blank lines" <|
                 \() ->
-                    parseNumberCheckerFile "\x0D\n5,4,5\x0D\n\x0D\n\x0D\n6,6,7\x0D\n\x0D\n"
+                    parseNumberCheckerFile "\r\n5,4,5\r\n\r\n\r\n6,6,7\r\n\r\n"
                         |> Expect.equal
                             (Ok
                                 [ NumberCheckerEntry 5 4 5

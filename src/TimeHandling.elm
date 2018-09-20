@@ -1,17 +1,18 @@
 module TimeHandling exposing (parseTime, formatTime, formatTimeWithHours)
 
-import Regex exposing (Regex, regex, HowMany(..))
+import Regex exposing (Regex, fromString)
 import Error exposing (Error)
 
 
 timeRegex : Regex
 timeRegex =
-    regex "^(?:(\\d+):)?(\\d{1,2}):(\\d{1,2})$"
+    Regex.fromString "^(?:(\\d+):)?(\\d{1,2}):(\\d{1,2})$"
+        |> Maybe.withDefault Regex.never
 
 
 parseTime : String -> Result Error Int
 parseTime timeString =
-    case Regex.find (AtMost 1) timeRegex timeString of
+    case Regex.findAtMost 1 timeRegex timeString of
         [ match ] ->
             case match.submatches of
                 [ hoursMatch, Just minutesStr, Just secondsStr ] ->
@@ -20,20 +21,20 @@ parseTime timeString =
                         hoursStr =
                             Maybe.withDefault "0" hoursMatch
 
-                        hoursResult : Result String Int
+                        hoursResult : Maybe Int
                         hoursResult =
                             String.toInt hoursStr
 
-                        minutesResult : Result String Int
+                        minutesResult : Maybe Int
                         minutesResult =
                             String.toInt minutesStr
 
-                        secondsResult : Result String Int
+                        secondsResult : Maybe Int
                         secondsResult =
                             String.toInt secondsStr
                     in
                         case ( hoursResult, minutesResult, secondsResult ) of
-                            ( Ok hours, Ok minutes, Ok seconds ) ->
+                            ( Just hours, Just minutes, Just seconds ) ->
                                 if seconds >= 60 then
                                     Error "SECONDS_TOO_LARGE" ("Seconds value " ++ secondsStr ++ " is too large")
                                         |> Err
@@ -61,9 +62,9 @@ parseTime timeString =
 formatToAtLeastTwoChars : Int -> String
 formatToAtLeastTwoChars number =
     if number < 10 then
-        "0" ++ (toString number)
+        "0" ++ (String.fromInt number)
     else
-        toString number
+        String.fromInt number
 
 
 formatTimeInternal : Bool -> Int -> String
@@ -74,11 +75,11 @@ formatTimeInternal mustIncludeHours timeInSeconds =
         let
             seconds : Int
             seconds =
-                timeInSeconds % 60
+                modBy 60 timeInSeconds
 
             minutes : Int
             minutes =
-                (timeInSeconds // 60) % 60
+                modBy 60 (timeInSeconds // 60)
 
             hours : Int
             hours =
