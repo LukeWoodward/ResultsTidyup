@@ -1,7 +1,7 @@
-module TimeHandling exposing (parseTime, formatTime, formatTimeWithHours)
+module TimeHandling exposing (formatTime, formatTimeWithHours, parseTime)
 
-import Regex exposing (Regex, fromString)
 import Error exposing (Error)
+import Regex exposing (Regex, fromString)
 
 
 timeRegex : Regex
@@ -33,21 +33,23 @@ parseTime timeString =
                         secondsResult =
                             String.toInt secondsStr
                     in
-                        case ( hoursResult, minutesResult, secondsResult ) of
-                            ( Just hours, Just minutes, Just seconds ) ->
-                                if seconds >= 60 then
-                                    Error "SECONDS_TOO_LARGE" ("Seconds value " ++ secondsStr ++ " is too large")
-                                        |> Err
-                                else if minutes >= 60 then
-                                    Error "MINUTES_TOO_LARGE" ("Minutes value " ++ secondsStr ++ " is too large")
-                                        |> Err
-                                else
-                                    Ok (hours * 3600 + minutes * 60 + seconds)
-
-                            _ ->
-                                -- Unexpected: one of the number values failed to parseTime
-                                Error "INTERNAL_TIME_PARSING_FAILURE_INT" ("Unexpected failure to parse time '" ++ timeString ++ "'")
+                    case ( hoursResult, minutesResult, secondsResult ) of
+                        ( Just hours, Just minutes, Just seconds ) ->
+                            if seconds >= 60 then
+                                Error "SECONDS_TOO_LARGE" ("Seconds value " ++ secondsStr ++ " is too large")
                                     |> Err
+
+                            else if minutes >= 60 then
+                                Error "MINUTES_TOO_LARGE" ("Minutes value " ++ secondsStr ++ " is too large")
+                                    |> Err
+
+                            else
+                                Ok (hours * 3600 + minutes * 60 + seconds)
+
+                        _ ->
+                            -- Unexpected: one of the number values failed to parseTime
+                            Error "INTERNAL_TIME_PARSING_FAILURE_INT" ("Unexpected failure to parse time '" ++ timeString ++ "'")
+                                |> Err
 
                 _ ->
                     -- Unexpected: not three matches from the regex.
@@ -62,7 +64,8 @@ parseTime timeString =
 formatToAtLeastTwoChars : Int -> String
 formatToAtLeastTwoChars number =
     if number < 10 then
-        "0" ++ (String.fromInt number)
+        "0" ++ String.fromInt number
+
     else
         String.fromInt number
 
@@ -71,6 +74,7 @@ formatTimeInternal : Bool -> Int -> String
 formatTimeInternal mustIncludeHours timeInSeconds =
     if timeInSeconds < 0 then
         "-" ++ formatTime -timeInSeconds
+
     else
         let
             seconds : Int
@@ -87,12 +91,13 @@ formatTimeInternal mustIncludeHours timeInSeconds =
 
             minsAndSecs : String
             minsAndSecs =
-                (formatToAtLeastTwoChars minutes) ++ ":" ++ (formatToAtLeastTwoChars seconds)
+                formatToAtLeastTwoChars minutes ++ ":" ++ formatToAtLeastTwoChars seconds
         in
-            if hours == 0 && not mustIncludeHours then
-                minsAndSecs
-            else
-                (formatToAtLeastTwoChars hours) ++ ":" ++ minsAndSecs
+        if hours == 0 && not mustIncludeHours then
+            minsAndSecs
+
+        else
+            formatToAtLeastTwoChars hours ++ ":" ++ minsAndSecs
 
 
 formatTime : Int -> String

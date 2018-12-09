@@ -1,9 +1,9 @@
 module NumberCheckerTests exposing (suite)
 
-import Expect
-import Test exposing (describe, test, Test)
-import NumberChecker exposing (..)
 import Errors exposing (expectError)
+import Expect
+import NumberChecker exposing (..)
+import Test exposing (Test, describe, test)
 
 
 suite : Test
@@ -29,7 +29,7 @@ suite =
                             )
             , test "reads two entries from two valid lines ignoring blank lines" <|
                 \() ->
-                    parseNumberCheckerFile "\r\n5,4,5\r\n\r\n\r\n6,6,7\r\n\r\n"
+                    parseNumberCheckerFile "\u{000D}\n5,4,5\u{000D}\n\u{000D}\n\u{000D}\n6,6,7\u{000D}\n\u{000D}\n"
                         |> Expect.equal
                             (Ok
                                 [ NumberCheckerEntry 5 4 5

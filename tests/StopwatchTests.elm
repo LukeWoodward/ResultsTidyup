@@ -1,10 +1,10 @@
 module StopwatchTests exposing (suite)
 
-import Expect
-import Test exposing (describe, test, Test)
-import Stopwatch exposing (..)
 import Errors exposing (expectError)
+import Expect
+import Stopwatch exposing (..)
 import String.Extra
+import Test exposing (Test, describe, test)
 
 
 sampleData : String
@@ -36,11 +36,11 @@ suite =
                         |> Expect.equal (Ok expectedParsedSampleData)
             , test "readStopwatchData of a valid multi-line string with CRLF line-endings is a valid list of results" <|
                 \() ->
-                    readStopwatchData (String.Extra.replace "\n" "\r\n" sampleData)
+                    readStopwatchData (String.Extra.replace "\n" "\u{000D}\n" sampleData)
                         |> Expect.equal (Ok expectedParsedSampleData)
             , test "readStopwatchData of a valid multi-line string with CR line-endings is a valid list of results" <|
                 \() ->
-                    readStopwatchData (String.Extra.replace "\n" "\r" sampleData)
+                    readStopwatchData (String.Extra.replace "\n" "\u{000D}" sampleData)
                         |> Expect.equal (Ok expectedParsedSampleData)
             , test "readStopwatchData of a valid multi-line string with blank lines is a valid list of results" <|
                 \() ->

@@ -6,6 +6,7 @@ import Result.Extra
 import TimeHandling exposing (parseTime)
 
 
+
 {- Stopwatch data is basically a list of integer numbers of seconds -}
 
 
@@ -56,13 +57,13 @@ readLine line =
         parts =
             String.split "," line
     in
-        case parts of
-            [ _, _, time ] ->
-                parseTime time
+    case parts of
+        [ _, _, time ] ->
+            parseTime time
 
-            _ ->
-                Error "NOT_THREE_PARTS" ("Line " ++ line ++ " does not contain the expected three comma-separated parts")
-                    |> Err
+        _ ->
+            Error "NOT_THREE_PARTS" ("Line " ++ line ++ " does not contain the expected three comma-separated parts")
+                |> Err
 
 
 failIfNoResults : List Int -> Result Error (List Int)
@@ -70,6 +71,7 @@ failIfNoResults results =
     if List.isEmpty results then
         Error "NO_RESULTS" "Stopwatch data contained no results"
             |> Err
+
     else
         Ok results
 
@@ -79,6 +81,7 @@ readStopwatchData text =
     if isPossibleBinary text then
         Error "BINARY_FILE" "File appears to be a binary file"
             |> Err
+
     else
         text
             |> splitLines

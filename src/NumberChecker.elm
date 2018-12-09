@@ -1,8 +1,8 @@
-module NumberChecker exposing (NumberCheckerEntry, AnnotatedNumberCheckerEntry, parseNumberCheckerFile, annotate)
+module NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, annotate, parseNumberCheckerFile)
 
+import Error exposing (Error)
 import Maybe.Extra
 import Result.Extra
-import Error exposing (Error)
 
 
 type alias NumberCheckerEntry =
@@ -38,34 +38,35 @@ parseNumberCheckerFileLine line =
                 |> List.map String.toInt
                 |> Maybe.Extra.combine
     in
-        case numbers of
-            Just [ sw1, sw2, ftoks ] ->
-                if sw1 > 0 && sw2 > 0 && ftoks > 0 then
-                    NumberCheckerEntry sw1 sw2 ftoks
-                        |> Ok
-                else
-                    Error
-                        "ZERO_OR_NEGATIVE_ENTRY"
-                        ("One or more numbers read from the line '"
-                            ++ line
-                            ++ "' was zero or negative"
-                        )
-                        |> Err
+    case numbers of
+        Just [ sw1, sw2, ftoks ] ->
+            if sw1 > 0 && sw2 > 0 && ftoks > 0 then
+                NumberCheckerEntry sw1 sw2 ftoks
+                    |> Ok
 
-            Just someOtherList ->
+            else
                 Error
-                    "WRONG_PART_COUNT"
-                    ("Unexpected number of parts: expected three, got "
-                        ++ (String.fromInt (List.length someOtherList))
-                        ++ " instead"
+                    "ZERO_OR_NEGATIVE_ENTRY"
+                    ("One or more numbers read from the line '"
+                        ++ line
+                        ++ "' was zero or negative"
                     )
                     |> Err
 
-            Nothing ->
-                Error
-                    "INVALID_NUMBER"
-                    ("Unrecognised numeric value in line '" ++ line ++ "'")
-                    |> Err
+        Just someOtherList ->
+            Error
+                "WRONG_PART_COUNT"
+                ("Unexpected number of parts: expected three, got "
+                    ++ String.fromInt (List.length someOtherList)
+                    ++ " instead"
+                )
+                |> Err
+
+        Nothing ->
+            Error
+                "INVALID_NUMBER"
+                ("Unrecognised numeric value in line '" ++ line ++ "'")
+                |> Err
 
 
 failIfEmpty : List NumberCheckerEntry -> Result Error (List NumberCheckerEntry)
@@ -73,6 +74,7 @@ failIfEmpty list =
     if List.isEmpty list then
         Error "EMPTY_FILE" "Number checker file was empty"
             |> Err
+
     else
         Ok list
 
@@ -128,9 +130,11 @@ annotateInternal previousRowNumber previousEntry entries =
                     if stopwatch1Diff == stopwatch2Diff && stopwatch1Diff == finishTokensDiff then
                         -- Most common case: all agree
                         annotateEntry firstEntry thisRowNumber 0 0 0
+
                     else if stopwatch1Diff == stopwatch2Diff then
                         -- Finish tokens looks to be off...
                         annotateEntry firstEntry thisRowNumber 0 0 (finishTokensDiff - stopwatch1Diff)
+
                     else
                         -- Anything else: take finish tokens to be authoritative
                         annotateEntry firstEntry thisRowNumber (stopwatch1Diff - finishTokensDiff) (stopwatch2Diff - finishTokensDiff) 0
@@ -139,7 +143,7 @@ annotateInternal previousRowNumber previousEntry entries =
                 restAnnotatedEntries =
                     annotateInternal thisRowNumber firstEntry rest
             in
-                firstAnnotatedEntry :: restAnnotatedEntries
+            firstAnnotatedEntry :: restAnnotatedEntries
 
 
 annotate : List NumberCheckerEntry -> List AnnotatedNumberCheckerEntry

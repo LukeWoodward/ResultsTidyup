@@ -1,20 +1,19 @@
-module MergedTable
-    exposing
-        ( MergedTableRow
-        , Underlines
-        , noUnderlines
-        , generateInitialTable
-        , toggleRowInTable
-        , deleteStopwatchFromTable
-        , flipTable
-        , underlineTable
-        , outputMergedTable
-        )
+module MergedTable exposing
+    ( MergedTableRow
+    , Underlines
+    , deleteStopwatchFromTable
+    , flipTable
+    , generateInitialTable
+    , noUnderlines
+    , outputMergedTable
+    , toggleRowInTable
+    , underlineTable
+    )
 
 import DataStructures exposing (WhichStopwatch(..))
+import Dict exposing (Dict)
 import Merger exposing (MergeEntry(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
-import Dict exposing (Dict)
 import TimeHandling exposing (formatTimeWithHours)
 
 
@@ -74,6 +73,7 @@ toggleRowInTableInternal toggledIndex currentRowNumber rows =
                 newRow =
                     if firstRow.index == toggledIndex && isSingleTimeRow firstRow then
                         { firstRow | included = not firstRow.included }
+
                     else
                         firstRow
 
@@ -81,6 +81,7 @@ toggleRowInTableInternal toggledIndex currentRowNumber rows =
                 rowNumberStep =
                     if newRow.included then
                         1
+
                     else
                         0
 
@@ -88,6 +89,7 @@ toggleRowInTableInternal toggledIndex currentRowNumber rows =
                 newRowNumber =
                     if newRow.included then
                         Just currentRowNumber
+
                     else
                         Nothing
 
@@ -95,7 +97,7 @@ toggleRowInTableInternal toggledIndex currentRowNumber rows =
                 remainingRows =
                     toggleRowInTableInternal toggledIndex (currentRowNumber + rowNumberStep) rest
             in
-                { newRow | rowNumber = newRowNumber } :: remainingRows
+            { newRow | rowNumber = newRowNumber } :: remainingRows
 
 
 toggleRowInTable : Int -> List MergedTableRow -> List MergedTableRow
@@ -121,6 +123,7 @@ deleteTimeFromRow which row =
         ( OneWatchOnly someStopwatch time, _ ) ->
             if someStopwatch == which then
                 Nothing
+
             else
                 Just time
 
@@ -174,6 +177,7 @@ getNextEntry : Int -> Int -> Dict Int Int -> Maybe Int
 getNextEntry currentPosn nextPosn numberDict =
     if nextPosn > currentPosn then
         Dict.get nextPosn numberDict
+
     else
         Nothing
 
@@ -220,6 +224,7 @@ underlineTableInternal numberDicts sw1Posn sw2Posn ftoksPosn mergedRows =
                 nextFtoksPosn =
                     if firstRow.included then
                         ftoksPosn + 1
+
                     else
                         ftoksPosn
 
@@ -238,7 +243,7 @@ underlineTableInternal numberDicts sw1Posn sw2Posn ftoksPosn mergedRows =
                 underlinedRestRows =
                     underlineTableInternal numberDicts nextSw1Posn nextSw2Posn nextFtoksPosn restRows
             in
-                underlinedFirstRow :: underlinedRestRows
+            underlinedFirstRow :: underlinedRestRows
 
 
 createMappingDict : List Int -> Dict Int Int
@@ -268,7 +273,7 @@ underlineTable numberCheckerEntries mergedRows =
                 |> List.map .finishTokens
                 |> createMappingDict
     in
-        underlineTableInternal (NumberDicts stopwatch1Numbers stopwatch2Numbers finishTokensNumbers) 0 0 0 mergedRows
+    underlineTableInternal (NumberDicts stopwatch1Numbers stopwatch2Numbers finishTokensNumbers) 0 0 0 mergedRows
 
 
 header : List String
@@ -288,12 +293,12 @@ formatRow rowNumber time =
         formattedTime =
             formatTimeWithHours time
     in
-        (String.fromInt rowNumber)
-            ++ ",01/01/2001 "
-            ++ formattedTime
-            ++ ","
-            ++ formattedTime
-            |> Just
+    String.fromInt rowNumber
+        ++ ",01/01/2001 "
+        ++ formattedTime
+        ++ ","
+        ++ formattedTime
+        |> Just
 
 
 outputMergedRow : MergedTableRow -> Maybe String
@@ -310,6 +315,7 @@ outputMergedRow row =
                 OneWatchOnly _ time ->
                     if row.included then
                         formatRow rowNum time
+
                     else
                         Nothing
 
@@ -320,6 +326,6 @@ outputMergedRow row =
 outputMergedTable : List MergedTableRow -> String
 outputMergedTable mergedRows =
     header
-        ++ (List.filterMap outputMergedRow mergedRows)
+        ++ List.filterMap outputMergedRow mergedRows
         ++ [ footer ]
-        |> String.join "\r\n"
+        |> String.join "\u{000D}\n"

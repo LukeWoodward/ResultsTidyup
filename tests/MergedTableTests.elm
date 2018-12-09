@@ -1,11 +1,11 @@
 module MergedTableTests exposing (suite)
 
-import Expect
-import Test exposing (describe, test, Test)
-import Merger exposing (MergeEntry(..))
-import MergedTable exposing (..)
 import DataStructures exposing (WhichStopwatch(..))
 import Errors exposing (expectError)
+import Expect
+import MergedTable exposing (..)
+import Merger exposing (MergeEntry(..))
+import Test exposing (Test, describe, test)
 
 
 entry1 : MergeEntry
@@ -96,8 +96,8 @@ suite =
                             , MergedTableRow 3 Nothing entry4 False noUnderlines
                             ]
                     in
-                        toggleRowInTable 3 previousData
-                            |> Expect.equal sampleMergedTable
+                    toggleRowInTable 3 previousData
+                        |> Expect.equal sampleMergedTable
             , test "toggles back in watch-2-only row" <|
                 \() ->
                     let
@@ -108,8 +108,8 @@ suite =
                             , MergedTableRow 3 (Just 3) entry4 True noUnderlines
                             ]
                     in
-                        toggleRowInTable 2 previousData
-                            |> Expect.equal sampleMergedTable
+                    toggleRowInTable 2 previousData
+                        |> Expect.equal sampleMergedTable
             , test "has no effect when toggling nonexistent row" <|
                 \() ->
                     toggleRowInTable 99 sampleMergedTable

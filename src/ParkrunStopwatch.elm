@@ -1,21 +1,21 @@
-module ParkrunStopwatch exposing (..)
+module ParkrunStopwatch exposing (Model, Msg(..), Stopwatches(..), TableHeaderButton, TableHeaderWithButton, cell, checkboxCell, deleteButton, deleteNumberCheckerEntryButtonCell, deleteStopwatch, deltaCell, downloadMergedStopwatchData, emptyNumberCell, errorView, flipStopwatches, getHeightAttribute, handleFileDrop, handleNumberCheckerFileDrop, handleStopwatchFileDrop, hasFileAlreadyBeenUploaded, init, initModel, intCell, isPossibleNumberCheckerFile, main, maxNearMatchDistance, mergedStopwatchRow, noNumberCheckerData, numberCheckerRegex, numberCheckerRow, numberCheckerTable, numberCheckerUnderlineAttributes, numberCheckerUnderlineClass, numberCheckerView, stopwatchButtonsContent, stopwatchInfoMessage, stopwatchRow, stopwatchTable, stopwatchesView, subscriptions, tableHeader, tableHeaderWithButtons, tableHeaders, tableHeadersWithButtons, timeCell, toggleTableRow, underlineStopwatches, update, view)
 
-import Html exposing (Html, div, text, table, tbody, thead, tr, td, th, h1, h3, input, label, br, button, small)
 import Browser
-import Html.Attributes exposing (class, checked, type_, id, for, style)
-import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
-import Regex exposing (Regex)
-import Error exposing (Error)
-import Time exposing (Posix, Zone)
-import Stopwatch exposing (Stopwatch(..), readStopwatchData)
-import Merger exposing (merge, MergeEntry(..))
-import MergedTable exposing (MergedTableRow, generateInitialTable, toggleRowInTable, deleteStopwatchFromTable, flipTable, underlineTable, outputMergedTable)
-import NumberChecker exposing (NumberCheckerEntry, AnnotatedNumberCheckerEntry, parseNumberCheckerFile, annotate)
 import DataStructures exposing (WhichStopwatch(..))
-import TimeHandling exposing (formatTime)
 import DateHandling exposing (generateDownloadFilenameDatePart)
+import Error exposing (Error)
+import Html exposing (Html, br, button, div, h1, h3, input, label, small, table, tbody, td, text, th, thead, tr)
+import Html.Attributes exposing (checked, class, for, id, style, type_)
+import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
+import MergedTable exposing (MergedTableRow, deleteStopwatchFromTable, flipTable, generateInitialTable, outputMergedTable, toggleRowInTable, underlineTable)
+import Merger exposing (MergeEntry(..), merge)
+import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, annotate, parseNumberCheckerFile)
+import Ports exposing (InteropFile, downloadMergedTimesToFile, fileDrop, getInitialHeight, heightUpdated)
+import Regex exposing (Regex)
+import Stopwatch exposing (Stopwatch(..), readStopwatchData)
 import Task exposing (Task)
-import Ports exposing (getInitialHeight, fileDrop, InteropFile, downloadMergedTimesToFile, heightUpdated)
+import Time exposing (Posix, Zone)
+import TimeHandling exposing (formatTime)
 
 
 maxNearMatchDistance : Int
@@ -97,6 +97,7 @@ underlineStopwatches : Stopwatches -> List AnnotatedNumberCheckerEntry -> Stopwa
 underlineStopwatches stopwatches numberCheckerEntries =
     if List.isEmpty numberCheckerEntries then
         stopwatches
+
     else
         case stopwatches of
             None ->
@@ -117,6 +118,7 @@ handleStopwatchFileDrop fileName fileText model =
                 { model
                     | lastError = Just ("File '" ++ fileName ++ "' has already been uploaded")
                 }
+
             else
                 let
                     newStopwatches =
@@ -134,15 +136,15 @@ handleStopwatchFileDrop fileName fileText model =
                                     mergedTable =
                                         generateInitialTable mergedDetails
                                 in
-                                    Double existingFilename fileName mergedTable
+                                Double existingFilename fileName mergedTable
 
                             Double _ _ _ ->
                                 model.stopwatches
                 in
-                    { model
-                        | stopwatches = underlineStopwatches newStopwatches model.numberCheckerEntries
-                        , lastError = Nothing
-                    }
+                { model
+                    | stopwatches = underlineStopwatches newStopwatches model.numberCheckerEntries
+                    , lastError = Nothing
+                }
 
         Err error ->
             { model | lastError = Just error.message }
@@ -150,7 +152,7 @@ handleStopwatchFileDrop fileName fileText model =
 
 numberCheckerRegex : Regex
 numberCheckerRegex =
-    Regex.fromString "^[0-9\r\n,]+$"
+    Regex.fromString "^[0-9\u{000D}\n,]+$"
         |> Maybe.withDefault Regex.never
 
 
@@ -166,30 +168,32 @@ handleNumberCheckerFileDrop fileText model =
         result =
             parseNumberCheckerFile fileText
     in
-        case result of
-            Ok entries ->
-                let
-                    annotatedEntries : List AnnotatedNumberCheckerEntry
-                    annotatedEntries =
-                        annotate entries
-                in
-                    { model
-                        | numberCheckerEntries = annotatedEntries
-                        , stopwatches = underlineStopwatches model.stopwatches annotatedEntries
-                    }
+    case result of
+        Ok entries ->
+            let
+                annotatedEntries : List AnnotatedNumberCheckerEntry
+                annotatedEntries =
+                    annotate entries
+            in
+            { model
+                | numberCheckerEntries = annotatedEntries
+                , stopwatches = underlineStopwatches model.stopwatches annotatedEntries
+            }
 
-            Err error ->
-                { model
-                    | lastError = Just error.message
-                }
+        Err error ->
+            { model
+                | lastError = Just error.message
+            }
 
 
 handleFileDrop : String -> String -> Model -> Model
 handleFileDrop fileName fileText model =
     if String.contains "STARTOFEVENT" fileText then
         handleStopwatchFileDrop fileName fileText model
+
     else if isPossibleNumberCheckerFile fileText then
         handleNumberCheckerFileDrop fileText model
+
     else
         { model
             | lastError = Just "Unrecognised file dropped"
@@ -213,9 +217,9 @@ toggleTableRow index model =
                         |> toggleRowInTable index
                         |> underlineTable model.numberCheckerEntries
             in
-                { model
-                    | stopwatches = Double fileName1 fileName2 newMergedTable
-                }
+            { model
+                | stopwatches = Double fileName1 fileName2 newMergedTable
+            }
 
 
 deleteStopwatch : WhichStopwatch -> Model -> Model
@@ -241,11 +245,11 @@ deleteStopwatch which model =
                         StopwatchTwo ->
                             fileName1
             in
-                { model
-                    | stopwatches =
-                        deleteStopwatchFromTable which mergedRows
-                            |> Single fileNameToKeep
-                }
+            { model
+                | stopwatches =
+                    deleteStopwatchFromTable which mergedRows
+                        |> Single fileNameToKeep
+            }
 
 
 flipStopwatches : Model -> Model
@@ -265,9 +269,9 @@ flipStopwatches model =
                         |> flipTable
                         |> underlineTable model.numberCheckerEntries
             in
-                { model
-                    | stopwatches = Double filename2 filename1 newStopwatches
-                }
+            { model
+                | stopwatches = Double filename2 filename1 newStopwatches
+            }
 
 
 downloadMergedStopwatchData : Zone -> Posix -> Model -> ( Model, Cmd Msg )
@@ -287,13 +291,13 @@ downloadMergedStopwatchData zone time model =
 
                 fileName : String
                 fileName =
-                    "parkrun_timer_" ++ (generateDownloadFilenameDatePart zone time) ++ ".txt"
+                    "parkrun_timer_" ++ generateDownloadFilenameDatePart zone time ++ ".txt"
 
                 file : InteropFile
                 file =
                     InteropFile fileName fileContents
             in
-                ( model, downloadMergedTimesToFile file )
+            ( model, downloadMergedTimesToFile file )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -313,7 +317,7 @@ update msg model =
 
         GetCurrentDateForDownloadFile ->
             ( model
-            ,  Task.perform identity (Task.map2 DownloadMergedStopwatchData Time.here Time.now)
+            , Task.perform identity (Task.map2 DownloadMergedStopwatchData Time.here Time.now)
             )
 
         DownloadMergedStopwatchData zone time ->
@@ -331,12 +335,13 @@ update msg model =
                 newModel =
                     if model.highlightedNumberCheckerId == Just unhighlightRow then
                         { model | highlightedNumberCheckerId = Nothing }
+
                     else
                         -- Ignore an un-highlight command when the row to
                         -- unhighlight isn't the highlighted one.
                         model
             in
-                ( newModel, Cmd.none )
+            ( newModel, Cmd.none )
 
         DeleteNumberCheckerRow entryNumber ->
             let
@@ -344,25 +349,25 @@ update msg model =
                 newNumberCheckerEntries =
                     List.filter (\e -> e.entryNumber /= entryNumber) model.numberCheckerEntries
             in
-                case model.stopwatches of
-                    Double filename1 filename2 oldMergedTable ->
-                        let
-                            newMergedTable : List MergedTableRow
-                            newMergedTable =
-                                underlineTable newNumberCheckerEntries oldMergedTable
-                        in
-                            ( { model
-                                | numberCheckerEntries = newNumberCheckerEntries
-                                , stopwatches = Double filename1 filename2 newMergedTable
-                              }
-                            , Cmd.none
-                            )
+            case model.stopwatches of
+                Double filename1 filename2 oldMergedTable ->
+                    let
+                        newMergedTable : List MergedTableRow
+                        newMergedTable =
+                            underlineTable newNumberCheckerEntries oldMergedTable
+                    in
+                    ( { model
+                        | numberCheckerEntries = newNumberCheckerEntries
+                        , stopwatches = Double filename1 filename2 newMergedTable
+                      }
+                    , Cmd.none
+                    )
 
-                    Single _ _ ->
-                        ( { model | numberCheckerEntries = newNumberCheckerEntries }, Cmd.none )
+                Single _ _ ->
+                    ( { model | numberCheckerEntries = newNumberCheckerEntries }, Cmd.none )
 
-                    None ->
-                        ( { model | numberCheckerEntries = newNumberCheckerEntries }, Cmd.none )
+                None ->
+                    ( { model | numberCheckerEntries = newNumberCheckerEntries }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -399,13 +404,13 @@ stopwatchInfoMessage stopwatches =
                 Double _ _ _ ->
                     Nothing
     in
-        case message of
-            Just messageText ->
-                div [ class "alert alert-info" ]
-                    [ text messageText ]
+    case message of
+        Just messageText ->
+            div [ class "alert alert-info" ]
+                [ text messageText ]
 
-            Nothing ->
-                text ""
+        Nothing ->
+            text ""
 
 
 numberCheckerUnderlineClass : Int -> Maybe Int -> String
@@ -415,17 +420,18 @@ numberCheckerUnderlineClass numberCheckerId highlightedNumberCheckerId =
         highlightClassPrefix =
             if highlightedNumberCheckerId == Just numberCheckerId then
                 "highlighted "
+
             else
                 ""
     in
-        highlightClassPrefix ++ "underlined number-checker-row-" ++ (String.fromInt numberCheckerId)
+    highlightClassPrefix ++ "underlined number-checker-row-" ++ String.fromInt numberCheckerId
 
 
 numberCheckerUnderlineAttributes : Maybe String -> Maybe Int -> Maybe Int -> List (Html.Attribute a)
 numberCheckerUnderlineAttributes className numberCheckerId highlightedNumberCheckerId =
     case ( className, numberCheckerId ) of
         ( Just someClass, Just someNumberCheckerId ) ->
-            [ class (someClass ++ " " ++ (numberCheckerUnderlineClass someNumberCheckerId highlightedNumberCheckerId)) ]
+            [ class (someClass ++ " " ++ numberCheckerUnderlineClass someNumberCheckerId highlightedNumberCheckerId) ]
 
         ( Nothing, Just someNumberCheckerId ) ->
             [ class (numberCheckerUnderlineClass someNumberCheckerId highlightedNumberCheckerId) ]
@@ -456,16 +462,18 @@ deltaCell : Int -> Html a
 deltaCell delta =
     if delta == 0 then
         td [ class "zero-delta" ] [ text "0" ]
+
     else
         let
             stringDelta : String
             stringDelta =
                 if delta > 0 then
-                    "+" ++ (String.fromInt delta)
+                    "+" ++ String.fromInt delta
+
                 else
-                    "−" ++ (String.fromInt -delta)
+                    "−" ++ String.fromInt -delta
         in
-            td [ class "nonzero-delta" ] [ text stringDelta ]
+        td [ class "nonzero-delta" ] [ text stringDelta ]
 
 
 stopwatchRow : Int -> Int -> Html a
@@ -499,30 +507,31 @@ checkboxCell time index included numberCheckerId highlightedNumberCheckerId =
     let
         idText : String
         idText =
-            "toggle_checkbox_" ++ (String.fromInt index)
+            "toggle_checkbox_" ++ String.fromInt index
 
         labelClassName : String
         labelClassName =
             if included then
                 "stopwatch-time-label"
+
             else
                 "stopwatch-time-label excluded"
     in
-        td
-            (numberCheckerUnderlineAttributes (Just "mismatch") numberCheckerId highlightedNumberCheckerId)
-            [ input
-                [ type_ "checkbox"
-                , checked included
-                , id idText
-                , onClick (ToggleTableRow index)
-                ]
-                []
-            , label
-                [ for idText
-                , class labelClassName
-                ]
-                [ text (formatTime time) ]
+    td
+        (numberCheckerUnderlineAttributes (Just "mismatch") numberCheckerId highlightedNumberCheckerId)
+        [ input
+            [ type_ "checkbox"
+            , checked included
+            , id idText
+            , onClick (ToggleTableRow index)
             ]
+            []
+        , label
+            [ for idText
+            , class labelClassName
+            ]
+            [ text (formatTime time) ]
+        ]
 
 
 mergedStopwatchRow : Maybe Int -> MergedTableRow -> Html Msg
@@ -536,38 +545,38 @@ mergedStopwatchRow highlightedNumberCheckerId row =
                 Nothing ->
                     emptyNumberCell
     in
-        case row.entry of
-            ExactMatch time ->
-                tr
-                    []
-                    [ indexCell
-                    , timeCell "exact-match" time row.underlines.stopwatch1 highlightedNumberCheckerId
-                    , timeCell "exact-match" time row.underlines.stopwatch2 highlightedNumberCheckerId
-                    ]
+    case row.entry of
+        ExactMatch time ->
+            tr
+                []
+                [ indexCell
+                , timeCell "exact-match" time row.underlines.stopwatch1 highlightedNumberCheckerId
+                , timeCell "exact-match" time row.underlines.stopwatch2 highlightedNumberCheckerId
+                ]
 
-            NearMatch time1 time2 ->
-                tr
-                    []
-                    [ indexCell
-                    , timeCell "near-match" time1 row.underlines.stopwatch1 highlightedNumberCheckerId
-                    , timeCell "near-match" time2 row.underlines.stopwatch2 highlightedNumberCheckerId
-                    ]
+        NearMatch time1 time2 ->
+            tr
+                []
+                [ indexCell
+                , timeCell "near-match" time1 row.underlines.stopwatch1 highlightedNumberCheckerId
+                , timeCell "near-match" time2 row.underlines.stopwatch2 highlightedNumberCheckerId
+                ]
 
-            OneWatchOnly StopwatchOne time1 ->
-                tr
-                    []
-                    [ indexCell
-                    , checkboxCell time1 row.index row.included row.underlines.stopwatch1 highlightedNumberCheckerId
-                    , cell "" Nothing Nothing
-                    ]
+        OneWatchOnly StopwatchOne time1 ->
+            tr
+                []
+                [ indexCell
+                , checkboxCell time1 row.index row.included row.underlines.stopwatch1 highlightedNumberCheckerId
+                , cell "" Nothing Nothing
+                ]
 
-            OneWatchOnly StopwatchTwo time2 ->
-                tr
-                    []
-                    [ indexCell
-                    , cell "" Nothing Nothing
-                    , checkboxCell time2 row.index row.included row.underlines.stopwatch2 highlightedNumberCheckerId
-                    ]
+        OneWatchOnly StopwatchTwo time2 ->
+            tr
+                []
+                [ indexCell
+                , cell "" Nothing Nothing
+                , checkboxCell time2 row.index row.included row.underlines.stopwatch2 highlightedNumberCheckerId
+                ]
 
 
 tableHeader : String -> Html a
@@ -602,22 +611,22 @@ tableHeaderWithButtons { headerText, buttonData } =
         textElement =
             text headerText
     in
-        case buttonData of
-            Just { change, buttonText } ->
-                th
-                    [ class "stopwatch-header" ]
-                    [ button
-                        [ type_ "button"
-                        , onClick change
-                        , class "btn btn-primary btn-xs"
-                        ]
-                        [ text buttonText ]
-                    , br [] []
-                    , textElement
+    case buttonData of
+        Just { change, buttonText } ->
+            th
+                [ class "stopwatch-header" ]
+                [ button
+                    [ type_ "button"
+                    , onClick change
+                    , class "btn btn-primary btn-xs"
                     ]
+                    [ text buttonText ]
+                , br [] []
+                , textElement
+                ]
 
-            Nothing ->
-                th [] [ textElement ]
+        Nothing ->
+            th [] [ textElement ]
 
 
 tableHeaders : List String -> Html a
@@ -705,7 +714,7 @@ getHeightAttribute : Maybe Int -> List (Html.Attribute a)
 getHeightAttribute lastHeight =
     case lastHeight of
         Just someHeight ->
-            [ style "height" (String.fromInt someHeight ++ "px")  ]
+            [ style "height" (String.fromInt someHeight ++ "px") ]
 
         Nothing ->
             []
@@ -761,6 +770,7 @@ numberCheckerView entries lastHeight =
         [ h3 [] [ text "Number checker" ]
         , if List.isEmpty entries then
             noNumberCheckerData
+
           else
             numberCheckerTable entries
         ]

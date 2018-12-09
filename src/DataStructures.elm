@@ -1,4 +1,4 @@
-module DataStructures exposing (..)
+module DataStructures exposing (WhichStopwatch(..))
 
 
 type WhichStopwatch
