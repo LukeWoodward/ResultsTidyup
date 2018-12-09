@@ -1,11 +1,11 @@
 module MergerTests exposing (suite)
 
-import Expect
-import Test exposing (describe, test, Test)
-import Merger exposing (MergeEntry(..), merge)
-import Errors exposing (expectError)
-import TimeHandling exposing (parseTime, formatTime)
 import DataStructures exposing (WhichStopwatch(..))
+import Errors exposing (expectError)
+import Expect
+import Merger exposing (MergeEntry(..), merge)
+import Test exposing (Test, describe, test)
+import TimeHandling exposing (formatTime, parseTime)
 
 
 suite : Test
@@ -63,5 +63,13 @@ suite =
                 \() ->
                     merge 2 [ 10, 31, 50 ] [ 10, 32, 33, 50 ]
                         |> Expect.equal [ ExactMatch 10, NearMatch 31 32, OneWatchOnly StopwatchTwo 33, ExactMatch 50 ]
+            , test "merging two lists with a near-match and followed by an exact match returns expected result" <|
+                \() ->
+                    merge 2 [ 118, 127, 127 ] [ 118, 126, 127 ]
+                        |> Expect.equal [ ExactMatch 118, NearMatch 127 126, ExactMatch 127 ]
+            , test "merging two lists with a near-match and followed by an exact match returns expected result 2" <|
+                \() ->
+                    merge 2 [ 118, 126, 127 ] [ 118, 127, 127 ]
+                        |> Expect.equal [ ExactMatch 118, NearMatch 126 127, ExactMatch 127 ]
             ]
         ]
