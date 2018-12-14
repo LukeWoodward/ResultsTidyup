@@ -9,11 +9,11 @@ type MergeEntry
     | OneWatchOnly WhichStopwatch Int
 
 
-containsInHead : List Int -> Int -> Bool
-containsInHead list num =
+isHeadInRange : List Int -> Int -> Int -> Bool
+isHeadInRange list rangeMin rangeMax =
     case List.head list of
         Just someNumber ->
-            someNumber == num
+            rangeMin <= someNumber && someNumber <= rangeMax
 
         Nothing ->
             False
@@ -40,8 +40,8 @@ merge maxNearMatchDistance times1 times2 =
 
                     else if first2 - maxNearMatchDistance <= first1 && first1 < first2 then
                         if
-                            List.any (containsInHead rest1) (List.range (first1 + 1) first2)
-                                && not (List.any (containsInHead rest2) (List.range first2 (first2 + maxNearMatchDistance)))
+                            isHeadInRange rest1 (first1 + 1) first2
+                                && not (isHeadInRange rest2 first2 (first2 + maxNearMatchDistance))
                         then
                             -- The times match within the interval but there's a nearer time next
                             -- on stopwatch 1 and the next time on stopwatch 2 isn't particularly near.
@@ -57,8 +57,8 @@ merge maxNearMatchDistance times1 times2 =
 
                     else if first2 < first1 && first1 <= first2 + maxNearMatchDistance then
                         if
-                            List.any (containsInHead rest2) (List.range (first2 + 1) first1)
-                                && not (List.any (containsInHead rest1) (List.range first1 (first1 + maxNearMatchDistance)))
+                            isHeadInRange rest2 (first2 + 1) first1
+                                && not (isHeadInRange rest1 first1 (first1 + maxNearMatchDistance))
                         then
                             OneWatchOnly StopwatchTwo first2 :: createTimes sortedTimes1 rest2
 
