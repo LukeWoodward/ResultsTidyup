@@ -31,6 +31,15 @@ table.table.stopwatch-times > tbody > tr > td, table.table.number-checker-table 
     text-align: right;
 }
 
+table.table.stopwatch-times > tbody > tr > td.scanned-athlete,
+table.table.stopwatch-times > tbody > tr > td.no-scanned-athlete {
+    text-align: left;
+}
+
+table.table.stopwatch-times > tbody > tr > td.no-scanned-athlete {
+    color: #dddddd;
+}
+
 table.table.stopwatch-times > tbody > tr > td {
     padding-top: 1px;
     padding-bottom: 1px;

@@ -1,8 +1,10 @@
-module ParkrunStopwatch exposing (Model, Msg(..), Stopwatches(..), TableHeaderButton, TableHeaderWithButton, cell, checkboxCell, deleteButton, deleteNumberCheckerEntryButtonCell, deleteStopwatch, deltaCell, downloadMergedStopwatchData, emptyNumberCell, errorView, flipStopwatches, getHeightAttribute, handleFileDrop, handleNumberCheckerFileDrop, handleStopwatchFileDrop, hasFileAlreadyBeenUploaded, init, initModel, intCell, isPossibleNumberCheckerFile, main, maxNearMatchDistance, mergedStopwatchRow, noNumberCheckerData, numberCheckerRegex, numberCheckerRow, numberCheckerTable, numberCheckerUnderlineAttributes, numberCheckerUnderlineClass, numberCheckerView, stopwatchButtonsContent, stopwatchInfoMessage, stopwatchRow, stopwatchTable, stopwatchesView, subscriptions, tableHeader, tableHeaderWithButtons, tableHeaders, tableHeadersWithButtons, timeCell, toggleTableRow, underlineStopwatches, update, view)
+module ParkrunStopwatch exposing (Model, Msg(..), main, update, view)
 
+import BarcodeScanner exposing (BarcodeScannerData, mergeScannerData, readBarcodeScannerData)
 import Browser
 import DataStructures exposing (WhichStopwatch(..))
 import DateHandling exposing (generateDownloadFilenameDatePart)
+import Dict exposing (Dict)
 import Error exposing (Error)
 import Html exposing (Html, br, button, div, h1, h3, input, label, small, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (checked, class, for, id, style, type_)
@@ -49,6 +51,8 @@ type alias Model =
     , numberCheckerEntries : List AnnotatedNumberCheckerEntry
     , lastHeight : Maybe Int
     , highlightedNumberCheckerId : Maybe Int
+    , barcodeScannerFiles : List String
+    , barcodeScannerData : BarcodeScannerData
     }
 
 
@@ -59,6 +63,8 @@ initModel =
     , numberCheckerEntries = []
     , lastHeight = Nothing
     , highlightedNumberCheckerId = Nothing
+    , barcodeScannerFiles = []
+    , barcodeScannerData = BarcodeScanner.empty
     }
 
 
@@ -186,6 +192,42 @@ handleNumberCheckerFileDrop fileText model =
             }
 
 
+barcodeScannerRegex : Regex
+barcodeScannerRegex =
+    Regex.fromString "^A[0-9]+,P[0-9]+"
+        |> Maybe.withDefault Regex.never
+
+
+isPossibleBarcodeScannerFile : String -> Bool
+isPossibleBarcodeScannerFile fileText =
+    Regex.contains barcodeScannerRegex fileText
+
+
+handleBarcodeScannerFileDrop : String -> String -> Model -> Model
+handleBarcodeScannerFileDrop fileName fileText model =
+    if List.member fileName model.barcodeScannerFiles then
+        { model
+            | lastError = Just "That barcode scanner file has already been loaded"
+        }
+
+    else
+        let
+            result : Result Error BarcodeScannerData
+            result =
+                readBarcodeScannerData fileText
+        in
+        case result of
+            Ok scannerData ->
+                { model
+                    | barcodeScannerFiles = fileName :: model.barcodeScannerFiles
+                    , barcodeScannerData = mergeScannerData model.barcodeScannerData scannerData
+                    , lastError = Nothing
+                }
+
+            Err error ->
+                { model | lastError = Just error.message }
+
+
 handleFileDrop : String -> String -> Model -> Model
 handleFileDrop fileName fileText model =
     if String.contains "STARTOFEVENT" fileText then
@@ -193,6 +235,9 @@ handleFileDrop fileName fileText model =
 
     else if isPossibleNumberCheckerFile fileText then
         handleNumberCheckerFileDrop fileText model
+
+    else if isPossibleBarcodeScannerFile fileText then
+        handleBarcodeScannerFileDrop fileName fileText model
 
     else
         { model
@@ -383,7 +428,7 @@ errorView maybeString =
     case maybeString of
         Just string ->
             div [ class "alert alert-danger" ]
-                [ text ("Unable to read in the stopwatch data: " ++ string) ]
+                [ text ("Unable to read in the dropped file: " ++ string) ]
 
         Nothing ->
             text ""
@@ -476,11 +521,27 @@ deltaCell delta =
         td [ class "nonzero-delta" ] [ text stringDelta ]
 
 
-stopwatchRow : Int -> Int -> Html a
-stopwatchRow index time =
+emptyBarcodeScannerCell : Html a
+emptyBarcodeScannerCell =
+    td [ class "no-scanned-athlete" ] [ text "−" ]
+
+
+barcodeScannerCell : BarcodeScannerData -> Int -> Html a
+barcodeScannerCell barcodeScannerData position =
+    case Dict.get position barcodeScannerData.scannedBarcodes of
+        Just athletes ->
+            td [ class "scanned-athlete" ] [ text (String.join ", " athletes) ]
+
+        Nothing ->
+            emptyBarcodeScannerCell
+
+
+stopwatchRow : BarcodeScannerData -> Int -> Int -> Html a
+stopwatchRow barcodeScannerData index time =
     tr []
         [ cell (String.fromInt (index + 1)) Nothing Nothing
         , cell (formatTime time) Nothing Nothing
+        , barcodeScannerCell barcodeScannerData (index + 1)
         ]
 
 
@@ -534,8 +595,8 @@ checkboxCell time index included numberCheckerId highlightedNumberCheckerId =
         ]
 
 
-mergedStopwatchRow : Maybe Int -> MergedTableRow -> Html Msg
-mergedStopwatchRow highlightedNumberCheckerId row =
+mergedStopwatchRow : Maybe Int -> BarcodeScannerData -> MergedTableRow -> Html Msg
+mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData row =
     let
         indexCell =
             case row.rowNumber of
@@ -544,6 +605,14 @@ mergedStopwatchRow highlightedNumberCheckerId row =
 
                 Nothing ->
                     emptyNumberCell
+
+        thisBarcodeScannerCell =
+            case row.rowNumber of
+                Just num ->
+                    barcodeScannerCell barcodeScannerData num
+
+                Nothing ->
+                    emptyBarcodeScannerCell
     in
     case row.entry of
         ExactMatch time ->
@@ -552,6 +621,7 @@ mergedStopwatchRow highlightedNumberCheckerId row =
                 [ indexCell
                 , timeCell "exact-match" time row.underlines.stopwatch1 highlightedNumberCheckerId
                 , timeCell "exact-match" time row.underlines.stopwatch2 highlightedNumberCheckerId
+                , thisBarcodeScannerCell
                 ]
 
         NearMatch time1 time2 ->
@@ -560,6 +630,7 @@ mergedStopwatchRow highlightedNumberCheckerId row =
                 [ indexCell
                 , timeCell "near-match" time1 row.underlines.stopwatch1 highlightedNumberCheckerId
                 , timeCell "near-match" time2 row.underlines.stopwatch2 highlightedNumberCheckerId
+                , thisBarcodeScannerCell
                 ]
 
         OneWatchOnly StopwatchOne time1 ->
@@ -568,6 +639,7 @@ mergedStopwatchRow highlightedNumberCheckerId row =
                 [ indexCell
                 , checkboxCell time1 row.index row.included row.underlines.stopwatch1 highlightedNumberCheckerId
                 , cell "" Nothing Nothing
+                , thisBarcodeScannerCell
                 ]
 
         OneWatchOnly StopwatchTwo time2 ->
@@ -576,6 +648,7 @@ mergedStopwatchRow highlightedNumberCheckerId row =
                 [ indexCell
                 , cell "" Nothing Nothing
                 , checkboxCell time2 row.index row.included row.underlines.stopwatch2 highlightedNumberCheckerId
+                , thisBarcodeScannerCell
                 ]
 
 
@@ -649,8 +722,8 @@ tableHeadersWithButtons headerTexts =
         ]
 
 
-stopwatchTable : Stopwatches -> Maybe Int -> Html Msg
-stopwatchTable stopwatches highlightedNumberCheckerId =
+stopwatchTable : Stopwatches -> BarcodeScannerData -> Maybe Int -> Html Msg
+stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
     case stopwatches of
         None ->
             text ""
@@ -661,8 +734,9 @@ stopwatchTable stopwatches highlightedNumberCheckerId =
                 [ tableHeadersWithButtons
                     [ TableHeaderWithButton "Position" Nothing
                     , TableHeaderWithButton "Stopwatch 1" (deleteButton StopwatchOne)
+                    , TableHeaderWithButton "Athletes" Nothing
                     ]
-                , tbody [] (List.indexedMap stopwatchRow stopwatchTimes)
+                , tbody [] (List.indexedMap (stopwatchRow barcodeScannerData) stopwatchTimes)
                 ]
 
         Double _ _ mergedTable ->
@@ -672,10 +746,11 @@ stopwatchTable stopwatches highlightedNumberCheckerId =
                     [ TableHeaderWithButton "Position" Nothing
                     , TableHeaderWithButton "Stopwatch 1" (deleteButton StopwatchOne)
                     , TableHeaderWithButton "Stopwatch 2" (deleteButton StopwatchTwo)
+                    , TableHeaderWithButton "Athletes" Nothing
                     ]
                 , tbody
                     []
-                    (List.map (mergedStopwatchRow highlightedNumberCheckerId) mergedTable)
+                    (List.map (mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData) mergedTable)
                 ]
 
 
@@ -720,12 +795,12 @@ getHeightAttribute lastHeight =
             []
 
 
-stopwatchesView : Stopwatches -> Maybe Int -> Maybe Int -> Html Msg
-stopwatchesView stopwatches lastHeight highlightedNumberCheckerId =
+stopwatchesView : Stopwatches -> BarcodeScannerData -> Maybe Int -> Maybe Int -> Html Msg
+stopwatchesView stopwatches barcodeScannerData lastHeight highlightedNumberCheckerId =
     div (class "stopwatch-view" :: getHeightAttribute lastHeight)
         [ h3 [] [ text "Stopwatches" ]
         , stopwatchInfoMessage stopwatches
-        , stopwatchTable stopwatches highlightedNumberCheckerId
+        , stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId
         , div [ class "stopwatch-buttons" ] (stopwatchButtonsContent stopwatches)
         ]
 
@@ -782,6 +857,6 @@ view model =
         []
         [ h1 [ id "header" ] [ text "Parkrun stopwatch comparison/merging" ]
         , errorView model.lastError
-        , stopwatchesView model.stopwatches model.lastHeight model.highlightedNumberCheckerId
+        , stopwatchesView model.stopwatches model.barcodeScannerData model.lastHeight model.highlightedNumberCheckerId
         , numberCheckerView model.numberCheckerEntries model.lastHeight
         ]
