@@ -6,8 +6,8 @@ import DataStructures exposing (WhichStopwatch(..))
 import DateHandling exposing (generateDownloadFilenameDatePart)
 import Dict exposing (Dict)
 import Error exposing (Error)
-import Html exposing (Html, br, button, div, h1, h3, input, label, small, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (checked, class, for, id, style, type_)
+import Html exposing (Html, a, br, button, div, h1, h3, input, label, small, table, tbody, td, text, th, thead, tr)
+import Html.Attributes exposing (checked, class, for, href, id, rel, style, target, type_)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import MergedTable exposing (MergedTableRow, deleteStopwatchFromTable, flipTable, generateInitialTable, outputMergedTable, toggleRowInTable, underlineTable)
 import Merger exposing (MergeEntry(..), merge)
@@ -18,6 +18,11 @@ import Stopwatch exposing (Stopwatch(..), readStopwatchData)
 import Task exposing (Task)
 import Time exposing (Posix, Zone)
 import TimeHandling exposing (formatTime)
+
+
+parkrunUrlResultsPrefix : String
+parkrunUrlResultsPrefix =
+    "http://www.parkrun.org.uk/results/athleteresultshistory/?athleteNumber="
 
 
 maxNearMatchDistance : Int
@@ -538,11 +543,25 @@ emptyBarcodeScannerCell =
     td [ class "no-scanned-athlete" ] [ text "−" ]
 
 
+athleteItem : String -> Html a
+athleteItem athlete =
+    div
+        []
+        [ a
+            [ rel "nofollow"
+            , href (parkrunUrlResultsPrefix ++ String.dropLeft 1 athlete)
+            , target "_blank"
+            ]
+            [ text athlete ]
+        ]
+
+
 barcodeScannerCell : BarcodeScannerData -> Int -> Html a
 barcodeScannerCell barcodeScannerData position =
     case Dict.get position barcodeScannerData.scannedBarcodes of
         Just athletes ->
-            td [ class "scanned-athlete" ] [ text (String.join ", " athletes) ]
+            td [ class "scanned-athlete" ]
+                (List.map athleteItem athletes)
 
         Nothing ->
             emptyBarcodeScannerCell
