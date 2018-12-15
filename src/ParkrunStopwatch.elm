@@ -538,9 +538,9 @@ deltaCell delta =
         td [ class "nonzero-delta" ] [ text stringDelta ]
 
 
-emptyBarcodeScannerCell : Html a
-emptyBarcodeScannerCell =
-    td [ class "no-scanned-athlete" ] [ text "−" ]
+emptyBarcodeScannerCell : Maybe Int -> Maybe Int -> Html a
+emptyBarcodeScannerCell maybeNumberCheckerId highlightedNumberCheckerId =
+    td (numberCheckerUnderlineAttributes (Just "no-scanned-athlete") maybeNumberCheckerId highlightedNumberCheckerId) [ text "−" ]
 
 
 athleteItem : String -> Html a
@@ -556,15 +556,16 @@ athleteItem athlete =
         ]
 
 
-barcodeScannerCell : BarcodeScannerData -> Int -> Html a
-barcodeScannerCell barcodeScannerData position =
+barcodeScannerCell : BarcodeScannerData -> Int -> Maybe Int -> Maybe Int -> Html a
+barcodeScannerCell barcodeScannerData position numberCheckerId highlightedNumberCheckerId =
     case Dict.get position barcodeScannerData.scannedBarcodes of
         Just athletes ->
-            td [ class "scanned-athlete" ]
+            td
+                (numberCheckerUnderlineAttributes (Just "scanned-athlete") numberCheckerId highlightedNumberCheckerId)
                 (List.map athleteItem athletes)
 
         Nothing ->
-            emptyBarcodeScannerCell
+            emptyBarcodeScannerCell numberCheckerId highlightedNumberCheckerId
 
 
 stopwatchRow : BarcodeScannerData -> Int -> Int -> Html a
@@ -572,7 +573,7 @@ stopwatchRow barcodeScannerData index time =
     tr []
         [ cell (String.fromInt (index + 1)) Nothing Nothing
         , cell (formatTime time) Nothing Nothing
-        , barcodeScannerCell barcodeScannerData (index + 1)
+        , barcodeScannerCell barcodeScannerData (index + 1) Nothing Nothing
         ]
 
 
@@ -629,6 +630,7 @@ checkboxCell time index included numberCheckerId highlightedNumberCheckerId =
 mergedStopwatchRow : Maybe Int -> BarcodeScannerData -> MergedTableRow -> Html Msg
 mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData row =
     let
+        indexCell : Html Msg
         indexCell =
             case row.rowNumber of
                 Just num ->
@@ -637,13 +639,14 @@ mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData row =
                 Nothing ->
                     emptyNumberCell
 
+        thisBarcodeScannerCell : Html Msg
         thisBarcodeScannerCell =
             case row.rowNumber of
                 Just num ->
-                    barcodeScannerCell barcodeScannerData num
+                    barcodeScannerCell barcodeScannerData num row.underlines.position highlightedNumberCheckerId
 
                 Nothing ->
-                    emptyBarcodeScannerCell
+                    emptyBarcodeScannerCell Nothing Nothing
     in
     case row.entry of
         ExactMatch time ->
