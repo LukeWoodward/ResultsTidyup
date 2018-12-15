@@ -78,6 +78,7 @@ type Msg
     | ToggleTableRow Int
     | DeleteStopwatch WhichStopwatch
     | FlipStopwatches
+    | ClearBarcodeScannerData
     | GetCurrentDateForDownloadFile
     | DownloadMergedStopwatchData Zone Posix
     | ContainerHeightChanged Int
@@ -319,6 +320,14 @@ flipStopwatches model =
             }
 
 
+clearBarcodeScannerData : Model -> Model
+clearBarcodeScannerData model =
+    { model
+        | barcodeScannerData = BarcodeScanner.empty
+        , barcodeScannerFiles = []
+    }
+
+
 downloadMergedStopwatchData : Zone -> Posix -> Model -> ( Model, Cmd Msg )
 downloadMergedStopwatchData zone time model =
     case model.stopwatches of
@@ -359,6 +368,9 @@ update msg model =
 
         FlipStopwatches ->
             ( flipStopwatches model, Cmd.none )
+
+        ClearBarcodeScannerData ->
+            ( clearBarcodeScannerData model, Cmd.none )
 
         GetCurrentDateForDownloadFile ->
             ( model
@@ -669,11 +681,19 @@ type alias TableHeaderWithButton =
     }
 
 
-deleteButton : WhichStopwatch -> Maybe TableHeaderButton
-deleteButton which =
+deleteStopwatchButton : WhichStopwatch -> Maybe TableHeaderButton
+deleteStopwatchButton which =
     Just
         { change = DeleteStopwatch which
         , buttonText = "Delete "
+        }
+
+
+clearBarcodeScannerButton : Maybe TableHeaderButton
+clearBarcodeScannerButton =
+    Just
+        { change = ClearBarcodeScannerData
+        , buttonText = "Clear"
         }
 
 
@@ -733,8 +753,8 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                 [ class "table table-condensed table-bordered stopwatch-times" ]
                 [ tableHeadersWithButtons
                     [ TableHeaderWithButton "Position" Nothing
-                    , TableHeaderWithButton "Stopwatch 1" (deleteButton StopwatchOne)
-                    , TableHeaderWithButton "Athletes" Nothing
+                    , TableHeaderWithButton "Stopwatch 1" (deleteStopwatchButton StopwatchOne)
+                    , TableHeaderWithButton "Athletes" clearBarcodeScannerButton
                     ]
                 , tbody [] (List.indexedMap (stopwatchRow barcodeScannerData) stopwatchTimes)
                 ]
@@ -744,9 +764,9 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                 [ class "table table-condensed table-bordered stopwatch-times" ]
                 [ tableHeadersWithButtons
                     [ TableHeaderWithButton "Position" Nothing
-                    , TableHeaderWithButton "Stopwatch 1" (deleteButton StopwatchOne)
-                    , TableHeaderWithButton "Stopwatch 2" (deleteButton StopwatchTwo)
-                    , TableHeaderWithButton "Athletes" Nothing
+                    , TableHeaderWithButton "Stopwatch 1" (deleteStopwatchButton StopwatchOne)
+                    , TableHeaderWithButton "Stopwatch 2" (deleteStopwatchButton StopwatchTwo)
+                    , TableHeaderWithButton "Athletes" clearBarcodeScannerButton
                     ]
                 , tbody
                     []
