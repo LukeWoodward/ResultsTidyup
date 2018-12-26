@@ -1,4 +1,4 @@
-module ParkrunStopwatch exposing (Model, Msg(..), main, update, view)
+module ParkrunStopwatch exposing (Model, main, update, view)
 
 import BarcodeScanner exposing (BarcodeScannerData, mergeScannerData, readBarcodeScannerData)
 import Browser
@@ -6,14 +6,16 @@ import DataStructures exposing (WhichStopwatch(..))
 import DateHandling exposing (generateDownloadFilenameDatePart)
 import Dict exposing (Dict)
 import Error exposing (Error)
-import Html exposing (Html, a, br, button, div, h1, h3, h4, input, label, small, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, a, br, button, div, h1, h3, input, label, small, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (checked, class, for, href, id, rel, style, target, type_)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import MergedTable exposing (MergedTableRow, Stopwatches(..), deleteStopwatchFromTable, flipTable, generateInitialTable, outputMergedTable, toggleRowInTable, underlineTable)
 import Merger exposing (MergeEntry(..), merge)
+import Msg exposing (Msg(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, annotate, parseNumberCheckerFile)
 import Ports exposing (InteropFile, downloadMergedTimesToFile, fileDrop, getInitialHeight, heightUpdated)
-import Problems exposing (MinorProblem, Problem, ProblemsContainer, identifyProblems, minorProblemToString, problemToString)
+import Problems exposing (ProblemsContainer, identifyProblems)
+import ProblemsView exposing (problemsView)
 import Regex exposing (Regex)
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
 import Task exposing (Task)
@@ -73,20 +75,6 @@ initModel =
 init : ( Model, Cmd Msg )
 init =
     ( initModel, getInitialHeight () )
-
-
-type Msg
-    = FileDropped InteropFile
-    | ToggleTableRow Int
-    | DeleteStopwatch WhichStopwatch
-    | FlipStopwatches
-    | ClearBarcodeScannerData
-    | GetCurrentDateForDownloadFile
-    | DownloadMergedStopwatchData Zone Posix
-    | ContainerHeightChanged Int
-    | MouseEnterNumberCheckerRow Int
-    | MouseLeaveNumberCheckerRow Int
-    | DeleteNumberCheckerRow Int
 
 
 hasFileAlreadyBeenUploaded : String -> Stopwatches -> Bool
@@ -903,62 +891,6 @@ numberCheckerView entries lastHeight =
 
           else
             numberCheckerTable entries
-        ]
-
-
-problemView : Problem -> Html Msg
-problemView problem =
-    div [] [ text (problemToString problem) ]
-
-
-majorProblemsView : List Problem -> Html Msg
-majorProblemsView problems =
-    if List.isEmpty problems then
-        div [] []
-
-    else
-        let
-            problemsHeader : String
-            problemsHeader =
-                if List.length problems == 1 then
-                    "The following problem was found:"
-
-                else
-                    "The following problems were found:"
-        in
-        div [ class "alert alert-danger" ]
-            (h4 [] [ text problemsHeader ] :: List.map problemView problems)
-
-
-minorProblemView : MinorProblem -> Html Msg
-minorProblemView minorProblem =
-    div [] [ text (minorProblemToString minorProblem) ]
-
-
-minorProblemsView : List MinorProblem -> Html Msg
-minorProblemsView minorProblems =
-    if List.isEmpty minorProblems then
-        div [] []
-
-    else
-        let
-            minorProblemsHeader : String
-            minorProblemsHeader =
-                if List.length minorProblems == 1 then
-                    "The following minor problem was found:"
-
-                else
-                    "The following minor problems were found:"
-        in
-        div [ class "alert alert-warning" ]
-            (h4 [] [ text minorProblemsHeader ] :: List.map minorProblemView minorProblems)
-
-
-problemsView : ProblemsContainer -> Html Msg
-problemsView problems =
-    div []
-        [ majorProblemsView problems.problems
-        , minorProblemsView problems.minorProblems
         ]
 
 
