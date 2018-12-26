@@ -8,11 +8,12 @@ import Dict exposing (Dict)
 import Error exposing (Error)
 import Html exposing (Html, a, br, button, div, h1, h3, input, label, small, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (checked, class, for, href, id, rel, style, target, type_)
-import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
+import Html.Events exposing (onClick)
 import MergedTable exposing (MergedTableRow, Stopwatches(..), deleteStopwatchFromTable, flipTable, generateInitialTable, outputMergedTable, toggleRowInTable, underlineTable)
 import Merger exposing (MergeEntry(..), merge)
 import Msg exposing (Msg(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, annotate, parseNumberCheckerFile)
+import NumberCheckerView exposing (numberCheckerView)
 import Ports exposing (InteropFile, downloadMergedTimesToFile, fileDrop, getInitialHeight, heightUpdated)
 import Problems exposing (ProblemsContainer, identifyProblems)
 import ProblemsView exposing (problemsView)
@@ -21,6 +22,7 @@ import Stopwatch exposing (Stopwatch(..), readStopwatchData)
 import Task exposing (Task)
 import Time exposing (Posix, Zone)
 import TimeHandling exposing (formatTime)
+import ViewCommon exposing (intCell, plainCell, tableHeaders)
 
 
 parkrunUrlResultsPrefix : String
@@ -510,32 +512,9 @@ cell contents numberCheckerId highlightedNumberCheckerId =
     td (numberCheckerUnderlineAttributes Nothing numberCheckerId highlightedNumberCheckerId) [ text contents ]
 
 
-intCell : Int -> Html a
-intCell contents =
-    cell (String.fromInt contents) Nothing Nothing
-
-
 timeCell : String -> Int -> Maybe Int -> Maybe Int -> Html a
 timeCell className time numberCheckerId highlightedNumberCheckerId =
     td (numberCheckerUnderlineAttributes (Just className) numberCheckerId highlightedNumberCheckerId) [ text (formatTime time) ]
-
-
-deltaCell : Int -> Html a
-deltaCell delta =
-    if delta == 0 then
-        td [ class "zero-delta" ] [ text "0" ]
-
-    else
-        let
-            stringDelta : String
-            stringDelta =
-                if delta > 0 then
-                    "+" ++ String.fromInt delta
-
-                else
-                    "−" ++ String.fromInt -delta
-        in
-        td [ class "nonzero-delta" ] [ text stringDelta ]
 
 
 emptyBarcodeScannerCell : Maybe Int -> Maybe Int -> Html a
@@ -571,22 +550,9 @@ barcodeScannerCell barcodeScannerData position numberCheckerId highlightedNumber
 stopwatchRow : BarcodeScannerData -> Int -> Int -> Html a
 stopwatchRow barcodeScannerData index time =
     tr []
-        [ cell (String.fromInt (index + 1)) Nothing Nothing
-        , cell (formatTime time) Nothing Nothing
+        [ intCell (index + 1)
+        , plainCell (formatTime time)
         , barcodeScannerCell barcodeScannerData (index + 1) Nothing Nothing
-        ]
-
-
-deleteNumberCheckerEntryButtonCell : Int -> Html Msg
-deleteNumberCheckerEntryButtonCell entryNumber =
-    td
-        [ class "delete-button-cell" ]
-        [ button
-            [ type_ "button"
-            , class "btn btn-primary btn-xs"
-            , onClick (DeleteNumberCheckerRow entryNumber)
-            ]
-            [ text "Delete " ]
         ]
 
 
@@ -672,7 +638,7 @@ mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData row =
                 []
                 [ indexCell
                 , checkboxCell time1 row.index row.included row.underlines.stopwatch1 highlightedNumberCheckerId
-                , cell "" Nothing Nothing
+                , plainCell ""
                 , thisBarcodeScannerCell
                 ]
 
@@ -680,15 +646,10 @@ mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData row =
             tr
                 []
                 [ indexCell
-                , cell "" Nothing Nothing
+                , plainCell ""
                 , checkboxCell time2 row.index row.included row.underlines.stopwatch2 highlightedNumberCheckerId
                 , thisBarcodeScannerCell
                 ]
-
-
-tableHeader : String -> Html a
-tableHeader headerText =
-    th [] [ text headerText ]
 
 
 type alias TableHeaderButton =
@@ -742,16 +703,6 @@ tableHeaderWithButtons { headerText, buttonData } =
 
         Nothing ->
             th [] [ textElement ]
-
-
-tableHeaders : List String -> Html a
-tableHeaders headerTexts =
-    thead
-        []
-        [ tr
-            []
-            (List.map tableHeader headerTexts)
-        ]
 
 
 tableHeadersWithButtons : List TableHeaderWithButton -> Html Msg
@@ -845,52 +796,6 @@ stopwatchesView stopwatches barcodeScannerData lastHeight highlightedNumberCheck
         , stopwatchInfoMessage stopwatches
         , stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId
         , div [ class "stopwatch-buttons" ] (stopwatchButtonsContent stopwatches)
-        ]
-
-
-numberCheckerRow : AnnotatedNumberCheckerEntry -> Html Msg
-numberCheckerRow entry =
-    tr
-        [ onMouseEnter (MouseEnterNumberCheckerRow entry.entryNumber)
-        , onMouseLeave (MouseLeaveNumberCheckerRow entry.entryNumber)
-        ]
-        [ intCell entry.stopwatch1
-        , deltaCell entry.stopwatch1Delta
-        , intCell entry.stopwatch2
-        , deltaCell entry.stopwatch2Delta
-        , intCell entry.finishTokens
-        , deltaCell entry.finishTokensDelta
-        , deleteNumberCheckerEntryButtonCell entry.entryNumber
-        ]
-
-
-noNumberCheckerData : Html a
-noNumberCheckerData =
-    div [ class "alert alert-info" ]
-        [ text "No number-checker data has been loaded" ]
-
-
-numberCheckerTable : List AnnotatedNumberCheckerEntry -> Html Msg
-numberCheckerTable entries =
-    table
-        [ class "table table-bordered table-hover number-checker-table" ]
-        [ tableHeaders [ "Stopwatch 1", "+/−", "Stopwatch 2", "+/−", "Finish tokens", "+/−", "" ]
-        , tbody
-            []
-            (List.map numberCheckerRow entries)
-        ]
-
-
-numberCheckerView : List AnnotatedNumberCheckerEntry -> Maybe Int -> Html Msg
-numberCheckerView entries lastHeight =
-    div
-        []
-        [ h3 [] [ text "Number checker" ]
-        , if List.isEmpty entries then
-            noNumberCheckerData
-
-          else
-            numberCheckerTable entries
         ]
 
 
