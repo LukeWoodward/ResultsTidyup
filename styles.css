@@ -10,15 +10,6 @@ td.mismatch {
     background-color: #ffcccc;
 }
 
-div.stopwatch-view, div.number-checker-view {
-    float: left;
-    overflow: auto;
-}
-
-div.number-checker-view {
-    margin-left: 50px;
-}
-
 table.table.stopwatch-times {
     float: left;
 }
@@ -67,7 +58,7 @@ td.empty-cell {
 }
 
 .table-bordered > tbody > tr > td.underlined.highlighted {
-    border-bottom: 10px solid black;
+    border-bottom: 5px solid red;
 }
 
 td.zero-delta {

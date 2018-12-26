@@ -1,5 +1,6 @@
 module MergedTable exposing
     ( MergedTableRow
+    , Stopwatches(..)
     , Underlines
     , deleteStopwatchFromTable
     , flipTable
@@ -15,6 +16,12 @@ import Dict exposing (Dict)
 import Merger exposing (MergeEntry(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import TimeHandling exposing (formatTimeWithHours)
+
+
+type Stopwatches
+    = None
+    | Single String (List Int)
+    | Double String String (List MergedTableRow)
 
 
 type alias Underlines =
