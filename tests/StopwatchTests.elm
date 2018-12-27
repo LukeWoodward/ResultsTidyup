@@ -1,4 +1,4 @@
-module StopwatchTests exposing (suite)
+module StopwatchTests exposing (expectedParsedSampleData, sampleData, suite)
 
 import Errors exposing (expectError)
 import Expect
