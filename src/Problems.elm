@@ -259,7 +259,7 @@ problemToString problem =
             "Multiple athletes are recorded as having finished in position " ++ String.fromInt position ++ ": " ++ String.join ", " athletes
 
         PositionOffEndOfTimes numberOfTimes maxPosition ->
-            "The highest barcode scanned was " ++ String.fromInt maxPosition ++ " but there are only " ++ String.fromInt numberOfTimes ++ " times recorded on the stopwatch(es)"
+            "The highest finish token scanned was " ++ String.fromInt maxPosition ++ " but there are only " ++ String.fromInt numberOfTimes ++ " times recorded on the stopwatch(es)"
 
         AthleteMissingPosition athlete ->
             "Athlete " ++ athlete ++ " has no associated finish token"
