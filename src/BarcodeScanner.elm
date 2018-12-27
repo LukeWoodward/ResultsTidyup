@@ -1,4 +1,4 @@
-module BarcodeScanner exposing (BarcodeScannerData, empty, mergeScannerData, readBarcodeScannerData)
+module BarcodeScanner exposing (BarcodeScannerData, empty, isEmpty, maxFinishToken, mergeScannerData, readBarcodeScannerData)
 
 import Dict exposing (Dict)
 import Error exposing (Error)
@@ -23,6 +23,13 @@ type BarcodeScannerEntry
 empty : BarcodeScannerData
 empty =
     BarcodeScannerData Dict.empty [] []
+
+
+isEmpty : BarcodeScannerData -> Bool
+isEmpty barcodeScannerData =
+    Dict.isEmpty barcodeScannerData.scannedBarcodes
+        && List.isEmpty barcodeScannerData.athleteBarcodesOnly
+        && List.isEmpty barcodeScannerData.finishTokensOnly
 
 
 athleteRegex : Regex
@@ -188,3 +195,9 @@ readBarcodeScannerData text =
             |> Result.Extra.combine
             |> Result.andThen failIfNoResults
             |> Result.map mergeEntries
+
+
+maxFinishToken : BarcodeScannerData -> Maybe Int
+maxFinishToken barcodeScannerData =
+    Dict.keys barcodeScannerData.scannedBarcodes
+        |> List.maximum

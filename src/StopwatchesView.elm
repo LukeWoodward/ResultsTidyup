@@ -1,6 +1,6 @@
 module StopwatchesView exposing (stopwatchesView)
 
-import BarcodeScanner exposing (BarcodeScannerData)
+import BarcodeScanner exposing (BarcodeScannerData, isEmpty, maxFinishToken)
 import DataStructures exposing (WhichStopwatch(..))
 import Dict exposing (Dict)
 import Html exposing (Html, a, br, button, div, h3, input, label, small, table, tbody, td, text, th, thead, tr)
@@ -212,11 +212,93 @@ numberCheckerUnderlineAttributes className numberCheckerId highlightedNumberChec
             []
 
 
+rowWithNoStopwatchTime : BarcodeScannerData -> Int -> Int -> Html Msg
+rowWithNoStopwatchTime barcodeScannerData blankTimeColumns position =
+    let
+        cells : List (Html Msg)
+        cells =
+            [ intCell position ]
+                ++ List.repeat blankTimeColumns (plainCell "")
+                ++ [ barcodeScannerCell barcodeScannerData position Nothing Nothing ]
+    in
+    tr [] cells
+
+
+noStopwatchTableBody : BarcodeScannerData -> Html Msg
+noStopwatchTableBody barcodeScannerData =
+    let
+        maxPosition : Int
+        maxPosition =
+            maxFinishToken barcodeScannerData
+                |> Maybe.withDefault 0
+    in
+    List.range 1 maxPosition
+        |> List.map (rowWithNoStopwatchTime barcodeScannerData 0)
+        |> tbody []
+
+
+singleStopwatchTableBody : List Int -> BarcodeScannerData -> Html Msg
+singleStopwatchTableBody stopwatchTimes barcodeScannerData =
+    let
+        maxPosition : Int
+        maxPosition =
+            maxFinishToken barcodeScannerData
+                |> Maybe.withDefault 0
+
+        rowsWithStopwatches : List (Html Msg)
+        rowsWithStopwatches =
+            List.indexedMap (stopwatchRow barcodeScannerData) stopwatchTimes
+
+        additionalRows : List (Html Msg)
+        additionalRows =
+            List.range (List.length stopwatchTimes + 1) maxPosition
+                |> List.map (rowWithNoStopwatchTime barcodeScannerData 1)
+    in
+    tbody [] (rowsWithStopwatches ++ additionalRows)
+
+
+mergedTableBody : Maybe Int -> BarcodeScannerData -> List MergedTableRow -> Html Msg
+mergedTableBody highlightedNumberCheckerId barcodeScannerData mergedTable =
+    let
+        maxPosition : Int
+        maxPosition =
+            maxFinishToken barcodeScannerData
+                |> Maybe.withDefault 0
+
+        maxPositionFromStopwatches : Int
+        maxPositionFromStopwatches =
+            List.filterMap .rowNumber mergedTable
+                |> List.maximum
+                |> Maybe.withDefault 0
+
+        rowsWithStopwatches : List (Html Msg)
+        rowsWithStopwatches =
+            List.map (mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData) mergedTable
+
+        additionalRows : List (Html Msg)
+        additionalRows =
+            List.range (maxPositionFromStopwatches + 1) maxPosition
+                |> List.map (rowWithNoStopwatchTime barcodeScannerData 2)
+    in
+    tbody [] (rowsWithStopwatches ++ additionalRows)
+
+
 stopwatchTable : Stopwatches -> BarcodeScannerData -> Maybe Int -> Html Msg
 stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
     case stopwatches of
         None ->
-            text ""
+            if isEmpty barcodeScannerData then
+                text ""
+
+            else
+                table
+                    [ class "table table-condensed table-bordered stopwatch-times" ]
+                    [ tableHeadersWithButtons
+                        [ TableHeaderWithButton "Position" Nothing
+                        , TableHeaderWithButton "Athletes" clearBarcodeScannerButton
+                        ]
+                    , noStopwatchTableBody barcodeScannerData
+                    ]
 
         Single _ stopwatchTimes ->
             table
@@ -226,7 +308,7 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                     , TableHeaderWithButton "Stopwatch 1" (deleteStopwatchButton StopwatchOne)
                     , TableHeaderWithButton "Athletes" clearBarcodeScannerButton
                     ]
-                , tbody [] (List.indexedMap (stopwatchRow barcodeScannerData) stopwatchTimes)
+                , singleStopwatchTableBody stopwatchTimes barcodeScannerData
                 ]
 
         Double _ _ mergedTable ->
@@ -238,9 +320,7 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                     , TableHeaderWithButton "Stopwatch 2" (deleteStopwatchButton StopwatchTwo)
                     , TableHeaderWithButton "Athletes" clearBarcodeScannerButton
                     ]
-                , tbody
-                    []
-                    (List.map (mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData) mergedTable)
+                , mergedTableBody highlightedNumberCheckerId barcodeScannerData mergedTable
                 ]
 
 

@@ -1,6 +1,6 @@
 module BarcodeScannerTests exposing (suite)
 
-import BarcodeScanner exposing (BarcodeScannerData, readBarcodeScannerData)
+import BarcodeScanner exposing (BarcodeScannerData, empty, isEmpty, maxFinishToken, readBarcodeScannerData)
 import Dict exposing (Dict)
 import Errors exposing (expectError)
 import Expect
@@ -11,7 +11,25 @@ import Test exposing (Test, describe, test)
 suite : Test
 suite =
     describe "BarcodeScanner tests"
-        [ describe "readBarcodeScannerData tests"
+        [ describe "emptiness tests"
+            [ test "Empty data is empty" <|
+                \() ->
+                    isEmpty empty
+                        |> Expect.true "Empty data is empty"
+            , test "Data with non-empty barcodes scanned should not be empty" <|
+                \() ->
+                    isEmpty (BarcodeScannerData (Dict.singleton 47 [ "A4580442" ]) [] [])
+                        |> Expect.false "Data with non-empty barcodes scanned should not be empty"
+            , test "Data with non-empty athletes-only should not be empty" <|
+                \() ->
+                    isEmpty (BarcodeScannerData Dict.empty [ "A123456" ] [])
+                        |> Expect.false "Data with non-empty athletes-only should not be empty"
+            , test "Data with non-empty finish-tokens-only should not be empty" <|
+                \() ->
+                    isEmpty (BarcodeScannerData Dict.empty [] [ 47 ])
+                        |> Expect.false "Data with non-empty finish-tokens  should not be empty"
+            ]
+        , describe "readBarcodeScannerData tests"
             [ test "readBarcodeScannerData of a valid single-line string with athlete and finish token is valid" <|
                 \() ->
                     readBarcodeScannerData "A4580442,P0047,14/03/2018 09:47:03"
@@ -60,5 +78,19 @@ suite =
                 \() ->
                     readBarcodeScannerData "A4580442,P0000,14/03/2018 09:47:03"
                         |> expectError "INVALID_POSITION_ZERO"
+            ]
+        , describe "maxFinishToken tests"
+            [ test "maxFinishToken of an empty set of barcodes returns Nothing" <|
+                \() ->
+                    maxFinishToken empty
+                        |> Expect.equal Nothing
+            , test "maxFinishToken of a single scanned barcode returns the finish position" <|
+                \() ->
+                    maxFinishToken (BarcodeScannerData (Dict.singleton 47 [ "A4580442" ]) [] [])
+                        |> Expect.equal (Just 47)
+            , test "maxFinishToken of three scanned barcodse returns the maximum finish position" <|
+                \() ->
+                    maxFinishToken (BarcodeScannerData (Dict.fromList [ ( 47, [ "A4580442" ] ), ( 59, [ "A456321" ] ), ( 33, [ "A464631" ] ) ]) [] [])
+                        |> Expect.equal (Just 59)
             ]
         ]
