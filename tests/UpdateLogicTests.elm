@@ -1,6 +1,7 @@
 module UpdateLogicTests exposing (suite)
 
-import BarcodeScanner exposing (BarcodeScannerData)
+import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData)
+import BarcodeScannerTests exposing (createBarcodeScannerData)
 import DataStructures exposing (WhichStopwatch(..))
 import Dict
 import Errors exposing (expectError)
@@ -202,12 +203,12 @@ invalidBarcodeScannerData =
 
 parsedBarcodeScannerData1 : BarcodeScannerData
 parsedBarcodeScannerData1 =
-    BarcodeScannerData (Dict.singleton 47 [ "A4580442" ]) [] []
+    BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] []
 
 
 parsedBarcodeScannerData1And2 : BarcodeScannerData
 parsedBarcodeScannerData1And2 =
-    BarcodeScannerData (Dict.fromList [ ( 47, [ "A4580442" ] ), ( 59, [ "A2044293" ] ) ]) [] []
+    BarcodeScannerData (Dict.fromList [ ( 47, [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ] ), ( 59, [ AthleteAndTimePair "A2044293" "14/03/2018 09:49:44" ] ) ]) [] []
 
 
 validNumberCheckerData : String
@@ -462,7 +463,7 @@ suite =
                         |> Expect.all defaultAssertions
             , test "Clearing barcode scanner data when some to clear clears it" <|
                 \() ->
-                    { initModel | barcodeScannerData = BarcodeScannerData (Dict.singleton 47 [ "A4580484" ]) [ "A123456" ] [ 11 ] }
+                    { initModel | barcodeScannerData = createBarcodeScannerData (Dict.singleton 47 [ "A4580484" ]) [ "A123456" ] [ 11 ] }
                         |> update ClearBarcodeScannerData
                         |> Expect.all defaultAssertions
             ]

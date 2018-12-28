@@ -214,7 +214,8 @@ identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly =
                 |> Maybe.andThen getSingleValue
                 |> Maybe.map (PositionWithAndWithoutAthlete position)
     in
-    List.filterMap getMinorProblemIfSingleAthlete finishTokensOnly
+    finishTokensOnly
+        |> List.filterMap getMinorProblemIfSingleAthlete
 
 
 identifyProblems : Stopwatches -> BarcodeScannerData -> ProblemsContainer
@@ -223,25 +224,34 @@ identifyProblems stopwatches barcodeScannerData =
         positionToAthletesDict : Dict Int (List String)
         positionToAthletesDict =
             barcodeScannerData.scannedBarcodes
+                |> Dict.map (\key athleteAndTimePairs -> List.map .athlete athleteAndTimePairs)
 
         athleteToPositionsDict : Dict String (List Int)
         athleteToPositionsDict =
-            getAthleteToPositionsDict barcodeScannerData.scannedBarcodes
+            getAthleteToPositionsDict positionToAthletesDict
+
+        athleteBarcodesOnly : List String
+        athleteBarcodesOnly =
+            List.map .athlete barcodeScannerData.athleteBarcodesOnly
+
+        finishTokensOnly : List Int
+        finishTokensOnly =
+            List.map .position barcodeScannerData.finishTokensOnly
 
         allProblems : List (List Problem)
         allProblems =
             [ identifyAthletesWithMultiplePositions athleteToPositionsDict
             , identifyPositionsWithMultipleAthletes positionToAthletesDict
             , identifyPositionsOffEndOfTimes stopwatches positionToAthletesDict
-            , identifyAthletesWithNoPositions barcodeScannerData.athleteBarcodesOnly athleteToPositionsDict
-            , identifyPositionsWithNoAthletes barcodeScannerData.finishTokensOnly positionToAthletesDict
+            , identifyAthletesWithNoPositions athleteBarcodesOnly athleteToPositionsDict
+            , identifyPositionsWithNoAthletes finishTokensOnly positionToAthletesDict
             ]
 
         allMinorProblems : List (List MinorProblem)
         allMinorProblems =
             [ identifyDuplicateScans positionToAthletesDict
-            , identifyAthletesWithAndWithoutPosition athleteToPositionsDict barcodeScannerData.athleteBarcodesOnly
-            , identifyPositionsWithAndWithoutAthlete positionToAthletesDict barcodeScannerData.finishTokensOnly
+            , identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly
+            , identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly
             ]
     in
     { problems = List.concat allProblems

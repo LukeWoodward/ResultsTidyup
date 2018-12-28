@@ -1,4 +1,4 @@
-module BarcodeScanner exposing (BarcodeScannerData, empty, isEmpty, maxFinishToken, mergeScannerData, readBarcodeScannerData)
+module BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, PositionAndTimePair, empty, isEmpty, maxFinishToken, mergeScannerData, readBarcodeScannerData)
 
 import Dict exposing (Dict)
 import Error exposing (Error)
@@ -7,17 +7,29 @@ import Regex exposing (Regex)
 import Result.Extra
 
 
+type alias AthleteAndTimePair =
+    { athlete : String
+    , scanTime : String
+    }
+
+
+type alias PositionAndTimePair =
+    { position : Int
+    , scanTime : String
+    }
+
+
 type alias BarcodeScannerData =
-    { scannedBarcodes : Dict Int (List String)
-    , athleteBarcodesOnly : List String
-    , finishTokensOnly : List Int
+    { scannedBarcodes : Dict Int (List AthleteAndTimePair)
+    , athleteBarcodesOnly : List AthleteAndTimePair
+    , finishTokensOnly : List PositionAndTimePair
     }
 
 
 type BarcodeScannerEntry
-    = Successful String Int
-    | AthleteOnly String
-    | FinishTokenOnly Int
+    = Successful String Int String
+    | AthleteOnly String String
+    | FinishTokenOnly Int String
 
 
 empty : BarcodeScannerData
@@ -52,7 +64,7 @@ readLine line =
             String.split "," line
     in
     case parts of
-        [ athlete, position, _ ] ->
+        [ athlete, position, time ] ->
             let
                 isAthleteMissing : Bool
                 isAthleteMissing =
@@ -95,7 +107,7 @@ readLine line =
                     |> Err
 
             else if isPositionMissing then
-                Ok (AthleteOnly athlete)
+                Ok (AthleteOnly athlete time)
 
             else
                 case positionNumber of
@@ -105,10 +117,10 @@ readLine line =
 
                     Just pos ->
                         if isAthleteMissing then
-                            Ok (FinishTokenOnly pos)
+                            Ok (FinishTokenOnly pos time)
 
                         else
-                            Ok (Successful athlete pos)
+                            Ok (Successful athlete pos time)
 
                     Nothing ->
                         Error "NON_NUMERIC_POSITION" ("Invalid position record '" ++ position ++ "' found in barcode scanner file")
@@ -122,22 +134,22 @@ readLine line =
 mergeEntry : BarcodeScannerEntry -> BarcodeScannerData -> BarcodeScannerData
 mergeEntry entry barcodeData =
     case entry of
-        Successful athlete pos ->
+        Successful athlete pos time ->
             let
-                updater : Maybe (List String) -> Maybe (List String)
+                updater : Maybe (List AthleteAndTimePair) -> Maybe (List AthleteAndTimePair)
                 updater currentValue =
                     currentValue
                         |> Maybe.withDefault []
-                        |> List.append [ athlete ]
+                        |> List.append [ AthleteAndTimePair athlete time ]
                         |> Just
             in
             { barcodeData | scannedBarcodes = Dict.update pos updater barcodeData.scannedBarcodes }
 
-        AthleteOnly athlete ->
-            { barcodeData | athleteBarcodesOnly = List.append barcodeData.athleteBarcodesOnly [ athlete ] }
+        AthleteOnly athlete time ->
+            { barcodeData | athleteBarcodesOnly = List.append barcodeData.athleteBarcodesOnly [ AthleteAndTimePair athlete time ] }
 
-        FinishTokenOnly finishToken ->
-            { barcodeData | finishTokensOnly = List.append barcodeData.finishTokensOnly [ finishToken ] }
+        FinishTokenOnly finishToken time ->
+            { barcodeData | finishTokensOnly = List.append barcodeData.finishTokensOnly [ PositionAndTimePair finishToken time ] }
 
 
 mergeEntries : List BarcodeScannerEntry -> BarcodeScannerData
@@ -155,20 +167,20 @@ failIfNoResults results =
         Ok results
 
 
-mergeScannerDictEntry : ( Int, List String ) -> Dict Int (List String) -> Dict Int (List String)
-mergeScannerDictEntry ( pos, athletes ) dict =
+mergeScannerDictEntry : ( Int, List AthleteAndTimePair ) -> Dict Int (List AthleteAndTimePair) -> Dict Int (List AthleteAndTimePair)
+mergeScannerDictEntry ( pos, athleteAndTimePairs ) dict =
     let
-        updater : Maybe (List String) -> Maybe (List String)
-        updater currentAthletes =
-            currentAthletes
+        updater : Maybe (List AthleteAndTimePair) -> Maybe (List AthleteAndTimePair)
+        updater currentAthleteAndTimePairs =
+            currentAthleteAndTimePairs
                 |> Maybe.withDefault []
-                |> (\x -> List.append x athletes)
+                |> (\x -> List.append x athleteAndTimePairs)
                 |> Just
     in
     Dict.update pos updater dict
 
 
-mergeScannerDicts : Dict Int (List String) -> Dict Int (List String) -> Dict Int (List String)
+mergeScannerDicts : Dict Int (List AthleteAndTimePair) -> Dict Int (List AthleteAndTimePair) -> Dict Int (List AthleteAndTimePair)
 mergeScannerDicts dict1 dict2 =
     List.foldr mergeScannerDictEntry dict1 (Dict.toList dict2)
 

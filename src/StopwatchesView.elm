@@ -1,6 +1,6 @@
 module StopwatchesView exposing (stopwatchesView)
 
-import BarcodeScanner exposing (BarcodeScannerData, isEmpty, maxFinishToken)
+import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, isEmpty, maxFinishToken)
 import DataStructures exposing (WhichStopwatch(..))
 import Dict exposing (Dict)
 import Html exposing (Html, a, br, button, div, h3, input, label, small, table, tbody, td, text, th, thead, tr)
@@ -33,10 +33,10 @@ type alias TableHeaderWithButton =
 barcodeScannerCell : BarcodeScannerData -> Int -> Maybe Int -> Maybe Int -> Html a
 barcodeScannerCell barcodeScannerData position numberCheckerId highlightedNumberCheckerId =
     case Dict.get position barcodeScannerData.scannedBarcodes of
-        Just athletes ->
+        Just athleteAndTimePairs ->
             td
                 (numberCheckerUnderlineAttributes (Just "scanned-athlete") numberCheckerId highlightedNumberCheckerId)
-                (List.map athleteItem athletes)
+                (List.map athleteItem athleteAndTimePairs)
 
         Nothing ->
             emptyBarcodeScannerCell numberCheckerId highlightedNumberCheckerId
@@ -57,8 +57,12 @@ emptyBarcodeScannerCell maybeNumberCheckerId highlightedNumberCheckerId =
     td (numberCheckerUnderlineAttributes (Just "no-scanned-athlete") maybeNumberCheckerId highlightedNumberCheckerId) [ text "−" ]
 
 
-athleteItem : String -> Html a
-athleteItem athlete =
+athleteItem : AthleteAndTimePair -> Html a
+athleteItem athleteAndTimePair =
+    let
+        athlete =
+            athleteAndTimePair.athlete
+    in
     div
         []
         [ a
