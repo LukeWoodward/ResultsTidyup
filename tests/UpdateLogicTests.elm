@@ -1,7 +1,7 @@
 module UpdateLogicTests exposing (suite)
 
 import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData)
-import BarcodeScannerTests exposing (createBarcodeScannerData)
+import BarcodeScannerTests exposing (createBarcodeScannerData, toPosix)
 import DataStructures exposing (WhichStopwatch(..))
 import Dict
 import Errors exposing (expectError)
@@ -203,12 +203,20 @@ invalidBarcodeScannerData =
 
 parsedBarcodeScannerData1 : BarcodeScannerData
 parsedBarcodeScannerData1 =
-    BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] []
+    BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] [] (toPosix "2018-03-14T09:47:03.000Z")
 
 
 parsedBarcodeScannerData1And2 : BarcodeScannerData
 parsedBarcodeScannerData1And2 =
-    BarcodeScannerData (Dict.fromList [ ( 47, [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ] ), ( 59, [ AthleteAndTimePair "A2044293" "14/03/2018 09:49:44" ] ) ]) [] []
+    BarcodeScannerData
+        (Dict.fromList
+            [ ( 47, [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ] )
+            , ( 59, [ AthleteAndTimePair "A2044293" "14/03/2018 09:49:44" ] )
+            ]
+        )
+        []
+        []
+        (toPosix "2018-03-14T09:49:44.000Z")
 
 
 validNumberCheckerData : String

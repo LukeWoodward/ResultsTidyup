@@ -1,16 +1,38 @@
-module BarcodeScannerTests exposing (createBarcodeScannerData, suite)
+module BarcodeScannerTests exposing (createBarcodeScannerData, suite, toPosix)
 
 import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, PositionAndTimePair, empty, isEmpty, maxFinishToken, readBarcodeScannerData)
 import Dict exposing (Dict)
 import Errors exposing (expectError)
 import Expect
+import Iso8601
 import String.Extra
 import Test exposing (Test, describe, test)
+import Time exposing (Posix)
 
 
 dummyTime : String
 dummyTime =
     "14/03/2018 09:47:53"
+
+
+toPosix : String -> Maybe Posix
+toPosix timeString =
+    let
+        parsedTime : Maybe Posix
+        parsedTime =
+            Iso8601.toTime timeString
+                |> Result.toMaybe
+    in
+    case parsedTime of
+        Just _ ->
+            parsedTime
+
+        Nothing ->
+            let
+                _ =
+                    Debug.log "Warning: time did not parse as ISO-8601 date string" timeString
+            in
+            Nothing
 
 
 createBarcodeScannerData : Dict Int (List String) -> List String -> List Int -> BarcodeScannerData
@@ -28,6 +50,7 @@ createBarcodeScannerData athleteToPositionsDict athleteBarcodesOnly finishTokens
         athletesToPosition
         (List.map wrapAthlete athleteBarcodesOnly)
         (List.map (\position -> PositionAndTimePair position dummyTime) finishTokensOnly)
+        Nothing
 
 
 suite : Test
@@ -55,19 +78,19 @@ suite =
             [ test "readBarcodeScannerData of a valid single-line string with athlete and finish token is valid" <|
                 \() ->
                     readBarcodeScannerData "A4580442,P0047,14/03/2018 09:47:03"
-                        |> Expect.equal (Ok (BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] []))
+                        |> Expect.equal (Ok (BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] [] (toPosix "2018-03-14T09:47:03.000Z")))
             , test "readBarcodeScannerData of a valid single-line string with athlete only is valid" <|
                 \() ->
                     readBarcodeScannerData "A4580442,,14/03/2018 09:47:03"
-                        |> Expect.equal (Ok (BarcodeScannerData Dict.empty [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ] []))
+                        |> Expect.equal (Ok (BarcodeScannerData Dict.empty [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ] [] (toPosix "2018-03-14T09:47:03.000Z")))
             , test "readBarcodeScannerData of a valid single-line string with finish token only is valid" <|
                 \() ->
                     readBarcodeScannerData ",P0047,14/03/2018 09:47:03"
-                        |> Expect.equal (Ok (BarcodeScannerData Dict.empty [] [ PositionAndTimePair 47 "14/03/2018 09:47:03" ]))
-            , test "readBarcodeScannerData of a valid single-line string with athlete and finish token is valid and blank lines is valid" <|
+                        |> Expect.equal (Ok (BarcodeScannerData Dict.empty [] [ PositionAndTimePair 47 "14/03/2018 09:47:03" ] (toPosix "2018-03-14T09:47:03.000Z")))
+            , test "readBarcodeScannerData of a valid single-line string with athlete and finish token and blank lines is valid" <|
                 \() ->
                     readBarcodeScannerData "\n\n\n\n\nA4580442,P0047,14/03/2018 09:47:03\n\n\n\n"
-                        |> Expect.equal (Ok (BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] []))
+                        |> Expect.equal (Ok (BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] [] (toPosix "2018-03-14T09:47:03.000Z")))
             , test "readBarcodeScannerData of a valid multiline string with two different finish tokens is valid" <|
                 \() ->
                     readBarcodeScannerData "A4580442,P0047,14/03/2018 09:47:03\nA1866207,P0047,14/03/2018 09:48:44"
@@ -81,6 +104,7 @@ suite =
                                     )
                                     []
                                     []
+                                    (toPosix "2018-03-14T09:48:44.000Z")
                                 )
                             )
             , test "readBarcodeScannerData of an empty string is not valid" <|

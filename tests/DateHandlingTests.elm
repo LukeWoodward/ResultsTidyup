@@ -1,6 +1,6 @@
 module DateHandlingTests exposing (suite)
 
-import DateHandling exposing (dateStringToPosix, generateDownloadFilenameDatePart)
+import DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart)
 import Errors exposing (expectError)
 import Expect
 import String.Extra
@@ -31,5 +31,11 @@ suite =
                 \() ->
                     dateStringToPosix "This is not a valid date-time"
                         |> Expect.equal Nothing
+            ]
+        , describe "dateToString tests"
+            [ test "Can convert a date into a string" <|
+                \() ->
+                    dateToString (Time.millisToPosix 1500000000000)
+                        |> Expect.equal "14/07/2017"
             ]
         ]

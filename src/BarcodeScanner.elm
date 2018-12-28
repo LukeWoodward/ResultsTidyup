@@ -1,10 +1,12 @@
 module BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, PositionAndTimePair, empty, isEmpty, maxFinishToken, mergeScannerData, readBarcodeScannerData)
 
+import DateHandling exposing (dateStringToPosix)
 import Dict exposing (Dict)
 import Error exposing (Error)
 import FileHandling exposing (isPossibleBinary, splitLines)
 import Regex exposing (Regex)
 import Result.Extra
+import Time exposing (Posix)
 
 
 type alias AthleteAndTimePair =
@@ -23,6 +25,7 @@ type alias BarcodeScannerData =
     { scannedBarcodes : Dict Int (List AthleteAndTimePair)
     , athleteBarcodesOnly : List AthleteAndTimePair
     , finishTokensOnly : List PositionAndTimePair
+    , lastScanDate : Maybe Posix
     }
 
 
@@ -34,7 +37,7 @@ type BarcodeScannerEntry
 
 empty : BarcodeScannerData
 empty =
-    BarcodeScannerData Dict.empty [] []
+    BarcodeScannerData Dict.empty [] [] Nothing
 
 
 isEmpty : BarcodeScannerData -> Bool
@@ -154,7 +157,7 @@ mergeEntry entry barcodeData =
 
 mergeEntries : List BarcodeScannerEntry -> BarcodeScannerData
 mergeEntries scannerEntries =
-    List.foldr mergeEntry (BarcodeScannerData Dict.empty [] []) scannerEntries
+    List.foldr mergeEntry empty scannerEntries
 
 
 failIfNoResults : List a -> Result Error (List a)
@@ -185,12 +188,52 @@ mergeScannerDicts dict1 dict2 =
     List.foldr mergeScannerDictEntry dict1 (Dict.toList dict2)
 
 
+maxDate : Maybe Posix -> Maybe Posix -> Maybe Posix
+maxDate maxDate1 maxDate2 =
+    case ( maxDate1, maxDate2 ) of
+        ( Just date1, Just date2 ) ->
+            max (Time.posixToMillis date1) (Time.posixToMillis date2)
+                |> Time.millisToPosix
+                |> Just
+
+        ( Just date1, Nothing ) ->
+            maxDate1
+
+        ( Nothing, _ ) ->
+            maxDate2
+
+
+withLastScanDate : BarcodeScannerData -> BarcodeScannerData
+withLastScanDate barcodeScannerData =
+    let
+        allTimes : List String
+        allTimes =
+            List.concat
+                [ Dict.values barcodeScannerData.scannedBarcodes
+                    |> List.concat
+                    |> List.map .scanTime
+                , List.map .scanTime barcodeScannerData.athleteBarcodesOnly
+                , List.map .scanTime barcodeScannerData.finishTokensOnly
+                ]
+
+        lastScanDate : Maybe Posix
+        lastScanDate =
+            allTimes
+                |> List.filterMap dateStringToPosix
+                |> List.map Time.posixToMillis
+                |> List.maximum
+                |> Maybe.map Time.millisToPosix
+    in
+    { barcodeScannerData | lastScanDate = lastScanDate }
+
+
 mergeScannerData : BarcodeScannerData -> BarcodeScannerData -> BarcodeScannerData
 mergeScannerData data1 data2 =
     BarcodeScannerData
         (mergeScannerDicts data1.scannedBarcodes data2.scannedBarcodes)
         (data1.athleteBarcodesOnly ++ data2.athleteBarcodesOnly)
         (data1.finishTokensOnly ++ data2.finishTokensOnly)
+        (maxDate data1.lastScanDate data2.lastScanDate)
 
 
 readBarcodeScannerData : String -> Result Error BarcodeScannerData
@@ -207,6 +250,7 @@ readBarcodeScannerData text =
             |> Result.Extra.combine
             |> Result.andThen failIfNoResults
             |> Result.map mergeEntries
+            |> Result.map withLastScanDate
 
 
 maxFinishToken : BarcodeScannerData -> Maybe Int

@@ -1,4 +1,4 @@
-module DateHandling exposing (dateStringToPosix, generateDownloadFilenameDatePart)
+module DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart)
 
 import Iso8601
 import Regex exposing (Regex)
@@ -97,3 +97,13 @@ dateStringToPosix dateString =
 
     else
         Nothing
+
+
+dateToString : Posix -> String
+dateToString time =
+    [ Time.toDay Time.utc time
+    , getMonthNumber Time.utc time
+    , Time.toYear Time.utc time
+    ]
+        |> List.map formatToAtLeastTwoChars
+        |> String.join "/"
