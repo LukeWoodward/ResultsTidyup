@@ -8,7 +8,7 @@ import Errors exposing (expectError)
 import Expect exposing (Expectation)
 import MergedTable exposing (MergedTableRow, Stopwatches(..), noUnderlines)
 import Merger exposing (MergeEntry(..))
-import Model exposing (Model, initModel)
+import Model exposing (EventDateAndTime, Model, initModel)
 import Msg exposing (Msg(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import Ports exposing (InteropFile)
@@ -76,6 +76,11 @@ expectProblems expectedProblems ( model, _ ) =
     Expect.equal expectedProblems model.problems
 
 
+expectEventDateAndTime : EventDateAndTime -> ( Model, Cmd Msg ) -> Expectation
+expectEventDateAndTime expectedEventDateAndTime ( model, _ ) =
+    Expect.equal expectedEventDateAndTime model.eventDateAndTime
+
+
 defaultAssertionsExcept : List String -> List (( Model, Cmd Msg ) -> Expectation)
 defaultAssertionsExcept exceptions =
     let
@@ -126,6 +131,11 @@ defaultAssertionsExcept exceptions =
 
               else
                 Just (expectProblems Problems.empty)
+            , if List.member "eventDateAndTime" exceptions then
+                Nothing
+
+              else
+                Just (expectEventDateAndTime (EventDateAndTime "" Nothing Nothing))
             ]
     in
     List.filterMap identity allMaybeAssertions
@@ -217,6 +227,11 @@ parsedBarcodeScannerData1And2 =
         []
         []
         (toPosix "2018-03-14T09:49:44.000Z")
+
+
+parsedEventDateAndTime : EventDateAndTime
+parsedEventDateAndTime =
+    EventDateAndTime "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z") Nothing
 
 
 validNumberCheckerData : String
@@ -355,7 +370,8 @@ suite =
                             |> Expect.all
                                 (expectBarcodeScannerFiles [ "barcodes1.txt" ]
                                     :: expectBarcodeScannerData parsedBarcodeScannerData1
-                                    :: defaultAssertionsExcept [ "barcodeScannerFiles", "barcodeScannerData" ]
+                                    :: expectEventDateAndTime parsedEventDateAndTime
+                                    :: defaultAssertionsExcept [ "barcodeScannerFiles", "barcodeScannerData", "eventDateAndTime" ]
                                 )
                 , test "Cannot upload a single invalid barcode scanner file" <|
                     \() ->
@@ -371,8 +387,9 @@ suite =
                             |> Expect.all
                                 (expectBarcodeScannerFiles [ "barcodes1.txt" ]
                                     :: expectBarcodeScannerData parsedBarcodeScannerData1
+                                    :: expectEventDateAndTime parsedEventDateAndTime
                                     :: expectLastError "BARCODE_DATA_ALREADY_LOADED"
-                                    :: defaultAssertionsExcept [ "barcodeScannerFiles", "barcodeScannerData", "lastError" ]
+                                    :: defaultAssertionsExcept [ "barcodeScannerFiles", "barcodeScannerData", "lastError", "eventDateAndTime" ]
                                 )
                 , test "Can upload two different barcode scanner files" <|
                     \() ->
@@ -383,7 +400,8 @@ suite =
                             |> Expect.all
                                 (expectBarcodeScannerFiles [ "barcodes1.txt", "barcodes2.txt" ]
                                     :: expectBarcodeScannerData parsedBarcodeScannerData1And2
-                                    :: defaultAssertionsExcept [ "barcodeScannerFiles", "barcodeScannerData" ]
+                                    :: expectEventDateAndTime parsedEventDateAndTime
+                                    :: defaultAssertionsExcept [ "barcodeScannerFiles", "barcodeScannerData", "eventDateAndTime" ]
                                 )
                 ]
             , describe "Number checker file tests"
@@ -600,6 +618,33 @@ suite =
                                 :: expectStopwatches singleStopwatch
                                 :: defaultAssertionsExcept [ "stopwatches", "numberCheckerEntries" ]
                             )
+            ]
+        , describe "Event date changed tests"
+            [ test "Setting a valid date sets the validated date" <|
+                \() ->
+                    update (EventDateChanged "26/05/2018") initModel
+                        |> Expect.all
+                            (expectEventDateAndTime (EventDateAndTime "26/05/2018" (toPosix "2018-05-26T00:00:00.000Z") Nothing)
+                                :: defaultAssertionsExcept [ "eventDateAndTime" ]
+                            )
+            , test "Setting a nonexistent date clears the validated date" <|
+                \() ->
+                    update (EventDateChanged "29/02/2018") initModel
+                        |> Expect.all
+                            (expectEventDateAndTime (EventDateAndTime "29/02/2018" Nothing Nothing)
+                                :: defaultAssertionsExcept [ "eventDateAndTime" ]
+                            )
+            , test "Setting an invalid date clears the validated date" <|
+                \() ->
+                    update (EventDateChanged "This is not a valid date") initModel
+                        |> Expect.all
+                            (expectEventDateAndTime (EventDateAndTime "This is not a valid date" Nothing Nothing)
+                                :: defaultAssertionsExcept [ "eventDateAndTime" ]
+                            )
+            , test "Setting an empty date clears the validated date" <|
+                \() ->
+                    update (EventDateChanged "") initModel
+                        |> Expect.all defaultAssertions
             ]
         ]
 

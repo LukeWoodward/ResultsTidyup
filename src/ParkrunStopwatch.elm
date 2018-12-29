@@ -3,6 +3,7 @@ module ParkrunStopwatch exposing (main)
 import BarcodeScanner exposing (BarcodeScannerData)
 import Browser
 import Error exposing (Error)
+import EventDateAndTimeView exposing (eventDateAndTimeView)
 import Html exposing (Html, div, h1, text)
 import Html.Attributes exposing (class, id, style)
 import MergedTable exposing (Stopwatches(..))
@@ -68,7 +69,9 @@ view model =
         , errorView model.lastError
         , div [ class "row" ]
             [ div (class "col-xs-6" :: getHeightAttribute model.lastHeight)
-                [ stopwatchesView model.stopwatches model.barcodeScannerData model.lastHeight model.highlightedNumberCheckerId ]
+                [ eventDateAndTimeView model.eventDateAndTime
+                , stopwatchesView model.stopwatches model.barcodeScannerData model.lastHeight model.highlightedNumberCheckerId
+                ]
             , div (class "col-xs-6" :: getHeightAttribute model.lastHeight)
                 [ problemsView model.problems
                 , numberCheckerView model.numberCheckerEntries model.lastHeight

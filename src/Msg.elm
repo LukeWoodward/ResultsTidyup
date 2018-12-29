@@ -17,3 +17,4 @@ type Msg
     | MouseEnterNumberCheckerRow Int
     | MouseLeaveNumberCheckerRow Int
     | DeleteNumberCheckerRow Int
+    | EventDateChanged String

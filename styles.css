@@ -90,3 +90,15 @@ th.stopwatch-header {
     padding: 4px;
     vertical-align: middle;
 }
+
+input#eventDateBox {
+    margin-left: 10px;
+}
+
+input#eventDateBox.date-error {
+    background-color: #ffdddd;
+}
+
+input#eventDateBox.date-error:focus {
+    background-color: inherit;
+}

@@ -2,7 +2,7 @@ module UpdateLogic exposing (createFileForDownload, update)
 
 import BarcodeScanner exposing (BarcodeScannerData, mergeScannerData, readBarcodeScannerData)
 import DataStructures exposing (WhichStopwatch(..))
-import DateHandling exposing (generateDownloadFilenameDatePart)
+import DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart)
 import Error exposing (Error)
 import MergedTable
     exposing
@@ -16,7 +16,7 @@ import MergedTable
         , underlineTable
         )
 import Merger exposing (MergeEntry, merge)
-import Model exposing (Model)
+import Model exposing (EventDateAndTime, Model)
 import Msg exposing (Msg(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, annotate, parseNumberCheckerFile)
 import Ports exposing (InteropFile, downloadMergedTimesToFile)
@@ -60,6 +60,51 @@ underlineStopwatches stopwatches numberCheckerEntries =
 
             Double fileName1 fileName2 mergedTable ->
                 Double fileName1 fileName2 (underlineTable numberCheckerEntries mergedTable)
+
+
+handleEventDateChange : String -> Model -> Model
+handleEventDateChange newEventDate model =
+    let
+        newParsedDate : Maybe Posix
+        newParsedDate =
+            newEventDate
+                ++ " 00:00:00"
+                |> dateStringToPosix
+
+        oldEventDateAndTime : EventDateAndTime
+        oldEventDateAndTime =
+            model.eventDateAndTime
+
+        newEventDateAndTime : EventDateAndTime
+        newEventDateAndTime =
+            { oldEventDateAndTime
+                | enteredDate = newEventDate
+                , validatedDate = newParsedDate
+            }
+    in
+    { model | eventDateAndTime = newEventDateAndTime }
+
+
+setEventDateAndTimeIn : Model -> Model
+setEventDateAndTimeIn model =
+    let
+        newEventDate : Maybe String
+        newEventDate =
+            model.barcodeScannerData.lastScanDate
+                |> Maybe.map dateToString
+    in
+    case ( newEventDate, model.eventDateAndTime.validatedDate ) of
+        ( Just _, Just _ ) ->
+            -- Already have an event date so leave it.
+            model
+
+        ( Just newDateString, Nothing ) ->
+            -- We've got an event date now and we didn't before.
+            handleEventDateChange newDateString model
+
+        ( Nothing, _ ) ->
+            -- No event date read so leave things as they were.
+            model
 
 
 identifyProblemsIn : Model -> Model
@@ -189,12 +234,13 @@ handleBarcodeScannerFileDrop fileName fileText model =
         in
         case result of
             Ok scannerData ->
-                identifyProblemsIn
-                    { model
-                        | barcodeScannerFiles = fileName :: model.barcodeScannerFiles
-                        , barcodeScannerData = mergeScannerData model.barcodeScannerData scannerData
-                        , lastError = Nothing
-                    }
+                { model
+                    | barcodeScannerFiles = fileName :: model.barcodeScannerFiles
+                    , barcodeScannerData = mergeScannerData model.barcodeScannerData scannerData
+                    , lastError = Nothing
+                }
+                    |> setEventDateAndTimeIn
+                    |> identifyProblemsIn
 
             Err error ->
                 { model | lastError = Just error }
@@ -402,3 +448,6 @@ update msg model =
 
                 None ->
                     ( { model | numberCheckerEntries = newNumberCheckerEntries }, Cmd.none )
+
+        EventDateChanged newEventDate ->
+            ( handleEventDateChange newEventDate model, Cmd.none )

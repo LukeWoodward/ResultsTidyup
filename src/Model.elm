@@ -1,10 +1,18 @@
-module Model exposing (Model, initModel)
+module Model exposing (EventDateAndTime, Model, initModel)
 
 import BarcodeScanner exposing (BarcodeScannerData)
 import Error exposing (Error)
 import MergedTable exposing (Stopwatches(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import Problems exposing (ProblemsContainer)
+import Time exposing (Posix)
+
+
+type alias EventDateAndTime =
+    { enteredDate : String
+    , validatedDate : Maybe Posix
+    , time : Maybe Int
+    }
 
 
 type alias Model =
@@ -16,6 +24,7 @@ type alias Model =
     , barcodeScannerFiles : List String
     , barcodeScannerData : BarcodeScannerData
     , problems : ProblemsContainer
+    , eventDateAndTime : EventDateAndTime
     }
 
 
@@ -29,4 +38,5 @@ initModel =
     , barcodeScannerFiles = []
     , barcodeScannerData = BarcodeScanner.empty
     , problems = Problems.empty
+    , eventDateAndTime = EventDateAndTime "" Nothing Nothing
     }
