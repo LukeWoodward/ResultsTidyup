@@ -2,7 +2,7 @@ module UpdateLogicTests exposing (suite)
 
 import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData)
 import BarcodeScannerTests exposing (createBarcodeScannerData, expectSingleUnrecognisedLine, toPosix)
-import DataStructures exposing (WhichStopwatch(..))
+import DataStructures exposing (InteropFile, WhichStopwatch(..))
 import Dict
 import Errors exposing (expectError)
 import Expect exposing (Expectation)
@@ -11,7 +11,6 @@ import Merger exposing (MergeEntry(..))
 import Model exposing (EventDateAndTime, Model, initModel)
 import Msg exposing (Msg(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
-import Ports exposing (InteropFile)
 import Problems exposing (Problem(..), ProblemsContainer)
 import Stopwatch exposing (Stopwatch(..))
 import StopwatchTests

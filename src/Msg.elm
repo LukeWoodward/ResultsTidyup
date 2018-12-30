@@ -1,7 +1,6 @@
 module Msg exposing (Msg(..))
 
-import DataStructures exposing (WhichStopwatch(..))
-import Ports exposing (InteropFile)
+import DataStructures exposing (InteropFile, WhichStopwatch(..))
 import Time exposing (Posix, Zone)
 
 

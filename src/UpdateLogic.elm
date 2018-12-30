@@ -1,9 +1,10 @@
 module UpdateLogic exposing (createFileForDownload, update)
 
 import BarcodeScanner exposing (BarcodeScannerData, mergeScannerData, readBarcodeScannerData)
-import DataStructures exposing (WhichStopwatch(..))
+import DataStructures exposing (InteropFile, WhichStopwatch(..))
 import DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart)
 import Error exposing (Error)
+import File.Download as Download
 import MergedTable
     exposing
         ( MergedTableRow
@@ -19,7 +20,6 @@ import Merger exposing (MergeEntry, merge)
 import Model exposing (EventDateAndTime, Model)
 import Msg exposing (Msg(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, annotate, parseNumberCheckerFile)
-import Ports exposing (InteropFile, downloadMergedTimesToFile)
 import Problems exposing (identifyProblems)
 import Regex exposing (Regex)
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
@@ -342,6 +342,11 @@ createFileForDownload zone time mergedTableRows =
             "parkrun_timer_" ++ generateDownloadFilenameDatePart zone time ++ ".txt"
     in
     InteropFile fileName fileContents
+
+
+downloadMergedTimesToFile : InteropFile -> Cmd Msg
+downloadMergedTimesToFile interopFile =
+    Download.string interopFile.fileName "text/csv" interopFile.fileText
 
 
 downloadMergedStopwatchData : Zone -> Posix -> Model -> ( Model, Cmd Msg )
