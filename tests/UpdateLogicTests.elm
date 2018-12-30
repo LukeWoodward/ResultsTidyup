@@ -81,57 +81,70 @@ expectEventDateAndTime expectedEventDateAndTime ( model, _ ) =
     Expect.equal expectedEventDateAndTime model.eventDateAndTime
 
 
-defaultAssertionsExcept : List String -> List (( Model, Cmd Msg ) -> Expectation)
+type Assertion
+    = Command
+    | Stopwatches
+    | LastError
+    | NumberCheckerEntries
+    | LastHeight
+    | HighlightedNumberCheckerId
+    | BarcodeScannerFiles
+    | BarcodeScannerDataAssertion
+    | Problems
+    | EventDateAndTimeAssertion
+
+
+defaultAssertionsExcept : List Assertion -> List (( Model, Cmd Msg ) -> Expectation)
 defaultAssertionsExcept exceptions =
     let
         allMaybeAssertions : List (Maybe (( Model, Cmd Msg ) -> Expectation))
         allMaybeAssertions =
-            [ if List.member "cmd" exceptions then
+            [ if List.member Command exceptions then
                 Nothing
 
               else
                 Just expectNoCommand
-            , if List.member "stopwatches" exceptions then
+            , if List.member Stopwatches exceptions then
                 Nothing
 
               else
                 Just (expectStopwatches None)
-            , if List.member "lastError" exceptions then
+            , if List.member LastError exceptions then
                 Nothing
 
               else
                 Just (\( model, _ ) -> Expect.equal Nothing model.lastError)
-            , if List.member "numberCheckerEntries" exceptions then
+            , if List.member NumberCheckerEntries exceptions then
                 Nothing
 
               else
                 Just (expectNumberCheckerEntries [])
-            , if List.member "lastHeight" exceptions then
+            , if List.member LastHeight exceptions then
                 Nothing
 
               else
                 Just (expectLastHeight Nothing)
-            , if List.member "highlightedNumberCheckerId" exceptions then
+            , if List.member HighlightedNumberCheckerId exceptions then
                 Nothing
 
               else
                 Just (expectHighlightedNumberCheckerId Nothing)
-            , if List.member "barcodeScannerFiles" exceptions then
+            , if List.member BarcodeScannerFiles exceptions then
                 Nothing
 
               else
                 Just (expectBarcodeScannerFiles [])
-            , if List.member "barcodeScannerData" exceptions then
+            , if List.member BarcodeScannerDataAssertion exceptions then
                 Nothing
 
               else
                 Just (expectBarcodeScannerData BarcodeScanner.empty)
-            , if List.member "problems" exceptions then
+            , if List.member Problems exceptions then
                 Nothing
 
               else
                 Just (expectProblems Problems.empty)
-            , if List.member "eventDateAndTime" exceptions then
+            , if List.member EventDateAndTimeAssertion exceptions then
                 Nothing
 
               else
@@ -311,25 +324,25 @@ suite =
                 [ test "Empty file should not match against any type" <|
                     \() ->
                         update (FileDropped (InteropFile "empty.txt" "")) initModel
-                            |> Expect.all (expectLastError "UNRECOGNISED_FILE" :: defaultAssertionsExcept [ "lastError" ])
+                            |> Expect.all (expectLastError "UNRECOGNISED_FILE" :: defaultAssertionsExcept [ LastError ])
                 , test "Binary file should not match against any type" <|
                     \() ->
                         update (FileDropped (InteropFile "binary.txt" "\u{0000}\u{0001}")) initModel
-                            |> Expect.all (expectLastError "UNRECOGNISED_FILE" :: defaultAssertionsExcept [ "lastError" ])
+                            |> Expect.all (expectLastError "UNRECOGNISED_FILE" :: defaultAssertionsExcept [ LastError ])
                 , test "Unrecognised file should not match against any type" <|
                     \() ->
                         update (FileDropped (InteropFile "Unrecognised.txt" "This file contents should not be recognised")) initModel
-                            |> Expect.all (expectLastError "UNRECOGNISED_FILE" :: defaultAssertionsExcept [ "lastError" ])
+                            |> Expect.all (expectLastError "UNRECOGNISED_FILE" :: defaultAssertionsExcept [ LastError ])
                 ]
             , describe "Stopwatch file tests"
                 [ test "Can upload a single stopwatch data file" <|
                     \() ->
                         update (FileDropped (InteropFile "stopwatch1.txt" StopwatchTests.sampleData)) initModel
-                            |> Expect.all (expectStopwatches singleStopwatch :: defaultAssertionsExcept [ "stopwatches" ])
+                            |> Expect.all (expectStopwatches singleStopwatch :: defaultAssertionsExcept [ Stopwatches ])
                 , test "Cannot upload a single invalid stopwatch data file" <|
                     \() ->
                         update (FileDropped (InteropFile "stopwatch1.txt" (String.Extra.replace "00" "XX" StopwatchTests.sampleData))) initModel
-                            |> Expect.all (expectLastError "UNRECOGNISED_TIME" :: defaultAssertionsExcept [ "lastError" ])
+                            |> Expect.all (expectLastError "UNRECOGNISED_TIME" :: defaultAssertionsExcept [ LastError ])
                 , test "Cannot upload the same single stopwatch data file twice" <|
                     \() ->
                         initModel
@@ -339,7 +352,7 @@ suite =
                             |> Expect.all
                                 (expectLastError "STOPWATCH_FILE_ALREADY_LOADED"
                                     :: expectStopwatches singleStopwatch
-                                    :: defaultAssertionsExcept [ "lastError", "stopwatches" ]
+                                    :: defaultAssertionsExcept [ LastError, Stopwatches ]
                                 )
                 , test "Can upload two different stopwatch data files" <|
                     \() ->
@@ -349,7 +362,7 @@ suite =
                             |> update (FileDropped (InteropFile "stopwatch2.txt" sampleStopwatchData2))
                             |> Expect.all
                                 (expectStopwatches doubleStopwatches
-                                    :: defaultAssertionsExcept [ "stopwatches" ]
+                                    :: defaultAssertionsExcept [ Stopwatches ]
                                 )
                 , test "Uploading a third stopwatch data file has no effect" <|
                     \() ->
@@ -361,7 +374,7 @@ suite =
                             |> update (FileDropped (InteropFile "stopwatch3.txt" StopwatchTests.sampleData))
                             |> Expect.all
                                 (expectStopwatches doubleStopwatches
-                                    :: defaultAssertionsExcept [ "stopwatches" ]
+                                    :: defaultAssertionsExcept [ Stopwatches ]
                                 )
                 ]
             , describe "Barcode scanner file tests"
@@ -372,7 +385,7 @@ suite =
                                 (expectBarcodeScannerFiles [ "barcodes1.txt" ]
                                     :: expectBarcodeScannerData parsedBarcodeScannerData1
                                     :: expectEventDateAndTime parsedEventDateAndTime
-                                    :: defaultAssertionsExcept [ "barcodeScannerFiles", "barcodeScannerData", "eventDateAndTime" ]
+                                    :: defaultAssertionsExcept [ BarcodeScannerFiles, BarcodeScannerDataAssertion, EventDateAndTimeAssertion ]
                                 )
                 , test "Can upload a single invalid barcode scanner file" <|
                     \() ->
@@ -383,7 +396,7 @@ suite =
                                             expectSingleUnrecognisedLine invalidBarcodeScannerData "INVALID_POSITION_ZERO" (Ok model.barcodeScannerData)
                                        )
                                     :: expectProblems (ProblemsContainer [ UnrecognisedBarcodeScannerLine "A4580442,P0000,14/03/2018 09:47:03" ] [])
-                                    :: defaultAssertionsExcept [ "barcodeScannerData", "barcodeScannerFiles", "problems" ]
+                                    :: defaultAssertionsExcept [ BarcodeScannerFiles, BarcodeScannerDataAssertion, EventDateAndTimeAssertion, Problems ]
                                 )
                 , test "Cannot upload the same barcode scanner file twice" <|
                     \() ->
@@ -396,7 +409,7 @@ suite =
                                     :: expectBarcodeScannerData parsedBarcodeScannerData1
                                     :: expectEventDateAndTime parsedEventDateAndTime
                                     :: expectLastError "BARCODE_DATA_ALREADY_LOADED"
-                                    :: defaultAssertionsExcept [ "barcodeScannerFiles", "barcodeScannerData", "lastError", "eventDateAndTime" ]
+                                    :: defaultAssertionsExcept [ BarcodeScannerFiles, BarcodeScannerDataAssertion, EventDateAndTimeAssertion, LastError ]
                                 )
                 , test "Can upload two different barcode scanner files" <|
                     \() ->
@@ -408,7 +421,7 @@ suite =
                                 (expectBarcodeScannerFiles [ "barcodes1.txt", "barcodes2.txt" ]
                                     :: expectBarcodeScannerData parsedBarcodeScannerData1And2
                                     :: expectEventDateAndTime parsedEventDateAndTime
-                                    :: defaultAssertionsExcept [ "barcodeScannerFiles", "barcodeScannerData", "eventDateAndTime" ]
+                                    :: defaultAssertionsExcept [ BarcodeScannerFiles, BarcodeScannerDataAssertion, EventDateAndTimeAssertion ]
                                 )
                 ]
             , describe "Number checker file tests"
@@ -417,14 +430,14 @@ suite =
                         update (FileDropped (InteropFile "numberChecker1.txt" validNumberCheckerData)) initModel
                             |> Expect.all
                                 (expectNumberCheckerEntries parsedNumberCheckerData
-                                    :: defaultAssertionsExcept [ "numberCheckerEntries" ]
+                                    :: defaultAssertionsExcept [ NumberCheckerEntries ]
                                 )
                 , test "Cannot upload an invalid number checker file" <|
                     \() ->
                         update (FileDropped (InteropFile "numberChecker1.txt" invalidNumberCheckerData)) initModel
                             |> Expect.all
                                 (expectLastError "WRONG_PART_COUNT"
-                                    :: defaultAssertionsExcept [ "lastError" ]
+                                    :: defaultAssertionsExcept [ LastError ]
                                 )
                 ]
             ]
@@ -448,7 +461,7 @@ suite =
                         |> update (DeleteStopwatch StopwatchTwo)
                         |> Expect.all
                             (expectStopwatches singleStopwatch
-                                :: defaultAssertionsExcept [ "stopwatches" ]
+                                :: defaultAssertionsExcept [ Stopwatches ]
                             )
             , test "Deleting stopwatch 1 when two to delete deletes stopwatch 1" <|
                 \() ->
@@ -456,7 +469,7 @@ suite =
                         |> update (DeleteStopwatch StopwatchOne)
                         |> Expect.all
                             (expectStopwatches (Single "stopwatch2.txt" parsedStopwatchTimes2)
-                                :: defaultAssertionsExcept [ "stopwatches" ]
+                                :: defaultAssertionsExcept [ Stopwatches ]
                             )
             , test "Deleting stopwatch 2 when two to delete deletes stopwatch 2" <|
                 \() ->
@@ -464,7 +477,7 @@ suite =
                         |> update (DeleteStopwatch StopwatchTwo)
                         |> Expect.all
                             (expectStopwatches singleStopwatch
-                                :: defaultAssertionsExcept [ "stopwatches" ]
+                                :: defaultAssertionsExcept [ Stopwatches ]
                             )
             ]
         , describe "Flip Stopwatch tests"
@@ -478,7 +491,7 @@ suite =
                         |> update FlipStopwatches
                         |> Expect.all
                             (expectStopwatches singleStopwatch
-                                :: defaultAssertionsExcept [ "stopwatches" ]
+                                :: defaultAssertionsExcept [ Stopwatches ]
                             )
             , test "Flipping stopwatches when two stopwatches loaded flips both stopwatches" <|
                 \() ->
@@ -486,7 +499,7 @@ suite =
                         |> update FlipStopwatches
                         |> Expect.all
                             (expectStopwatches flippedDoubleStopwatches
-                                :: defaultAssertionsExcept [ "stopwatches" ]
+                                :: defaultAssertionsExcept [ Stopwatches ]
                             )
             ]
         , describe "Clear Barcode Scanner Data tests"
@@ -506,7 +519,7 @@ suite =
                     update GetCurrentDateForDownloadFile initModel
                         |> Expect.all
                             (expectACommand
-                                :: defaultAssertionsExcept [ "cmd" ]
+                                :: defaultAssertionsExcept [ Command ]
                             )
             ]
         , describe "Download merged stopwatch data tests"
@@ -523,7 +536,7 @@ suite =
                         |> update (DownloadMergedStopwatchData Time.utc recentTime)
                         |> Expect.all
                             (expectStopwatches singleStopwatch
-                                :: defaultAssertionsExcept [ "stopwatches" ]
+                                :: defaultAssertionsExcept [ Stopwatches ]
                             )
             , test "Can download merged data for two stopwatches" <|
                 \() ->
@@ -536,7 +549,7 @@ suite =
                         |> Expect.all
                             (expectACommand
                                 :: expectStopwatches doubleStopwatches
-                                :: defaultAssertionsExcept [ "stopwatches", "cmd" ]
+                                :: defaultAssertionsExcept [ Stopwatches, Command ]
                             )
             ]
         , describe "Create file for download tests"
@@ -565,7 +578,7 @@ suite =
                     update (ContainerHeightChanged 567) initModel
                         |> Expect.all
                             (expectLastHeight (Just 567)
-                                :: defaultAssertionsExcept [ "lastHeight" ]
+                                :: defaultAssertionsExcept [ LastHeight ]
                             )
             ]
         , describe "Mouse enter number-checker row tests"
@@ -574,7 +587,7 @@ suite =
                     update (MouseEnterNumberCheckerRow 6) initModel
                         |> Expect.all
                             (expectHighlightedNumberCheckerId (Just 6)
-                                :: defaultAssertionsExcept [ "highlightedNumberCheckerId" ]
+                                :: defaultAssertionsExcept [ HighlightedNumberCheckerId ]
                             )
             , test "Can leave a number-checker row that has been entered" <|
                 \() ->
@@ -587,7 +600,7 @@ suite =
                         |> update (MouseLeaveNumberCheckerRow 6)
                         |> Expect.all
                             (expectHighlightedNumberCheckerId (Just 8)
-                                :: defaultAssertionsExcept [ "highlightedNumberCheckerId" ]
+                                :: defaultAssertionsExcept [ HighlightedNumberCheckerId ]
                             )
             ]
         , describe "Delete number checker row tests"
@@ -597,7 +610,7 @@ suite =
                         |> update (DeleteNumberCheckerRow 2)
                         |> Expect.all
                             (expectNumberCheckerEntries (List.filter (\e -> e.entryNumber /= 2) sampleNumberCheckerData)
-                                :: defaultAssertionsExcept [ "numberCheckerEntries" ]
+                                :: defaultAssertionsExcept [ NumberCheckerEntries ]
                             )
             , test "Deleting a non-existent number-checker row has no effect when no stopwatches loaded" <|
                 \() ->
@@ -605,7 +618,7 @@ suite =
                         |> update (DeleteNumberCheckerRow 7)
                         |> Expect.all
                             (expectNumberCheckerEntries sampleNumberCheckerData
-                                :: defaultAssertionsExcept [ "numberCheckerEntries" ]
+                                :: defaultAssertionsExcept [ NumberCheckerEntries ]
                             )
             , test "Can delete a number-checker row when one stopwatches loaded" <|
                 \() ->
@@ -614,7 +627,7 @@ suite =
                         |> Expect.all
                             (expectNumberCheckerEntries (List.filter (\e -> e.entryNumber /= 2) sampleNumberCheckerData)
                                 :: expectStopwatches singleStopwatch
-                                :: defaultAssertionsExcept [ "stopwatches", "numberCheckerEntries" ]
+                                :: defaultAssertionsExcept [ Stopwatches, NumberCheckerEntries ]
                             )
             , test "Deleting a non-existent number-checker row has no effect when one stopwatch loaded" <|
                 \() ->
@@ -623,7 +636,7 @@ suite =
                         |> Expect.all
                             (expectNumberCheckerEntries sampleNumberCheckerData
                                 :: expectStopwatches singleStopwatch
-                                :: defaultAssertionsExcept [ "stopwatches", "numberCheckerEntries" ]
+                                :: defaultAssertionsExcept [ Stopwatches, NumberCheckerEntries ]
                             )
             ]
         , describe "Event date changed tests"
@@ -632,21 +645,21 @@ suite =
                     update (EventDateChanged "26/05/2018") initModel
                         |> Expect.all
                             (expectEventDateAndTime (EventDateAndTime "26/05/2018" (toPosix "2018-05-26T00:00:00.000Z") Nothing)
-                                :: defaultAssertionsExcept [ "eventDateAndTime" ]
+                                :: defaultAssertionsExcept [ EventDateAndTimeAssertion ]
                             )
             , test "Setting a nonexistent date clears the validated date" <|
                 \() ->
                     update (EventDateChanged "29/02/2018") initModel
                         |> Expect.all
                             (expectEventDateAndTime (EventDateAndTime "29/02/2018" Nothing Nothing)
-                                :: defaultAssertionsExcept [ "eventDateAndTime" ]
+                                :: defaultAssertionsExcept [ EventDateAndTimeAssertion ]
                             )
             , test "Setting an invalid date clears the validated date" <|
                 \() ->
                     update (EventDateChanged "This is not a valid date") initModel
                         |> Expect.all
                             (expectEventDateAndTime (EventDateAndTime "This is not a valid date" Nothing Nothing)
-                                :: defaultAssertionsExcept [ "eventDateAndTime" ]
+                                :: defaultAssertionsExcept [ EventDateAndTimeAssertion ]
                             )
             , test "Setting an empty date clears the validated date" <|
                 \() ->
