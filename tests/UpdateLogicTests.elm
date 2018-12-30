@@ -15,7 +15,6 @@ import Ports exposing (InteropFile)
 import Problems exposing (Problem(..), ProblemsContainer)
 import Stopwatch exposing (Stopwatch(..))
 import StopwatchTests
-import String.Extra
 import Test exposing (Test, describe, test)
 import Time
 import UpdateLogic exposing (createFileForDownload, update)
@@ -341,7 +340,7 @@ suite =
                             |> Expect.all (expectStopwatches singleStopwatch :: defaultAssertionsExcept [ Stopwatches ])
                 , test "Cannot upload a single invalid stopwatch data file" <|
                     \() ->
-                        update (FileDropped (InteropFile "stopwatch1.txt" (String.Extra.replace "00" "XX" StopwatchTests.sampleData))) initModel
+                        update (FileDropped (InteropFile "stopwatch1.txt" (String.replace "00" "XX" StopwatchTests.sampleData))) initModel
                             |> Expect.all (expectLastError "UNRECOGNISED_TIME" :: defaultAssertionsExcept [ LastError ])
                 , test "Cannot upload the same single stopwatch data file twice" <|
                     \() ->

@@ -3,7 +3,6 @@ module DateHandlingTests exposing (suite)
 import DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart)
 import Errors exposing (expectError)
 import Expect
-import String.Extra
 import Test exposing (Test, describe, test)
 import Time
 

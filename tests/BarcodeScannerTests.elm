@@ -6,7 +6,6 @@ import Error exposing (Error)
 import Errors exposing (expectError)
 import Expect exposing (Expectation)
 import Iso8601
-import String.Extra
 import Test exposing (Test, describe, test)
 import Time exposing (Posix)
 

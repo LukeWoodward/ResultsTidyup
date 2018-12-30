@@ -7,7 +7,6 @@ import Errors exposing (expectError)
 import Expect
 import MergedTable exposing (Stopwatches(..))
 import Problems exposing (MinorProblem(..), Problem(..), ProblemsContainer, identifyProblems)
-import String.Extra
 import Test exposing (Test, describe, test)
 
 

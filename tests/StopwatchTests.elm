@@ -3,7 +3,6 @@ module StopwatchTests exposing (expectedParsedSampleData, sampleData, suite)
 import Errors exposing (expectError)
 import Expect
 import Stopwatch exposing (..)
-import String.Extra
 import Test exposing (Test, describe, test)
 
 
@@ -36,15 +35,15 @@ suite =
                         |> Expect.equal (Ok expectedParsedSampleData)
             , test "readStopwatchData of a valid multi-line string with CRLF line-endings is a valid list of results" <|
                 \() ->
-                    readStopwatchData (String.Extra.replace "\n" "\u{000D}\n" sampleData)
+                    readStopwatchData (String.replace "\n" "\u{000D}\n" sampleData)
                         |> Expect.equal (Ok expectedParsedSampleData)
             , test "readStopwatchData of a valid multi-line string with CR line-endings is a valid list of results" <|
                 \() ->
-                    readStopwatchData (String.Extra.replace "\n" "\u{000D}" sampleData)
+                    readStopwatchData (String.replace "\n" "\u{000D}" sampleData)
                         |> Expect.equal (Ok expectedParsedSampleData)
             , test "readStopwatchData of a valid multi-line string with blank lines is a valid list of results" <|
                 \() ->
-                    readStopwatchData (String.Extra.replace "\n" "\n\n" sampleData)
+                    readStopwatchData (String.replace "\n" "\n\n" sampleData)
                         |> Expect.equal (Ok expectedParsedSampleData)
             , test "readStopwatchData of an empty string is not a valid list of results" <|
                 \() ->
@@ -68,7 +67,7 @@ suite =
                         |> expectError "UNRECOGNISED_TIME"
             , test "readStopwatchData of a multi-line string with an invalid value on one line is not a valid list of results" <|
                 \() ->
-                    readStopwatchData (String.Extra.replace "00:07:44" "nonsense" sampleData)
+                    readStopwatchData (String.replace "00:07:44" "nonsense" sampleData)
                         |> expectError "UNRECOGNISED_TIME"
             ]
         ]
