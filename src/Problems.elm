@@ -1,6 +1,6 @@
 module Problems exposing (MinorProblem(..), Problem(..), ProblemsContainer, empty, identifyProblems, minorProblemToString, problemToString)
 
-import BarcodeScanner exposing (BarcodeScannerData)
+import BarcodeScanner exposing (BarcodeScannerData, UnrecognisedLine)
 import Dict exposing (Dict)
 import MergedTable exposing (Stopwatches(..))
 import Set exposing (Set)
@@ -12,6 +12,7 @@ type Problem
     | PositionOffEndOfTimes Int Int
     | AthleteMissingPosition String
     | PositionMissingAthlete Int
+    | UnrecognisedBarcodeScannerLine String
     | StopwatchesInconsistentWithNumberChecker
     | StopwatchesAndFinishTokensInconsistentWithNumberChecker
 
@@ -180,6 +181,12 @@ identifyPositionsWithNoAthletes unpairedPositions positionToAthletesDict =
         |> List.map PositionMissingAthlete
 
 
+identifyUnrecognisedBarcodeScannerLines : List UnrecognisedLine -> List Problem
+identifyUnrecognisedBarcodeScannerLines unrecognisedLines =
+    List.map .line unrecognisedLines
+        |> List.map UnrecognisedBarcodeScannerLine
+
+
 identifyDuplicateScans : Dict Int (List String) -> List MinorProblem
 identifyDuplicateScans positionToAthletesDict =
     let
@@ -245,6 +252,7 @@ identifyProblems stopwatches barcodeScannerData =
             , identifyPositionsOffEndOfTimes stopwatches positionToAthletesDict
             , identifyAthletesWithNoPositions athleteBarcodesOnly athleteToPositionsDict
             , identifyPositionsWithNoAthletes finishTokensOnly positionToAthletesDict
+            , identifyUnrecognisedBarcodeScannerLines barcodeScannerData.unrecognisedLines
             ]
 
         allMinorProblems : List (List MinorProblem)
@@ -275,7 +283,10 @@ problemToString problem =
             "Athlete " ++ athlete ++ " has no associated finish token"
 
         PositionMissingAthlete position ->
-            "Finish position " ++ String.fromInt position ++ " was scanned without a corresponding athlete"
+            "Finish token " ++ String.fromInt position ++ " was scanned without a corresponding athlete"
+
+        UnrecognisedBarcodeScannerLine line ->
+            "The line '" ++ line ++ "' in a barcode scanner file was not recognised"
 
         StopwatchesInconsistentWithNumberChecker ->
             "TODO"

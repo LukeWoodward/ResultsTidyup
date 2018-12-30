@@ -1,7 +1,7 @@
 module UpdateLogicTests exposing (suite)
 
 import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData)
-import BarcodeScannerTests exposing (createBarcodeScannerData, toPosix)
+import BarcodeScannerTests exposing (createBarcodeScannerData, expectSingleUnrecognisedLine, toPosix)
 import DataStructures exposing (WhichStopwatch(..))
 import Dict
 import Errors exposing (expectError)
@@ -12,7 +12,7 @@ import Model exposing (EventDateAndTime, Model, initModel)
 import Msg exposing (Msg(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import Ports exposing (InteropFile)
-import Problems exposing (ProblemsContainer)
+import Problems exposing (Problem(..), ProblemsContainer)
 import Stopwatch exposing (Stopwatch(..))
 import StopwatchTests
 import String.Extra
@@ -213,7 +213,7 @@ invalidBarcodeScannerData =
 
 parsedBarcodeScannerData1 : BarcodeScannerData
 parsedBarcodeScannerData1 =
-    BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] [] (toPosix "2018-03-14T09:47:03.000Z")
+    BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] [] [] (toPosix "2018-03-14T09:47:03.000Z")
 
 
 parsedBarcodeScannerData1And2 : BarcodeScannerData
@@ -224,6 +224,7 @@ parsedBarcodeScannerData1And2 =
             , ( 59, [ AthleteAndTimePair "A2044293" "14/03/2018 09:49:44" ] )
             ]
         )
+        []
         []
         []
         (toPosix "2018-03-14T09:49:44.000Z")
@@ -373,11 +374,17 @@ suite =
                                     :: expectEventDateAndTime parsedEventDateAndTime
                                     :: defaultAssertionsExcept [ "barcodeScannerFiles", "barcodeScannerData", "eventDateAndTime" ]
                                 )
-                , test "Cannot upload a single invalid barcode scanner file" <|
+                , test "Can upload a single invalid barcode scanner file" <|
                     \() ->
                         update (FileDropped (InteropFile "barcodes1.txt" invalidBarcodeScannerData)) initModel
                             |> Expect.all
-                                (expectLastError "INVALID_POSITION_ZERO" :: defaultAssertionsExcept [ "lastError" ])
+                                (expectBarcodeScannerFiles [ "barcodes1.txt" ]
+                                    :: (\( model, _ ) ->
+                                            expectSingleUnrecognisedLine invalidBarcodeScannerData "INVALID_POSITION_ZERO" (Ok model.barcodeScannerData)
+                                       )
+                                    :: expectProblems (ProblemsContainer [ UnrecognisedBarcodeScannerLine "A4580442,P0000,14/03/2018 09:47:03" ] [])
+                                    :: defaultAssertionsExcept [ "barcodeScannerData", "barcodeScannerFiles", "problems" ]
+                                )
                 , test "Cannot upload the same barcode scanner file twice" <|
                     \() ->
                         initModel

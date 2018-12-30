@@ -1,9 +1,10 @@
-module BarcodeScannerTests exposing (createBarcodeScannerData, suite, toPosix)
+module BarcodeScannerTests exposing (createBarcodeScannerData, expectSingleUnrecognisedLine, suite, toPosix)
 
 import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, PositionAndTimePair, empty, isEmpty, maxFinishToken, readBarcodeScannerData)
 import Dict exposing (Dict)
+import Error exposing (Error)
 import Errors exposing (expectError)
-import Expect
+import Expect exposing (Expectation)
 import Iso8601
 import String.Extra
 import Test exposing (Test, describe, test)
@@ -50,7 +51,40 @@ createBarcodeScannerData athleteToPositionsDict athleteBarcodesOnly finishTokens
         athletesToPosition
         (List.map wrapAthlete athleteBarcodesOnly)
         (List.map (\position -> PositionAndTimePair position dummyTime) finishTokensOnly)
+        []
         Nothing
+
+
+expectSingleUnrecognisedLine : String -> String -> Result Error BarcodeScannerData -> Expectation
+expectSingleUnrecognisedLine expectedLine expectedCode barcodeScannerDataResult =
+    case barcodeScannerDataResult of
+        Ok barcodeScannerData ->
+            case barcodeScannerData.unrecognisedLines of
+                [] ->
+                    Expect.fail "No unrecognised lines"
+
+                [ unrecognisedLine ] ->
+                    if Dict.isEmpty barcodeScannerData.scannedBarcodes then
+                        Expect.all
+                            [ \ul -> Expect.equal expectedLine ul.line
+                            , \ul -> Expect.equal expectedCode ul.errorCode
+                            ]
+                            unrecognisedLine
+
+                    else
+                        Expect.fail "Unexpected valid lines found"
+
+                first :: second :: rest ->
+                    Expect.fail "More than one unrecognised line was found"
+
+        Err error ->
+            Expect.fail ("Unexpectedly failed with error '" ++ Debug.toString error ++ "'")
+
+
+expectSingleUnrecognisedLineFor : String -> String -> Expectation
+expectSingleUnrecognisedLineFor line expectedCode =
+    readBarcodeScannerData line
+        |> expectSingleUnrecognisedLine line expectedCode
 
 
 suite : Test
@@ -78,19 +112,19 @@ suite =
             [ test "readBarcodeScannerData of a valid single-line string with athlete and finish token is valid" <|
                 \() ->
                     readBarcodeScannerData "A4580442,P0047,14/03/2018 09:47:03"
-                        |> Expect.equal (Ok (BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] [] (toPosix "2018-03-14T09:47:03.000Z")))
+                        |> Expect.equal (Ok (BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] [] [] (toPosix "2018-03-14T09:47:03.000Z")))
             , test "readBarcodeScannerData of a valid single-line string with athlete only is valid" <|
                 \() ->
                     readBarcodeScannerData "A4580442,,14/03/2018 09:47:03"
-                        |> Expect.equal (Ok (BarcodeScannerData Dict.empty [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ] [] (toPosix "2018-03-14T09:47:03.000Z")))
+                        |> Expect.equal (Ok (BarcodeScannerData Dict.empty [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ] [] [] (toPosix "2018-03-14T09:47:03.000Z")))
             , test "readBarcodeScannerData of a valid single-line string with finish token only is valid" <|
                 \() ->
                     readBarcodeScannerData ",P0047,14/03/2018 09:47:03"
-                        |> Expect.equal (Ok (BarcodeScannerData Dict.empty [] [ PositionAndTimePair 47 "14/03/2018 09:47:03" ] (toPosix "2018-03-14T09:47:03.000Z")))
+                        |> Expect.equal (Ok (BarcodeScannerData Dict.empty [] [ PositionAndTimePair 47 "14/03/2018 09:47:03" ] [] (toPosix "2018-03-14T09:47:03.000Z")))
             , test "readBarcodeScannerData of a valid single-line string with athlete and finish token and blank lines is valid" <|
                 \() ->
                     readBarcodeScannerData "\n\n\n\n\nA4580442,P0047,14/03/2018 09:47:03\n\n\n\n"
-                        |> Expect.equal (Ok (BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] [] (toPosix "2018-03-14T09:47:03.000Z")))
+                        |> Expect.equal (Ok (BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] [] [] (toPosix "2018-03-14T09:47:03.000Z")))
             , test "readBarcodeScannerData of a valid multiline string with two different finish tokens is valid" <|
                 \() ->
                     readBarcodeScannerData "A4580442,P0047,14/03/2018 09:47:03\nA1866207,P0047,14/03/2018 09:48:44"
@@ -104,6 +138,7 @@ suite =
                                     )
                                     []
                                     []
+                                    []
                                     (toPosix "2018-03-14T09:48:44.000Z")
                                 )
                             )
@@ -113,28 +148,22 @@ suite =
                         |> expectError "NO_RESULTS"
             , test "readBarcodeScannerData of a string with an invalid athlete barcode is not valid" <|
                 \() ->
-                    readBarcodeScannerData "Nonsense,P0047,14/03/2018 09:47:03"
-                        |> expectError "INVALID_ATHLETE_RECORD"
+                    expectSingleUnrecognisedLineFor "Nonsense,P0047,14/03/2018 09:47:03" "INVALID_ATHLETE_RECORD"
             , test "readBarcodeScannerData of a string with an invalid finish token barcode is not valid" <|
                 \() ->
-                    readBarcodeScannerData "A4580442,Nonsense,14/03/2018 09:47:03"
-                        |> expectError "INVALID_POSITION_RECORD"
+                    expectSingleUnrecognisedLineFor "A4580442,Nonsense,14/03/2018 09:47:03" "INVALID_POSITION_RECORD"
             , test "readBarcodeScannerData of a string with no athlete nor finish token barcode is not valid" <|
                 \() ->
-                    readBarcodeScannerData ",,14/03/2018 09:47:03"
-                        |> expectError "ATHLETE_AND_FINISH_TOKEN_MISSING"
+                    expectSingleUnrecognisedLineFor ",,14/03/2018 09:47:03" "ATHLETE_AND_FINISH_TOKEN_MISSING"
             , test "readBarcodeScannerData of a string with too few parts is not valid" <|
                 \() ->
-                    readBarcodeScannerData "A4580442,P0047"
-                        |> expectError "NOT_THREE_PARTS"
+                    expectSingleUnrecognisedLineFor "A4580442,P0047" "NOT_THREE_PARTS"
             , test "readBarcodeScannerData of a string with too many parts is not valid" <|
                 \() ->
-                    readBarcodeScannerData "A4580442,P0047,14/03/2018 09:47:03,someOtherRubbish"
-                        |> expectError "NOT_THREE_PARTS"
+                    expectSingleUnrecognisedLineFor "A4580442,P0047,14/03/2018 09:47:03,someOtherRubbish" "NOT_THREE_PARTS"
             , test "readBarcodeScannerData of a string with position zero is not valid" <|
                 \() ->
-                    readBarcodeScannerData "A4580442,P0000,14/03/2018 09:47:03"
-                        |> expectError "INVALID_POSITION_ZERO"
+                    expectSingleUnrecognisedLineFor "A4580442,P0000,14/03/2018 09:47:03" "INVALID_POSITION_ZERO"
             ]
         , describe "maxFinishToken tests"
             [ test "maxFinishToken of an empty set of barcodes returns Nothing" <|
