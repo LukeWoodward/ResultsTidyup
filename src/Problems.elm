@@ -271,19 +271,19 @@ problemToString : Problem -> String
 problemToString problem =
     case problem of
         AthleteWithMultiplePositions athlete positions ->
-            "Athlete " ++ athlete ++ " is recorded as being in positions " ++ String.join ", " (List.map String.fromInt positions)
+            "Athlete barcode " ++ athlete ++ " has been scanned with more than one finish token: " ++ String.join ", " (List.map String.fromInt positions)
 
         PositionWithMultipleAthletes position athletes ->
-            "Multiple athletes are recorded as having finished in position " ++ String.fromInt position ++ ": " ++ String.join ", " athletes
+            "Multiple athlete barcodes have been scanned with finish token " ++ String.fromInt position ++ ": " ++ String.join ", " athletes
 
         PositionOffEndOfTimes numberOfTimes maxPosition ->
             "The highest finish token scanned was " ++ String.fromInt maxPosition ++ " but there are only " ++ String.fromInt numberOfTimes ++ " times recorded on the stopwatch(es)"
 
         AthleteMissingPosition athlete ->
-            "Athlete " ++ athlete ++ " has no associated finish token"
+            "Athlete barcode " ++ athlete ++ " was scanned without a corresponding finish token"
 
         PositionMissingAthlete position ->
-            "Finish token " ++ String.fromInt position ++ " was scanned without a corresponding athlete"
+            "Finish token " ++ String.fromInt position ++ " was scanned without a corresponding athlete barcode"
 
         UnrecognisedBarcodeScannerLine line ->
             "The line '" ++ line ++ "' in a barcode scanner file was not recognised"
@@ -299,10 +299,10 @@ minorProblemToString : MinorProblem -> String
 minorProblemToString minorProblem =
     case minorProblem of
         AthleteInSamePositionMultipleTimes athlete position ->
-            "Athlete " ++ athlete ++ " has been recorded as finishing in position " ++ String.fromInt position ++ " more than once"
+            "Athlete barcode " ++ athlete ++ " has been scanned with finish token " ++ String.fromInt position ++ " more than once"
 
         AthleteWithAndWithoutPosition athlete position ->
-            "Athlete " ++ athlete ++ " has been recorded as finishing in position " ++ String.fromInt position ++ " and also without a position"
+            "Athlete " ++ athlete ++ " has been scanned with finish token " ++ String.fromInt position ++ " and also without a corresponding finish token"
 
         PositionWithAndWithoutAthlete position athlete ->
-            "Athlete " ++ athlete ++ " has been recorded as finishing in position " ++ String.fromInt position ++ " and that position has also been recorded without an athlete"
+            "Finish token " ++ String.fromInt position ++ " has been scanned with athlete barcode " ++ athlete ++ " and also without a corresponding athlete barcode"
