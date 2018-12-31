@@ -1,6 +1,7 @@
 module UpdateLogic exposing (createFileForDownload, update)
 
 import BarcodeScanner exposing (BarcodeScannerData, mergeScannerData, readBarcodeScannerData)
+import Browser.Dom
 import DataStructures exposing (InteropFile, WhichStopwatch(..))
 import DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart)
 import Error exposing (Error)
@@ -17,9 +18,9 @@ import MergedTable
         , underlineTable
         )
 import Merger exposing (MergeEntry, merge)
-import Model exposing (EventDateAndTime, Model)
-import Msg exposing (Msg(..))
-import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, annotate, parseNumberCheckerFile)
+import Model exposing (EventDateAndTime, Model, NumberCheckerManualEntryRow, NumericEntry, emptyNumberCheckerManualEntryRow)
+import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
+import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, addAndAnnotate, annotate, parseNumberCheckerFile)
 import Problems exposing (identifyProblems)
 import Regex exposing (Regex)
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
@@ -30,6 +31,11 @@ import Time exposing (Posix, Zone)
 maxNearMatchDistance : Int
 maxNearMatchDistance =
     1
+
+
+focus : String -> Cmd Msg
+focus elementId =
+    Task.attempt (\_ -> NoOp) (Browser.Dom.focus elementId)
 
 
 hasFileAlreadyBeenUploaded : String -> Stopwatches -> Bool
@@ -382,9 +388,69 @@ handleFileDrop fileName fileText model =
         }
 
 
+ensureNonNegative : Int -> Maybe Int
+ensureNonNegative intValue =
+    if intValue < 0 then
+        Nothing
+
+    else
+        Just intValue
+
+
+handleNumberCheckerFieldChange : NumberCheckerFieldChange -> String -> Model -> Model
+handleNumberCheckerFieldChange fieldChange newValue model =
+    let
+        oldNumberCheckerRow : NumberCheckerManualEntryRow
+        oldNumberCheckerRow =
+            model.numberCheckerManualEntryRow
+
+        newEntry : NumericEntry
+        newEntry =
+            String.toInt newValue
+                |> Maybe.andThen ensureNonNegative
+                |> NumericEntry newValue
+
+        newNumberCheckerManualEntryRow : NumberCheckerManualEntryRow
+        newNumberCheckerManualEntryRow =
+            case fieldChange of
+                Stopwatch1 ->
+                    { oldNumberCheckerRow | stopwatch1 = newEntry }
+
+                Stopwatch2 ->
+                    { oldNumberCheckerRow | stopwatch2 = newEntry }
+
+                FinishTokens ->
+                    { oldNumberCheckerRow | finishTokens = newEntry }
+    in
+    { model | numberCheckerManualEntryRow = newNumberCheckerManualEntryRow }
+
+
+addNumberCheckerRow : Model -> ( Model, Cmd Msg )
+addNumberCheckerRow model =
+    let
+        manualEntryRow =
+            model.numberCheckerManualEntryRow
+    in
+    case ( manualEntryRow.stopwatch1.parsedValue, manualEntryRow.stopwatch2.parsedValue, manualEntryRow.finishTokens.parsedValue ) of
+        ( Just stopwatch1, Just stopwatch2, Just finishTokens ) ->
+            ( { model
+                | numberCheckerEntries =
+                    addAndAnnotate (NumberCheckerEntry stopwatch1 stopwatch2 finishTokens) model.numberCheckerEntries
+                , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
+              }
+            , focus "number-checker-stopwatch-1"
+            )
+
+        _ ->
+            ( model, Cmd.none )
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        NoOp ->
+            ( model, Cmd.none )
+
         FileDropped { fileName, fileText } ->
             ( handleFileDrop fileName fileText model, Cmd.none )
 
@@ -456,3 +522,9 @@ update msg model =
 
         EventDateChanged newEventDate ->
             ( handleEventDateChange newEventDate model, Cmd.none )
+
+        NumberCheckerFieldChanged fieldChange newValue ->
+            ( handleNumberCheckerFieldChange fieldChange newValue model, Cmd.none )
+
+        AddNumberCheckerRow ->
+            addNumberCheckerRow model

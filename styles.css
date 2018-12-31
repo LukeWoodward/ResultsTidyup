@@ -102,3 +102,19 @@ input#eventDateBox.date-error {
 input#eventDateBox.date-error:focus {
     background-color: inherit;
 }
+
+div.no-number-checker-entries {
+    text-align: left;
+}
+
+input.number-checker-manual-entry {
+    max-width: 120px;
+}
+
+input.number-checker-manual-entry.number-error {
+    background-color: #ffdddd;
+}
+
+input.number-checker-manual-entry.number-error:focus {
+    background-color: inherit;
+}

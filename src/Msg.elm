@@ -1,11 +1,18 @@
-module Msg exposing (Msg(..))
+module Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 
 import DataStructures exposing (InteropFile, WhichStopwatch(..))
 import Time exposing (Posix, Zone)
 
 
+type NumberCheckerFieldChange
+    = Stopwatch1
+    | Stopwatch2
+    | FinishTokens
+
+
 type Msg
-    = FileDropped InteropFile
+    = NoOp
+    | FileDropped InteropFile
     | ToggleTableRow Int
     | DeleteStopwatch WhichStopwatch
     | FlipStopwatches
@@ -17,3 +24,5 @@ type Msg
     | MouseLeaveNumberCheckerRow Int
     | DeleteNumberCheckerRow Int
     | EventDateChanged String
+    | NumberCheckerFieldChanged NumberCheckerFieldChange String
+    | AddNumberCheckerRow

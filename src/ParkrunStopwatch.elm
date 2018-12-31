@@ -74,7 +74,7 @@ view model =
                 ]
             , div (class "col-xs-6" :: getHeightAttribute model.lastHeight)
                 [ problemsView model.problems
-                , numberCheckerView model.numberCheckerEntries model.lastHeight
+                , numberCheckerView model.numberCheckerEntries model.numberCheckerManualEntryRow model.lastHeight
                 ]
             ]
         ]

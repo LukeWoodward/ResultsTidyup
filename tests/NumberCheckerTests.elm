@@ -135,4 +135,20 @@ suite =
                             , AnnotatedNumberCheckerEntry 4 34 0 32 0 34 0
                             ]
             ]
+        , describe "addAndAnnotate tests"
+            [ test "Adds an unannotated entry to an existing list" <|
+                \() ->
+                    annotate
+                        [ NumberCheckerEntry 7 6 7
+                        , NumberCheckerEntry 18 16 17
+                        , NumberCheckerEntry 34 32 34
+                        ]
+                        |> addAndAnnotate (NumberCheckerEntry 29 27 29)
+                        |> Expect.equal
+                            [ AnnotatedNumberCheckerEntry 1 7 0 6 -1 7 0
+                            , AnnotatedNumberCheckerEntry 2 18 1 16 0 17 0
+                            , AnnotatedNumberCheckerEntry 3 29 0 27 0 29 1
+                            , AnnotatedNumberCheckerEntry 4 34 0 32 0 34 0
+                            ]
+            ]
         ]

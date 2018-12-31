@@ -1,4 +1,4 @@
-module Model exposing (EventDateAndTime, Model, initModel)
+module Model exposing (EventDateAndTime, Model, NumberCheckerManualEntryRow, NumericEntry, emptyNumberCheckerManualEntryRow, emptyNumericEntry, initModel)
 
 import BarcodeScanner exposing (BarcodeScannerData)
 import Error exposing (Error)
@@ -15,6 +15,29 @@ type alias EventDateAndTime =
     }
 
 
+type alias NumericEntry =
+    { enteredValue : String
+    , parsedValue : Maybe Int
+    }
+
+
+emptyNumericEntry : NumericEntry
+emptyNumericEntry =
+    NumericEntry "" Nothing
+
+
+type alias NumberCheckerManualEntryRow =
+    { stopwatch1 : NumericEntry
+    , stopwatch2 : NumericEntry
+    , finishTokens : NumericEntry
+    }
+
+
+emptyNumberCheckerManualEntryRow : NumberCheckerManualEntryRow
+emptyNumberCheckerManualEntryRow =
+    NumberCheckerManualEntryRow emptyNumericEntry emptyNumericEntry emptyNumericEntry
+
+
 type alias Model =
     { stopwatches : Stopwatches
     , lastError : Maybe Error
@@ -25,6 +48,7 @@ type alias Model =
     , barcodeScannerData : BarcodeScannerData
     , problems : ProblemsContainer
     , eventDateAndTime : EventDateAndTime
+    , numberCheckerManualEntryRow : NumberCheckerManualEntryRow
     }
 
 
@@ -39,4 +63,5 @@ initModel =
     , barcodeScannerData = BarcodeScanner.empty
     , problems = Problems.empty
     , eventDateAndTime = EventDateAndTime "" Nothing Nothing
+    , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
     }

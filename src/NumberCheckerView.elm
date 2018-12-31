@@ -1,11 +1,26 @@
 module NumberCheckerView exposing (numberCheckerView)
 
-import Html exposing (Html, button, div, h3, table, tbody, td, text, tr)
-import Html.Attributes exposing (class, type_)
-import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
-import Msg exposing (Msg(..))
+import Html exposing (Attribute, Html, button, div, h3, input, table, tbody, td, text, tr)
+import Html.Attributes exposing (class, colspan, disabled, id, type_, value)
+import Html.Events exposing (keyCode, on, onClick, onInput, onMouseEnter, onMouseLeave)
+import Json.Decode as Json
+import Model exposing (NumberCheckerManualEntryRow, NumericEntry)
+import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import ViewCommon exposing (intCell, tableHeaders)
+
+
+onEnterKeypress : Msg -> Attribute Msg
+onEnterKeypress msg =
+    let
+        isEnter code =
+            if code == 13 then
+                Json.succeed msg
+
+            else
+                Json.fail "not an Enter keypress"
+    in
+    on "keydown" (Json.andThen isEnter keyCode)
 
 
 deleteNumberCheckerEntryButtonCell : Int -> Html Msg
@@ -85,31 +100,98 @@ numberCheckerRow entry =
         ]
 
 
-noNumberCheckerData : Html a
-noNumberCheckerData =
-    div [ class "alert alert-info" ]
-        [ text "No number-checker data has been loaded" ]
+manualEntryFieldClass : NumericEntry -> String
+manualEntryFieldClass entry =
+    if entry.enteredValue /= "" && entry.parsedValue == Nothing then
+        "number-checker-manual-entry number-error"
+
+    else
+        "number-checker-manual-entry"
 
 
-numberCheckerTable : List AnnotatedNumberCheckerEntry -> Html Msg
-numberCheckerTable entries =
+isManualEntryAddButtonDisabled : NumberCheckerManualEntryRow -> Bool
+isManualEntryAddButtonDisabled manualEntryRow =
+    (manualEntryRow.stopwatch1.parsedValue == Nothing)
+        || (manualEntryRow.stopwatch2.parsedValue == Nothing)
+        || (manualEntryRow.finishTokens.parsedValue == Nothing)
+
+
+enterNewRow : NumberCheckerManualEntryRow -> Html Msg
+enterNewRow manualEntryRow =
+    tr []
+        [ td [ colspan 2 ]
+            [ input
+                [ type_ "text"
+                , id "number-checker-stopwatch-1"
+                , class (manualEntryFieldClass manualEntryRow.stopwatch1)
+                , value manualEntryRow.stopwatch1.enteredValue
+                , onInput (NumberCheckerFieldChanged Stopwatch1)
+                , onEnterKeypress AddNumberCheckerRow
+                ]
+                []
+            ]
+        , td [ colspan 2 ]
+            [ input
+                [ type_ "text"
+                , class (manualEntryFieldClass manualEntryRow.stopwatch2)
+                , value manualEntryRow.stopwatch2.enteredValue
+                , onInput (NumberCheckerFieldChanged Stopwatch2)
+                , onEnterKeypress AddNumberCheckerRow
+                ]
+                []
+            ]
+        , td [ colspan 2 ]
+            [ input
+                [ type_ "text"
+                , class (manualEntryFieldClass manualEntryRow.finishTokens)
+                , value manualEntryRow.finishTokens.enteredValue
+                , onInput (NumberCheckerFieldChanged FinishTokens)
+                , onEnterKeypress AddNumberCheckerRow
+                ]
+                []
+            ]
+        , td []
+            [ button
+                [ type_ "button"
+                , class "btn btn-primary btn-xs"
+                , disabled (isManualEntryAddButtonDisabled manualEntryRow)
+                , onClick AddNumberCheckerRow
+                ]
+                [ text "Add" ]
+            ]
+        ]
+
+
+numberCheckerTable : List AnnotatedNumberCheckerEntry -> NumberCheckerManualEntryRow -> Html Msg
+numberCheckerTable entries manualEntryRow =
+    let
+        emptyRows : List (Html Msg)
+        emptyRows =
+            if List.isEmpty entries then
+                [ tr []
+                    [ td [ colspan 7 ]
+                        [ div [ class "no-number-checker-entries" ]
+                            [ text "No number-checker data has been loaded." ]
+                        ]
+                    ]
+                ]
+
+            else
+                []
+    in
     table
         [ class "table table-bordered table-hover number-checker-table" ]
         [ tableHeaders [ "Stopwatch 1", "+/−", "Stopwatch 2", "+/−", "Finish tokens", "+/−", "" ]
         , tbody
             []
-            (List.map numberCheckerRow entries)
+            (emptyRows ++ List.map numberCheckerRow entries ++ [ enterNewRow manualEntryRow ])
         ]
 
 
-numberCheckerView : List AnnotatedNumberCheckerEntry -> Maybe Int -> Html Msg
-numberCheckerView entries lastHeight =
+numberCheckerView : List AnnotatedNumberCheckerEntry -> NumberCheckerManualEntryRow -> Maybe Int -> Html Msg
+numberCheckerView entries manualEntryRow lastHeight =
     div
         []
         [ h3 [] [ text "Number checker" ]
-        , if List.isEmpty entries then
-            noNumberCheckerData
-
-          else
-            numberCheckerTable entries
+        , numberCheckerTable entries manualEntryRow
         ]

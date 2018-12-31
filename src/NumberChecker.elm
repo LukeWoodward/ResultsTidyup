@@ -1,4 +1,4 @@
-module NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, annotate, parseNumberCheckerFile)
+module NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, addAndAnnotate, annotate, parseNumberCheckerFile)
 
 import Error exposing (Error)
 import Maybe.Extra
@@ -101,6 +101,11 @@ annotateEntry { stopwatch1, stopwatch2, finishTokens } entryNumber stopwatch1Dif
     AnnotatedNumberCheckerEntry entryNumber stopwatch1 stopwatch1Diff stopwatch2 stopwatch2Diff finishTokens finishTokensDiff
 
 
+unannotateEntry : AnnotatedNumberCheckerEntry -> NumberCheckerEntry
+unannotateEntry entry =
+    NumberCheckerEntry entry.stopwatch1 entry.stopwatch2 entry.finishTokens
+
+
 annotateInternal : Int -> NumberCheckerEntry -> List NumberCheckerEntry -> List AnnotatedNumberCheckerEntry
 annotateInternal previousRowNumber previousEntry entries =
     case entries of
@@ -149,3 +154,11 @@ annotateInternal previousRowNumber previousEntry entries =
 annotate : List NumberCheckerEntry -> List AnnotatedNumberCheckerEntry
 annotate entries =
     annotateInternal 0 (NumberCheckerEntry 0 0 0) entries
+
+
+addAndAnnotate : NumberCheckerEntry -> List AnnotatedNumberCheckerEntry -> List AnnotatedNumberCheckerEntry
+addAndAnnotate newEntry existingAnnotatedEntries =
+    List.map unannotateEntry existingAnnotatedEntries
+        |> (::) newEntry
+        |> sortNumberCheckerEntries
+        |> annotate
