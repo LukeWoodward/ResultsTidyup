@@ -33,7 +33,7 @@ function handleResize() {
     var headerHeight = $("#header").outerHeight(true);
 
     body.height(containerHeight);
-    app.ports.heightUpdated.send(containerHeight - headerHeight);
+    app.ports.heightUpdated.send(Math.floor(containerHeight - headerHeight));
     currentResizeTimeout = null;
 }
 
