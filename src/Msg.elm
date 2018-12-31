@@ -26,3 +26,4 @@ type Msg
     | EventDateChanged String
     | NumberCheckerFieldChanged NumberCheckerFieldChange String
     | AddNumberCheckerRow
+    | EditNumberCheckerRow Int

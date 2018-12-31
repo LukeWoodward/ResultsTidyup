@@ -23,16 +23,22 @@ onEnterKeypress msg =
     on "keydown" (Json.andThen isEnter keyCode)
 
 
-deleteNumberCheckerEntryButtonCell : Int -> Html Msg
-deleteNumberCheckerEntryButtonCell entryNumber =
+actionButtonsCell : Int -> Html Msg
+actionButtonsCell entryNumber =
     td
         [ class "delete-button-cell" ]
         [ button
             [ type_ "button"
-            , class "btn btn-primary btn-xs"
+            , class "btn btn-primary btn-xs number-checker-command"
+            , onClick (EditNumberCheckerRow entryNumber)
+            ]
+            [ text "Edit" ]
+        , button
+            [ type_ "button"
+            , class "btn btn-primary btn-xs number-checker-command"
             , onClick (DeleteNumberCheckerRow entryNumber)
             ]
-            [ text "Delete " ]
+            [ text "Delete" ]
         ]
 
 
@@ -96,7 +102,7 @@ numberCheckerRow entry =
         , deltaCell entry.stopwatch2Delta
         , intCell entry.finishTokens
         , deltaCell entry.finishTokensDelta
-        , deleteNumberCheckerEntryButtonCell entry.entryNumber
+        , actionButtonsCell entry.entryNumber
         ]
 
 
@@ -118,7 +124,7 @@ isManualEntryAddButtonDisabled manualEntryRow =
 
 enterNewRow : NumberCheckerManualEntryRow -> Html Msg
 enterNewRow manualEntryRow =
-    tr []
+    tr [ class "number-checker-manual-entry-row" ]
         [ td [ colspan 2 ]
             [ input
                 [ type_ "text"

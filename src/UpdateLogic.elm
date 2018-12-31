@@ -445,6 +445,33 @@ addNumberCheckerRow model =
             ( model, Cmd.none )
 
 
+deleteNumberCheckerEntry : Int -> Model -> Model
+deleteNumberCheckerEntry entryNumber model =
+    let
+        newNumberCheckerEntries : List AnnotatedNumberCheckerEntry
+        newNumberCheckerEntries =
+            List.filter (\e -> e.entryNumber /= entryNumber) model.numberCheckerEntries
+                |> reannotate
+    in
+    case model.stopwatches of
+        Double filename1 filename2 oldMergedTable ->
+            let
+                newMergedTable : List MergedTableRow
+                newMergedTable =
+                    underlineTable newNumberCheckerEntries oldMergedTable
+            in
+            { model
+                | numberCheckerEntries = newNumberCheckerEntries
+                , stopwatches = Double filename1 filename2 newMergedTable
+            }
+
+        Single _ _ ->
+            { model | numberCheckerEntries = newNumberCheckerEntries }
+
+        None ->
+            { model | numberCheckerEntries = newNumberCheckerEntries }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -494,32 +521,36 @@ update msg model =
             in
             ( newModel, Cmd.none )
 
-        DeleteNumberCheckerRow entryNumber ->
+        EditNumberCheckerRow entryNumber ->
             let
-                newNumberCheckerEntries : List AnnotatedNumberCheckerEntry
-                newNumberCheckerEntries =
-                    List.filter (\e -> e.entryNumber /= entryNumber) model.numberCheckerEntries
-                        |> reannotate
+                numberCheckerEntryToEdit : Maybe AnnotatedNumberCheckerEntry
+                numberCheckerEntryToEdit =
+                    List.filter (\e -> e.entryNumber == entryNumber) model.numberCheckerEntries
+                        |> List.head
+
+                makeNumericEntry : Int -> NumericEntry
+                makeNumericEntry value =
+                    NumericEntry (String.fromInt value) (Just value)
             in
-            case model.stopwatches of
-                Double filename1 filename2 oldMergedTable ->
+            case numberCheckerEntryToEdit of
+                Just entry ->
                     let
-                        newMergedTable : List MergedTableRow
-                        newMergedTable =
-                            underlineTable newNumberCheckerEntries oldMergedTable
+                        modelWithEntryDeleted : Model
+                        modelWithEntryDeleted =
+                            deleteNumberCheckerEntry entryNumber model
                     in
-                    ( { model
-                        | numberCheckerEntries = newNumberCheckerEntries
-                        , stopwatches = Double filename1 filename2 newMergedTable
+                    ( { modelWithEntryDeleted
+                        | numberCheckerManualEntryRow =
+                            NumberCheckerManualEntryRow (makeNumericEntry entry.stopwatch1) (makeNumericEntry entry.stopwatch2) (makeNumericEntry entry.finishTokens)
                       }
                     , Cmd.none
                     )
 
-                Single _ _ ->
-                    ( { model | numberCheckerEntries = newNumberCheckerEntries }, Cmd.none )
+                Nothing ->
+                    ( model, Cmd.none )
 
-                None ->
-                    ( { model | numberCheckerEntries = newNumberCheckerEntries }, Cmd.none )
+        DeleteNumberCheckerRow entryNumber ->
+            ( deleteNumberCheckerEntry entryNumber model, Cmd.none )
 
         EventDateChanged newEventDate ->
             ( handleEventDateChange newEventDate model, Cmd.none )

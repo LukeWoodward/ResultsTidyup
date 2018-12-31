@@ -356,6 +356,16 @@ expectNoChangeForNumberCheckerManualEntryRow manualEntryRow =
             )
 
 
+createNumericEntry : Int -> NumericEntry
+createNumericEntry value =
+    NumericEntry (String.fromInt value) (Just value)
+
+
+createNumberCheckerManualEntryRow : Int -> Int -> Int -> NumberCheckerManualEntryRow
+createNumberCheckerManualEntryRow stopwatch1 stopwatch2 finishTokens =
+    NumberCheckerManualEntryRow (createNumericEntry stopwatch1) (createNumericEntry stopwatch2) (createNumericEntry finishTokens)
+
+
 suite : Test
 suite =
     describe "Update logic tests"
@@ -666,7 +676,7 @@ suite =
                             (expectNumberCheckerEntries sampleNumberCheckerData
                                 :: defaultAssertionsExcept [ NumberCheckerEntries ]
                             )
-            , test "Can delete a number-checker row when one stopwatches loaded" <|
+            , test "Can delete a number-checker row when one stopwatch loaded" <|
                 \() ->
                     { initModel | numberCheckerEntries = sampleNumberCheckerData, stopwatches = singleStopwatch }
                         |> update (DeleteNumberCheckerRow 2)
@@ -813,7 +823,7 @@ suite =
                         |> expectNoChangeForNumberCheckerManualEntryRow
             , test "Can enter a number-checker row with all valid values" <|
                 \() ->
-                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow (NumericEntry "12" (Just 12)) (NumericEntry "12" (Just 12)) (NumericEntry "12" (Just 12)) }
+                    { initModel | numberCheckerManualEntryRow = createNumberCheckerManualEntryRow 12 12 12 }
                         |> update AddNumberCheckerRow
                         |> Expect.all
                             (expectNumberCheckerEntries
@@ -828,6 +838,44 @@ suite =
                                 ]
                                 :: expectACommand
                                 :: defaultAssertionsExcept [ Command, NumberCheckerEntries ]
+                            )
+            ]
+        , describe "Edit number checker row tests"
+            [ test "Can edit a number-checker row when no stopwatches loaded" <|
+                \() ->
+                    { initModel | numberCheckerEntries = sampleNumberCheckerData }
+                        |> update (EditNumberCheckerRow 2)
+                        |> Expect.all
+                            (expectNumberCheckerEntries sampleNumberCheckerDataWithSecondItemRemoved
+                                :: expectNumberCheckerManualEntryRow (createNumberCheckerManualEntryRow 11 10 11)
+                                :: defaultAssertionsExcept [ NumberCheckerEntries, NumberCheckerManualEntryRowAssertion ]
+                            )
+            , test "Editing a non-existent number-checker row has no effect when no stopwatches loaded" <|
+                \() ->
+                    { initModel | numberCheckerEntries = sampleNumberCheckerData }
+                        |> update (EditNumberCheckerRow 7)
+                        |> Expect.all
+                            (expectNumberCheckerEntries sampleNumberCheckerData
+                                :: defaultAssertionsExcept [ NumberCheckerEntries ]
+                            )
+            , test "Can edit a number-checker row when one stopwatch loaded" <|
+                \() ->
+                    { initModel | numberCheckerEntries = sampleNumberCheckerData, stopwatches = singleStopwatch }
+                        |> update (EditNumberCheckerRow 2)
+                        |> Expect.all
+                            (expectNumberCheckerEntries sampleNumberCheckerDataWithSecondItemRemoved
+                                :: expectNumberCheckerManualEntryRow (createNumberCheckerManualEntryRow 11 10 11)
+                                :: expectStopwatches singleStopwatch
+                                :: defaultAssertionsExcept [ Stopwatches, NumberCheckerEntries, NumberCheckerManualEntryRowAssertion ]
+                            )
+            , test "Editing a non-existent number-checker row has no effect when one stopwatch loaded" <|
+                \() ->
+                    { initModel | numberCheckerEntries = sampleNumberCheckerData, stopwatches = singleStopwatch }
+                        |> update (EditNumberCheckerRow 7)
+                        |> Expect.all
+                            (expectNumberCheckerEntries sampleNumberCheckerData
+                                :: expectStopwatches singleStopwatch
+                                :: defaultAssertionsExcept [ Stopwatches, NumberCheckerEntries ]
                             )
             ]
         ]

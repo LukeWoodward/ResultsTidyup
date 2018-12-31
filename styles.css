@@ -118,3 +118,12 @@ input.number-checker-manual-entry.number-error {
 input.number-checker-manual-entry.number-error:focus {
     background-color: inherit;
 }
+
+table.table.number-checker-table > tbody > tr.number-checker-manual-entry-row > td {
+    text-align: left;
+}
+
+button.number-checker-command {
+    margin-left: 3px;
+    margin-right: 3px;
+}
