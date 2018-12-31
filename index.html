@@ -72,23 +72,6 @@ function handleLoad(files) {
   }
 }
 
-// Taken from https://stackoverflow.com/a/33542499
-function saveFile(filename, data) {
-    var blob = new Blob([data], {type: 'text/csv'});
-    if (window.navigator.msSaveOrOpenBlob) {
-        window.navigator.msSaveBlob(blob, filename);
-    }
-    else {
-        var elem = window.document.createElement('a');
-        elem.href = window.URL.createObjectURL(blob);
-        elem.download = filename;
-        document.body.appendChild(elem);
-        elem.click();
-        document.body.removeChild(elem);
-        window.URL.revokeObjectURL(elem.href);
-    }
-}
-
 // The following functions have been adapted from
 // https://developer.mozilla.org/en-US/docs/Using_files_from_web_applications#Selecting_files_using_drag_and_drop
 function stopDefaultBehaviour(e) {
