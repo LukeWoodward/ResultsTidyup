@@ -50,7 +50,11 @@ $(window).resize(handleWindowResize);
 function handleSingleFileLoad(file) {
   var reader = new FileReader();
   reader.onload = function (e) {
-    app.ports.fileDrop.send({fileName: file.name, fileText: e.target.result});
+    app.ports.fileDrop.send({
+      fileName: file.name,
+      // Replace UTF-8 byte-order marks for the benefit of IE.
+      fileText: e.target.result.replace(/\ufeff/, "")
+    });
   };
 
   reader.readAsText(file, "UTF-8");
