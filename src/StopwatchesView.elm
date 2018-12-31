@@ -172,7 +172,7 @@ stopwatchInfoMessage stopwatches =
                     Just "No stopwatch files have been uploaded"
 
                 Single _ _ ->
-                    Just "Please upload another stopwatch file to enable comparison/merging"
+                    Nothing
 
                 Double _ _ _ ->
                     Nothing
