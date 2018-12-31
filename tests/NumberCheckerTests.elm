@@ -151,4 +151,19 @@ suite =
                             , AnnotatedNumberCheckerEntry 4 34 0 32 0 34 0
                             ]
             ]
+        , describe "reannotate tests"
+            [ test "Re-annotates a list to itself" <|
+                \() ->
+                    let
+                        sampleData : List AnnotatedNumberCheckerEntry
+                        sampleData =
+                            [ AnnotatedNumberCheckerEntry 1 7 0 6 -1 7 0
+                            , AnnotatedNumberCheckerEntry 2 18 1 16 0 17 0
+                            , AnnotatedNumberCheckerEntry 3 29 0 27 0 29 1
+                            , AnnotatedNumberCheckerEntry 4 34 0 32 0 34 0
+                            ]
+                    in
+                    reannotate sampleData
+                        |> Expect.equal sampleData
+            ]
         ]

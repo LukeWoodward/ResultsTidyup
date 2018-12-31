@@ -1,4 +1,4 @@
-module NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, addAndAnnotate, annotate, parseNumberCheckerFile)
+module NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, addAndAnnotate, annotate, parseNumberCheckerFile, reannotate)
 
 import Error exposing (Error)
 import Maybe.Extra
@@ -160,5 +160,12 @@ addAndAnnotate : NumberCheckerEntry -> List AnnotatedNumberCheckerEntry -> List 
 addAndAnnotate newEntry existingAnnotatedEntries =
     List.map unannotateEntry existingAnnotatedEntries
         |> (::) newEntry
+        |> sortNumberCheckerEntries
+        |> annotate
+
+
+reannotate : List AnnotatedNumberCheckerEntry -> List AnnotatedNumberCheckerEntry
+reannotate entries =
+    List.map unannotateEntry entries
         |> sortNumberCheckerEntries
         |> annotate

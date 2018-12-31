@@ -20,7 +20,7 @@ import MergedTable
 import Merger exposing (MergeEntry, merge)
 import Model exposing (EventDateAndTime, Model, NumberCheckerManualEntryRow, NumericEntry, emptyNumberCheckerManualEntryRow)
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
-import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, addAndAnnotate, annotate, parseNumberCheckerFile)
+import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, addAndAnnotate, annotate, parseNumberCheckerFile, reannotate)
 import Problems exposing (identifyProblems)
 import Regex exposing (Regex)
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
@@ -499,6 +499,7 @@ update msg model =
                 newNumberCheckerEntries : List AnnotatedNumberCheckerEntry
                 newNumberCheckerEntries =
                     List.filter (\e -> e.entryNumber /= entryNumber) model.numberCheckerEntries
+                        |> reannotate
             in
             case model.stopwatches of
                 Double filename1 filename2 oldMergedTable ->

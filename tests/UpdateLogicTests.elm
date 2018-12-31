@@ -316,11 +316,32 @@ sampleNumberCheckerData =
       }
     , { entryNumber = 3
       , stopwatch1 = 18
-      , stopwatch1Delta = 1
+      , stopwatch1Delta = 0
       , stopwatch2 = 17
       , stopwatch2Delta = 0
       , finishTokens = 17
+      , finishTokensDelta = -1
+      }
+    ]
+
+
+sampleNumberCheckerDataWithSecondItemRemoved : List AnnotatedNumberCheckerEntry
+sampleNumberCheckerDataWithSecondItemRemoved =
+    [ { entryNumber = 1
+      , stopwatch1 = 5
+      , stopwatch1Delta = 0
+      , stopwatch2 = 4
+      , stopwatch2Delta = -1
+      , finishTokens = 5
       , finishTokensDelta = 0
+      }
+    , { entryNumber = 2
+      , stopwatch1 = 18
+      , stopwatch1Delta = 0
+      , stopwatch2 = 17
+      , stopwatch2Delta = 0
+      , finishTokens = 17
+      , finishTokensDelta = -1
       }
     ]
 
@@ -634,7 +655,7 @@ suite =
                     { initModel | numberCheckerEntries = sampleNumberCheckerData }
                         |> update (DeleteNumberCheckerRow 2)
                         |> Expect.all
-                            (expectNumberCheckerEntries (List.filter (\e -> e.entryNumber /= 2) sampleNumberCheckerData)
+                            (expectNumberCheckerEntries sampleNumberCheckerDataWithSecondItemRemoved
                                 :: defaultAssertionsExcept [ NumberCheckerEntries ]
                             )
             , test "Deleting a non-existent number-checker row has no effect when no stopwatches loaded" <|
@@ -650,7 +671,7 @@ suite =
                     { initModel | numberCheckerEntries = sampleNumberCheckerData, stopwatches = singleStopwatch }
                         |> update (DeleteNumberCheckerRow 2)
                         |> Expect.all
-                            (expectNumberCheckerEntries (List.filter (\e -> e.entryNumber /= 2) sampleNumberCheckerData)
+                            (expectNumberCheckerEntries sampleNumberCheckerDataWithSecondItemRemoved
                                 :: expectStopwatches singleStopwatch
                                 :: defaultAssertionsExcept [ Stopwatches, NumberCheckerEntries ]
                             )
