@@ -16,6 +16,11 @@ timeRegex =
         |> Maybe.withDefault Regex.never
 
 
+intMatches : List (Maybe String) -> List (Maybe Int)
+intMatches matches =
+    List.map (Maybe.andThen String.toInt) matches
+
+
 {-| Parse a string containing a time in the form MM:SS or HH:MM:SS to a time,
 as a number of seconds.
 
@@ -30,46 +35,26 @@ parseTime : String -> Result Error Int
 parseTime timeString =
     case Regex.findAtMost 1 timeRegex timeString of
         [ match ] ->
-            case match.submatches of
-                [ hoursMatch, Just minutesStr, Just secondsStr ] ->
+            case intMatches match.submatches of
+                [ hoursMaybe, Just minutes, Just seconds ] ->
                     let
-                        hoursStr : String
-                        hoursStr =
-                            Maybe.withDefault "0" hoursMatch
-
-                        hoursMaybe : Maybe Int
-                        hoursMaybe =
-                            String.toInt hoursStr
-
-                        minutesMaybe : Maybe Int
-                        minutesMaybe =
-                            String.toInt minutesStr
-
-                        secondsMaybe : Maybe Int
-                        secondsMaybe =
-                            String.toInt secondsStr
+                        hours =
+                            Maybe.withDefault 0 hoursMaybe
                     in
-                    case ( hoursMaybe, minutesMaybe, secondsMaybe ) of
-                        ( Just hours, Just minutes, Just seconds ) ->
-                            if seconds >= 60 then
-                                Error "SECONDS_TOO_LARGE" ("Seconds value " ++ secondsStr ++ " is too large")
-                                    |> Err
+                    if seconds >= 60 then
+                        Error "SECONDS_TOO_LARGE" ("Seconds value " ++ String.fromInt seconds ++ " is too large")
+                            |> Err
 
-                            else if minutes >= 60 then
-                                Error "MINUTES_TOO_LARGE" ("Minutes value " ++ minutesStr ++ " is too large")
-                                    |> Err
+                    else if minutes >= 60 then
+                        Error "MINUTES_TOO_LARGE" ("Minutes value " ++ String.fromInt minutes ++ " is too large")
+                            |> Err
 
-                            else
-                                Ok (hours * 3600 + minutes * 60 + seconds)
-
-                        _ ->
-                            -- Unexpected: one of the number values failed to parse.
-                            Error "INTERNAL_TIME_PARSING_FAILURE_INT" ("Unexpected failure to parse time '" ++ timeString ++ "'")
-                                |> Err
+                    else
+                        Ok (hours * 3600 + minutes * 60 + seconds)
 
                 _ ->
-                    -- Unexpected: not three matches from the regex.
-                    Error "INTERNAL_TIME_PARSING_FAILURE_REGEX" ("Unexpected failure to parse time '" ++ timeString ++ "'")
+                    -- Unexpected: not three matches from the regex or one of them wasn't integer-valued.
+                    Error "INTERNAL_TIME_PARSING_FAILURE" ("Unexpected failure to parse time '" ++ timeString ++ "'")
                         |> Err
 
         _ ->
@@ -89,38 +74,22 @@ parseHoursAndMinutes : String -> Result Error Int
 parseHoursAndMinutes timeString =
     case Regex.findAtMost 1 hoursAndMinutesRegex timeString of
         [ match ] ->
-            case match.submatches of
-                [ Just hoursStr, Just minutesStr ] ->
-                    let
-                        hoursMaybe : Maybe Int
-                        hoursMaybe =
-                            String.toInt hoursStr
+            case intMatches match.submatches of
+                [ Just hours, Just minutes ] ->
+                    if hours >= 24 then
+                        Error "HOURS_TOO_LARGE" ("Hours value " ++ String.fromInt hours ++ " is too large")
+                            |> Err
 
-                        minutesMaybe : Maybe Int
-                        minutesMaybe =
-                            String.toInt minutesStr
-                    in
-                    case ( hoursMaybe, minutesMaybe ) of
-                        ( Just hours, Just minutes ) ->
-                            if hours >= 24 then
-                                Error "HOURS_TOO_LARGE" ("Hours value " ++ hoursStr ++ " is too large")
-                                    |> Err
+                    else if minutes >= 60 then
+                        Error "MINUTES_TOO_LARGE" ("Minutes value " ++ String.fromInt minutes ++ " is too large")
+                            |> Err
 
-                            else if minutes >= 60 then
-                                Error "MINUTES_TOO_LARGE" ("Minutes value " ++ minutesStr ++ " is too large")
-                                    |> Err
-
-                            else
-                                Ok (hours * 60 + minutes)
-
-                        _ ->
-                            -- Unexpected: one of the number values failed to parse.
-                            Error "INTERNAL_TIME_PARSING_FAILURE_INT" ("Unexpected failure to parse time '" ++ timeString ++ "'")
-                                |> Err
+                    else
+                        Ok (hours * 60 + minutes)
 
                 _ ->
-                    -- Unexpected: not two matches from the regex.
-                    Error "INTERNAL_TIME_PARSING_FAILURE_REGEX" ("Unexpected failure to parse time '" ++ timeString ++ "'")
+                    -- Unexpected: one of the number values failed to parse or didn't match in the regex
+                    Error "INTERNAL_TIME_PARSING_FAILURE" ("Unexpected failure to parse time '" ++ timeString ++ "'")
                         |> Err
 
         _ ->
