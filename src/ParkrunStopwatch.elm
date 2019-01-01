@@ -64,7 +64,7 @@ getHeightAttribute lastHeight =
 view : Model -> Html Msg
 view model =
     div
-        [ class "container" ]
+        []
         [ h1 [ id "header" ] [ text "Parkrun stopwatch comparison/merging" ]
         , errorView model.lastError
         , div [ class "row" ]
