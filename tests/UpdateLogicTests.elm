@@ -152,7 +152,7 @@ defaultAssertionsExcept exceptions =
                 Nothing
 
               else
-                Just (expectEventDateAndTime (EventDateAndTime "" Nothing Nothing))
+                Just (expectEventDateAndTime (EventDateAndTime "" Nothing "" Nothing))
             , if List.member NumberCheckerManualEntryRowAssertion exceptions then
                 Nothing
 
@@ -252,9 +252,9 @@ parsedBarcodeScannerData1And2 =
         (toPosix "2018-03-14T09:49:44.000Z")
 
 
-parsedEventDateAndTime : EventDateAndTime
-parsedEventDateAndTime =
-    EventDateAndTime "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z") Nothing
+parsedEventDateOnly : EventDateAndTime
+parsedEventDateOnly =
+    EventDateAndTime "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z") "" Nothing
 
 
 validNumberCheckerData : String
@@ -440,7 +440,7 @@ suite =
                             |> Expect.all
                                 (expectBarcodeScannerFiles [ "barcodes1.txt" ]
                                     :: expectBarcodeScannerData parsedBarcodeScannerData1
-                                    :: expectEventDateAndTime parsedEventDateAndTime
+                                    :: expectEventDateAndTime parsedEventDateOnly
                                     :: defaultAssertionsExcept [ BarcodeScannerFiles, BarcodeScannerDataAssertion, EventDateAndTimeAssertion ]
                                 )
                 , test "Can upload a single invalid barcode scanner file" <|
@@ -463,7 +463,7 @@ suite =
                             |> Expect.all
                                 (expectBarcodeScannerFiles [ "barcodes1.txt" ]
                                     :: expectBarcodeScannerData parsedBarcodeScannerData1
-                                    :: expectEventDateAndTime parsedEventDateAndTime
+                                    :: expectEventDateAndTime parsedEventDateOnly
                                     :: expectLastError "BARCODE_DATA_ALREADY_LOADED"
                                     :: defaultAssertionsExcept [ BarcodeScannerFiles, BarcodeScannerDataAssertion, EventDateAndTimeAssertion, LastError ]
                                 )
@@ -476,7 +476,7 @@ suite =
                             |> Expect.all
                                 (expectBarcodeScannerFiles [ "barcodes1.txt", "barcodes2.txt" ]
                                     :: expectBarcodeScannerData parsedBarcodeScannerData1And2
-                                    :: expectEventDateAndTime parsedEventDateAndTime
+                                    :: expectEventDateAndTime parsedEventDateOnly
                                     :: defaultAssertionsExcept [ BarcodeScannerFiles, BarcodeScannerDataAssertion, EventDateAndTimeAssertion ]
                                 )
                 ]
@@ -700,26 +700,53 @@ suite =
                 \() ->
                     update (EventDateChanged "26/05/2018") initModel
                         |> Expect.all
-                            (expectEventDateAndTime (EventDateAndTime "26/05/2018" (toPosix "2018-05-26T00:00:00.000Z") Nothing)
+                            (expectEventDateAndTime (EventDateAndTime "26/05/2018" (toPosix "2018-05-26T00:00:00.000Z") "" Nothing)
                                 :: defaultAssertionsExcept [ EventDateAndTimeAssertion ]
                             )
             , test "Setting a nonexistent date clears the validated date" <|
                 \() ->
                     update (EventDateChanged "29/02/2018") initModel
                         |> Expect.all
-                            (expectEventDateAndTime (EventDateAndTime "29/02/2018" Nothing Nothing)
+                            (expectEventDateAndTime (EventDateAndTime "29/02/2018" Nothing "" Nothing)
                                 :: defaultAssertionsExcept [ EventDateAndTimeAssertion ]
                             )
             , test "Setting an invalid date clears the validated date" <|
                 \() ->
                     update (EventDateChanged "This is not a valid date") initModel
                         |> Expect.all
-                            (expectEventDateAndTime (EventDateAndTime "This is not a valid date" Nothing Nothing)
+                            (expectEventDateAndTime (EventDateAndTime "This is not a valid date" Nothing "" Nothing)
                                 :: defaultAssertionsExcept [ EventDateAndTimeAssertion ]
                             )
             , test "Setting an empty date clears the validated date" <|
                 \() ->
                     update (EventDateChanged "") initModel
+                        |> Expect.all defaultAssertions
+            ]
+        , describe "Event time changed tests"
+            [ test "Setting a valid time sets the validated time" <|
+                \() ->
+                    update (EventTimeChanged "09:30") initModel
+                        |> Expect.all
+                            (expectEventDateAndTime (EventDateAndTime "" Nothing "09:30" (Just (9 * 60 + 30)))
+                                :: defaultAssertionsExcept [ EventDateAndTimeAssertion ]
+                            )
+            , test "Setting a nonexistent time clears the validated time" <|
+                \() ->
+                    update (EventTimeChanged "25:30") initModel
+                        |> Expect.all
+                            (expectEventDateAndTime (EventDateAndTime "" Nothing "25:30" Nothing)
+                                :: defaultAssertionsExcept [ EventDateAndTimeAssertion ]
+                            )
+            , test "Setting an invalid time clears the validated time" <|
+                \() ->
+                    update (EventTimeChanged "This is not a valid time") initModel
+                        |> Expect.all
+                            (expectEventDateAndTime (EventDateAndTime "" Nothing "This is not a valid time" Nothing)
+                                :: defaultAssertionsExcept [ EventDateAndTimeAssertion ]
+                            )
+            , test "Setting an empty time clears the validated time" <|
+                \() ->
+                    update (EventTimeChanged "") initModel
                         |> Expect.all defaultAssertions
             ]
         , describe "Number checker field changed tests"

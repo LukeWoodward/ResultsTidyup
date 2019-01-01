@@ -24,6 +24,7 @@ type Msg
     | MouseLeaveNumberCheckerRow Int
     | DeleteNumberCheckerRow Int
     | EventDateChanged String
+    | EventTimeChanged String
     | NumberCheckerFieldChanged NumberCheckerFieldChange String
     | AddNumberCheckerRow
     | EditNumberCheckerRow Int

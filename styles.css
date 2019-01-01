@@ -91,15 +91,15 @@ th.stopwatch-header {
     vertical-align: middle;
 }
 
-input#eventDateBox {
+input#eventDateBox, input#eventTimeBox {
     margin-left: 10px;
 }
 
-input#eventDateBox.date-error {
+input#eventDateBox.date-error, input#eventTimeBox.time-error{
     background-color: #ffdddd;
 }
 
-input#eventDateBox.date-error:focus {
+input#eventDateBox.date-error:focus, input#eventTimeBox.time-error:focus {
     background-color: inherit;
 }
 
@@ -109,6 +109,7 @@ div.no-number-checker-entries {
 
 input.number-checker-manual-entry {
     max-width: 120px;
+    width: 120px;
 }
 
 input.number-checker-manual-entry.number-error {
@@ -126,4 +127,14 @@ table.table.number-checker-table > tbody > tr.number-checker-manual-entry-row > 
 button.number-checker-command {
     margin-left: 3px;
     margin-right: 3px;
+}
+
+input#eventTimeBox {
+    max-width: 80px;
+    width: 80px;
+    display: inline-block;
+}
+
+button.event-time-button {
+    margin-left: 3px;
 }

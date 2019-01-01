@@ -26,6 +26,7 @@ import Regex exposing (Regex)
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
 import Task exposing (Task)
 import Time exposing (Posix, Zone)
+import TimeHandling exposing (parseHoursAndMinutes)
 
 
 maxNearMatchDistance : Int
@@ -86,6 +87,28 @@ handleEventDateChange newEventDate model =
             { oldEventDateAndTime
                 | enteredDate = newEventDate
                 , validatedDate = newParsedDate
+            }
+    in
+    { model | eventDateAndTime = newEventDateAndTime }
+
+
+handleEventTimeChange : String -> Model -> Model
+handleEventTimeChange newEventTime model =
+    let
+        newParsedTime : Maybe Int
+        newParsedTime =
+            parseHoursAndMinutes newEventTime
+                |> Result.toMaybe
+
+        oldEventDateAndTime : EventDateAndTime
+        oldEventDateAndTime =
+            model.eventDateAndTime
+
+        newEventDateAndTime : EventDateAndTime
+        newEventDateAndTime =
+            { oldEventDateAndTime
+                | enteredTime = newEventTime
+                , validatedTime = newParsedTime
             }
     in
     { model | eventDateAndTime = newEventDateAndTime }
@@ -554,6 +577,9 @@ update msg model =
 
         EventDateChanged newEventDate ->
             ( handleEventDateChange newEventDate model, Cmd.none )
+
+        EventTimeChanged newEventTime ->
+            ( handleEventTimeChange newEventTime model, Cmd.none )
 
         NumberCheckerFieldChanged fieldChange newValue ->
             ( handleNumberCheckerFieldChange fieldChange newValue model, Cmd.none )

@@ -11,7 +11,8 @@ import Time exposing (Posix)
 type alias EventDateAndTime =
     { enteredDate : String
     , validatedDate : Maybe Posix
-    , time : Maybe Int
+    , enteredTime : String
+    , validatedTime : Maybe Int
     }
 
 
@@ -62,6 +63,6 @@ initModel =
     , barcodeScannerFiles = []
     , barcodeScannerData = BarcodeScanner.empty
     , problems = Problems.empty
-    , eventDateAndTime = EventDateAndTime "" Nothing Nothing
+    , eventDateAndTime = EventDateAndTime "" Nothing "" Nothing
     , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
     }
