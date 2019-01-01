@@ -1,19 +1,12 @@
-module Model exposing (EventDateAndTime, Model, NumberCheckerManualEntryRow, NumericEntry, emptyNumberCheckerManualEntryRow, emptyNumericEntry, initModel)
+module Model exposing (Model, NumberCheckerManualEntryRow, NumericEntry, emptyNumberCheckerManualEntryRow, emptyNumericEntry, initModel)
 
 import BarcodeScanner exposing (BarcodeScannerData)
+import DataStructures exposing (EventDateAndTime)
 import Error exposing (Error)
 import MergedTable exposing (Stopwatches(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import Problems exposing (ProblemsContainer)
 import Time exposing (Posix)
-
-
-type alias EventDateAndTime =
-    { enteredDate : String
-    , validatedDate : Maybe Posix
-    , enteredTime : String
-    , validatedTime : Maybe Int
-    }
 
 
 type alias NumericEntry =

@@ -1,9 +1,9 @@
 module EventDateAndTimeView exposing (eventDateAndTimeView)
 
+import DataStructures exposing (EventDateAndTime)
 import Html exposing (Html, button, div, h3, input, label, text)
 import Html.Attributes exposing (class, for, id, type_, value)
 import Html.Events exposing (onClick, onInput)
-import Model exposing (EventDateAndTime)
 import Msg exposing (Msg(..))
 
 

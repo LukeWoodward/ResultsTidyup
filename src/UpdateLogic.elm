@@ -2,7 +2,7 @@ module UpdateLogic exposing (createFileForDownload, update)
 
 import BarcodeScanner exposing (BarcodeScannerData, mergeScannerData, readBarcodeScannerData)
 import Browser.Dom
-import DataStructures exposing (InteropFile, WhichStopwatch(..))
+import DataStructures exposing (EventDateAndTime, InteropFile, WhichStopwatch(..))
 import DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart)
 import Error exposing (Error)
 import File.Download as Download
@@ -18,7 +18,7 @@ import MergedTable
         , underlineTable
         )
 import Merger exposing (MergeEntry, merge)
-import Model exposing (EventDateAndTime, Model, NumberCheckerManualEntryRow, NumericEntry, emptyNumberCheckerManualEntryRow)
+import Model exposing (Model, NumberCheckerManualEntryRow, NumericEntry, emptyNumberCheckerManualEntryRow)
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, addAndAnnotate, annotate, parseNumberCheckerFile, reannotate)
 import Problems exposing (identifyProblems)
@@ -89,7 +89,7 @@ handleEventDateChange newEventDate model =
                 , validatedDate = newParsedDate
             }
     in
-    { model | eventDateAndTime = newEventDateAndTime }
+    identifyProblemsIn { model | eventDateAndTime = newEventDateAndTime }
 
 
 handleEventTimeChange : String -> Model -> Model
@@ -111,7 +111,7 @@ handleEventTimeChange newEventTime model =
                 , validatedTime = newParsedTime
             }
     in
-    { model | eventDateAndTime = newEventDateAndTime }
+    identifyProblemsIn { model | eventDateAndTime = newEventDateAndTime }
 
 
 setEventDateAndTimeIn : Model -> Model
@@ -139,7 +139,7 @@ setEventDateAndTimeIn model =
 identifyProblemsIn : Model -> Model
 identifyProblemsIn model =
     { model
-        | problems = identifyProblems model.stopwatches model.barcodeScannerData
+        | problems = identifyProblems model.stopwatches model.barcodeScannerData model.eventDateAndTime
     }
 
 

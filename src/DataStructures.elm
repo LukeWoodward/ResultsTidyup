@@ -1,4 +1,6 @@
-module DataStructures exposing (InteropFile, WhichStopwatch(..))
+module DataStructures exposing (EventDateAndTime, InteropFile, WhichStopwatch(..))
+
+import Time exposing (Posix)
 
 
 type WhichStopwatch
@@ -9,4 +11,12 @@ type WhichStopwatch
 type alias InteropFile =
     { fileName : String
     , fileText : String
+    }
+
+
+type alias EventDateAndTime =
+    { enteredDate : String
+    , validatedDate : Maybe Posix
+    , enteredTime : String
+    , validatedTime : Maybe Int
     }

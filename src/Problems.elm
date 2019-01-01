@@ -1,9 +1,12 @@
 module Problems exposing (MinorProblem(..), Problem(..), ProblemsContainer, empty, identifyProblems, minorProblemToString, problemToString)
 
 import BarcodeScanner exposing (BarcodeScannerData, UnrecognisedLine)
+import DataStructures exposing (EventDateAndTime)
+import DateHandling exposing (dateStringToPosix)
 import Dict exposing (Dict)
 import MergedTable exposing (Stopwatches(..))
 import Set exposing (Set)
+import Time exposing (posixToMillis)
 
 
 type Problem
@@ -21,6 +24,7 @@ type MinorProblem
     = AthleteInSamePositionMultipleTimes String Int
     | AthleteWithAndWithoutPosition String Int
     | PositionWithAndWithoutAthlete Int String
+    | BarcodesScannedBeforeEventStart Int String
 
 
 type alias ProblemsContainer =
@@ -225,8 +229,49 @@ identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly =
         |> List.filterMap getMinorProblemIfSingleAthlete
 
 
-identifyProblems : Stopwatches -> BarcodeScannerData -> ProblemsContainer
-identifyProblems stopwatches barcodeScannerData =
+identifyRecordsScannedBeforeEventStartTime : BarcodeScannerData -> String -> Int -> List MinorProblem
+identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString eventStartTimeMillis =
+    let
+        countDatesBeforeEventStart : List String -> Int
+        countDatesBeforeEventStart dates =
+            List.filterMap dateStringToPosix dates
+                |> List.map Time.posixToMillis
+                |> List.filter (\t -> t < eventStartTimeMillis)
+                |> List.length
+
+        scannedBarcodesBeforeEventStart : Int
+        scannedBarcodesBeforeEventStart =
+            barcodeScannerData.scannedBarcodes
+                |> Dict.values
+                |> List.concat
+                |> List.map .scanTime
+                |> countDatesBeforeEventStart
+
+        athleteBarcodesOnlyBeforeEventStart : Int
+        athleteBarcodesOnlyBeforeEventStart =
+            barcodeScannerData.athleteBarcodesOnly
+                |> List.map .scanTime
+                |> countDatesBeforeEventStart
+
+        finishTokensOnlyBeforeEventStart : Int
+        finishTokensOnlyBeforeEventStart =
+            barcodeScannerData.finishTokensOnly
+                |> List.map .scanTime
+                |> countDatesBeforeEventStart
+
+        totalNumberOfScansBeforeEventStart : Int
+        totalNumberOfScansBeforeEventStart =
+            scannedBarcodesBeforeEventStart + athleteBarcodesOnlyBeforeEventStart + finishTokensOnlyBeforeEventStart
+    in
+    if totalNumberOfScansBeforeEventStart == 0 then
+        []
+
+    else
+        [ BarcodesScannedBeforeEventStart totalNumberOfScansBeforeEventStart eventStartTimeAsString ]
+
+
+identifyProblems : Stopwatches -> BarcodeScannerData -> EventDateAndTime -> ProblemsContainer
+identifyProblems stopwatches barcodeScannerData eventDateAndTime =
     let
         positionToAthletesDict : Dict Int (List String)
         positionToAthletesDict =
@@ -245,6 +290,17 @@ identifyProblems stopwatches barcodeScannerData =
         finishTokensOnly =
             List.map .position barcodeScannerData.finishTokensOnly
 
+        eventStartTimeMillis : Maybe Int
+        eventStartTimeMillis =
+            Maybe.map2
+                (\dateAsPosix timeInMinutes -> Time.posixToMillis dateAsPosix + timeInMinutes * 60 * 1000)
+                eventDateAndTime.validatedDate
+                eventDateAndTime.validatedTime
+
+        eventStartTimeAsString : String
+        eventStartTimeAsString =
+            eventDateAndTime.enteredDate ++ " " ++ eventDateAndTime.enteredTime
+
         allProblems : List (List Problem)
         allProblems =
             [ identifyAthletesWithMultiplePositions athleteToPositionsDict
@@ -260,6 +316,8 @@ identifyProblems stopwatches barcodeScannerData =
             [ identifyDuplicateScans positionToAthletesDict
             , identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly
             , identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly
+            , Maybe.map (identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString) eventStartTimeMillis
+                |> Maybe.withDefault []
             ]
     in
     { problems = List.concat allProblems
@@ -306,3 +364,15 @@ minorProblemToString minorProblem =
 
         PositionWithAndWithoutAthlete position athlete ->
             "Finish token " ++ String.fromInt position ++ " has been scanned with athlete barcode " ++ athlete ++ " and also without a corresponding athlete barcode"
+
+        BarcodesScannedBeforeEventStart number eventStart ->
+            let
+                barcodesString : String
+                barcodesString =
+                    if number == 1 then
+                        "One barcode was"
+
+                    else
+                        String.fromInt number ++ " barcodes were"
+            in
+            barcodesString ++ " scanned before the event start (" ++ eventStart ++ ")"
