@@ -1,4 +1,4 @@
-module TimeHandling exposing (formatTime, formatTimeWithHours, parseHoursAndMinutes, parseTime)
+module TimeHandling exposing (formatHoursAndMinutes, formatTime, formatTimeWithHours, parseHoursAndMinutes, parseTime)
 
 import Error exposing (Error)
 import Regex exposing (Regex, fromString)
@@ -144,3 +144,8 @@ formatTime timeInSeconds =
 formatTimeWithHours : Int -> String
 formatTimeWithHours timeInSeconds =
     formatTimeInternal True timeInSeconds
+
+
+formatHoursAndMinutes : Int -> String
+formatHoursAndMinutes timeInMinutes =
+    formatToAtLeastTwoChars (timeInMinutes // 60) ++ ":" ++ formatToAtLeastTwoChars (modBy 60 timeInMinutes)

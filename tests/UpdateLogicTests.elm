@@ -723,12 +723,13 @@ suite =
                         |> Expect.all defaultAssertions
             ]
         , describe "Event time changed tests"
-            [ test "Setting a valid time sets the validated time" <|
+            [ test "Setting a valid time sets the validated time and issues a command" <|
                 \() ->
                     update (EventTimeChanged "09:30") initModel
                         |> Expect.all
                             (expectEventDateAndTime (EventDateAndTime "" Nothing "09:30" (Just (9 * 60 + 30)))
-                                :: defaultAssertionsExcept [ EventDateAndTimeAssertion ]
+                                :: expectACommand
+                                :: defaultAssertionsExcept [ EventDateAndTimeAssertion, Command ]
                             )
             , test "Setting a nonexistent time clears the validated time" <|
                 \() ->

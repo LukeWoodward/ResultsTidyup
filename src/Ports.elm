@@ -1,4 +1,4 @@
-port module Ports exposing (fileDrop, getInitialHeight, heightUpdated)
+port module Ports exposing (fileDrop, getInitialHeight, heightUpdated, recordEventStartTime)
 
 import DataStructures exposing (InteropFile)
 
@@ -10,3 +10,6 @@ port fileDrop : (InteropFile -> msg) -> Sub msg
 
 
 port heightUpdated : (Int -> msg) -> Sub msg
+
+
+port recordEventStartTime : Int -> Cmd msg

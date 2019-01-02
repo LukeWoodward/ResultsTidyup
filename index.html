@@ -17,10 +17,23 @@
 <script src="parkrun-stopwatch.js"></script>
 <script src="jquery-3.3.1.js"></script>
 <script>
-var app = Elm.ParkrunStopwatch.init({node: document.getElementById("parkrun-stopwatch")});
+var startTime = parseInt(window.localStorage.getItem("eventStartTime"), 10);
+if (isNaN(startTime)) {
+    startTime = null;
+}
+
+var app = Elm.ParkrunStopwatch.init({
+    node: document.getElementById("parkrun-stopwatch"),
+    flags: startTime
+});
+
 app.ports.getInitialHeight.subscribe(function () {
     handleResize();
-})
+});
+
+app.ports.recordEventStartTime.subscribe(function (time) {
+    window.localStorage.setItem("eventStartTime", time);
+});
 
 var currentResizeTimeout = null;
 

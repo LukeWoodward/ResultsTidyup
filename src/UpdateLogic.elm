@@ -21,6 +21,7 @@ import Merger exposing (MergeEntry, merge)
 import Model exposing (Model, NumberCheckerManualEntryRow, NumericEntry, emptyNumberCheckerManualEntryRow)
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, addAndAnnotate, annotate, parseNumberCheckerFile, reannotate)
+import Ports exposing (recordEventStartTime)
 import Problems exposing (identifyProblems)
 import Regex exposing (Regex)
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
@@ -92,7 +93,7 @@ handleEventDateChange newEventDate model =
     identifyProblemsIn { model | eventDateAndTime = newEventDateAndTime }
 
 
-handleEventTimeChange : String -> Model -> Model
+handleEventTimeChange : String -> Model -> ( Model, Cmd Msg )
 handleEventTimeChange newEventTime model =
     let
         newParsedTime : Maybe Int
@@ -110,8 +111,13 @@ handleEventTimeChange newEventTime model =
                 | enteredTime = newEventTime
                 , validatedTime = newParsedTime
             }
+
+        command : Cmd Msg
+        command =
+            Maybe.map recordEventStartTime newParsedTime
+                |> Maybe.withDefault Cmd.none
     in
-    identifyProblemsIn { model | eventDateAndTime = newEventDateAndTime }
+    ( identifyProblemsIn { model | eventDateAndTime = newEventDateAndTime }, command )
 
 
 setEventDateAndTimeIn : Model -> Model
@@ -579,7 +585,7 @@ update msg model =
             ( handleEventDateChange newEventDate model, Cmd.none )
 
         EventTimeChanged newEventTime ->
-            ( handleEventTimeChange newEventTime model, Cmd.none )
+            handleEventTimeChange newEventTime model
 
         NumberCheckerFieldChanged fieldChange newValue ->
             ( handleNumberCheckerFieldChange fieldChange newValue model, Cmd.none )

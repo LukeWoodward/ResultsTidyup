@@ -4,7 +4,7 @@ import Errors exposing (expectError)
 import Expect
 import Stopwatch exposing (..)
 import Test exposing (Test, describe, test)
-import TimeHandling exposing (formatTime, formatTimeWithHours, parseHoursAndMinutes, parseTime)
+import TimeHandling exposing (formatHoursAndMinutes, formatTime, formatTimeWithHours, parseHoursAndMinutes, parseTime)
 
 
 suite : Test
@@ -157,5 +157,35 @@ suite =
                 \() ->
                     formatTimeWithHours -(49 * 60 * 60 + 37 * 60 + 19)
                         |> Expect.equal "-49:37:19"
+            , describe "formatHoursAndMinutes tests"
+                [ test "formatHoursAndMinutes of zero is correct" <|
+                    \() ->
+                        formatHoursAndMinutes 0
+                            |> Expect.equal "00:00"
+                , test "formatHoursAndMinutes of one minute is correct" <|
+                    \() ->
+                        formatHoursAndMinutes 1
+                            |> Expect.equal "00:01"
+                , test "formatHoursAndMinutes of nine minutes is correct" <|
+                    \() ->
+                        formatHoursAndMinutes 9
+                            |> Expect.equal "00:09"
+                , test "formatHoursAndMinutes of ten minutes is correct" <|
+                    \() ->
+                        formatHoursAndMinutes 10
+                            |> Expect.equal "00:10"
+                , test "formatHoursAndMinutes of one hour is correct" <|
+                    \() ->
+                        formatHoursAndMinutes 60
+                            |> Expect.equal "01:00"
+                , test "formatHoursAndMinutes of nine hours is correct" <|
+                    \() ->
+                        formatHoursAndMinutes (9 * 60)
+                            |> Expect.equal "09:00"
+                , test "formatHoursAndMinutes of ten hours is correct" <|
+                    \() ->
+                        formatHoursAndMinutes (10 * 60)
+                            |> Expect.equal "10:00"
+                ]
             ]
         ]
