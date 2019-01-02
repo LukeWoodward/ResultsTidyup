@@ -1,6 +1,6 @@
 module ProblemsView exposing (problemsView)
 
-import Html exposing (Html, div, h4, text)
+import Html exposing (Html, div, h4, li, text, ul)
 import Html.Attributes exposing (class)
 import Msg exposing (Msg)
 import Problems exposing (MinorProblem, Problem, ProblemsContainer, minorProblemToString, problemToString)
@@ -8,7 +8,7 @@ import Problems exposing (MinorProblem, Problem, ProblemsContainer, minorProblem
 
 majorProblemView : Problem -> Html Msg
 majorProblemView problem =
-    div [] [ text (problemToString problem) ]
+    li [] [ text (problemToString problem) ]
 
 
 majorProblemsView : List Problem -> Html Msg
@@ -27,12 +27,14 @@ majorProblemsView problems =
                     "The following problems were found:"
         in
         div [ class "alert alert-danger" ]
-            (h4 [] [ text problemsHeader ] :: List.map majorProblemView problems)
+            [ h4 [] [ text problemsHeader ]
+            , ul [] (List.map majorProblemView problems)
+            ]
 
 
 minorProblemView : MinorProblem -> Html Msg
 minorProblemView minorProblem =
-    div [] [ text (minorProblemToString minorProblem) ]
+    li [] [ text (minorProblemToString minorProblem) ]
 
 
 minorProblemsView : List MinorProblem -> Html Msg
@@ -51,7 +53,9 @@ minorProblemsView minorProblems =
                     "The following minor problems were found:"
         in
         div [ class "alert alert-warning" ]
-            (h4 [] [ text minorProblemsHeader ] :: List.map minorProblemView minorProblems)
+            [ h4 [] [ text minorProblemsHeader ]
+            , ul [] (List.map minorProblemView minorProblems)
+            ]
 
 
 problemsView : ProblemsContainer -> Html Msg
