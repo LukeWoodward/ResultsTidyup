@@ -2,7 +2,6 @@ module Stopwatch exposing (Stopwatch(..), readStopwatchData)
 
 import Error exposing (Error)
 import FileHandling exposing (isPossibleBinary, splitLines)
-import Regex exposing (Regex)
 import Result.Extra
 import TimeHandling exposing (parseTime)
 

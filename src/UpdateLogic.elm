@@ -21,9 +21,11 @@ import Merger exposing (MergeEntry, merge)
 import Model exposing (Model, NumberCheckerManualEntryRow, NumericEntry, emptyNumberCheckerManualEntryRow)
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, addAndAnnotate, annotate, parseNumberCheckerFile, reannotate)
+import Parser exposing ((|.), Parser, chompIf, chompWhile, end, int, run, symbol)
+import Parsers exposing (digits)
 import Ports exposing (recordEventStartTime)
 import Problems exposing (identifyProblems)
-import Regex exposing (Regex)
+import Result.Extra
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
 import Task exposing (Task)
 import Time exposing (Posix, Zone)
@@ -201,15 +203,21 @@ handleStopwatchFileDrop fileName fileText model =
             { model | lastError = Just error }
 
 
-numberCheckerRegex : Regex
-numberCheckerRegex =
-    Regex.fromString "^[0-9\u{000D}\n,]+$"
-        |> Maybe.withDefault Regex.never
+isNumberCheckerDigit : Char -> Bool
+isNumberCheckerDigit c =
+    Char.isDigit c || c == '\u{000D}' || c == '\n' || c == ','
+
+
+numberCheckerParser : Parser ()
+numberCheckerParser =
+    chompIf isNumberCheckerDigit
+        |. chompWhile isNumberCheckerDigit
+        |. end
 
 
 isPossibleNumberCheckerFile : String -> Bool
 isPossibleNumberCheckerFile fileText =
-    Regex.contains numberCheckerRegex fileText
+    Result.Extra.isOk (run numberCheckerParser fileText)
 
 
 handleNumberCheckerFileDrop : String -> Model -> Model
@@ -238,15 +246,18 @@ handleNumberCheckerFileDrop fileText model =
             }
 
 
-barcodeScannerRegex : Regex
-barcodeScannerRegex =
-    Regex.fromString "^A[0-9]+,P[0-9]+"
-        |> Maybe.withDefault Regex.never
+barcodeScannerParser : Parser ()
+barcodeScannerParser =
+    symbol "A"
+        |. int
+        |. symbol ","
+        |. symbol "P"
+        |. digits 4
 
 
 isPossibleBarcodeScannerFile : String -> Bool
 isPossibleBarcodeScannerFile fileText =
-    Regex.contains barcodeScannerRegex fileText
+    Result.Extra.isOk (run barcodeScannerParser fileText)
 
 
 handleBarcodeScannerFileDrop : String -> String -> Model -> Model

@@ -14,7 +14,8 @@ import DateHandling exposing (dateStringToPosix)
 import Dict exposing (Dict)
 import Error exposing (Error)
 import FileHandling exposing (isPossibleBinary, splitLines)
-import Regex exposing (Regex)
+import Parser exposing ((|.), (|=), Parser, end, int, run, succeed, symbol)
+import Parsers exposing (digitsRange)
 import Result.Extra
 import Time exposing (Posix)
 
@@ -80,16 +81,18 @@ isEmpty barcodeScannerData =
         && List.isEmpty barcodeScannerData.finishTokensOnly
 
 
-athleteRegex : Regex
-athleteRegex =
-    Regex.fromString "^A[0-9]+$"
-        |> Maybe.withDefault Regex.never
+athleteParser : Parser ()
+athleteParser =
+    symbol "A"
+        |. int
+        |. end
 
 
-positionRegex : Regex
-positionRegex =
-    Regex.fromString "^P[0-9]+$"
-        |> Maybe.withDefault Regex.never
+positionParser : Parser ()
+positionParser =
+    symbol "P"
+        |. digitsRange 1 5
+        |. end
 
 
 readLine : String -> Result UnrecognisedLine BarcodeScannerEntry
@@ -113,7 +116,7 @@ readLine line =
 
                 hasInvalidAthlete : Bool
                 hasInvalidAthlete =
-                    not isAthleteMissing && not (Regex.contains athleteRegex athlete)
+                    not isAthleteMissing && Result.Extra.isErr (run athleteParser athlete)
 
                 isPositionMissing : Bool
                 isPositionMissing =
@@ -121,7 +124,7 @@ readLine line =
 
                 hasInvalidPosition : Bool
                 hasInvalidPosition =
-                    not isPositionMissing && not (Regex.contains positionRegex position)
+                    not isPositionMissing && Result.Extra.isErr (run positionParser position)
 
                 positionNumber : Maybe Int
                 positionNumber =

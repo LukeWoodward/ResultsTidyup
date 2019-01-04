@@ -1,7 +1,9 @@
 module DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart)
 
 import Iso8601
-import Regex exposing (Regex)
+import Parser exposing ((|.), (|=), Parser, end, run, symbol)
+import Parsers exposing (digits)
+import Result.Extra
 import Time exposing (Month(..), Posix, Zone)
 
 
@@ -67,15 +69,25 @@ generateDownloadFilenameDatePart zone time =
         |> String.join ""
 
 
-barcodeScannerDateRegex : Regex
-barcodeScannerDateRegex =
-    Regex.fromString "^\\d\\d/\\d\\d/\\d\\d\\d\\d \\d\\d:\\d\\d:\\d\\d$"
-        |> Maybe.withDefault Regex.never
+barcodeScannerDateParser : Parser ()
+barcodeScannerDateParser =
+    digits 2
+        |. symbol "/"
+        |. digits 2
+        |. symbol "/"
+        |. digits 4
+        |. symbol " "
+        |. digits 2
+        |. symbol ":"
+        |. digits 2
+        |. symbol ":"
+        |. digits 2
+        |. end
 
 
 dateStringToPosix : String -> Maybe Posix
 dateStringToPosix dateString =
-    if Regex.contains barcodeScannerDateRegex dateString then
+    if Result.Extra.isOk (run barcodeScannerDateParser dateString) then
         let
             isoDateString : String
             isoDateString =

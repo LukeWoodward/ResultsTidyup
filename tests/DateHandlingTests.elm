@@ -26,6 +26,54 @@ suite =
                 \() ->
                     dateStringToPosix "29/02/2017 09:57:22"
                         |> Expect.equal Nothing
+            , test "Can parse a string with too-short day value into Nothing" <|
+                \() ->
+                    dateStringToPosix "9/02/2017 02:24:00"
+                        |> Expect.equal Nothing
+            , test "Can parse a string with too-long day value into Nothing" <|
+                \() ->
+                    dateStringToPosix "109/02/2017 02:24:00"
+                        |> Expect.equal Nothing
+            , test "Can parse a string with too-short month value into Nothing" <|
+                \() ->
+                    dateStringToPosix "19/2/2017 02:24:00"
+                        |> Expect.equal Nothing
+            , test "Can parse a string with too-long month value into Nothing" <|
+                \() ->
+                    dateStringToPosix "19/102/2017 02:24:00"
+                        |> Expect.equal Nothing
+            , test "Can parse a string with too-short year value into Nothing" <|
+                \() ->
+                    dateStringToPosix "19/02/207 02:24:00"
+                        |> Expect.equal Nothing
+            , test "Can parse a string with too-long year value into Nothing" <|
+                \() ->
+                    dateStringToPosix "19/02/21017 02:24:00"
+                        |> Expect.equal Nothing
+            , test "Can parse a string with too-short hour value into Nothing" <|
+                \() ->
+                    dateStringToPosix "19/02/2017 2:24:00"
+                        |> Expect.equal Nothing
+            , test "Can parse a string with too-long hour value into Nothing" <|
+                \() ->
+                    dateStringToPosix "19/02/2017 302:24:00"
+                        |> Expect.equal Nothing
+            , test "Can parse a string with too-short minute value into Nothing" <|
+                \() ->
+                    dateStringToPosix "19/02/2017 02:4:00"
+                        |> Expect.equal Nothing
+            , test "Can parse a string with too-long minute value into Nothing" <|
+                \() ->
+                    dateStringToPosix "19/02/2017 02:124:00"
+                        |> Expect.equal Nothing
+            , test "Can parse a string with too-short second value into Nothing" <|
+                \() ->
+                    dateStringToPosix "19/02/2017 02:04:0"
+                        |> Expect.equal Nothing
+            , test "Can parse a string with too-long second value into Nothing" <|
+                \() ->
+                    dateStringToPosix "19/02/2017 02:24:200"
+                        |> Expect.equal Nothing
             , test "Can parse a nonsense string into Nothing" <|
                 \() ->
                     dateStringToPosix "This is not a valid date-time"
