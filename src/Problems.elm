@@ -1,4 +1,4 @@
-module Problems exposing (MinorProblem(..), Problem(..), ProblemsContainer, empty, identifyProblems, minorProblemToString, problemToString)
+module Problems exposing (MinorProblem(..), Problem(..), ProblemsContainer, empty, identifyProblems, problemToString)
 
 import BarcodeScanner exposing (BarcodeScannerData, UnrecognisedLine)
 import DataStructures exposing (EventDateAndTime)
@@ -24,7 +24,7 @@ type MinorProblem
     = AthleteInSamePositionMultipleTimes String Int
     | AthleteWithAndWithoutPosition String Int
     | PositionWithAndWithoutAthlete Int String
-    | BarcodesScannedBeforeEventStart Int String
+    | BarcodesScannedBeforeEventStart Int Int String
 
 
 type alias ProblemsContainer =
@@ -267,7 +267,7 @@ identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsSt
         []
 
     else
-        [ BarcodesScannedBeforeEventStart totalNumberOfScansBeforeEventStart eventStartTimeAsString ]
+        [ BarcodesScannedBeforeEventStart totalNumberOfScansBeforeEventStart eventStartTimeMillis eventStartTimeAsString ]
 
 
 identifyProblems : Stopwatches -> BarcodeScannerData -> EventDateAndTime -> ProblemsContainer
@@ -351,28 +351,3 @@ problemToString problem =
 
         StopwatchesAndFinishTokensInconsistentWithNumberChecker ->
             "TODO"
-
-
-minorProblemToString : MinorProblem -> String
-minorProblemToString minorProblem =
-    case minorProblem of
-        AthleteInSamePositionMultipleTimes athlete position ->
-            "Athlete barcode " ++ athlete ++ " has been scanned with finish token " ++ String.fromInt position ++ " more than once"
-
-        AthleteWithAndWithoutPosition athlete position ->
-            "Athlete " ++ athlete ++ " has been scanned with finish token " ++ String.fromInt position ++ " and also without a corresponding finish token"
-
-        PositionWithAndWithoutAthlete position athlete ->
-            "Finish token " ++ String.fromInt position ++ " has been scanned with athlete barcode " ++ athlete ++ " and also without a corresponding athlete barcode"
-
-        BarcodesScannedBeforeEventStart number eventStart ->
-            let
-                barcodesString : String
-                barcodesString =
-                    if number == 1 then
-                        "One barcode was"
-
-                    else
-                        String.fromInt number ++ " barcodes were"
-            in
-            barcodesString ++ " scanned before the event start (" ++ eventStart ++ ")"

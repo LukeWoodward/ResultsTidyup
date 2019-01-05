@@ -1,9 +1,10 @@
 module UpdateLogic exposing (createFileForDownload, update)
 
-import BarcodeScanner exposing (BarcodeScannerData, mergeScannerData, readBarcodeScannerData)
+import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, mergeScannerData, readBarcodeScannerData)
 import Browser.Dom
-import DataStructures exposing (EventDateAndTime, InteropFile, WhichStopwatch(..))
+import DataStructures exposing (EventDateAndTime, InteropFile, MinorProblemFix(..), WhichStopwatch(..))
 import DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart)
+import Dict
 import Error exposing (Error)
 import File.Download as Download
 import MergedTable
@@ -35,6 +36,12 @@ import TimeHandling exposing (parseHoursAndMinutes)
 maxNearMatchDistance : Int
 maxNearMatchDistance =
     1
+
+
+type alias Scanned a =
+    { a
+        | scanTime : String
+    }
 
 
 focus : String -> Cmd Msg
@@ -512,6 +519,81 @@ deleteNumberCheckerEntry entryNumber model =
             { model | numberCheckerEntries = newNumberCheckerEntries }
 
 
+removeMultipleOccurrencesOf : String -> List AthleteAndTimePair -> List AthleteAndTimePair
+removeMultipleOccurrencesOf athlete list =
+    case list of
+        [] ->
+            []
+
+        first :: rest ->
+            if first.athlete == athlete then
+                first :: List.filter (\athleteAndTimePair -> athleteAndTimePair.athlete /= athlete) rest
+
+            else
+                first :: removeMultipleOccurrencesOf athlete rest
+
+
+fixMinorProblem : MinorProblemFix -> Model -> Model
+fixMinorProblem minorProblemFix model =
+    let
+        oldBarcodeScannerData : BarcodeScannerData
+        oldBarcodeScannerData =
+            model.barcodeScannerData
+
+        newBarcodeScannerData : BarcodeScannerData
+        newBarcodeScannerData =
+            case minorProblemFix of
+                RemoveUnassociatedFinishToken position ->
+                    { oldBarcodeScannerData
+                        | finishTokensOnly =
+                            List.filter
+                                (\positionAndTimePair -> positionAndTimePair.position /= position)
+                                oldBarcodeScannerData.finishTokensOnly
+                    }
+
+                RemoveUnassociatedAthlete athlete ->
+                    { oldBarcodeScannerData
+                        | athleteBarcodesOnly =
+                            List.filter
+                                (\athleteAndTimePair -> athleteAndTimePair.athlete /= athlete)
+                                oldBarcodeScannerData.athleteBarcodesOnly
+                    }
+
+                RemoveDuplicateScans position athlete ->
+                    { oldBarcodeScannerData
+                        | scannedBarcodes =
+                            Dict.update
+                                position
+                                (\x -> Maybe.map (removeMultipleOccurrencesOf athlete) x)
+                                oldBarcodeScannerData.scannedBarcodes
+                    }
+
+                RemoveScansBeforeEventStart eventStartTimeMillis ->
+                    let
+                        isAfterEventStart : Scanned a -> Bool
+                        isAfterEventStart { scanTime } =
+                            case Maybe.map Time.posixToMillis (dateStringToPosix scanTime) of
+                                Just scanTimeMillis ->
+                                    scanTimeMillis >= eventStartTimeMillis
+
+                                Nothing ->
+                                    -- Assume after event start so don't filter out.
+                                    True
+                    in
+                    { oldBarcodeScannerData
+                        | scannedBarcodes =
+                            Dict.map (\_ values -> List.filter isAfterEventStart values) oldBarcodeScannerData.scannedBarcodes
+                                |> Dict.filter (\_ athletes -> not (List.isEmpty athletes))
+                        , athleteBarcodesOnly =
+                            List.filter isAfterEventStart oldBarcodeScannerData.athleteBarcodesOnly
+                        , finishTokensOnly =
+                            List.filter isAfterEventStart oldBarcodeScannerData.finishTokensOnly
+                    }
+    in
+    { model | barcodeScannerData = newBarcodeScannerData }
+        |> identifyProblemsIn
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -603,3 +685,6 @@ update msg model =
 
         AddNumberCheckerRow ->
             addNumberCheckerRow model
+
+        FixMinorProblem minorProblemFix ->
+            ( fixMinorProblem minorProblemFix model, Cmd.none )

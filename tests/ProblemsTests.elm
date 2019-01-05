@@ -26,6 +26,13 @@ lateEventDateAndTime =
     EventDateAndTime "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z") "10:00" (Just (10 * 60))
 
 
+{-| 2018-03-14T09:00:00
+-}
+baseEventStartTime : Int
+baseEventStartTime =
+    1521018000000
+
+
 suite : Test
 suite =
     describe "Problems tests"
@@ -221,7 +228,7 @@ suite =
                             []
                         )
                         lateEventDateAndTime
-                        |> Expect.equal (ProblemsContainer [] [ BarcodesScannedBeforeEventStart 1 "14/03/2018 10:00" ])
+                        |> Expect.equal (ProblemsContainer [] [ BarcodesScannedBeforeEventStart 1 (baseEventStartTime + 60 * 60 * 1000) "14/03/2018 10:00" ])
             , test "identifyProblems returns no problems for athletes with no finish tokens but with their scan time after the event start" <|
                 \() ->
                     identifyProblems
@@ -243,7 +250,7 @@ suite =
                             []
                         )
                         lateEventDateAndTime
-                        |> Expect.equal (ProblemsContainer [ AthleteMissingPosition "A123456" ] [ BarcodesScannedBeforeEventStart 1 "14/03/2018 10:00" ])
+                        |> Expect.equal (ProblemsContainer [ AthleteMissingPosition "A123456" ] [ BarcodesScannedBeforeEventStart 1 (baseEventStartTime + 60 * 60 * 1000) "14/03/2018 10:00" ])
             , test "identifyProblems returns no problems for finish tokens with no associated athletes but with their scan time after the event start" <|
                 \() ->
                     identifyProblems
@@ -265,6 +272,6 @@ suite =
                             [ 19 ]
                         )
                         lateEventDateAndTime
-                        |> Expect.equal (ProblemsContainer [ PositionMissingAthlete 19 ] [ BarcodesScannedBeforeEventStart 1 "14/03/2018 10:00" ])
+                        |> Expect.equal (ProblemsContainer [ PositionMissingAthlete 19 ] [ BarcodesScannedBeforeEventStart 1 (baseEventStartTime + 60 * 60 * 1000) "14/03/2018 10:00" ])
             ]
         ]

@@ -1,4 +1,4 @@
-module DataStructures exposing (EventDateAndTime, InteropFile, WhichStopwatch(..))
+module DataStructures exposing (EventDateAndTime, InteropFile, MinorProblemFix(..), WhichStopwatch(..))
 
 import Time exposing (Posix)
 
@@ -20,3 +20,10 @@ type alias EventDateAndTime =
     , enteredTime : String
     , validatedTime : Maybe Int
     }
+
+
+type MinorProblemFix
+    = RemoveUnassociatedFinishToken Int
+    | RemoveUnassociatedAthlete String
+    | RemoveDuplicateScans Int String
+    | RemoveScansBeforeEventStart Int

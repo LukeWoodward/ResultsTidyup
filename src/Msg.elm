@@ -1,6 +1,6 @@
 module Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 
-import DataStructures exposing (InteropFile, WhichStopwatch(..))
+import DataStructures exposing (InteropFile, MinorProblemFix, WhichStopwatch(..))
 import Time exposing (Posix, Zone)
 
 
@@ -28,3 +28,4 @@ type Msg
     | NumberCheckerFieldChanged NumberCheckerFieldChange String
     | AddNumberCheckerRow
     | EditNumberCheckerRow Int
+    | FixMinorProblem MinorProblemFix
