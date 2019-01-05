@@ -1,4 +1,4 @@
-module ParkrunStopwatch exposing (main)
+module ParkrunResults exposing (main)
 
 import BarcodeScanner exposing (BarcodeScannerData)
 import Browser
@@ -77,7 +77,7 @@ view : Model -> Html Msg
 view model =
     div
         []
-        [ h1 [ id "header" ] [ text "Parkrun stopwatch comparison/merging" ]
+        [ h1 [ id "header" ] [ text "Parkrun results tidyup" ]
         , errorView model.lastError
         , div [ class "row" ]
             [ div (class "col-xs-6" :: getHeightAttribute model.lastHeight)
