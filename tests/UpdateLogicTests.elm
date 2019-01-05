@@ -443,6 +443,15 @@ suite =
                                     :: expectEventDateAndTime parsedEventDateOnly
                                     :: defaultAssertionsExcept [ BarcodeScannerFiles, BarcodeScannerDataAssertion, EventDateAndTimeAssertion ]
                                 )
+                , test "Can upload a single barcode scanner file with position token without leading zeroes" <|
+                    \() ->
+                        update (FileDropped (InteropFile "barcodes1.txt" (String.replace "P0047" "P47" validBarcodeScannerData1))) initModel
+                            |> Expect.all
+                                (expectBarcodeScannerFiles [ "barcodes1.txt" ]
+                                    :: expectBarcodeScannerData parsedBarcodeScannerData1
+                                    :: expectEventDateAndTime parsedEventDateOnly
+                                    :: defaultAssertionsExcept [ BarcodeScannerFiles, BarcodeScannerDataAssertion, EventDateAndTimeAssertion ]
+                                )
                 , test "Can upload a single invalid barcode scanner file" <|
                     \() ->
                         update (FileDropped (InteropFile "barcodes1.txt" invalidBarcodeScannerData)) initModel

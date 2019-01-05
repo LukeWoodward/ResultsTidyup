@@ -22,7 +22,7 @@ import Model exposing (Model, NumberCheckerManualEntryRow, NumericEntry, emptyNu
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, addAndAnnotate, annotate, parseNumberCheckerFile, reannotate)
 import Parser exposing ((|.), Parser, chompIf, chompWhile, end, int, run, symbol)
-import Parsers exposing (digits)
+import Parsers exposing (digitsRange)
 import Ports exposing (recordEventStartTime)
 import Problems exposing (identifyProblems)
 import Result.Extra
@@ -252,7 +252,7 @@ barcodeScannerParser =
         |. int
         |. symbol ","
         |. symbol "P"
-        |. digits 4
+        |. digitsRange 1 5
 
 
 isPossibleBarcodeScannerFile : String -> Bool
