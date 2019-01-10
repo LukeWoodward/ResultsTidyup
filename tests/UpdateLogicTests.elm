@@ -236,7 +236,7 @@ invalidBarcodeScannerData =
 
 parsedBarcodeScannerData1 : BarcodeScannerData
 parsedBarcodeScannerData1 =
-    BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] [] [] (toPosix "2018-03-14T09:47:03.000Z")
+    BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] [] [] [] (toPosix "2018-03-14T09:47:03.000Z")
 
 
 parsedBarcodeScannerData1And2 : BarcodeScannerData
@@ -247,6 +247,7 @@ parsedBarcodeScannerData1And2 =
             , ( 59, [ AthleteAndTimePair "A2044293" "14/03/2018 09:49:44" ] )
             ]
         )
+        []
         []
         []
         []
@@ -414,6 +415,7 @@ barcodeScannerDataForEventStartTimeFiltering =
     { scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A123456" "14/03/2018 09:22:08" ]
     , athleteBarcodesOnly = [ AthleteAndTimePair "A345678" "14/03/2018 09:47:54" ]
     , finishTokensOnly = [ PositionAndTimePair 19 "14/03/2018 10:11:16" ]
+    , misScannedItems = []
     , unrecognisedLines = []
     , lastScanDate = Nothing
     }

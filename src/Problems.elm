@@ -1,6 +1,6 @@
 module Problems exposing (MinorProblem(..), Problem(..), ProblemsContainer, empty, identifyProblems, problemToString)
 
-import BarcodeScanner exposing (BarcodeScannerData, UnrecognisedLine)
+import BarcodeScanner exposing (BarcodeScannerData, MisScannedItem, UnrecognisedLine)
 import DataStructures exposing (EventDateAndTime)
 import DateHandling exposing (dateStringToPosix)
 import Dict exposing (Dict)
@@ -15,6 +15,7 @@ type Problem
     | PositionOffEndOfTimes Int Int
     | AthleteMissingPosition String
     | PositionMissingAthlete Int
+    | MisScan String
     | UnrecognisedBarcodeScannerLine String
     | StopwatchesInconsistentWithNumberChecker
     | StopwatchesAndFinishTokensInconsistentWithNumberChecker
@@ -185,6 +186,12 @@ identifyPositionsWithNoAthletes unpairedPositions positionToAthletesDict =
         |> List.map PositionMissingAthlete
 
 
+identifyMisScannedItems : List MisScannedItem -> List Problem
+identifyMisScannedItems misScannedItems =
+    List.map .scannedText misScannedItems
+        |> List.map MisScan
+
+
 identifyUnrecognisedBarcodeScannerLines : List UnrecognisedLine -> List Problem
 identifyUnrecognisedBarcodeScannerLines unrecognisedLines =
     List.map .line unrecognisedLines
@@ -308,6 +315,7 @@ identifyProblems stopwatches barcodeScannerData eventDateAndTime =
             , identifyPositionsOffEndOfTimes stopwatches positionToAthletesDict
             , identifyAthletesWithNoPositions athleteBarcodesOnly athleteToPositionsDict
             , identifyPositionsWithNoAthletes finishTokensOnly positionToAthletesDict
+            , identifyMisScannedItems barcodeScannerData.misScannedItems
             , identifyUnrecognisedBarcodeScannerLines barcodeScannerData.unrecognisedLines
             ]
 
@@ -342,6 +350,9 @@ problemToString problem =
 
         PositionMissingAthlete position ->
             "Finish token " ++ String.fromInt position ++ " was scanned without a corresponding athlete barcode"
+
+        MisScan misScannedText ->
+            "An unrecognised item '" ++ misScannedText ++ "' was scanned"
 
         UnrecognisedBarcodeScannerLine line ->
             "The line '" ++ line ++ "' in a barcode scanner file was not recognised"

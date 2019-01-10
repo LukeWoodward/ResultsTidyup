@@ -1,6 +1,7 @@
 module BarcodeScanner exposing
     ( AthleteAndTimePair
     , BarcodeScannerData
+    , MisScannedItem
     , PositionAndTimePair
     , UnrecognisedLine
     , empty
@@ -37,6 +38,12 @@ type alias PositionAndTimePair =
     }
 
 
+type alias MisScannedItem =
+    { scannedText : String
+    , scanTime : String
+    }
+
+
 type alias UnrecognisedLine =
     { line : String
     , errorCode : String
@@ -48,6 +55,7 @@ type alias BarcodeScannerData =
     { scannedBarcodes : Dict Int (List AthleteAndTimePair)
     , athleteBarcodesOnly : List AthleteAndTimePair
     , finishTokensOnly : List PositionAndTimePair
+    , misScannedItems : List MisScannedItem
     , unrecognisedLines : List UnrecognisedLine
     , lastScanDate : Maybe Posix
     }
@@ -57,6 +65,7 @@ type BarcodeScannerEntry
     = Successful String Int String
     | AthleteOnly String String
     | FinishTokenOnly Int String
+    | MisScanned String String
 
 
 toMaybeError : Result e x -> Maybe e
@@ -71,7 +80,7 @@ toMaybeError result =
 
 empty : BarcodeScannerData
 empty =
-    BarcodeScannerData Dict.empty [] [] [] Nothing
+    BarcodeScannerData Dict.empty [] [] [] [] Nothing
 
 
 isEmpty : BarcodeScannerData -> Bool
@@ -165,8 +174,11 @@ readLine line =
                     Nothing ->
                         unrecognisedLine "NON_NUMERIC_POSITION" ("Invalid position record '" ++ position ++ "' found in barcode scanner file")
 
+        [ misScannedText, time ] ->
+            Ok (MisScanned misScannedText time)
+
         _ ->
-            unrecognisedLine "NOT_THREE_PARTS" ("Line " ++ line ++ " does not contain the expected three comma-separated parts")
+            unrecognisedLine "NOT_TWO_OR_THREE_PARTS" ("Line " ++ line ++ " does not contain the expected two or three comma-separated parts")
 
 
 mergeEntry : BarcodeScannerEntry -> BarcodeScannerData -> BarcodeScannerData
@@ -188,6 +200,9 @@ mergeEntry entry barcodeData =
 
         FinishTokenOnly finishToken time ->
             { barcodeData | finishTokensOnly = List.append barcodeData.finishTokensOnly [ PositionAndTimePair finishToken time ] }
+
+        MisScanned misScannedText time ->
+            { barcodeData | misScannedItems = List.append barcodeData.misScannedItems [ MisScannedItem misScannedText time ] }
 
 
 mergeEntries : List BarcodeScannerEntry -> BarcodeScannerData
@@ -239,6 +254,7 @@ withLastScanDate barcodeScannerData =
                     |> List.map .scanTime
                 , List.map .scanTime barcodeScannerData.athleteBarcodesOnly
                 , List.map .scanTime barcodeScannerData.finishTokensOnly
+                , List.map .scanTime barcodeScannerData.misScannedItems
                 ]
 
         lastScanDate : Maybe Posix
@@ -258,6 +274,7 @@ mergeScannerData data1 data2 =
         (mergeScannerDicts data1.scannedBarcodes data2.scannedBarcodes)
         (data1.athleteBarcodesOnly ++ data2.athleteBarcodesOnly)
         (data1.finishTokensOnly ++ data2.finishTokensOnly)
+        (data1.misScannedItems ++ data2.misScannedItems)
         (data1.unrecognisedLines ++ data2.unrecognisedLines)
         (maxDate data1.lastScanDate data2.lastScanDate)
 

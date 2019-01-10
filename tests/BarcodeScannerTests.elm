@@ -1,6 +1,6 @@
 module BarcodeScannerTests exposing (createBarcodeScannerData, expectSingleUnrecognisedLine, suite, toPosix)
 
-import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, PositionAndTimePair, empty, isEmpty, maxFinishToken, readBarcodeScannerData)
+import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, MisScannedItem, PositionAndTimePair, empty, isEmpty, maxFinishToken, readBarcodeScannerData)
 import Dict exposing (Dict)
 import Error exposing (Error)
 import Errors exposing (expectError)
@@ -50,6 +50,7 @@ createBarcodeScannerData athleteToPositionsDict athleteBarcodesOnly finishTokens
         athletesToPosition
         (List.map wrapAthlete athleteBarcodesOnly)
         (List.map (\position -> PositionAndTimePair position dummyTime) finishTokensOnly)
+        []
         []
         Nothing
 
@@ -111,19 +112,23 @@ suite =
             [ test "readBarcodeScannerData of a valid single-line string with athlete and finish token is valid" <|
                 \() ->
                     readBarcodeScannerData "A4580442,P0047,14/03/2018 09:47:03"
-                        |> Expect.equal (Ok (BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] [] [] (toPosix "2018-03-14T09:47:03.000Z")))
+                        |> Expect.equal (Ok (BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] [] [] [] (toPosix "2018-03-14T09:47:03.000Z")))
             , test "readBarcodeScannerData of a valid single-line string with athlete only is valid" <|
                 \() ->
                     readBarcodeScannerData "A4580442,,14/03/2018 09:47:03"
-                        |> Expect.equal (Ok (BarcodeScannerData Dict.empty [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ] [] [] (toPosix "2018-03-14T09:47:03.000Z")))
+                        |> Expect.equal (Ok (BarcodeScannerData Dict.empty [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ] [] [] [] (toPosix "2018-03-14T09:47:03.000Z")))
             , test "readBarcodeScannerData of a valid single-line string with finish token only is valid" <|
                 \() ->
                     readBarcodeScannerData ",P0047,14/03/2018 09:47:03"
-                        |> Expect.equal (Ok (BarcodeScannerData Dict.empty [] [ PositionAndTimePair 47 "14/03/2018 09:47:03" ] [] (toPosix "2018-03-14T09:47:03.000Z")))
+                        |> Expect.equal (Ok (BarcodeScannerData Dict.empty [] [ PositionAndTimePair 47 "14/03/2018 09:47:03" ] [] [] (toPosix "2018-03-14T09:47:03.000Z")))
+            , test "readBarcodeScannerData of a valid single-line string with mis-scanned item only is valid" <|
+                \() ->
+                    readBarcodeScannerData "&d084,14/03/2018 09:47:03"
+                        |> Expect.equal (Ok (BarcodeScannerData Dict.empty [] [] [ MisScannedItem "&d084" "14/03/2018 09:47:03" ] [] (toPosix "2018-03-14T09:47:03.000Z")))
             , test "readBarcodeScannerData of a valid single-line string with athlete and finish token and blank lines is valid" <|
                 \() ->
                     readBarcodeScannerData "\n\n\n\n\nA4580442,P0047,14/03/2018 09:47:03\n\n\n\n"
-                        |> Expect.equal (Ok (BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] [] [] (toPosix "2018-03-14T09:47:03.000Z")))
+                        |> Expect.equal (Ok (BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] [] [] [] (toPosix "2018-03-14T09:47:03.000Z")))
             , test "readBarcodeScannerData of a valid multiline string with two different finish tokens is valid" <|
                 \() ->
                     readBarcodeScannerData "A4580442,P0047,14/03/2018 09:47:03\nA1866207,P0047,14/03/2018 09:48:44"
@@ -135,6 +140,7 @@ suite =
                                         , AthleteAndTimePair "A1866207" "14/03/2018 09:48:44"
                                         ]
                                     )
+                                    []
                                     []
                                     []
                                     []
@@ -154,12 +160,12 @@ suite =
             , test "readBarcodeScannerData of a string with no athlete nor finish token barcode is not valid" <|
                 \() ->
                     expectSingleUnrecognisedLineFor ",,14/03/2018 09:47:03" "ATHLETE_AND_FINISH_TOKEN_MISSING"
-            , test "readBarcodeScannerData of a string with too few parts is not valid" <|
+            , test "readBarcodeScannerData of a string with one comma-separated item is not valid" <|
                 \() ->
-                    expectSingleUnrecognisedLineFor "A4580442,P0047" "NOT_THREE_PARTS"
+                    expectSingleUnrecognisedLineFor "This is not valid" "NOT_TWO_OR_THREE_PARTS"
             , test "readBarcodeScannerData of a string with too many parts is not valid" <|
                 \() ->
-                    expectSingleUnrecognisedLineFor "A4580442,P0047,14/03/2018 09:47:03,someOtherRubbish" "NOT_THREE_PARTS"
+                    expectSingleUnrecognisedLineFor "A4580442,P0047,14/03/2018 09:47:03,someOtherRubbish" "NOT_TWO_OR_THREE_PARTS"
             , test "readBarcodeScannerData of a string with position zero is not valid" <|
                 \() ->
                     expectSingleUnrecognisedLineFor "A4580442,P0000,14/03/2018 09:47:03" "INVALID_POSITION_ZERO"

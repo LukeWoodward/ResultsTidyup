@@ -1,6 +1,6 @@
 module ProblemsTests exposing (suite)
 
-import BarcodeScanner exposing (BarcodeScannerData, UnrecognisedLine)
+import BarcodeScanner exposing (BarcodeScannerData, MisScannedItem, UnrecognisedLine)
 import BarcodeScannerTests exposing (createBarcodeScannerData, toPosix)
 import DataStructures exposing (EventDateAndTime)
 import Dict exposing (Dict)
@@ -134,11 +134,18 @@ suite =
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A987654" ] ) ]) [] [ 15, 18, 26 ])
                         emptyEventDateAndTime
                         |> Expect.equal (ProblemsContainer [ PositionMissingAthlete 15, PositionMissingAthlete 18, PositionMissingAthlete 26 ] [])
+            , test "identifyProblems returns a problem for a mis-scanned item" <|
+                \() ->
+                    identifyProblems
+                        None
+                        (BarcodeScannerData Dict.empty [] [] [ MisScannedItem "&d084" "14/03/2018 09:47:03" ] [] Nothing)
+                        emptyEventDateAndTime
+                        |> Expect.equal (ProblemsContainer [ MisScan "&d084" ] [])
             , test "identifyProblems returns a problem for an unrecognised barcode-scanner line" <|
                 \() ->
                     identifyProblems
                         None
-                        (BarcodeScannerData Dict.empty [] [] [ UnrecognisedLine "This is not a valid line" "code" "message" ] Nothing)
+                        (BarcodeScannerData Dict.empty [] [] [] [ UnrecognisedLine "This is not a valid line" "code" "message" ] Nothing)
                         emptyEventDateAndTime
                         |> Expect.equal (ProblemsContainer [ UnrecognisedBarcodeScannerLine "This is not a valid line" ] [])
             , test "identifyProblems returns a minor problem for the same athlete with the same finish position twice" <|
