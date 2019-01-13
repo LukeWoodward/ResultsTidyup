@@ -416,20 +416,18 @@ downloadFile interopFile =
     Download.string interopFile.fileName "text/csv" interopFile.fileText
 
 
-downloadMergedStopwatchData : Zone -> Posix -> Model -> ( Model, Cmd Msg )
-downloadMergedStopwatchData zone time model =
+downloadMergedStopwatchDataCommand : Zone -> Posix -> Model -> Cmd Msg
+downloadMergedStopwatchDataCommand zone time model =
     case model.stopwatches of
         None ->
-            ( model, Cmd.none )
+            Cmd.none
 
         Single _ _ ->
-            ( model, Cmd.none )
+            Cmd.none
 
         Double _ _ mergedTableRows ->
-            ( model
-            , createStopwatchFileForDownload zone time mergedTableRows
+            createStopwatchFileForDownload zone time mergedTableRows
                 |> downloadFile
-            )
 
 
 downloadBarcodeScannerDataCommand : Zone -> Posix -> Model -> Cmd Msg
@@ -641,7 +639,7 @@ update msg model =
             )
 
         DownloadMergedStopwatchData zone time ->
-            downloadMergedStopwatchData zone time model
+            ( model, downloadMergedStopwatchDataCommand zone time model )
 
         DownloadBarcodeScannerData zone time ->
             ( model, downloadBarcodeScannerDataCommand zone time model )
