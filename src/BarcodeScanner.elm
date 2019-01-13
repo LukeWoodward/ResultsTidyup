@@ -9,16 +9,21 @@ module BarcodeScanner exposing
     , maxFinishToken
     , mergeScannerData
     , readBarcodeScannerData
+    , toDownloadText
     )
 
 import DateHandling exposing (dateStringToPosix)
 import Dict exposing (Dict)
 import Error exposing (Error)
-import FileHandling exposing (isPossibleBinary, splitLines)
+import FileHandling exposing (crlf, isPossibleBinary, splitLines)
 import Parser exposing ((|.), (|=), Parser, end, int, run, succeed, symbol)
 import Parsers exposing (digitsRange)
 import Result.Extra
 import Time exposing (Posix)
+
+
+type alias Timed a =
+    { a | scanTime : String }
 
 
 maxUnrecognisedLines : Int
@@ -321,3 +326,94 @@ maxFinishToken : BarcodeScannerData -> Maybe Int
 maxFinishToken barcodeScannerData =
     Dict.keys barcodeScannerData.scannedBarcodes
         |> List.maximum
+
+
+{-| Placeholder time (in milliseconds) used if a time fails to parse.
+-}
+placeholderMaxEventTime : Int
+placeholderMaxEventTime =
+    9999999999999
+
+
+toScanTimeMillis : Timed a -> Int
+toScanTimeMillis { scanTime } =
+    dateStringToPosix scanTime
+        |> Maybe.map Time.posixToMillis
+        |> Maybe.withDefault placeholderMaxEventTime
+
+
+sortByTime : List (Timed a) -> List (Timed a)
+sortByTime times =
+    List.sortBy toScanTimeMillis times
+
+
+type alias TimedItem =
+    { line : String
+    , time : Int
+    }
+
+
+formatPosition : Int -> String
+formatPosition position =
+    let
+        stringifiedPosition : String
+        stringifiedPosition =
+            String.fromInt position
+    in
+    "P" ++ String.repeat (4 - String.length stringifiedPosition) "0" ++ stringifiedPosition
+
+
+formatAthleteEntries : ( Int, List AthleteAndTimePair ) -> List TimedItem
+formatAthleteEntries ( position, athleteAndTimePairs ) =
+    List.map
+        (\athleteAndTimePair ->
+            TimedItem
+                (athleteAndTimePair.athlete ++ "," ++ formatPosition position ++ "," ++ athleteAndTimePair.scanTime)
+                (toScanTimeMillis athleteAndTimePair)
+        )
+        athleteAndTimePairs
+
+
+toDownloadText : BarcodeScannerData -> String
+toDownloadText barcodeScannerData =
+    let
+        scannedBarcodeItems : List TimedItem
+        scannedBarcodeItems =
+            Dict.toList barcodeScannerData.scannedBarcodes
+                |> List.map formatAthleteEntries
+                |> List.concat
+
+        athleteBarcodeOnlyItems : List TimedItem
+        athleteBarcodeOnlyItems =
+            List.map
+                (\athleteAndTimePair ->
+                    TimedItem
+                        (athleteAndTimePair.athlete ++ ",," ++ athleteAndTimePair.scanTime)
+                        (toScanTimeMillis athleteAndTimePair)
+                )
+                barcodeScannerData.athleteBarcodesOnly
+
+        finishTokensOnlyItems : List TimedItem
+        finishTokensOnlyItems =
+            List.map
+                (\positionAndTimePair ->
+                    TimedItem
+                        ("," ++ formatPosition positionAndTimePair.position ++ "," ++ positionAndTimePair.scanTime)
+                        (toScanTimeMillis positionAndTimePair)
+                )
+                barcodeScannerData.finishTokensOnly
+
+        misScanItems : List TimedItem
+        misScanItems =
+            List.map
+                (\misScanItem ->
+                    TimedItem
+                        (misScanItem.scannedText ++ "," ++ misScanItem.scanTime)
+                        (toScanTimeMillis misScanItem)
+                )
+                barcodeScannerData.misScannedItems
+    in
+    List.concat [ scannedBarcodeItems, athleteBarcodeOnlyItems, finishTokensOnlyItems, misScanItems ]
+        |> List.sortBy .time
+        |> List.map (\item -> item.line ++ crlf)
+        |> String.join ""

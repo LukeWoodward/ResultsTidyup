@@ -1,10 +1,23 @@
 module BarcodeScannerTests exposing (createBarcodeScannerData, expectSingleUnrecognisedLine, suite, toPosix)
 
-import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, MisScannedItem, PositionAndTimePair, empty, isEmpty, maxFinishToken, readBarcodeScannerData)
+import BarcodeScanner
+    exposing
+        ( AthleteAndTimePair
+        , BarcodeScannerData
+        , MisScannedItem
+        , PositionAndTimePair
+        , UnrecognisedLine
+        , empty
+        , isEmpty
+        , maxFinishToken
+        , readBarcodeScannerData
+        , toDownloadText
+        )
 import Dict exposing (Dict)
 import Error exposing (Error)
 import Errors exposing (expectError)
 import Expect exposing (Expectation)
+import FileHandling exposing (crlf)
 import Iso8601
 import Test exposing (Test, describe, test)
 import Time exposing (Posix)
@@ -179,9 +192,83 @@ suite =
                 \() ->
                     maxFinishToken (createBarcodeScannerData (Dict.singleton 47 [ "A4580442" ]) [] [])
                         |> Expect.equal (Just 47)
-            , test "maxFinishToken of three scanned barcodse returns the maximum finish position" <|
+            , test "maxFinishToken of three scanned barcodes returns the maximum finish position" <|
                 \() ->
                     maxFinishToken (createBarcodeScannerData (Dict.fromList [ ( 47, [ "A4580442" ] ), ( 59, [ "A456321" ] ), ( 33, [ "A464631" ] ) ]) [] [])
                         |> Expect.equal (Just 59)
+            ]
+        , describe "toDownloadText tests"
+            [ test "toDownloadText returns an empty string for an empty data" <|
+                \() ->
+                    toDownloadText BarcodeScanner.empty
+                        |> Expect.equal ""
+            , test "toDownloadText returns a valid string for a single scanned barcode" <|
+                \() ->
+                    toDownloadText (createBarcodeScannerData (Dict.singleton 47 [ "A4580442" ]) [] [])
+                        |> Expect.equal ("A4580442,P0047," ++ dummyTime ++ crlf)
+            , test "toDownloadText returns a valid string for a single athlete-barcode-only record" <|
+                \() ->
+                    toDownloadText (createBarcodeScannerData Dict.empty [ "A4580442" ] [])
+                        |> Expect.equal ("A4580442,," ++ dummyTime ++ crlf)
+            , test "toDownloadText returns a valid string for a single finish-token-only record" <|
+                \() ->
+                    toDownloadText (createBarcodeScannerData Dict.empty [] [ 47 ])
+                        |> Expect.equal (",P0047," ++ dummyTime ++ crlf)
+            , test "toDownloadText returns a valid string for a single mis-scanned item" <|
+                \() ->
+                    toDownloadText (BarcodeScannerData Dict.empty [] [] [ MisScannedItem "other" dummyTime ] [] Nothing)
+                        |> Expect.equal ("other," ++ dummyTime ++ crlf)
+            , test "toDownloadText returns a valid string for a combination of all items" <|
+                \() ->
+                    let
+                        data : BarcodeScannerData
+                        data =
+                            BarcodeScannerData
+                                (Dict.singleton 58 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:53" ])
+                                [ AthleteAndTimePair "A3097724" "14/03/2018 09:36:04" ]
+                                [ PositionAndTimePair 51 "14/03/2018 09:52:06" ]
+                                [ MisScannedItem "other" "14/03/2018 09:44:37" ]
+                                [ UnrecognisedLine "Some other text" "code" "message" ]
+                                Nothing
+
+                        expectedResult : String
+                        expectedResult =
+                            "A3097724,,14/03/2018 09:36:04"
+                                ++ crlf
+                                ++ "other,14/03/2018 09:44:37"
+                                ++ crlf
+                                ++ "A4580442,P0058,14/03/2018 09:47:53"
+                                ++ crlf
+                                ++ ",P0051,14/03/2018 09:52:06"
+                                ++ crlf
+                    in
+                    toDownloadText data
+                        |> Expect.equal expectedResult
+            , test "toDownloadText returns a valid string for a combination of all items with an item with an invalid time" <|
+                \() ->
+                    let
+                        data : BarcodeScannerData
+                        data =
+                            BarcodeScannerData
+                                (Dict.singleton 58 [ AthleteAndTimePair "A4580442" "This time is not valid" ])
+                                [ AthleteAndTimePair "A3097724" "14/03/2018 09:36:04" ]
+                                [ PositionAndTimePair 51 "14/03/2018 09:52:06" ]
+                                [ MisScannedItem "other" "14/03/2018 09:44:37" ]
+                                [ UnrecognisedLine "Some other text" "code" "message" ]
+                                Nothing
+
+                        expectedResult : String
+                        expectedResult =
+                            "A3097724,,14/03/2018 09:36:04"
+                                ++ crlf
+                                ++ "other,14/03/2018 09:44:37"
+                                ++ crlf
+                                ++ ",P0051,14/03/2018 09:52:06"
+                                ++ crlf
+                                ++ "A4580442,P0058,This time is not valid"
+                                ++ crlf
+                    in
+                    toDownloadText data
+                        |> Expect.equal expectedResult
             ]
         ]

@@ -2,6 +2,7 @@ module StopwatchTests exposing (expectedParsedSampleData, sampleData, suite)
 
 import Errors exposing (expectError)
 import Expect
+import FileHandling exposing (crlf)
 import Stopwatch exposing (..)
 import Test exposing (Test, describe, test)
 
@@ -35,7 +36,7 @@ suite =
                         |> Expect.equal (Ok expectedParsedSampleData)
             , test "readStopwatchData of a valid multi-line string with CRLF line-endings is a valid list of results" <|
                 \() ->
-                    readStopwatchData (String.replace "\n" "\u{000D}\n" sampleData)
+                    readStopwatchData (String.replace "\n" crlf sampleData)
                         |> Expect.equal (Ok expectedParsedSampleData)
             , test "readStopwatchData of a valid multi-line string with CR line-endings is a valid list of results" <|
                 \() ->

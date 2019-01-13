@@ -17,8 +17,9 @@ type Msg
     | DeleteStopwatch WhichStopwatch
     | FlipStopwatches
     | ClearBarcodeScannerData
-    | GetCurrentDateForDownloadFile
+    | GetCurrentDateForDownloadFile (Zone -> Posix -> Msg)
     | DownloadMergedStopwatchData Zone Posix
+    | DownloadBarcodeScannerData Zone Posix
     | ContainerHeightChanged Int
     | MouseEnterNumberCheckerRow Int
     | MouseLeaveNumberCheckerRow Int

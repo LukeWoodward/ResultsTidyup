@@ -1,6 +1,11 @@
-module FileHandling exposing (isPossibleBinary, splitLines)
+module FileHandling exposing (crlf, isPossibleBinary, splitLines)
 
 import Regex exposing (Regex)
+
+
+crlf : String
+crlf =
+    "\u{000D}\n"
 
 
 binaryRegex : Regex

@@ -6,6 +6,7 @@ import DataStructures exposing (EventDateAndTime, InteropFile, MinorProblemFix(.
 import Dict exposing (Dict)
 import Errors exposing (expectError)
 import Expect exposing (Expectation)
+import FileHandling exposing (crlf)
 import MergedTable exposing (MergedTableRow, Stopwatches(..), noUnderlines)
 import Merger exposing (MergeEntry(..))
 import Model exposing (Model, NumberCheckerManualEntryRow, NumericEntry, emptyNumberCheckerManualEntryRow, emptyNumericEntry, initModel)
@@ -17,7 +18,7 @@ import Stopwatch exposing (Stopwatch(..))
 import StopwatchTests
 import Test exposing (Test, describe, test)
 import Time
-import UpdateLogic exposing (createFileForDownload, update)
+import UpdateLogic exposing (createBarcodeScannerFileForDownload, createStopwatchFileForDownload, update)
 
 
 expectNoCommand : ( Model, Cmd Msg ) -> Expectation
@@ -221,17 +222,17 @@ flippedDoubleStopwatches =
 
 validBarcodeScannerData1 : String
 validBarcodeScannerData1 =
-    "A4580442,P0047,14/03/2018 09:47:03"
+    "A4580442,P0047,14/03/2018 09:47:03" ++ crlf
 
 
 validBarcodeScannerData2 : String
 validBarcodeScannerData2 =
-    "A2044293,P0059,14/03/2018 09:49:44"
+    "A2044293,P0059,14/03/2018 09:49:44" ++ crlf
 
 
 invalidBarcodeScannerData : String
 invalidBarcodeScannerData =
-    "A4580442,P0000,14/03/2018 09:47:03"
+    "A4580442,P0000,14/03/2018 09:47:03" ++ crlf
 
 
 parsedBarcodeScannerData1 : BarcodeScannerData
@@ -331,12 +332,18 @@ recentTime =
 
 expectedMergedStopwatchFileContents : String
 expectedMergedStopwatchFileContents =
-    "STARTOFEVENT,01/01/2001 00:00:00,junsd_stopwatch\u{000D}\n"
-        ++ "0,01/01/2001 00:00:00\u{000D}\n"
-        ++ "1,01/01/2001 00:03:11,00:03:11\u{000D}\n"
-        ++ "2,01/01/2001 00:07:43,00:07:43\u{000D}\n"
-        ++ "3,01/01/2001 00:10:03,00:10:03\u{000D}\n"
-        ++ "4,01/01/2001 00:10:11,00:10:11\u{000D}\n"
+    "STARTOFEVENT,01/01/2001 00:00:00,junsd_stopwatch"
+        ++ crlf
+        ++ "0,01/01/2001 00:00:00"
+        ++ crlf
+        ++ "1,01/01/2001 00:03:11,00:03:11"
+        ++ crlf
+        ++ "2,01/01/2001 00:07:43,00:07:43"
+        ++ crlf
+        ++ "3,01/01/2001 00:10:03,00:10:03"
+        ++ crlf
+        ++ "4,01/01/2001 00:10:11,00:10:11"
+        ++ crlf
         ++ "ENDOFEVENT,01/01/2001 01:59:59"
 
 
@@ -520,7 +527,7 @@ suite =
                             |> Expect.all
                                 (expectBarcodeScannerFiles [ "barcodes1.txt" ]
                                     :: (\( model, _ ) ->
-                                            expectSingleUnrecognisedLine invalidBarcodeScannerData "INVALID_POSITION_ZERO" (Ok model.barcodeScannerData)
+                                            expectSingleUnrecognisedLine (String.replace crlf "" invalidBarcodeScannerData) "INVALID_POSITION_ZERO" (Ok model.barcodeScannerData)
                                        )
                                     :: expectProblems (ProblemsContainer [ UnrecognisedBarcodeScannerLine "A4580442,P0000,14/03/2018 09:47:03" ] [])
                                     :: defaultAssertionsExcept [ BarcodeScannerFiles, BarcodeScannerDataAssertion, EventDateAndTimeAssertion, Problems ]
@@ -643,7 +650,7 @@ suite =
         , describe "Get current date for download file tests"
             [ test "Getting current date issues a task and returns the same model" <|
                 \() ->
-                    update GetCurrentDateForDownloadFile initModel
+                    update (GetCurrentDateForDownloadFile DownloadMergedStopwatchData) initModel
                         |> Expect.all
                             (expectACommand
                                 :: defaultAssertionsExcept [ Command ]
@@ -679,8 +686,23 @@ suite =
                                 :: defaultAssertionsExcept [ Stopwatches, Command ]
                             )
             ]
-        , describe "Create file for download tests"
-            [ test "Can create a file for download" <|
+        , describe "Download barcode scanner data data tests"
+            [ test "Can download barcode scanner data" <|
+                \() ->
+                    initModel
+                        |> update (FileDropped (InteropFile "barcodes.txt" validBarcodeScannerData1))
+                        |> Tuple.first
+                        |> update (DownloadBarcodeScannerData Time.utc recentTime)
+                        |> Expect.all
+                            (expectACommand
+                                :: expectBarcodeScannerFiles [ "barcodes.txt" ]
+                                :: expectEventDateAndTime (EventDateAndTime "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z") "" Nothing)
+                                :: expectBarcodeScannerData parsedBarcodeScannerData1
+                                :: defaultAssertionsExcept [ BarcodeScannerFiles, BarcodeScannerDataAssertion, EventDateAndTimeAssertion, Command ]
+                            )
+            ]
+        , describe "Create stopwatch file for download tests"
+            [ test "Can create a stopwatch file for download" <|
                 \() ->
                     let
                         model : Model
@@ -693,11 +715,24 @@ suite =
                     in
                     case model.stopwatches of
                         Double _ _ mergedTableRows ->
-                            createFileForDownload Time.utc recentTime mergedTableRows
+                            createStopwatchFileForDownload Time.utc recentTime mergedTableRows
                                 |> Expect.equal (InteropFile "parkrun_timer_14072017024000.txt" expectedMergedStopwatchFileContents)
 
                         _ ->
                             Expect.fail ("Expected merged data from two stopwatches, got '" ++ Debug.toString model.stopwatches ++ "' instead.")
+            ]
+        , describe "Create barcode scanner file for download tests"
+            [ test "Can create a barcode scanner file for download" <|
+                \() ->
+                    let
+                        model : Model
+                        model =
+                            initModel
+                                |> update (FileDropped (InteropFile "barcodes.txt" validBarcodeScannerData1))
+                                |> Tuple.first
+                    in
+                    createBarcodeScannerFileForDownload Time.utc recentTime model.barcodeScannerData
+                        |> Expect.equal (InteropFile "parkrun_barcode_14072017024000.txt" validBarcodeScannerData1)
             ]
         , describe "Container height changed tests"
             [ test "Can update the container height" <|

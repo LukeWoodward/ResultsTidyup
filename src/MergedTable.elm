@@ -13,6 +13,7 @@ module MergedTable exposing
 
 import DataStructures exposing (WhichStopwatch(..))
 import Dict exposing (Dict)
+import FileHandling exposing (crlf)
 import Merger exposing (MergeEntry(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import TimeHandling exposing (formatTimeWithHours)
@@ -335,4 +336,4 @@ outputMergedTable mergedRows =
     header
         ++ List.filterMap outputMergedRow mergedRows
         ++ [ footer ]
-        |> String.join "\u{000D}\n"
+        |> String.join crlf

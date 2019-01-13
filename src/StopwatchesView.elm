@@ -350,11 +350,21 @@ stopwatchButtonsContent stopwatches =
             , br [] []
             , button
                 [ class "btn btn-primary btn-large"
-                , onClick GetCurrentDateForDownloadFile
+                , onClick (GetCurrentDateForDownloadFile DownloadMergedStopwatchData)
                 ]
                 [ text "Download"
                 , br [] []
                 , small [] [ text "merged times" ]
+                ]
+            , br [] []
+            , br [] []
+            , button
+                [ class "btn btn-primary btn-large"
+                , onClick (GetCurrentDateForDownloadFile DownloadBarcodeScannerData)
+                ]
+                [ text "Download"
+                , br [] []
+                , small [] [ text "all barcodes" ]
                 ]
             ]
 

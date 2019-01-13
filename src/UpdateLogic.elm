@@ -1,4 +1,4 @@
-module UpdateLogic exposing (createFileForDownload, update)
+module UpdateLogic exposing (createBarcodeScannerFileForDownload, createStopwatchFileForDownload, update)
 
 import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, mergeScannerData, readBarcodeScannerData)
 import Browser.Dom
@@ -383,8 +383,8 @@ clearBarcodeScannerData model =
         }
 
 
-createFileForDownload : Zone -> Posix -> List MergedTableRow -> InteropFile
-createFileForDownload zone time mergedTableRows =
+createStopwatchFileForDownload : Zone -> Posix -> List MergedTableRow -> InteropFile
+createStopwatchFileForDownload zone time mergedTableRows =
     let
         fileContents : String
         fileContents =
@@ -397,8 +397,22 @@ createFileForDownload zone time mergedTableRows =
     InteropFile fileName fileContents
 
 
-downloadMergedTimesToFile : InteropFile -> Cmd Msg
-downloadMergedTimesToFile interopFile =
+createBarcodeScannerFileForDownload : Zone -> Posix -> BarcodeScannerData -> InteropFile
+createBarcodeScannerFileForDownload zone time barcodeScannerData =
+    let
+        fileContents : String
+        fileContents =
+            BarcodeScanner.toDownloadText barcodeScannerData
+
+        fileName : String
+        fileName =
+            "parkrun_barcode_" ++ generateDownloadFilenameDatePart zone time ++ ".txt"
+    in
+    InteropFile fileName fileContents
+
+
+downloadFile : InteropFile -> Cmd Msg
+downloadFile interopFile =
     Download.string interopFile.fileName "text/csv" interopFile.fileText
 
 
@@ -413,9 +427,15 @@ downloadMergedStopwatchData zone time model =
 
         Double _ _ mergedTableRows ->
             ( model
-            , createFileForDownload zone time mergedTableRows
-                |> downloadMergedTimesToFile
+            , createStopwatchFileForDownload zone time mergedTableRows
+                |> downloadFile
             )
+
+
+downloadBarcodeScannerDataCommand : Zone -> Posix -> Model -> Cmd Msg
+downloadBarcodeScannerDataCommand zone time model =
+    createBarcodeScannerFileForDownload zone time model.barcodeScannerData
+        |> downloadFile
 
 
 handleFileDrop : String -> String -> Model -> Model
@@ -615,13 +635,16 @@ update msg model =
         ClearBarcodeScannerData ->
             ( clearBarcodeScannerData model, Cmd.none )
 
-        GetCurrentDateForDownloadFile ->
+        GetCurrentDateForDownloadFile operation ->
             ( model
-            , Task.perform identity (Task.map2 DownloadMergedStopwatchData Time.here Time.now)
+            , Task.perform identity (Task.map2 operation Time.here Time.now)
             )
 
         DownloadMergedStopwatchData zone time ->
             downloadMergedStopwatchData zone time model
+
+        DownloadBarcodeScannerData zone time ->
+            ( model, downloadBarcodeScannerDataCommand zone time model )
 
         ContainerHeightChanged newHeight ->
             ( { model | lastHeight = Just newHeight }, Cmd.none )
