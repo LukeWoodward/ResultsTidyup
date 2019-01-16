@@ -1,4 +1,4 @@
-module DataStructures exposing (EventDateAndTime, InteropFile, MinorProblemFix(..), WhichStopwatch(..))
+module DataStructures exposing (EventDateAndTime, InteropFile, MinorProblemFix(..), SecondTab(..), WhichStopwatch(..))
 
 import Time exposing (Posix)
 
@@ -20,6 +20,11 @@ type alias EventDateAndTime =
     , enteredTime : String
     , validatedTime : Maybe Int
     }
+
+
+type SecondTab
+    = NumberCheckerTab
+    | BarcodeScannersTab
 
 
 type MinorProblemFix

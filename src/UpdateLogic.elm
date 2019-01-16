@@ -712,3 +712,6 @@ update msg model =
 
         FixMinorProblem minorProblemFix ->
             ( fixMinorProblem minorProblemFix model, Cmd.none )
+
+        ChangeSecondTab newSecondTab ->
+            ( { model | secondTab = newSecondTab }, Cmd.none )

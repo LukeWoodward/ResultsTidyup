@@ -2,11 +2,12 @@ module ParkrunResults exposing (main)
 
 import BarcodeScanner exposing (BarcodeScannerData)
 import Browser
-import DataStructures exposing (EventDateAndTime)
+import DataStructures exposing (EventDateAndTime, SecondTab(..))
 import Error exposing (Error)
 import EventDateAndTimeView exposing (eventDateAndTimeView)
-import Html exposing (Html, div, h1, text)
-import Html.Attributes exposing (class, id, style)
+import Html exposing (Html, a, div, h1, h3, li, text, ul)
+import Html.Attributes exposing (attribute, class, href, id, style)
+import Html.Events exposing (onClick)
 import MergedTable exposing (Stopwatches(..))
 import Model exposing (Model, initModel)
 import Msg exposing (Msg(..))
@@ -17,6 +18,11 @@ import ProblemsView exposing (problemsView)
 import StopwatchesView exposing (stopwatchesView)
 import TimeHandling exposing (formatHoursAndMinutes)
 import UpdateLogic exposing (update)
+
+
+role : String -> Html.Attribute Msg
+role =
+    attribute "role"
 
 
 main : Program (Maybe Int) Model Msg
@@ -73,6 +79,15 @@ getHeightAttribute lastHeight =
             []
 
 
+classAttributes : SecondTab -> SecondTab -> List (Html.Attribute Msg)
+classAttributes wantedTab actualTab =
+    if wantedTab == actualTab then
+        [ class "active" ]
+
+    else
+        []
+
+
 view : Model -> Html Msg
 view model =
     div
@@ -86,7 +101,27 @@ view model =
                 ]
             , div (class "col-xs-6" :: getHeightAttribute model.lastHeight)
                 [ problemsView model.problems
-                , numberCheckerView model.numberCheckerEntries model.numberCheckerManualEntryRow model.lastHeight
+                , ul
+                    [ class "nav nav-tabs" ]
+                    [ li
+                        (role "presentation"
+                            :: onClick (ChangeSecondTab NumberCheckerTab)
+                            :: classAttributes NumberCheckerTab model.secondTab
+                        )
+                        [ a [ href "#" ] [ text "Number checker" ] ]
+                    , li
+                        (role "presentation"
+                            :: onClick (ChangeSecondTab BarcodeScannersTab)
+                            :: classAttributes BarcodeScannersTab model.secondTab
+                        )
+                        [ a [ href "#" ] [ text "Barcode scanners" ] ]
+                    ]
+                , case model.secondTab of
+                    NumberCheckerTab ->
+                        numberCheckerView model.numberCheckerEntries model.numberCheckerManualEntryRow model.lastHeight
+
+                    BarcodeScannersTab ->
+                        div [] [ h3 [] [ text "TODO" ] ]
                 ]
             ]
         ]

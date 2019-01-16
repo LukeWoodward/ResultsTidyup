@@ -1,7 +1,7 @@
 module Model exposing (Model, NumberCheckerManualEntryRow, NumericEntry, emptyNumberCheckerManualEntryRow, emptyNumericEntry, initModel)
 
 import BarcodeScanner exposing (BarcodeScannerData)
-import DataStructures exposing (EventDateAndTime)
+import DataStructures exposing (EventDateAndTime, SecondTab(..))
 import Error exposing (Error)
 import MergedTable exposing (Stopwatches(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
@@ -43,6 +43,7 @@ type alias Model =
     , problems : ProblemsContainer
     , eventDateAndTime : EventDateAndTime
     , numberCheckerManualEntryRow : NumberCheckerManualEntryRow
+    , secondTab : SecondTab
     }
 
 
@@ -58,4 +59,5 @@ initModel =
     , problems = Problems.empty
     , eventDateAndTime = EventDateAndTime "" Nothing "" Nothing
     , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
+    , secondTab = NumberCheckerTab
     }

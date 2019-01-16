@@ -2,7 +2,7 @@ module UpdateLogicTests exposing (suite)
 
 import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, PositionAndTimePair)
 import BarcodeScannerTests exposing (createBarcodeScannerData, expectSingleUnrecognisedLine, toPosix)
-import DataStructures exposing (EventDateAndTime, InteropFile, MinorProblemFix(..), WhichStopwatch(..))
+import DataStructures exposing (EventDateAndTime, InteropFile, MinorProblemFix(..), SecondTab(..), WhichStopwatch(..))
 import Dict exposing (Dict)
 import Error exposing (Error)
 import Errors exposing (expectError)
@@ -87,6 +87,11 @@ expectNumberCheckerManualEntryRow expectedManualEntryRow ( model, _ ) =
     Expect.equal expectedManualEntryRow model.numberCheckerManualEntryRow
 
 
+expectSecondTab : SecondTab -> ( Model, Cmd Msg ) -> Expectation
+expectSecondTab expectedSecondTab ( model, _ ) =
+    Expect.equal expectedSecondTab model.secondTab
+
+
 type Assertion
     = Command
     | Stopwatches
@@ -99,6 +104,7 @@ type Assertion
     | Problems
     | EventDateAndTimeAssertion
     | NumberCheckerManualEntryRowAssertion
+    | SecondTabAssertion
 
 
 defaultAssertionsExcept : List Assertion -> List (( Model, Cmd Msg ) -> Expectation)
@@ -161,6 +167,11 @@ defaultAssertionsExcept exceptions =
 
               else
                 Just (expectNumberCheckerManualEntryRow emptyNumberCheckerManualEntryRow)
+            , if List.member SecondTabAssertion exceptions then
+                Nothing
+
+              else
+                Just (expectSecondTab NumberCheckerTab)
             ]
     in
     List.filterMap identity allMaybeAssertions
@@ -1323,6 +1334,20 @@ suite =
                                 :: expectProblems (ProblemsContainer [ AthleteMissingPosition "A123456" ] [])
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems ]
                             )
+            ]
+        , describe "ChangeSecondTab tabs"
+            [ test "Can change from number checker tab to barcode scanner tab" <|
+                \() ->
+                    update (ChangeSecondTab BarcodeScannersTab) initModel
+                        |> Expect.all
+                            (expectSecondTab BarcodeScannersTab
+                                :: defaultAssertionsExcept [ SecondTabAssertion ]
+                            )
+            , test "Can change from barcode scanner tab to number checker tab" <|
+                \() ->
+                    { initModel | secondTab = BarcodeScannersTab }
+                        |> update (ChangeSecondTab NumberCheckerTab)
+                        |> Expect.all defaultAssertions
             ]
         ]
 
