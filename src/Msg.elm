@@ -17,6 +17,7 @@ type Msg
     | DeleteStopwatch WhichStopwatch
     | FlipStopwatches
     | ClearBarcodeScannerData
+    | ClearAllData
     | GetCurrentDateForDownloadFile (Zone -> Posix -> Msg)
     | DownloadMergedStopwatchData Zone Posix
     | DownloadBarcodeScannerData Zone Posix

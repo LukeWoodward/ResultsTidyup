@@ -4,6 +4,7 @@ import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, Position
 import BarcodeScannerTests exposing (createBarcodeScannerData, expectSingleUnrecognisedLine, toPosix)
 import DataStructures exposing (EventDateAndTime, InteropFile, MinorProblemFix(..), WhichStopwatch(..))
 import Dict exposing (Dict)
+import Error exposing (Error)
 import Errors exposing (expectError)
 import Expect exposing (Expectation)
 import FileHandling exposing (crlf)
@@ -645,6 +646,28 @@ suite =
                 \() ->
                     { initModel | barcodeScannerData = createBarcodeScannerData (Dict.singleton 47 [ "A4580484" ]) [ "A123456" ] [ 11 ] }
                         |> update ClearBarcodeScannerData
+                        |> Expect.all defaultAssertions
+            ]
+        , describe "Clear All Data tests"
+            [ test "Clearing all data when nothing to clear does nothing" <|
+                \() ->
+                    update ClearAllData initModel
+                        |> Expect.all defaultAssertions
+            , test "Clearing all data when some to clear clears it" <|
+                \() ->
+                    { initModel
+                        | barcodeScannerData = createBarcodeScannerData (Dict.singleton 47 [ "A4580484" ]) [ "A123456" ] [ 11 ]
+                        , barcodeScannerFiles = [ "barcodes1.txt" ]
+                        , eventDateAndTime = parsedEventDateOnly
+                        , stopwatches = doubleStopwatches
+                        , lastError = Just (Error "TEST_ERROR" "Some test error message")
+                        , lastHeight = Just 700
+                        , highlightedNumberCheckerId = Just 2
+                        , numberCheckerEntries = [ AnnotatedNumberCheckerEntry 2 2 0 2 0 2 0 ]
+                        , numberCheckerManualEntryRow = NumberCheckerManualEntryRow (NumericEntry "2" (Just 2)) (NumericEntry "2" (Just 2)) (NumericEntry "2" (Just 2))
+                        , problems = ProblemsContainer [ MisScan "something" ] [ PositionWithAndWithoutAthlete 5 "A123" ]
+                    }
+                        |> update ClearAllData
                         |> Expect.all defaultAssertions
             ]
         , describe "Get current date for download file tests"

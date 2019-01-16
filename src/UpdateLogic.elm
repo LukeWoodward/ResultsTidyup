@@ -19,7 +19,7 @@ import MergedTable
         , underlineTable
         )
 import Merger exposing (MergeEntry, merge)
-import Model exposing (Model, NumberCheckerManualEntryRow, NumericEntry, emptyNumberCheckerManualEntryRow)
+import Model exposing (Model, NumberCheckerManualEntryRow, NumericEntry, emptyNumberCheckerManualEntryRow, initModel)
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, addAndAnnotate, annotate, parseNumberCheckerFile, reannotate)
 import Parser exposing ((|.), Parser, chompIf, chompWhile, end, int, run, symbol)
@@ -632,6 +632,9 @@ update msg model =
 
         ClearBarcodeScannerData ->
             ( clearBarcodeScannerData model, Cmd.none )
+
+        ClearAllData ->
+            ( initModel, Cmd.none )
 
         GetCurrentDateForDownloadFile operation ->
             ( model

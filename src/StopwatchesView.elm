@@ -366,6 +366,16 @@ stopwatchButtonsContent stopwatches =
                 , br [] []
                 , small [] [ text "all barcodes" ]
                 ]
+            , br [] []
+            , br [] []
+            , button
+                [ class "btn btn-primary btn-large"
+                , onClick ClearAllData
+                ]
+                [ text "Clear"
+                , br [] []
+                , small [] [ text "all data" ]
+                ]
             ]
 
 
