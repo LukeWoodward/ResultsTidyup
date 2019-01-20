@@ -1,7 +1,11 @@
 module BarcodeScanner exposing
     ( AthleteAndTimePair
     , BarcodeScannerData
+    , BarcodeScannerFile
+    , BarcodeScannerFileLine
+    , LineContents(..)
     , MisScannedItem
+    , ModificationStatus(..)
     , PositionAndTimePair
     , UnrecognisedLine
     , empty
@@ -56,8 +60,33 @@ type alias UnrecognisedLine =
     }
 
 
+type ModificationStatus
+    = Unmodified
+    | Deleted String
+
+
+type LineContents
+    = Ordinary String String
+    | MisScan String
+
+
+type alias BarcodeScannerFileLine =
+    { lineNumber : Int
+    , contents : LineContents
+    , date : String
+    , modificationStatus : ModificationStatus
+    }
+
+
+type alias BarcodeScannerFile =
+    { name : String
+    , lines : List BarcodeScannerFileLine
+    }
+
+
 type alias BarcodeScannerData =
-    { scannedBarcodes : Dict Int (List AthleteAndTimePair)
+    { files : List BarcodeScannerFile
+    , scannedBarcodes : Dict Int (List AthleteAndTimePair)
     , athleteBarcodesOnly : List AthleteAndTimePair
     , finishTokensOnly : List PositionAndTimePair
     , misScannedItems : List MisScannedItem
@@ -85,7 +114,7 @@ toMaybeError result =
 
 empty : BarcodeScannerData
 empty =
-    BarcodeScannerData Dict.empty [] [] [] [] Nothing
+    BarcodeScannerData [] Dict.empty [] [] [] [] Nothing
 
 
 isEmpty : BarcodeScannerData -> Bool
@@ -273,9 +302,36 @@ withLastScanDate barcodeScannerData =
     { barcodeScannerData | lastScanDate = lastScanDate }
 
 
+withFile : BarcodeScannerFile -> BarcodeScannerData -> BarcodeScannerData
+withFile file barcodeScannerData =
+    { barcodeScannerData | files = barcodeScannerData.files ++ [ file ] }
+
+
+mapFileLine : Int -> BarcodeScannerEntry -> BarcodeScannerFileLine
+mapFileLine lineNumber entry =
+    case entry of
+        Successful athlete position date ->
+            BarcodeScannerFileLine lineNumber (Ordinary athlete (String.fromInt position)) date Unmodified
+
+        AthleteOnly athlete date ->
+            BarcodeScannerFileLine lineNumber (Ordinary athlete "") date Unmodified
+
+        FinishTokenOnly position date ->
+            BarcodeScannerFileLine lineNumber (Ordinary "" (String.fromInt position)) date Unmodified
+
+        MisScanned text date ->
+            BarcodeScannerFileLine lineNumber (MisScan text) date Unmodified
+
+
+createFileLines : List BarcodeScannerEntry -> List BarcodeScannerFileLine
+createFileLines entries =
+    List.indexedMap (\index entry -> mapFileLine (index + 1) entry) entries
+
+
 mergeScannerData : BarcodeScannerData -> BarcodeScannerData -> BarcodeScannerData
 mergeScannerData data1 data2 =
     BarcodeScannerData
+        (data1.files ++ data2.files)
         (mergeScannerDicts data1.scannedBarcodes data2.scannedBarcodes)
         (data1.athleteBarcodesOnly ++ data2.athleteBarcodesOnly)
         (data1.finishTokensOnly ++ data2.finishTokensOnly)
@@ -284,8 +340,8 @@ mergeScannerData data1 data2 =
         (maxDate data1.lastScanDate data2.lastScanDate)
 
 
-readBarcodeScannerData : String -> Result Error BarcodeScannerData
-readBarcodeScannerData text =
+readBarcodeScannerData : String -> String -> Result Error BarcodeScannerData
+readBarcodeScannerData filename text =
     if isPossibleBinary text then
         Error "BINARY_FILE" "File appears to be a binary file"
             |> Err
@@ -303,6 +359,10 @@ readBarcodeScannerData text =
             validLines =
                 List.filterMap Result.toMaybe lines
 
+            fileLines : List BarcodeScannerFileLine
+            fileLines =
+                createFileLines validLines
+
             unrecognisedLines : List UnrecognisedLine
             unrecognisedLines =
                 List.filterMap toMaybeError lines
@@ -319,6 +379,7 @@ readBarcodeScannerData text =
             mergeEntries validLines
                 |> withUnrecognisedLines
                 |> withLastScanDate
+                |> withFile (BarcodeScannerFile filename fileLines)
                 |> Ok
 
 

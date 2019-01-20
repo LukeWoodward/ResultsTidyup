@@ -38,7 +38,6 @@ type alias Model =
     , numberCheckerEntries : List AnnotatedNumberCheckerEntry
     , lastHeight : Maybe Int
     , highlightedNumberCheckerId : Maybe Int
-    , barcodeScannerFiles : List String
     , barcodeScannerData : BarcodeScannerData
     , problems : ProblemsContainer
     , eventDateAndTime : EventDateAndTime
@@ -54,7 +53,6 @@ initModel =
     , numberCheckerEntries = []
     , lastHeight = Nothing
     , highlightedNumberCheckerId = Nothing
-    , barcodeScannerFiles = []
     , barcodeScannerData = BarcodeScanner.empty
     , problems = Problems.empty
     , eventDateAndTime = EventDateAndTime "" Nothing "" Nothing

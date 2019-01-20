@@ -269,7 +269,7 @@ isPossibleBarcodeScannerFile fileText =
 
 handleBarcodeScannerFileDrop : String -> String -> Model -> Model
 handleBarcodeScannerFileDrop fileName fileText model =
-    if List.member fileName model.barcodeScannerFiles then
+    if List.any (\file -> file.name == fileName) model.barcodeScannerData.files then
         { model
             | lastError =
                 Just
@@ -283,13 +283,12 @@ handleBarcodeScannerFileDrop fileName fileText model =
         let
             result : Result Error BarcodeScannerData
             result =
-                readBarcodeScannerData fileText
+                readBarcodeScannerData fileName fileText
         in
         case result of
             Ok scannerData ->
                 { model
-                    | barcodeScannerFiles = fileName :: model.barcodeScannerFiles
-                    , barcodeScannerData = mergeScannerData model.barcodeScannerData scannerData
+                    | barcodeScannerData = mergeScannerData model.barcodeScannerData scannerData
                     , lastError = Nothing
                 }
                     |> setEventDateAndTimeIn
@@ -376,11 +375,7 @@ flipStopwatches model =
 
 clearBarcodeScannerData : Model -> Model
 clearBarcodeScannerData model =
-    identifyProblemsIn
-        { model
-            | barcodeScannerData = BarcodeScanner.empty
-            , barcodeScannerFiles = []
-        }
+    identifyProblemsIn { model | barcodeScannerData = BarcodeScanner.empty }
 
 
 createStopwatchFileForDownload : Zone -> Posix -> List MergedTableRow -> InteropFile

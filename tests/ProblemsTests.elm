@@ -138,14 +138,14 @@ suite =
                 \() ->
                     identifyProblems
                         None
-                        (BarcodeScannerData Dict.empty [] [] [ MisScannedItem "&d084" "14/03/2018 09:47:03" ] [] Nothing)
+                        (BarcodeScannerData [] Dict.empty [] [] [ MisScannedItem "&d084" "14/03/2018 09:47:03" ] [] Nothing)
                         emptyEventDateAndTime
                         |> Expect.equal (ProblemsContainer [ MisScan "&d084" ] [])
             , test "identifyProblems returns a problem for an unrecognised barcode-scanner line" <|
                 \() ->
                     identifyProblems
                         None
-                        (BarcodeScannerData Dict.empty [] [] [] [ UnrecognisedLine "This is not a valid line" "code" "message" ] Nothing)
+                        (BarcodeScannerData [] Dict.empty [] [] [] [ UnrecognisedLine "This is not a valid line" "code" "message" ] Nothing)
                         emptyEventDateAndTime
                         |> Expect.equal (ProblemsContainer [ UnrecognisedBarcodeScannerLine "This is not a valid line" ] [])
             , test "identifyProblems returns a minor problem for the same athlete with the same finish position twice" <|

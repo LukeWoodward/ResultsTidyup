@@ -4,7 +4,11 @@ import BarcodeScanner
     exposing
         ( AthleteAndTimePair
         , BarcodeScannerData
+        , BarcodeScannerFile
+        , BarcodeScannerFileLine
+        , LineContents(..)
         , MisScannedItem
+        , ModificationStatus(..)
         , PositionAndTimePair
         , UnrecognisedLine
         , empty
@@ -60,6 +64,7 @@ createBarcodeScannerData athleteToPositionsDict athleteBarcodesOnly finishTokens
             Dict.map (\position athletes -> List.map wrapAthlete athletes) athleteToPositionsDict
     in
     BarcodeScannerData
+        []
         athletesToPosition
         (List.map wrapAthlete athleteBarcodesOnly)
         (List.map (\position -> PositionAndTimePair position dummyTime) finishTokensOnly)
@@ -96,7 +101,7 @@ expectSingleUnrecognisedLine expectedLine expectedCode barcodeScannerDataResult 
 
 expectSingleUnrecognisedLineFor : String -> String -> Expectation
 expectSingleUnrecognisedLineFor line expectedCode =
-    readBarcodeScannerData line
+    readBarcodeScannerData "barcodes.txt" line
         |> expectSingleUnrecognisedLine line expectedCode
 
 
@@ -124,30 +129,100 @@ suite =
         , describe "readBarcodeScannerData tests"
             [ test "readBarcodeScannerData of a valid single-line string with athlete and finish token is valid" <|
                 \() ->
-                    readBarcodeScannerData "A4580442,P0047,14/03/2018 09:47:03"
-                        |> Expect.equal (Ok (BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] [] [] [] (toPosix "2018-03-14T09:47:03.000Z")))
-            , test "readBarcodeScannerData of a valid single-line string with athlete only is valid" <|
-                \() ->
-                    readBarcodeScannerData "A4580442,,14/03/2018 09:47:03"
-                        |> Expect.equal (Ok (BarcodeScannerData Dict.empty [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ] [] [] [] (toPosix "2018-03-14T09:47:03.000Z")))
-            , test "readBarcodeScannerData of a valid single-line string with finish token only is valid" <|
-                \() ->
-                    readBarcodeScannerData ",P0047,14/03/2018 09:47:03"
-                        |> Expect.equal (Ok (BarcodeScannerData Dict.empty [] [ PositionAndTimePair 47 "14/03/2018 09:47:03" ] [] [] (toPosix "2018-03-14T09:47:03.000Z")))
-            , test "readBarcodeScannerData of a valid single-line string with mis-scanned item only is valid" <|
-                \() ->
-                    readBarcodeScannerData "&d084,14/03/2018 09:47:03"
-                        |> Expect.equal (Ok (BarcodeScannerData Dict.empty [] [] [ MisScannedItem "&d084" "14/03/2018 09:47:03" ] [] (toPosix "2018-03-14T09:47:03.000Z")))
-            , test "readBarcodeScannerData of a valid single-line string with athlete and finish token and blank lines is valid" <|
-                \() ->
-                    readBarcodeScannerData "\n\n\n\n\nA4580442,P0047,14/03/2018 09:47:03\n\n\n\n"
-                        |> Expect.equal (Ok (BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] [] [] [] (toPosix "2018-03-14T09:47:03.000Z")))
-            , test "readBarcodeScannerData of a valid multiline string with two different finish tokens is valid" <|
-                \() ->
-                    readBarcodeScannerData "A4580442,P0047,14/03/2018 09:47:03\nA1866207,P0047,14/03/2018 09:48:44"
+                    readBarcodeScannerData "barcodes1.txt" "A4580442,P0047,14/03/2018 09:47:03"
                         |> Expect.equal
                             (Ok
                                 (BarcodeScannerData
+                                    [ BarcodeScannerFile "barcodes1.txt"
+                                        [ BarcodeScannerFileLine 1 (Ordinary "A4580442" "47") "14/03/2018 09:47:03" Unmodified ]
+                                    ]
+                                    (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
+                                    []
+                                    []
+                                    []
+                                    []
+                                    (toPosix "2018-03-14T09:47:03.000Z")
+                                )
+                            )
+            , test "readBarcodeScannerData of a valid single-line string with athlete only is valid" <|
+                \() ->
+                    readBarcodeScannerData "barcodes2.txt" "A4580442,,14/03/2018 09:47:03"
+                        |> Expect.equal
+                            (Ok
+                                (BarcodeScannerData
+                                    [ BarcodeScannerFile "barcodes2.txt"
+                                        [ BarcodeScannerFileLine 1 (Ordinary "A4580442" "") "14/03/2018 09:47:03" Unmodified ]
+                                    ]
+                                    Dict.empty
+                                    [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]
+                                    []
+                                    []
+                                    []
+                                    (toPosix "2018-03-14T09:47:03.000Z")
+                                )
+                            )
+            , test "readBarcodeScannerData of a valid single-line string with finish token only is valid" <|
+                \() ->
+                    readBarcodeScannerData "barcodes3.txt" ",P0047,14/03/2018 09:47:03"
+                        |> Expect.equal
+                            (Ok
+                                (BarcodeScannerData
+                                    [ BarcodeScannerFile "barcodes3.txt"
+                                        [ BarcodeScannerFileLine 1 (Ordinary "" "47") "14/03/2018 09:47:03" Unmodified ]
+                                    ]
+                                    Dict.empty
+                                    []
+                                    [ PositionAndTimePair 47 "14/03/2018 09:47:03" ]
+                                    []
+                                    []
+                                    (toPosix "2018-03-14T09:47:03.000Z")
+                                )
+                            )
+            , test "readBarcodeScannerData of a valid single-line string with mis-scanned item only is valid" <|
+                \() ->
+                    readBarcodeScannerData "barcodes4.txt" "&d084,14/03/2018 09:47:03"
+                        |> Expect.equal
+                            (Ok
+                                (BarcodeScannerData
+                                    [ BarcodeScannerFile "barcodes4.txt"
+                                        [ BarcodeScannerFileLine 1 (MisScan "&d084") "14/03/2018 09:47:03" Unmodified ]
+                                    ]
+                                    Dict.empty
+                                    []
+                                    []
+                                    [ MisScannedItem "&d084" "14/03/2018 09:47:03" ]
+                                    []
+                                    (toPosix "2018-03-14T09:47:03.000Z")
+                                )
+                            )
+            , test "readBarcodeScannerData of a valid single-line string with athlete and finish token and blank lines is valid" <|
+                \() ->
+                    readBarcodeScannerData "barcodes5.txt" "\n\n\n\n\nA4580442,P0047,14/03/2018 09:47:03\n\n\n\n"
+                        |> Expect.equal
+                            (Ok
+                                (BarcodeScannerData
+                                    [ BarcodeScannerFile "barcodes5.txt"
+                                        [ BarcodeScannerFileLine 1 (Ordinary "A4580442" "47") "14/03/2018 09:47:03" Unmodified ]
+                                    ]
+                                    (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
+                                    []
+                                    []
+                                    []
+                                    []
+                                    (toPosix "2018-03-14T09:47:03.000Z")
+                                )
+                            )
+            , test "readBarcodeScannerData of a valid multiline string with two different finish tokens is valid" <|
+                \() ->
+                    readBarcodeScannerData "barcodes6.txt" "A4580442,P0047,14/03/2018 09:47:03\nA1866207,P0047,14/03/2018 09:48:44"
+                        |> Expect.equal
+                            (Ok
+                                (BarcodeScannerData
+                                    [ BarcodeScannerFile "barcodes6.txt"
+                                        [ BarcodeScannerFileLine 1 (Ordinary "A4580442" "47") "14/03/2018 09:47:03" Unmodified
+                                        , BarcodeScannerFileLine 2 (Ordinary "A1866207" "47") "14/03/2018 09:48:44" Unmodified
+                                        ]
+                                    ]
                                     (Dict.singleton 47
                                         [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03"
                                         , AthleteAndTimePair "A1866207" "14/03/2018 09:48:44"
@@ -162,7 +237,7 @@ suite =
                             )
             , test "readBarcodeScannerData of an empty string is not valid" <|
                 \() ->
-                    readBarcodeScannerData ""
+                    readBarcodeScannerData "empty.txt" ""
                         |> expectError "NO_RESULTS"
             , test "readBarcodeScannerData of a string with an invalid athlete barcode is not valid" <|
                 \() ->
@@ -216,7 +291,7 @@ suite =
                         |> Expect.equal (",P0047," ++ dummyTime ++ crlf)
             , test "toDownloadText returns a valid string for a single mis-scanned item" <|
                 \() ->
-                    toDownloadText (BarcodeScannerData Dict.empty [] [] [ MisScannedItem "other" dummyTime ] [] Nothing)
+                    toDownloadText (BarcodeScannerData [] Dict.empty [] [] [ MisScannedItem "other" dummyTime ] [] Nothing)
                         |> Expect.equal ("other," ++ dummyTime ++ crlf)
             , test "toDownloadText returns a valid string for a combination of all items" <|
                 \() ->
@@ -224,6 +299,7 @@ suite =
                         data : BarcodeScannerData
                         data =
                             BarcodeScannerData
+                                []
                                 (Dict.singleton 58 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:53" ])
                                 [ AthleteAndTimePair "A3097724" "14/03/2018 09:36:04" ]
                                 [ PositionAndTimePair 51 "14/03/2018 09:52:06" ]
@@ -250,6 +326,7 @@ suite =
                         data : BarcodeScannerData
                         data =
                             BarcodeScannerData
+                                []
                                 (Dict.singleton 58 [ AthleteAndTimePair "A4580442" "This time is not valid" ])
                                 [ AthleteAndTimePair "A3097724" "14/03/2018 09:36:04" ]
                                 [ PositionAndTimePair 51 "14/03/2018 09:52:06" ]

@@ -1,6 +1,6 @@
 module UpdateLogicTests exposing (suite)
 
-import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, PositionAndTimePair)
+import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, BarcodeScannerFile, BarcodeScannerFileLine, LineContents(..), ModificationStatus(..), PositionAndTimePair)
 import BarcodeScannerTests exposing (createBarcodeScannerData, expectSingleUnrecognisedLine, toPosix)
 import DataStructures exposing (EventDateAndTime, InteropFile, MinorProblemFix(..), SecondTab(..), WhichStopwatch(..))
 import Dict exposing (Dict)
@@ -62,11 +62,6 @@ expectHighlightedNumberCheckerId expectedHighlightedNumberCheckerId ( model, _ )
     Expect.equal expectedHighlightedNumberCheckerId model.highlightedNumberCheckerId
 
 
-expectBarcodeScannerFiles : List String -> ( Model, Cmd Msg ) -> Expectation
-expectBarcodeScannerFiles expectedBarcodeScannerFiles ( model, _ ) =
-    Expect.equal expectedBarcodeScannerFiles (List.sort model.barcodeScannerFiles)
-
-
 expectBarcodeScannerData : BarcodeScannerData -> ( Model, Cmd Msg ) -> Expectation
 expectBarcodeScannerData expectedBarcodeScannerData ( model, _ ) =
     Expect.equal expectedBarcodeScannerData model.barcodeScannerData
@@ -99,7 +94,6 @@ type Assertion
     | NumberCheckerEntries
     | LastHeight
     | HighlightedNumberCheckerId
-    | BarcodeScannerFiles
     | BarcodeScannerDataAssertion
     | Problems
     | EventDateAndTimeAssertion
@@ -142,11 +136,6 @@ defaultAssertionsExcept exceptions =
 
               else
                 Just (expectHighlightedNumberCheckerId Nothing)
-            , if List.member BarcodeScannerFiles exceptions then
-                Nothing
-
-              else
-                Just (expectBarcodeScannerFiles [])
             , if List.member BarcodeScannerDataAssertion exceptions then
                 Nothing
 
@@ -249,12 +238,26 @@ invalidBarcodeScannerData =
 
 parsedBarcodeScannerData1 : BarcodeScannerData
 parsedBarcodeScannerData1 =
-    BarcodeScannerData (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]) [] [] [] [] (toPosix "2018-03-14T09:47:03.000Z")
+    BarcodeScannerData
+        [ BarcodeScannerFile "barcodes1.txt"
+            [ BarcodeScannerFileLine 1 (Ordinary "A4580442" "47") "14/03/2018 09:47:03" Unmodified ]
+        ]
+        (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
+        []
+        []
+        []
+        []
+        (toPosix "2018-03-14T09:47:03.000Z")
 
 
 parsedBarcodeScannerData1And2 : BarcodeScannerData
 parsedBarcodeScannerData1And2 =
     BarcodeScannerData
+        [ BarcodeScannerFile "barcodes1.txt"
+            [ BarcodeScannerFileLine 1 (Ordinary "A4580442" "47") "14/03/2018 09:47:03" Unmodified ]
+        , BarcodeScannerFile "barcodes2.txt"
+            [ BarcodeScannerFileLine 1 (Ordinary "A2044293" "59") "14/03/2018 09:49:44" Unmodified ]
+        ]
         (Dict.fromList
             [ ( 47, [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ] )
             , ( 59, [ AthleteAndTimePair "A2044293" "14/03/2018 09:49:44" ] )
@@ -431,7 +434,8 @@ createNumberCheckerManualEntryRow stopwatch1 stopwatch2 finishTokens =
 
 barcodeScannerDataForEventStartTimeFiltering : BarcodeScannerData
 barcodeScannerDataForEventStartTimeFiltering =
-    { scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A123456" "14/03/2018 09:22:08" ]
+    { files = []
+    , scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A123456" "14/03/2018 09:22:08" ]
     , athleteBarcodesOnly = [ AthleteAndTimePair "A345678" "14/03/2018 09:47:54" ]
     , finishTokensOnly = [ PositionAndTimePair 19 "14/03/2018 10:11:16" ]
     , misScannedItems = []
@@ -519,30 +523,27 @@ suite =
                     \() ->
                         update (FileDropped (InteropFile "barcodes1.txt" validBarcodeScannerData1)) initModel
                             |> Expect.all
-                                (expectBarcodeScannerFiles [ "barcodes1.txt" ]
-                                    :: expectBarcodeScannerData parsedBarcodeScannerData1
+                                (expectBarcodeScannerData parsedBarcodeScannerData1
                                     :: expectEventDateAndTime parsedEventDateOnly
-                                    :: defaultAssertionsExcept [ BarcodeScannerFiles, BarcodeScannerDataAssertion, EventDateAndTimeAssertion ]
+                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, EventDateAndTimeAssertion ]
                                 )
                 , test "Can upload a single barcode scanner file with position token without leading zeroes" <|
                     \() ->
                         update (FileDropped (InteropFile "barcodes1.txt" (String.replace "P0047" "P47" validBarcodeScannerData1))) initModel
                             |> Expect.all
-                                (expectBarcodeScannerFiles [ "barcodes1.txt" ]
-                                    :: expectBarcodeScannerData parsedBarcodeScannerData1
+                                (expectBarcodeScannerData parsedBarcodeScannerData1
                                     :: expectEventDateAndTime parsedEventDateOnly
-                                    :: defaultAssertionsExcept [ BarcodeScannerFiles, BarcodeScannerDataAssertion, EventDateAndTimeAssertion ]
+                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, EventDateAndTimeAssertion ]
                                 )
                 , test "Can upload a single invalid barcode scanner file" <|
                     \() ->
                         update (FileDropped (InteropFile "barcodes1.txt" invalidBarcodeScannerData)) initModel
                             |> Expect.all
-                                (expectBarcodeScannerFiles [ "barcodes1.txt" ]
-                                    :: (\( model, _ ) ->
-                                            expectSingleUnrecognisedLine (String.replace crlf "" invalidBarcodeScannerData) "INVALID_POSITION_ZERO" (Ok model.barcodeScannerData)
-                                       )
+                                ((\( model, _ ) ->
+                                    expectSingleUnrecognisedLine (String.replace crlf "" invalidBarcodeScannerData) "INVALID_POSITION_ZERO" (Ok model.barcodeScannerData)
+                                 )
                                     :: expectProblems (ProblemsContainer [ UnrecognisedBarcodeScannerLine "A4580442,P0000,14/03/2018 09:47:03" ] [])
-                                    :: defaultAssertionsExcept [ BarcodeScannerFiles, BarcodeScannerDataAssertion, EventDateAndTimeAssertion, Problems ]
+                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, EventDateAndTimeAssertion, Problems ]
                                 )
                 , test "Cannot upload the same barcode scanner file twice" <|
                     \() ->
@@ -551,11 +552,10 @@ suite =
                             |> Tuple.first
                             |> update (FileDropped (InteropFile "barcodes1.txt" validBarcodeScannerData1))
                             |> Expect.all
-                                (expectBarcodeScannerFiles [ "barcodes1.txt" ]
-                                    :: expectBarcodeScannerData parsedBarcodeScannerData1
+                                (expectBarcodeScannerData parsedBarcodeScannerData1
                                     :: expectEventDateAndTime parsedEventDateOnly
                                     :: expectLastError "BARCODE_DATA_ALREADY_LOADED"
-                                    :: defaultAssertionsExcept [ BarcodeScannerFiles, BarcodeScannerDataAssertion, EventDateAndTimeAssertion, LastError ]
+                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, EventDateAndTimeAssertion, LastError ]
                                 )
                 , test "Can upload two different barcode scanner files" <|
                     \() ->
@@ -564,10 +564,9 @@ suite =
                             |> Tuple.first
                             |> update (FileDropped (InteropFile "barcodes2.txt" validBarcodeScannerData2))
                             |> Expect.all
-                                (expectBarcodeScannerFiles [ "barcodes1.txt", "barcodes2.txt" ]
-                                    :: expectBarcodeScannerData parsedBarcodeScannerData1And2
+                                (expectBarcodeScannerData parsedBarcodeScannerData1And2
                                     :: expectEventDateAndTime parsedEventDateOnly
-                                    :: defaultAssertionsExcept [ BarcodeScannerFiles, BarcodeScannerDataAssertion, EventDateAndTimeAssertion ]
+                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, EventDateAndTimeAssertion ]
                                 )
                 ]
             , describe "Number checker file tests"
@@ -668,7 +667,6 @@ suite =
                 \() ->
                     { initModel
                         | barcodeScannerData = createBarcodeScannerData (Dict.singleton 47 [ "A4580484" ]) [ "A123456" ] [ 11 ]
-                        , barcodeScannerFiles = [ "barcodes1.txt" ]
                         , eventDateAndTime = parsedEventDateOnly
                         , stopwatches = doubleStopwatches
                         , lastError = Just (Error "TEST_ERROR" "Some test error message")
@@ -676,7 +674,7 @@ suite =
                         , highlightedNumberCheckerId = Just 2
                         , numberCheckerEntries = [ AnnotatedNumberCheckerEntry 2 2 0 2 0 2 0 ]
                         , numberCheckerManualEntryRow = NumberCheckerManualEntryRow (NumericEntry "2" (Just 2)) (NumericEntry "2" (Just 2)) (NumericEntry "2" (Just 2))
-                        , problems = ProblemsContainer [ MisScan "something" ] [ PositionWithAndWithoutAthlete 5 "A123" ]
+                        , problems = ProblemsContainer [ Problems.MisScan "something" ] [ PositionWithAndWithoutAthlete 5 "A123" ]
                     }
                         |> update ClearAllData
                         |> Expect.all defaultAssertions
@@ -724,15 +722,14 @@ suite =
             [ test "Can download barcode scanner data" <|
                 \() ->
                     initModel
-                        |> update (FileDropped (InteropFile "barcodes.txt" validBarcodeScannerData1))
+                        |> update (FileDropped (InteropFile "barcodes1.txt" validBarcodeScannerData1))
                         |> Tuple.first
                         |> update (DownloadBarcodeScannerData Time.utc recentTime)
                         |> Expect.all
                             (expectACommand
-                                :: expectBarcodeScannerFiles [ "barcodes.txt" ]
                                 :: expectEventDateAndTime (EventDateAndTime "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z") "" Nothing)
                                 :: expectBarcodeScannerData parsedBarcodeScannerData1
-                                :: defaultAssertionsExcept [ BarcodeScannerFiles, BarcodeScannerDataAssertion, EventDateAndTimeAssertion, Command ]
+                                :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, EventDateAndTimeAssertion, Command ]
                             )
             ]
         , describe "Create stopwatch file for download tests"
@@ -762,7 +759,7 @@ suite =
                         model : Model
                         model =
                             initModel
-                                |> update (FileDropped (InteropFile "barcodes.txt" validBarcodeScannerData1))
+                                |> update (FileDropped (InteropFile "barcodes1.txt" validBarcodeScannerData1))
                                 |> Tuple.first
                     in
                     createBarcodeScannerFileForDownload Time.utc recentTime model.barcodeScannerData
