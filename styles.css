@@ -31,7 +31,7 @@ table.table.stopwatch-times > tbody > tr > td.no-scanned-athlete {
     color: #dddddd;
 }
 
-table.table.stopwatch-times > tbody > tr > td {
+table.table.stopwatch-times > tbody > tr > td, table.table.barcode-scanner-data > tbody > tr > td {
     padding-top: 1px;
     padding-bottom: 1px;
 }
@@ -137,4 +137,9 @@ input#eventTimeBox {
 
 button.event-time-button {
     margin-left: 3px;
+}
+
+.misscanned {
+    font-weight: bold;
+    text-align: center;
 }

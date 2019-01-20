@@ -1,6 +1,7 @@
 module ParkrunResults exposing (main)
 
 import BarcodeScanner exposing (BarcodeScannerData)
+import BarcodeScannerView exposing (barcodeScannerView)
 import Browser
 import DataStructures exposing (EventDateAndTime, SecondTab(..))
 import Error exposing (Error)
@@ -121,7 +122,7 @@ view model =
                         numberCheckerView model.numberCheckerEntries model.numberCheckerManualEntryRow model.lastHeight
 
                     BarcodeScannersTab ->
-                        div [] [ h3 [] [ text "TODO" ] ]
+                        div [] (List.map barcodeScannerView model.barcodeScannerData.files)
                 ]
             ]
         ]
