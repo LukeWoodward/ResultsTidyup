@@ -170,7 +170,7 @@ defaultAssertionsExcept exceptions =
                 Nothing
 
               else
-                Just (expectSecondTab NumberCheckerTab)
+                Just (expectSecondTab BarcodeScannersTab)
             ]
     in
     List.filterMap identity allMaybeAssertions
@@ -542,7 +542,7 @@ ifAthlete athlete line =
     case line.contents of
         Ordinary someAthlete Nothing ->
             if athlete == someAthlete then
-                { line | modificationStatus = Deleted (AthleteScannedElsewhereWithFinishToken athlete) }
+                { line | modificationStatus = Deleted (AthleteScannedWithFinishTokenElsewhere athlete) }
 
             else
                 line
@@ -556,7 +556,7 @@ ifFinishPosition position line =
     case line.contents of
         Ordinary "" somePosition ->
             if somePosition == Just position then
-                { line | modificationStatus = Deleted (FinishTokenScannedElsewhereWithAthlete position) }
+                { line | modificationStatus = Deleted (FinishTokenScannedWithAthleteElsewhere position) }
 
             else
                 line
@@ -797,7 +797,7 @@ suite =
                 \() ->
                     { initModel
                         | barcodeScannerData = createBarcodeScannerData (Dict.singleton 47 [ "A4580484" ]) [ "A123456" ] [ 11 ]
-                        , eventDateAndTime = parsedEventDateOnly
+                        , eventDateAndTime = { parsedEventDateOnly | enteredTime = "09:00", validatedTime = Just (9 * 60) }
                         , stopwatches = doubleStopwatches
                         , lastError = Just (Error "TEST_ERROR" "Some test error message")
                         , lastHeight = Just 700
@@ -805,9 +805,14 @@ suite =
                         , numberCheckerEntries = [ AnnotatedNumberCheckerEntry 2 2 0 2 0 2 0 ]
                         , numberCheckerManualEntryRow = NumberCheckerManualEntryRow (NumericEntry "2" (Just 2)) (NumericEntry "2" (Just 2)) (NumericEntry "2" (Just 2))
                         , problems = ProblemsContainer [ Problems.MisScan "something" ] [ PositionWithAndWithoutAthlete 5 "A123" ]
+                        , secondTab = NumberCheckerTab
                     }
                         |> update ClearAllData
-                        |> Expect.all defaultAssertions
+                        |> Expect.all
+                            (expectSecondTab NumberCheckerTab
+                                :: expectEventDateAndTime (EventDateAndTime "" Nothing "09:00" (Just (9 * 60)))
+                                :: defaultAssertionsExcept [ EventDateAndTimeAssertion, SecondTabAssertion ]
+                            )
             ]
         , describe "Get current date for download file tests"
             [ test "Getting current date issues a task and returns the same model" <|
@@ -1548,18 +1553,22 @@ suite =
                             )
             ]
         , describe "ChangeSecondTab tabs"
-            [ test "Can change from number checker tab to barcode scanner tab" <|
+            [ test "Can change from barcode scanner tab to number checker tab" <|
                 \() ->
-                    update (ChangeSecondTab BarcodeScannersTab) initModel
+                    { initModel | secondTab = BarcodeScannersTab }
+                        |> update (ChangeSecondTab NumberCheckerTab)
+                        |> Expect.all
+                            (expectSecondTab NumberCheckerTab
+                                :: defaultAssertionsExcept [ SecondTabAssertion ]
+                            )
+            , test "Can change from number checker tab to barcode scanner tab" <|
+                \() ->
+                    { initModel | secondTab = NumberCheckerTab }
+                        |> update (ChangeSecondTab BarcodeScannersTab)
                         |> Expect.all
                             (expectSecondTab BarcodeScannersTab
                                 :: defaultAssertionsExcept [ SecondTabAssertion ]
                             )
-            , test "Can change from barcode scanner tab to number checker tab" <|
-                \() ->
-                    { initModel | secondTab = BarcodeScannersTab }
-                        |> update (ChangeSecondTab NumberCheckerTab)
-                        |> Expect.all defaultAssertions
             ]
         ]
 

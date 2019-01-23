@@ -389,6 +389,14 @@ clearBarcodeScannerData model =
     identifyProblemsIn { model | barcodeScannerData = BarcodeScanner.empty }
 
 
+clearAllData : Model -> Model
+clearAllData model =
+    { initModel
+        | secondTab = model.secondTab
+        , eventDateAndTime = EventDateAndTime "" Nothing model.eventDateAndTime.enteredTime model.eventDateAndTime.validatedTime
+    }
+
+
 createStopwatchFileForDownload : Zone -> Posix -> List MergedTableRow -> InteropFile
 createStopwatchFileForDownload zone time mergedTableRows =
     let
@@ -776,7 +784,7 @@ update msg model =
             ( clearBarcodeScannerData model, Cmd.none )
 
         ClearAllData ->
-            ( initModel, Cmd.none )
+            ( clearAllData model, Cmd.none )
 
         GetCurrentDateForDownloadFile operation ->
             ( model
