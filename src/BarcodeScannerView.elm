@@ -1,7 +1,7 @@
 module BarcodeScannerView exposing (barcodeScannerView)
 
 import BarcodeScanner exposing (BarcodeScannerFile, BarcodeScannerFileLine, LineContents(..), ModificationStatus(..))
-import Html exposing (Html, div, h4, table, tbody, td, text, tr)
+import Html exposing (Attribute, Html, div, h4, table, tbody, td, text, tr)
 import Html.Attributes exposing (class, colspan, title)
 import Msg exposing (Msg(..))
 import ViewCommon exposing (tableHeaders)
@@ -19,13 +19,36 @@ barcodeScannerContents contents =
             [ td [ colspan 2, class "misscanned", title "This item was not scanned properly." ] [ text misScannedText ] ]
 
 
+modificationStatusCell : ModificationStatus -> Html Msg
+modificationStatusCell status =
+    case status of
+        Unmodified ->
+            td [] [ text "Unmodified" ]
+
+        Deleted reason ->
+            td [] [ text "Deleted" ]
+
+
 barcodeScannerViewRow : BarcodeScannerFileLine -> Html Msg
 barcodeScannerViewRow line =
-    tr []
+    let
+        rowAttributes : List (Attribute Msg)
+        rowAttributes =
+            case line.modificationStatus of
+                Unmodified ->
+                    []
+
+                Deleted deletionReason ->
+                    [ class "deleted-barcode-scanner-row"
+                    , title deletionReason
+                    ]
+    in
+    tr
+        rowAttributes
         ([ td [] [ text (String.fromInt line.lineNumber) ] ]
             ++ barcodeScannerContents line.contents
-            ++ [ td [] [ text line.date ]
-               , td [] [ text "Unmodified" ]
+            ++ [ td [] [ text line.scanTime ]
+               , modificationStatusCell line.modificationStatus
                ]
         )
 

@@ -294,9 +294,24 @@ createBarcodeScannerDataForRemovingUnassociatedFinishTokens finishTokens =
                 |> deduplicate
                 |> List.indexedMap (\index position -> ( position, [ fakeAthlete index ] ))
                 |> Dict.fromList
+
+        fileLines : List BarcodeScannerFileLine
+        fileLines =
+            List.map String.fromInt finishTokens
+                |> List.indexedMap
+                    (\index token ->
+                        [ BarcodeScannerFileLine (index * 2 + 1) (Ordinary (fakeAthlete index) token) "14/03/2018 09:47:03" Unmodified
+                        , BarcodeScannerFileLine (index * 2 + 2) (Ordinary "" token) "14/03/2018 09:47:03" Unmodified
+                        ]
+                    )
+                |> List.concat
+
+        barcodeScannerData : BarcodeScannerData
+        barcodeScannerData =
+            createBarcodeScannerData scannedBarcodes [] finishTokens
     in
     { initModel
-        | barcodeScannerData = createBarcodeScannerData scannedBarcodes [] finishTokens
+        | barcodeScannerData = { barcodeScannerData | files = [ BarcodeScannerFile "barcodes1.txt" fileLines ] }
         , problems = ProblemsContainer [] (List.indexedMap (\index position -> PositionWithAndWithoutAthlete position (fakeAthlete index)) finishTokens)
     }
 
@@ -310,10 +325,53 @@ createBarcodeScannerDataForRemovingUnassociatedAthletes athletes =
                 |> deduplicate
                 |> List.indexedMap (\index athlete -> ( index + 1, [ athlete ] ))
                 |> Dict.fromList
+
+        fileLines : List BarcodeScannerFileLine
+        fileLines =
+            athletes
+                |> List.indexedMap
+                    (\index athlete ->
+                        [ BarcodeScannerFileLine (index * 2 + 1) (Ordinary athlete (String.fromInt index)) "14/03/2018 09:47:03" Unmodified
+                        , BarcodeScannerFileLine (index * 2 + 2) (Ordinary athlete "") "14/03/2018 09:47:03" Unmodified
+                        ]
+                    )
+                |> List.concat
+
+        barcodeScannerData : BarcodeScannerData
+        barcodeScannerData =
+            createBarcodeScannerData scannedBarcodes athletes []
     in
     { initModel
-        | barcodeScannerData = createBarcodeScannerData scannedBarcodes athletes []
+        | barcodeScannerData = { barcodeScannerData | files = [ BarcodeScannerFile "barcodes1.txt" fileLines ] }
         , problems = ProblemsContainer [] (List.indexedMap (\index athlete -> AthleteWithAndWithoutPosition athlete (index + 1)) athletes)
+    }
+
+
+createBarcodeScannerDataForRemovingDuplicateScans : Int -> Model
+createBarcodeScannerDataForRemovingDuplicateScans numberOfTimes =
+    let
+        barcodeScannerData : BarcodeScannerData
+        barcodeScannerData =
+            createBarcodeScannerData (Dict.singleton 27 (List.repeat numberOfTimes "A1234")) [] []
+
+        fileLines : List BarcodeScannerFileLine
+        fileLines =
+            List.range 1 numberOfTimes
+                |> List.map
+                    (\index ->
+                        BarcodeScannerFileLine index (Ordinary "A1234" "27") "14/03/2018 09:47:03" Unmodified
+                    )
+    in
+    { initModel
+        | barcodeScannerData = { barcodeScannerData | files = [ BarcodeScannerFile "barcodes1.txt" fileLines ] }
+        , problems =
+            ProblemsContainer []
+                (if numberOfTimes > 1 then
+                    [ AthleteInSamePositionMultipleTimes "A1234" 27 ]
+
+                 else
+                    []
+                )
     }
 
 
@@ -434,7 +492,13 @@ createNumberCheckerManualEntryRow stopwatch1 stopwatch2 finishTokens =
 
 barcodeScannerDataForEventStartTimeFiltering : BarcodeScannerData
 barcodeScannerDataForEventStartTimeFiltering =
-    { files = []
+    { files =
+        [ BarcodeScannerFile "barcodes1.txt"
+            [ BarcodeScannerFileLine 1 (Ordinary "A123456" "27") "14/03/2018 09:22:08" Unmodified
+            , BarcodeScannerFileLine 2 (Ordinary "A345678" "") "14/03/2018 09:47:54" Unmodified
+            , BarcodeScannerFileLine 3 (Ordinary "" "19") "14/03/2018 10:11:16" Unmodified
+            ]
+        ]
     , scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A123456" "14/03/2018 09:22:08" ]
     , athleteBarcodesOnly = [ AthleteAndTimePair "A345678" "14/03/2018 09:47:54" ]
     , finishTokensOnly = [ PositionAndTimePair 19 "14/03/2018 10:11:16" ]
@@ -442,6 +506,62 @@ barcodeScannerDataForEventStartTimeFiltering =
     , unrecognisedLines = []
     , lastScanDate = Nothing
     }
+
+
+deleteLinesWithinFile : (BarcodeScannerFileLine -> BarcodeScannerFileLine) -> List BarcodeScannerFile -> List BarcodeScannerFile
+deleteLinesWithinFile deleter files =
+    let
+        deleteInFile : BarcodeScannerFile -> BarcodeScannerFile
+        deleteInFile file =
+            { file | lines = List.map deleter file.lines }
+    in
+    List.map deleteInFile files
+
+
+ifLineNumberNoMoreThan : Int -> BarcodeScannerFileLine -> BarcodeScannerFileLine
+ifLineNumberNoMoreThan maxLineNumberToDelete line =
+    if line.lineNumber <= maxLineNumberToDelete then
+        { line | modificationStatus = Deleted "Before event start" }
+
+    else
+        line
+
+
+ifAthlete : String -> BarcodeScannerFileLine -> BarcodeScannerFileLine
+ifAthlete athlete line =
+    case line.contents of
+        Ordinary someAthlete "" ->
+            if athlete == someAthlete then
+                { line | modificationStatus = Deleted ("Athlete " ++ athlete ++ " has been scanned with a finish token elsewhere") }
+
+            else
+                line
+
+        _ ->
+            line
+
+
+ifFinishPosition : Int -> BarcodeScannerFileLine -> BarcodeScannerFileLine
+ifFinishPosition position line =
+    case line.contents of
+        Ordinary "" somePosition ->
+            if somePosition == String.fromInt position then
+                { line | modificationStatus = Deleted ("Position " ++ String.fromInt position ++ " has been scanned with an athlete barcode elsewhere") }
+
+            else
+                line
+
+        _ ->
+            line
+
+
+ifLineNumberGreaterThanOne : BarcodeScannerFileLine -> BarcodeScannerFileLine
+ifLineNumberGreaterThanOne line =
+    if line.lineNumber > 1 then
+        { line | modificationStatus = Deleted "Athlete A1234 has been scanned in position 27 elsewhere" }
+
+    else
+        line
 
 
 {-| 2018-03-14T09:00:00
@@ -1060,6 +1180,7 @@ suite =
                             expectedBarcodeScannerData =
                                 { initialBarcodeScannerData
                                     | finishTokensOnly = List.filter (\x -> x.position /= 39) initialBarcodeScannerData.finishTokensOnly
+                                    , files = deleteLinesWithinFile (ifFinishPosition 39) initialModel.barcodeScannerData.files
                                 }
                         in
                         initialModel
@@ -1090,6 +1211,7 @@ suite =
                             expectedBarcodeScannerData =
                                 { initialBarcodeScannerData
                                     | finishTokensOnly = List.filter (\x -> x.position /= 39) initialBarcodeScannerData.finishTokensOnly
+                                    , files = deleteLinesWithinFile (ifFinishPosition 39) initialModel.barcodeScannerData.files
                                 }
                         in
                         initialModel
@@ -1143,6 +1265,7 @@ suite =
                             expectedBarcodeScannerData =
                                 { initialBarcodeScannerData
                                     | athleteBarcodesOnly = List.filter (\x -> x.athlete /= "A5678") initialBarcodeScannerData.athleteBarcodesOnly
+                                    , files = deleteLinesWithinFile (ifAthlete "A5678") initialModel.barcodeScannerData.files
                                 }
                         in
                         initialModel
@@ -1173,6 +1296,7 @@ suite =
                             expectedBarcodeScannerData =
                                 { initialBarcodeScannerData
                                     | athleteBarcodesOnly = List.filter (\x -> x.athlete /= "A5678") initialBarcodeScannerData.athleteBarcodesOnly
+                                    , files = deleteLinesWithinFile (ifAthlete "A5678") initialModel.barcodeScannerData.files
                                 }
                         in
                         initialModel
@@ -1213,18 +1337,76 @@ suite =
             , describe "Removing duplicate scans test"
                 [ test "Can remove scan that occurs twice" <|
                     \() ->
-                        { initModel | barcodeScannerData = createBarcodeScannerData (Dict.singleton 27 [ "A1234", "A1234" ]) [] [] }
+                        let
+                            initialModel : Model
+                            initialModel =
+                                createBarcodeScannerDataForRemovingDuplicateScans 2
+
+                            initialBarcodeScannerData : BarcodeScannerData
+                            initialBarcodeScannerData =
+                                initialModel.barcodeScannerData
+                        in
+                        initialModel
                             |> update (FixMinorProblem (RemoveDuplicateScans 27 "A1234"))
                             |> Expect.all
-                                (expectBarcodeScannerData (createBarcodeScannerData (Dict.singleton 27 [ "A1234" ]) [] [])
+                                (expectBarcodeScannerData
+                                    { initialBarcodeScannerData
+                                        | scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A1234" "14/03/2018 09:47:53" ]
+                                        , files = deleteLinesWithinFile ifLineNumberGreaterThanOne initialBarcodeScannerData.files
+                                    }
                                     :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
                                 )
                 , test "Can remove scan that occurs more than twice" <|
                     \() ->
-                        { initModel | barcodeScannerData = createBarcodeScannerData (Dict.singleton 27 [ "A1234", "A1234", "A1234", "A1234", "A1234", "A1234" ]) [] [] }
+                        let
+                            initialModel : Model
+                            initialModel =
+                                createBarcodeScannerDataForRemovingDuplicateScans 5
+
+                            initialBarcodeScannerData : BarcodeScannerData
+                            initialBarcodeScannerData =
+                                initialModel.barcodeScannerData
+                        in
+                        initialModel
                             |> update (FixMinorProblem (RemoveDuplicateScans 27 "A1234"))
                             |> Expect.all
-                                (expectBarcodeScannerData (createBarcodeScannerData (Dict.singleton 27 [ "A1234" ]) [] [])
+                                (expectBarcodeScannerData
+                                    { initialBarcodeScannerData
+                                        | scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A1234" "14/03/2018 09:47:53" ]
+                                        , files = deleteLinesWithinFile ifLineNumberGreaterThanOne initialBarcodeScannerData.files
+                                    }
+                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
+                                )
+                , test "Can remove scan that occurs twice in two different files" <|
+                    \() ->
+                        let
+                            initialBarcodeScannerData : BarcodeScannerData
+                            initialBarcodeScannerData =
+                                createBarcodeScannerData (Dict.singleton 27 [ "A1234", "A1234" ]) [] []
+
+                            startingScannerData : BarcodeScannerData
+                            startingScannerData =
+                                { initialBarcodeScannerData
+                                    | files =
+                                        [ BarcodeScannerFile "barcodes1.txt" [ BarcodeScannerFileLine 1 (Ordinary "A1234" "27") "14/03/2018 09:47:53" Unmodified ]
+                                        , BarcodeScannerFile "barcodes2.txt" [ BarcodeScannerFileLine 1 (Ordinary "A1234" "27") "14/03/2018 09:47:53" Unmodified ]
+                                        ]
+                                }
+
+                            finalBarcodeScannerData : BarcodeScannerData
+                            finalBarcodeScannerData =
+                                { initialBarcodeScannerData
+                                    | scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A1234" "14/03/2018 09:47:53" ]
+                                    , files =
+                                        [ BarcodeScannerFile "barcodes1.txt" [ BarcodeScannerFileLine 1 (Ordinary "A1234" "27") "14/03/2018 09:47:53" Unmodified ]
+                                        , BarcodeScannerFile "barcodes2.txt" [ BarcodeScannerFileLine 1 (Ordinary "A1234" "27") "14/03/2018 09:47:53" (Deleted "Athlete A1234 has been scanned in position 27 elsewhere") ]
+                                        ]
+                                }
+                        in
+                        { initModel | barcodeScannerData = startingScannerData }
+                            |> update (FixMinorProblem (RemoveDuplicateScans 27 "A1234"))
+                            |> Expect.all
+                                (expectBarcodeScannerData finalBarcodeScannerData
                                     :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
                                 )
                 , test "Attempting to remove duplicate scan when not duplicate does nothing" <|
@@ -1299,7 +1481,11 @@ suite =
                     { initModel | barcodeScannerData = barcodeScannerDataForEventStartTimeFiltering }
                         |> update (FixMinorProblem (RemoveScansBeforeEventStart (baseEventStartTime + 30 * 60 * 1000)))
                         |> Expect.all
-                            (expectBarcodeScannerData { barcodeScannerDataForEventStartTimeFiltering | scannedBarcodes = Dict.empty }
+                            (expectBarcodeScannerData
+                                { barcodeScannerDataForEventStartTimeFiltering
+                                    | scannedBarcodes = Dict.empty
+                                    , files = deleteLinesWithinFile (ifLineNumberNoMoreThan 1) barcodeScannerDataForEventStartTimeFiltering.files
+                                }
                                 :: expectProblems (ProblemsContainer [ AthleteMissingPosition "A345678", PositionMissingAthlete 19 ] [])
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems ]
                             )
@@ -1308,7 +1494,12 @@ suite =
                     { initModel | barcodeScannerData = barcodeScannerDataForEventStartTimeFiltering }
                         |> update (FixMinorProblem (RemoveScansBeforeEventStart (baseEventStartTime + 60 * 60 * 1000)))
                         |> Expect.all
-                            (expectBarcodeScannerData { barcodeScannerDataForEventStartTimeFiltering | scannedBarcodes = Dict.empty, athleteBarcodesOnly = [] }
+                            (expectBarcodeScannerData
+                                { barcodeScannerDataForEventStartTimeFiltering
+                                    | scannedBarcodes = Dict.empty
+                                    , athleteBarcodesOnly = []
+                                    , files = deleteLinesWithinFile (ifLineNumberNoMoreThan 2) barcodeScannerDataForEventStartTimeFiltering.files
+                                }
                                 :: expectProblems (ProblemsContainer [ PositionMissingAthlete 19 ] [])
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems ]
                             )
@@ -1316,7 +1507,16 @@ suite =
                 \() ->
                     { initModel | barcodeScannerData = barcodeScannerDataForEventStartTimeFiltering }
                         |> update (FixMinorProblem (RemoveScansBeforeEventStart (baseEventStartTime + 90 * 60 * 1000)))
-                        |> Expect.all defaultAssertions
+                        |> Expect.all
+                            (expectBarcodeScannerData
+                                { barcodeScannerDataForEventStartTimeFiltering
+                                    | scannedBarcodes = Dict.empty
+                                    , athleteBarcodesOnly = []
+                                    , finishTokensOnly = []
+                                    , files = deleteLinesWithinFile (ifLineNumberNoMoreThan 3) barcodeScannerDataForEventStartTimeFiltering.files
+                                }
+                                :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
+                            )
             , test "A scan with an invalid time never gets removed" <|
                 \() ->
                     let
@@ -1327,7 +1527,12 @@ suite =
                     { initModel | barcodeScannerData = initialBarcodeScannerData }
                         |> update (FixMinorProblem (RemoveScansBeforeEventStart (baseEventStartTime + 2 * 60 * 60 * 1000)))
                         |> Expect.all
-                            (expectBarcodeScannerData { initialBarcodeScannerData | scannedBarcodes = Dict.empty, finishTokensOnly = [] }
+                            (expectBarcodeScannerData
+                                { initialBarcodeScannerData
+                                    | scannedBarcodes = Dict.empty
+                                    , finishTokensOnly = []
+                                    , files = deleteLinesWithinFile (ifLineNumberNoMoreThan 3) barcodeScannerDataForEventStartTimeFiltering.files
+                                }
                                 :: expectProblems (ProblemsContainer [ AthleteMissingPosition "A123456" ] [])
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems ]
                             )

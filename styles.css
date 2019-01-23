@@ -143,3 +143,9 @@ button.event-time-button {
     font-weight: bold;
     text-align: center;
 }
+
+tr.deleted-barcode-scanner-row {
+    text-decoration: line-through;
+    color: #aaaaaa;
+    font-style: italic;
+}

@@ -73,7 +73,7 @@ type LineContents
 type alias BarcodeScannerFileLine =
     { lineNumber : Int
     , contents : LineContents
-    , date : String
+    , scanTime : String
     , modificationStatus : ModificationStatus
     }
 

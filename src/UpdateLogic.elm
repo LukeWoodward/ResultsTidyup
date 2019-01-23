@@ -1,6 +1,16 @@
 module UpdateLogic exposing (createBarcodeScannerFileForDownload, createStopwatchFileForDownload, update)
 
-import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, mergeScannerData, readBarcodeScannerData)
+import BarcodeScanner
+    exposing
+        ( AthleteAndTimePair
+        , BarcodeScannerData
+        , BarcodeScannerFile
+        , BarcodeScannerFileLine
+        , LineContents(..)
+        , ModificationStatus(..)
+        , mergeScannerData
+        , readBarcodeScannerData
+        )
 import Browser.Dom
 import DataStructures exposing (EventDateAndTime, InteropFile, MinorProblemFix(..), WhichStopwatch(..))
 import DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart)
@@ -546,6 +556,139 @@ removeMultipleOccurrencesOf athlete list =
                 first :: removeMultipleOccurrencesOf athlete rest
 
 
+deleteWithinFiles : (BarcodeScannerFileLine -> BarcodeScannerFileLine) -> List BarcodeScannerFile -> List BarcodeScannerFile
+deleteWithinFiles deleter files =
+    let
+        deleteWithinFile : BarcodeScannerFile -> BarcodeScannerFile
+        deleteWithinFile file =
+            { file | lines = List.map deleter file.lines }
+    in
+    List.map deleteWithinFile files
+
+
+deleteUnassociatedAthlete : String -> BarcodeScannerFileLine -> BarcodeScannerFileLine
+deleteUnassociatedAthlete athlete line =
+    case line.contents of
+        Ordinary someAthlete "" ->
+            if athlete == someAthlete then
+                { line | modificationStatus = Deleted ("Athlete " ++ athlete ++ " has been scanned with a finish token elsewhere") }
+
+            else
+                line
+
+        Ordinary _ _ ->
+            line
+
+        MisScan _ ->
+            line
+
+
+deleteUnassociatedFinishPosition : Int -> BarcodeScannerFileLine -> BarcodeScannerFileLine
+deleteUnassociatedFinishPosition position line =
+    case line.contents of
+        Ordinary "" somePosition ->
+            if somePosition == String.fromInt position then
+                { line | modificationStatus = Deleted ("Position " ++ somePosition ++ " has been scanned with an athlete barcode elsewhere") }
+
+            else
+                line
+
+        Ordinary _ _ ->
+            line
+
+        MisScan _ ->
+            line
+
+
+deleteBeforeEventStart : Int -> BarcodeScannerFileLine -> BarcodeScannerFileLine
+deleteBeforeEventStart eventStartTimeMillis line =
+    case Maybe.map Time.posixToMillis (dateStringToPosix line.scanTime) of
+        Just scanTimeMillis ->
+            if scanTimeMillis < eventStartTimeMillis then
+                { line | modificationStatus = Deleted "Before event start" }
+
+            else
+                line
+
+        Nothing ->
+            line
+
+
+
+-- The following functions are used to delete duplicate scans (i.e. two identical
+-- scans for the same athlete and same finish token).  The parameter 'found'
+-- records whether the first match has been found.
+
+
+deleteDuplicateScansWithinLine : String -> Int -> BarcodeScannerFileLine -> Bool -> ( BarcodeScannerFileLine, Bool )
+deleteDuplicateScansWithinLine athlete position line found =
+    case line.contents of
+        Ordinary someAthlete somePosition ->
+            if someAthlete == athlete && somePosition == String.fromInt position then
+                if found then
+                    ( { line | modificationStatus = Deleted ("Athlete " ++ athlete ++ " has been scanned in position " ++ somePosition ++ " elsewhere") }
+                    , True
+                    )
+
+                else
+                    -- The first matching record has been found.
+                    ( line, True )
+
+            else
+                ( line, found )
+
+        MisScan _ ->
+            ( line, found )
+
+
+deleteDuplicateScansWithinFile : String -> Int -> BarcodeScannerFile -> Bool -> ( BarcodeScannerFile, Bool )
+deleteDuplicateScansWithinFile athlete position file startingFound =
+    let
+        transformLines : List BarcodeScannerFileLine -> Bool -> ( List BarcodeScannerFileLine, Bool )
+        transformLines lines oldFound =
+            case lines of
+                [] ->
+                    ( [], oldFound )
+
+                firstLine :: remainingLines ->
+                    let
+                        ( newLine, newFound ) =
+                            deleteDuplicateScansWithinLine athlete position firstLine oldFound
+
+                        ( transformedRemainingLines, foundOfRemaining ) =
+                            transformLines remainingLines newFound
+                    in
+                    ( newLine :: transformedRemainingLines, foundOfRemaining )
+
+        ( transformedLines, finalFound ) =
+            transformLines file.lines startingFound
+    in
+    ( BarcodeScannerFile file.name transformedLines, finalFound )
+
+
+deleteDuplicateScansWithinFilesInternal : String -> Int -> List BarcodeScannerFile -> Bool -> ( List BarcodeScannerFile, Bool )
+deleteDuplicateScansWithinFilesInternal athlete position files startingFound =
+    case files of
+        [] ->
+            ( [], startingFound )
+
+        firstFile :: remainingFiles ->
+            let
+                ( newFile, newFound ) =
+                    deleteDuplicateScansWithinFile athlete position firstFile startingFound
+
+                ( transformedRemainingFiles, finalFound ) =
+                    deleteDuplicateScansWithinFilesInternal athlete position remainingFiles newFound
+            in
+            ( newFile :: transformedRemainingFiles, finalFound )
+
+
+deleteDuplicateScansWithinFiles : String -> Int -> List BarcodeScannerFile -> List BarcodeScannerFile
+deleteDuplicateScansWithinFiles athlete position files =
+    deleteDuplicateScansWithinFilesInternal athlete position files False
+        |> Tuple.first
+
+
 fixMinorProblem : MinorProblemFix -> Model -> Model
 fixMinorProblem minorProblemFix model =
     let
@@ -562,6 +705,7 @@ fixMinorProblem minorProblemFix model =
                             List.filter
                                 (\positionAndTimePair -> positionAndTimePair.position /= position)
                                 oldBarcodeScannerData.finishTokensOnly
+                        , files = deleteWithinFiles (deleteUnassociatedFinishPosition position) oldBarcodeScannerData.files
                     }
 
                 RemoveUnassociatedAthlete athlete ->
@@ -570,6 +714,7 @@ fixMinorProblem minorProblemFix model =
                             List.filter
                                 (\athleteAndTimePair -> athleteAndTimePair.athlete /= athlete)
                                 oldBarcodeScannerData.athleteBarcodesOnly
+                        , files = deleteWithinFiles (deleteUnassociatedAthlete athlete) oldBarcodeScannerData.files
                     }
 
                 RemoveDuplicateScans position athlete ->
@@ -579,6 +724,7 @@ fixMinorProblem minorProblemFix model =
                                 position
                                 (\x -> Maybe.map (removeMultipleOccurrencesOf athlete) x)
                                 oldBarcodeScannerData.scannedBarcodes
+                        , files = deleteDuplicateScansWithinFiles athlete position oldBarcodeScannerData.files
                     }
 
                 RemoveScansBeforeEventStart eventStartTimeMillis ->
@@ -601,6 +747,8 @@ fixMinorProblem minorProblemFix model =
                             List.filter isAfterEventStart oldBarcodeScannerData.athleteBarcodesOnly
                         , finishTokensOnly =
                             List.filter isAfterEventStart oldBarcodeScannerData.finishTokensOnly
+                        , files =
+                            deleteWithinFiles (deleteBeforeEventStart eventStartTimeMillis) oldBarcodeScannerData.files
                     }
     in
     { model | barcodeScannerData = newBarcodeScannerData }
