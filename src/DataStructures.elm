@@ -23,8 +23,8 @@ type alias EventDateAndTime =
 
 
 type SecondTab
-    = NumberCheckerTab
-    | BarcodeScannersTab
+    = BarcodeScannersTab
+    | NumberCheckerTab
 
 
 type MinorProblemFix

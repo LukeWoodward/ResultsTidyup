@@ -106,23 +106,23 @@ view model =
                     [ class "nav nav-tabs" ]
                     [ li
                         (role "presentation"
-                            :: onClick (ChangeSecondTab NumberCheckerTab)
-                            :: classAttributes NumberCheckerTab model.secondTab
-                        )
-                        [ a [ href "#" ] [ text "Number checker" ] ]
-                    , li
-                        (role "presentation"
                             :: onClick (ChangeSecondTab BarcodeScannersTab)
                             :: classAttributes BarcodeScannersTab model.secondTab
                         )
                         [ a [ href "#" ] [ text "Barcode scanners" ] ]
+                    , li
+                        (role "presentation"
+                            :: onClick (ChangeSecondTab NumberCheckerTab)
+                            :: classAttributes NumberCheckerTab model.secondTab
+                        )
+                        [ a [ href "#" ] [ text "Number checker" ] ]
                     ]
                 , case model.secondTab of
-                    NumberCheckerTab ->
-                        numberCheckerView model.numberCheckerEntries model.numberCheckerManualEntryRow model.lastHeight
-
                     BarcodeScannersTab ->
                         div [] (List.map barcodeScannerView model.barcodeScannerData.files)
+
+                    NumberCheckerTab ->
+                        numberCheckerView model.numberCheckerEntries model.numberCheckerManualEntryRow model.lastHeight
                 ]
             ]
         ]

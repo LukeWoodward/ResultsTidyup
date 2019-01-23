@@ -57,5 +57,5 @@ initModel =
     , problems = Problems.empty
     , eventDateAndTime = EventDateAndTime "" Nothing "" Nothing
     , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
-    , secondTab = NumberCheckerTab
+    , secondTab = BarcodeScannersTab
     }
