@@ -569,7 +569,7 @@ deleteWithinFiles deleter files =
 deleteUnassociatedAthlete : String -> BarcodeScannerFileLine -> BarcodeScannerFileLine
 deleteUnassociatedAthlete athlete line =
     case line.contents of
-        Ordinary someAthlete "" ->
+        Ordinary someAthlete Nothing ->
             if athlete == someAthlete then
                 { line | modificationStatus = Deleted ("Athlete " ++ athlete ++ " has been scanned with a finish token elsewhere") }
 
@@ -587,8 +587,8 @@ deleteUnassociatedFinishPosition : Int -> BarcodeScannerFileLine -> BarcodeScann
 deleteUnassociatedFinishPosition position line =
     case line.contents of
         Ordinary "" somePosition ->
-            if somePosition == String.fromInt position then
-                { line | modificationStatus = Deleted ("Position " ++ somePosition ++ " has been scanned with an athlete barcode elsewhere") }
+            if somePosition == Just position then
+                { line | modificationStatus = Deleted ("Position " ++ String.fromInt position ++ " has been scanned with an athlete barcode elsewhere") }
 
             else
                 line
@@ -624,9 +624,9 @@ deleteDuplicateScansWithinLine : String -> Int -> BarcodeScannerFileLine -> Bool
 deleteDuplicateScansWithinLine athlete position line found =
     case line.contents of
         Ordinary someAthlete somePosition ->
-            if someAthlete == athlete && somePosition == String.fromInt position then
+            if someAthlete == athlete && somePosition == Just position then
                 if found then
-                    ( { line | modificationStatus = Deleted ("Athlete " ++ athlete ++ " has been scanned in position " ++ somePosition ++ " elsewhere") }
+                    ( { line | modificationStatus = Deleted ("Athlete " ++ athlete ++ " has been scanned in position " ++ String.fromInt position ++ " elsewhere") }
                     , True
                     )
 

@@ -7,12 +7,22 @@ import Msg exposing (Msg(..))
 import ViewCommon exposing (tableHeaders)
 
 
+maybeIntToString : Maybe Int -> String
+maybeIntToString maybeInt =
+    case maybeInt of
+        Just someInt ->
+            String.fromInt someInt
+
+        Nothing ->
+            ""
+
+
 barcodeScannerContents : LineContents -> List (Html Msg)
 barcodeScannerContents contents =
     case contents of
         Ordinary athlete position ->
             [ td [] [ text athlete ]
-            , td [] [ text position ]
+            , td [] [ text (maybeIntToString position) ]
             ]
 
         MisScan misScannedText ->

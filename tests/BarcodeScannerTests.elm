@@ -134,7 +134,7 @@ suite =
                             (Ok
                                 (BarcodeScannerData
                                     [ BarcodeScannerFile "barcodes1.txt"
-                                        [ BarcodeScannerFileLine 1 (Ordinary "A4580442" "47") "14/03/2018 09:47:03" Unmodified ]
+                                        [ BarcodeScannerFileLine 1 (Ordinary "A4580442" (Just 47)) "14/03/2018 09:47:03" Unmodified ]
                                     ]
                                     (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
                                     []
@@ -151,7 +151,7 @@ suite =
                             (Ok
                                 (BarcodeScannerData
                                     [ BarcodeScannerFile "barcodes2.txt"
-                                        [ BarcodeScannerFileLine 1 (Ordinary "A4580442" "") "14/03/2018 09:47:03" Unmodified ]
+                                        [ BarcodeScannerFileLine 1 (Ordinary "A4580442" Nothing) "14/03/2018 09:47:03" Unmodified ]
                                     ]
                                     Dict.empty
                                     [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]
@@ -168,7 +168,7 @@ suite =
                             (Ok
                                 (BarcodeScannerData
                                     [ BarcodeScannerFile "barcodes3.txt"
-                                        [ BarcodeScannerFileLine 1 (Ordinary "" "47") "14/03/2018 09:47:03" Unmodified ]
+                                        [ BarcodeScannerFileLine 1 (Ordinary "" (Just 47)) "14/03/2018 09:47:03" Unmodified ]
                                     ]
                                     Dict.empty
                                     []
@@ -202,7 +202,7 @@ suite =
                             (Ok
                                 (BarcodeScannerData
                                     [ BarcodeScannerFile "barcodes5.txt"
-                                        [ BarcodeScannerFileLine 1 (Ordinary "A4580442" "47") "14/03/2018 09:47:03" Unmodified ]
+                                        [ BarcodeScannerFileLine 1 (Ordinary "A4580442" (Just 47)) "14/03/2018 09:47:03" Unmodified ]
                                     ]
                                     (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
                                     []
@@ -219,8 +219,8 @@ suite =
                             (Ok
                                 (BarcodeScannerData
                                     [ BarcodeScannerFile "barcodes6.txt"
-                                        [ BarcodeScannerFileLine 1 (Ordinary "A4580442" "47") "14/03/2018 09:47:03" Unmodified
-                                        , BarcodeScannerFileLine 2 (Ordinary "A1866207" "47") "14/03/2018 09:48:44" Unmodified
+                                        [ BarcodeScannerFileLine 1 (Ordinary "A4580442" (Just 47)) "14/03/2018 09:47:03" Unmodified
+                                        , BarcodeScannerFileLine 2 (Ordinary "A1866207" (Just 47)) "14/03/2018 09:48:44" Unmodified
                                         ]
                                     ]
                                     (Dict.singleton 47

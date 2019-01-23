@@ -66,7 +66,7 @@ type ModificationStatus
 
 
 type LineContents
-    = Ordinary String String
+    = Ordinary String (Maybe Int)
     | MisScan String
 
 
@@ -311,13 +311,13 @@ mapFileLine : Int -> BarcodeScannerEntry -> BarcodeScannerFileLine
 mapFileLine lineNumber entry =
     case entry of
         Successful athlete position date ->
-            BarcodeScannerFileLine lineNumber (Ordinary athlete (String.fromInt position)) date Unmodified
+            BarcodeScannerFileLine lineNumber (Ordinary athlete (Just position)) date Unmodified
 
         AthleteOnly athlete date ->
-            BarcodeScannerFileLine lineNumber (Ordinary athlete "") date Unmodified
+            BarcodeScannerFileLine lineNumber (Ordinary athlete Nothing) date Unmodified
 
         FinishTokenOnly position date ->
-            BarcodeScannerFileLine lineNumber (Ordinary "" (String.fromInt position)) date Unmodified
+            BarcodeScannerFileLine lineNumber (Ordinary "" (Just position)) date Unmodified
 
         MisScanned text date ->
             BarcodeScannerFileLine lineNumber (MisScan text) date Unmodified
