@@ -3,6 +3,7 @@ module BarcodeScanner exposing
     , BarcodeScannerData
     , BarcodeScannerFile
     , BarcodeScannerFileLine
+    , DeletionReason(..)
     , LineContents(..)
     , MisScannedItem
     , ModificationStatus(..)
@@ -60,9 +61,16 @@ type alias UnrecognisedLine =
     }
 
 
+type DeletionReason
+    = BeforeEventStart
+    | DuplicateScan String Int
+    | AthleteScannedWithFinishTokenElsewhere String
+    | FinishTokenScannedWithAthleteElsewhere Int
+
+
 type ModificationStatus
     = Unmodified
-    | Deleted String
+    | Deleted DeletionReason
 
 
 type LineContents

@@ -6,6 +6,7 @@ import BarcodeScanner
         , BarcodeScannerData
         , BarcodeScannerFile
         , BarcodeScannerFileLine
+        , DeletionReason(..)
         , LineContents(..)
         , ModificationStatus(..)
         , mergeScannerData
@@ -571,7 +572,7 @@ deleteUnassociatedAthlete athlete line =
     case line.contents of
         Ordinary someAthlete Nothing ->
             if athlete == someAthlete then
-                { line | modificationStatus = Deleted ("Athlete " ++ athlete ++ " has been scanned with a finish token elsewhere") }
+                { line | modificationStatus = Deleted (AthleteScannedWithFinishTokenElsewhere athlete) }
 
             else
                 line
@@ -588,7 +589,7 @@ deleteUnassociatedFinishPosition position line =
     case line.contents of
         Ordinary "" somePosition ->
             if somePosition == Just position then
-                { line | modificationStatus = Deleted ("Position " ++ String.fromInt position ++ " has been scanned with an athlete barcode elsewhere") }
+                { line | modificationStatus = Deleted (FinishTokenScannedWithAthleteElsewhere position) }
 
             else
                 line
@@ -605,7 +606,7 @@ deleteBeforeEventStart eventStartTimeMillis line =
     case Maybe.map Time.posixToMillis (dateStringToPosix line.scanTime) of
         Just scanTimeMillis ->
             if scanTimeMillis < eventStartTimeMillis then
-                { line | modificationStatus = Deleted "Before event start" }
+                { line | modificationStatus = Deleted BeforeEventStart }
 
             else
                 line
@@ -626,9 +627,7 @@ deleteDuplicateScansWithinLine athlete position line found =
         Ordinary someAthlete somePosition ->
             if someAthlete == athlete && somePosition == Just position then
                 if found then
-                    ( { line | modificationStatus = Deleted ("Athlete " ++ athlete ++ " has been scanned in position " ++ String.fromInt position ++ " elsewhere") }
-                    , True
-                    )
+                    ( { line | modificationStatus = Deleted (DuplicateScan athlete position) }, True )
 
                 else
                     -- The first matching record has been found.

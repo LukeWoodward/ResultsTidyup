@@ -1,6 +1,16 @@
 module UpdateLogicTests exposing (suite)
 
-import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, BarcodeScannerFile, BarcodeScannerFileLine, LineContents(..), ModificationStatus(..), PositionAndTimePair)
+import BarcodeScanner
+    exposing
+        ( AthleteAndTimePair
+        , BarcodeScannerData
+        , BarcodeScannerFile
+        , BarcodeScannerFileLine
+        , DeletionReason(..)
+        , LineContents(..)
+        , ModificationStatus(..)
+        , PositionAndTimePair
+        )
 import BarcodeScannerTests exposing (createBarcodeScannerData, expectSingleUnrecognisedLine, toPosix)
 import DataStructures exposing (EventDateAndTime, InteropFile, MinorProblemFix(..), SecondTab(..), WhichStopwatch(..))
 import Dict exposing (Dict)
@@ -521,7 +531,7 @@ deleteLinesWithinFile deleter files =
 ifLineNumberNoMoreThan : Int -> BarcodeScannerFileLine -> BarcodeScannerFileLine
 ifLineNumberNoMoreThan maxLineNumberToDelete line =
     if line.lineNumber <= maxLineNumberToDelete then
-        { line | modificationStatus = Deleted "Before event start" }
+        { line | modificationStatus = Deleted BeforeEventStart }
 
     else
         line
@@ -532,7 +542,7 @@ ifAthlete athlete line =
     case line.contents of
         Ordinary someAthlete Nothing ->
             if athlete == someAthlete then
-                { line | modificationStatus = Deleted ("Athlete " ++ athlete ++ " has been scanned with a finish token elsewhere") }
+                { line | modificationStatus = Deleted (AthleteScannedElsewhereWithFinishToken athlete) }
 
             else
                 line
@@ -546,7 +556,7 @@ ifFinishPosition position line =
     case line.contents of
         Ordinary "" somePosition ->
             if somePosition == Just position then
-                { line | modificationStatus = Deleted ("Position " ++ String.fromInt position ++ " has been scanned with an athlete barcode elsewhere") }
+                { line | modificationStatus = Deleted (FinishTokenScannedElsewhereWithAthlete position) }
 
             else
                 line
@@ -558,7 +568,7 @@ ifFinishPosition position line =
 ifLineNumberGreaterThanOne : BarcodeScannerFileLine -> BarcodeScannerFileLine
 ifLineNumberGreaterThanOne line =
     if line.lineNumber > 1 then
-        { line | modificationStatus = Deleted "Athlete A1234 has been scanned in position 27 elsewhere" }
+        { line | modificationStatus = Deleted (DuplicateScan "A1234" 27) }
 
     else
         line
@@ -1399,7 +1409,7 @@ suite =
                                     | scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A1234" "14/03/2018 09:47:53" ]
                                     , files =
                                         [ BarcodeScannerFile "barcodes1.txt" [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:53" Unmodified ]
-                                        , BarcodeScannerFile "barcodes2.txt" [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:53" (Deleted "Athlete A1234 has been scanned in position 27 elsewhere") ]
+                                        , BarcodeScannerFile "barcodes2.txt" [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:53" (Deleted (DuplicateScan "A1234" 27)) ]
                                         ]
                                 }
                         in

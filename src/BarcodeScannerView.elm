@@ -1,6 +1,6 @@
 module BarcodeScannerView exposing (barcodeScannerView)
 
-import BarcodeScanner exposing (BarcodeScannerFile, BarcodeScannerFileLine, LineContents(..), ModificationStatus(..))
+import BarcodeScanner exposing (BarcodeScannerFile, BarcodeScannerFileLine, DeletionReason(..), LineContents(..), ModificationStatus(..))
 import Html exposing (Attribute, Html, div, h4, table, tbody, td, text, tr)
 import Html.Attributes exposing (class, colspan, title)
 import Msg exposing (Msg(..))
@@ -15,6 +15,22 @@ maybeIntToString maybeInt =
 
         Nothing ->
             ""
+
+
+deletionReasonToString : DeletionReason -> String
+deletionReasonToString reason =
+    case reason of
+        BeforeEventStart ->
+            "Before event start"
+
+        DuplicateScan athlete position ->
+            "Athlete " ++ athlete ++ " has been scanned in position " ++ String.fromInt position ++ " elsewhere"
+
+        AthleteScannedWithFinishTokenElsewhere athlete ->
+            "Athlete " ++ athlete ++ " has been scanned with a finish token elsewhere"
+
+        FinishTokenScannedWithAthleteElsewhere position ->
+            "Position " ++ String.fromInt position ++ " has been scanned with an athlete barcode elsewhere"
 
 
 barcodeScannerContents : LineContents -> List (Html Msg)
@@ -50,7 +66,7 @@ barcodeScannerViewRow line =
 
                 Deleted deletionReason ->
                     [ class "deleted-barcode-scanner-row"
-                    , title deletionReason
+                    , title (deletionReasonToString deletionReason)
                     ]
     in
     tr
