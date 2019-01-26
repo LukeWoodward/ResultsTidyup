@@ -59,15 +59,14 @@ subscriptions model =
         ]
 
 
-errorView : Maybe Error -> Html a
-errorView maybeError =
-    case maybeError of
-        Just someError ->
-            div [ class "alert alert-danger" ]
-                [ text ("Unable to read in the dropped file: " ++ someError.message) ]
+errorView : List Error -> Html a
+errorView errors =
+    if List.isEmpty errors then
+        text ""
 
-        Nothing ->
-            text ""
+    else
+        div [ class "alert alert-danger" ]
+            (List.map (\error -> text error.message) errors)
 
 
 getHeightAttribute : Maybe Int -> List (Html.Attribute a)
@@ -94,7 +93,7 @@ view model =
     div
         []
         [ h1 [ id "header" ] [ text "Parkrun results tidyup" ]
-        , errorView model.lastError
+        , errorView model.lastErrors
         , div [ class "row" ]
             [ div (class "col-xs-6" :: getHeightAttribute model.lastHeight)
                 [ eventDateAndTimeView model.eventDateAndTime

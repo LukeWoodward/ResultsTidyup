@@ -176,15 +176,15 @@ handleStopwatchFileDrop fileName fileText model =
         Ok (StopwatchData newStopwatch) ->
             if hasFileAlreadyBeenUploaded fileName model.stopwatches then
                 { model
-                    | lastError =
-                        Just
-                            (Error
-                                "STOPWATCH_FILE_ALREADY_LOADED"
-                                ("Stopwatch data file '"
-                                    ++ fileName
-                                    ++ "' has already been loaded"
-                                )
-                            )
+                    | lastErrors =
+                        model.lastErrors
+                            ++ [ Error
+                                    "STOPWATCH_FILE_ALREADY_LOADED"
+                                    ("Stopwatch data file '"
+                                        ++ fileName
+                                        ++ "' has already been loaded"
+                                    )
+                               ]
                 }
 
             else
@@ -215,11 +215,11 @@ handleStopwatchFileDrop fileName fileText model =
                 identifyProblemsIn
                     { model
                         | stopwatches = underlinedStopwatches
-                        , lastError = Nothing
+                        , lastErrors = []
                     }
 
         Err error ->
-            { model | lastError = Just error }
+            { model | lastErrors = model.lastErrors ++ [ error ] }
 
 
 isNumberCheckerDigit : Char -> Bool
@@ -261,7 +261,7 @@ handleNumberCheckerFileDrop fileText model =
 
         Err error ->
             { model
-                | lastError = Just error
+                | lastErrors = model.lastErrors ++ [ error ]
             }
 
 
@@ -280,12 +280,12 @@ handleBarcodeScannerFileDrop : String -> String -> Model -> Model
 handleBarcodeScannerFileDrop fileName fileText model =
     if List.any (\file -> file.name == fileName) model.barcodeScannerData.files then
         { model
-            | lastError =
-                Just
-                    (Error
-                        "BARCODE_DATA_ALREADY_LOADED"
-                        "That barcode scanner file has already been loaded"
-                    )
+            | lastErrors =
+                model.lastErrors
+                    ++ [ Error
+                            "BARCODE_DATA_ALREADY_LOADED"
+                            "That barcode scanner file has already been loaded"
+                       ]
         }
 
     else
@@ -298,13 +298,12 @@ handleBarcodeScannerFileDrop fileName fileText model =
             Ok scannerData ->
                 { model
                     | barcodeScannerData = mergeScannerData model.barcodeScannerData scannerData
-                    , lastError = Nothing
                 }
                     |> setEventDateAndTimeIn
                     |> identifyProblemsIn
 
             Err error ->
-                { model | lastError = Just error }
+                { model | lastErrors = model.lastErrors ++ [ error ] }
 
 
 toggleTableRow : Int -> Model -> Model
@@ -461,7 +460,7 @@ handleFileDrop fileName fileText model =
 
     else
         { model
-            | lastError = Just (Error "UNRECOGNISED_FILE" "Unrecognised file dropped")
+            | lastErrors = model.lastErrors ++ [ Error "UNRECOGNISED_FILE" "Unrecognised file dropped" ]
         }
 
 

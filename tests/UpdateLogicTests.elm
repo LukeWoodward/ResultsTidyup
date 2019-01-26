@@ -49,12 +49,21 @@ expectStopwatches expectedStopwatches ( model, _ ) =
 
 expectLastError : String -> ( Model, Cmd Msg ) -> Expectation
 expectLastError expectedCode ( model, _ ) =
-    case model.lastError of
-        Just error ->
-            Expect.equal expectedCode error.code
+    case model.lastErrors of
+        [ singleError ] ->
+            Expect.equal expectedCode singleError.code
 
-        Nothing ->
+        [] ->
             Expect.fail ("Expected to fail with error " ++ expectedCode ++ ", but no error was present")
+
+        _ ->
+            let
+                codes : String
+                codes =
+                    List.map .code model.lastErrors
+                        |> String.join ", "
+            in
+            Expect.fail ("Expected to fail with error " ++ expectedCode ++ ", but multiple errors were present: " ++ codes)
 
 
 expectNumberCheckerEntries : List AnnotatedNumberCheckerEntry -> ( Model, Cmd Msg ) -> Expectation
@@ -130,7 +139,7 @@ defaultAssertionsExcept exceptions =
                 Nothing
 
               else
-                Just (\( model, _ ) -> Expect.equal Nothing model.lastError)
+                Just (\( model, _ ) -> Expect.equal [] model.lastErrors)
             , if List.member NumberCheckerEntries exceptions then
                 Nothing
 
@@ -829,7 +838,7 @@ suite =
                         | barcodeScannerData = createBarcodeScannerData (Dict.singleton 47 [ "A4580484" ]) [ "A123456" ] [ 11 ]
                         , eventDateAndTime = { parsedEventDateOnly | enteredTime = "09:00", validatedTime = Just (9 * 60) }
                         , stopwatches = doubleStopwatches
-                        , lastError = Just (Error "TEST_ERROR" "Some test error message")
+                        , lastErrors = [ Error "TEST_ERROR" "Some test error message" ]
                         , lastHeight = Just 700
                         , highlightedNumberCheckerId = Just 2
                         , numberCheckerEntries = [ AnnotatedNumberCheckerEntry 2 2 0 2 0 2 0 ]

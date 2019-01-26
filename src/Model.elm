@@ -34,7 +34,7 @@ emptyNumberCheckerManualEntryRow =
 
 type alias Model =
     { stopwatches : Stopwatches
-    , lastError : Maybe Error
+    , lastErrors : List Error
     , numberCheckerEntries : List AnnotatedNumberCheckerEntry
     , lastHeight : Maybe Int
     , highlightedNumberCheckerId : Maybe Int
@@ -49,7 +49,7 @@ type alias Model =
 initModel : Model
 initModel =
     { stopwatches = None
-    , lastError = Nothing
+    , lastErrors = []
     , numberCheckerEntries = []
     , lastHeight = Nothing
     , highlightedNumberCheckerId = Nothing
