@@ -32,3 +32,4 @@ type Msg
     | EditNumberCheckerRow Int
     | FixMinorProblem MinorProblemFix
     | ChangeSecondTab SecondTab
+    | ClearErrors

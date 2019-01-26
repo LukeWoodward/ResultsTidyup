@@ -1591,7 +1591,7 @@ suite =
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems ]
                             )
             ]
-        , describe "ChangeSecondTab tabs"
+        , describe "ChangeSecondTab tests"
             [ test "Can change from barcode scanner tab to number checker tab" <|
                 \() ->
                     { initModel | secondTab = BarcodeScannersTab }
@@ -1608,6 +1608,13 @@ suite =
                             (expectSecondTab BarcodeScannersTab
                                 :: defaultAssertionsExcept [ SecondTabAssertion ]
                             )
+            ]
+        , describe "ClearErrors tests"
+            [ test "ClearErrors removes the errors" <|
+                \() ->
+                    { initModel | lastErrors = [ FileError "CODE" "Message" "fileName" ] }
+                        |> update ClearErrors
+                        |> Expect.all defaultAssertions
             ]
         ]
 

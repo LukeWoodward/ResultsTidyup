@@ -6,7 +6,7 @@ import Browser
 import DataStructures exposing (EventDateAndTime, SecondTab(..))
 import Error exposing (FileError)
 import EventDateAndTimeView exposing (eventDateAndTimeView)
-import Html exposing (Html, a, div, h1, h3, li, text, ul)
+import Html exposing (Html, a, div, h1, h3, li, span, text, ul)
 import Html.Attributes exposing (attribute, class, href, id, style)
 import Html.Events exposing (onClick)
 import MergedTable exposing (Stopwatches(..))
@@ -64,13 +64,16 @@ errorView error =
     div [] [ text ("Error with file '" ++ error.fileName ++ "': " ++ error.message) ]
 
 
-errorsView : List FileError -> Html a
+errorsView : List FileError -> Html Msg
 errorsView errors =
     if List.isEmpty errors then
         text ""
 
     else
-        div [ class "alert alert-danger" ] (List.map errorView errors)
+        div [ class "alert alert-danger" ]
+            (span [ class "close", onClick ClearErrors ] [ text "×" ]
+                :: List.map errorView errors
+            )
 
 
 getHeightAttribute : Maybe Int -> List (Html.Attribute a)
