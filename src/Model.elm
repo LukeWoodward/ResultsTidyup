@@ -2,7 +2,7 @@ module Model exposing (Model, NumberCheckerManualEntryRow, NumericEntry, emptyNu
 
 import BarcodeScanner exposing (BarcodeScannerData)
 import DataStructures exposing (EventDateAndTime, SecondTab(..))
-import Error exposing (Error)
+import Error exposing (FileError)
 import MergedTable exposing (Stopwatches(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import Problems exposing (ProblemsContainer)
@@ -34,7 +34,7 @@ emptyNumberCheckerManualEntryRow =
 
 type alias Model =
     { stopwatches : Stopwatches
-    , lastErrors : List Error
+    , lastErrors : List FileError
     , numberCheckerEntries : List AnnotatedNumberCheckerEntry
     , lastHeight : Maybe Int
     , highlightedNumberCheckerId : Maybe Int

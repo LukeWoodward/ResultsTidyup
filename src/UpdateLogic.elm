@@ -16,7 +16,7 @@ import Browser.Dom
 import DataStructures exposing (EventDateAndTime, InteropFile, MinorProblemFix(..), WhichStopwatch(..))
 import DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart)
 import Dict
-import Error exposing (Error)
+import Error exposing (Error, FileError, mapError)
 import File.Download as Download
 import MergedTable
     exposing
@@ -178,12 +178,10 @@ handleStopwatchFileDrop fileName fileText model =
                 { model
                     | lastErrors =
                         model.lastErrors
-                            ++ [ Error
+                            ++ [ FileError
                                     "STOPWATCH_FILE_ALREADY_LOADED"
-                                    ("Stopwatch data file '"
-                                        ++ fileName
-                                        ++ "' has already been loaded"
-                                    )
+                                    "That stopwatch data file has already been loaded"
+                                    fileName
                                ]
                 }
 
@@ -219,7 +217,7 @@ handleStopwatchFileDrop fileName fileText model =
                     }
 
         Err error ->
-            { model | lastErrors = model.lastErrors ++ [ error ] }
+            { model | lastErrors = model.lastErrors ++ [ mapError fileName error ] }
 
 
 isNumberCheckerDigit : Char -> Bool
@@ -239,8 +237,8 @@ isPossibleNumberCheckerFile fileText =
     Result.Extra.isOk (run numberCheckerParser fileText)
 
 
-handleNumberCheckerFileDrop : String -> Model -> Model
-handleNumberCheckerFileDrop fileText model =
+handleNumberCheckerFileDrop : String -> String -> Model -> Model
+handleNumberCheckerFileDrop fileName fileText model =
     let
         result : Result Error (List NumberCheckerEntry)
         result =
@@ -261,7 +259,7 @@ handleNumberCheckerFileDrop fileText model =
 
         Err error ->
             { model
-                | lastErrors = model.lastErrors ++ [ error ]
+                | lastErrors = model.lastErrors ++ [ mapError fileName error ]
             }
 
 
@@ -282,9 +280,10 @@ handleBarcodeScannerFileDrop fileName fileText model =
         { model
             | lastErrors =
                 model.lastErrors
-                    ++ [ Error
+                    ++ [ FileError
                             "BARCODE_DATA_ALREADY_LOADED"
                             "That barcode scanner file has already been loaded"
+                            fileName
                        ]
         }
 
@@ -303,7 +302,7 @@ handleBarcodeScannerFileDrop fileName fileText model =
                     |> identifyProblemsIn
 
             Err error ->
-                { model | lastErrors = model.lastErrors ++ [ error ] }
+                { model | lastErrors = model.lastErrors ++ [ mapError fileName error ] }
 
 
 toggleTableRow : Int -> Model -> Model
@@ -453,14 +452,14 @@ handleFileDropped { fileName, fileText } model =
         handleStopwatchFileDrop fileName fileText model
 
     else if isPossibleNumberCheckerFile fileText then
-        handleNumberCheckerFileDrop fileText model
+        handleNumberCheckerFileDrop fileName fileText model
 
     else if isPossibleBarcodeScannerFile fileText then
         handleBarcodeScannerFileDrop fileName fileText model
 
     else
         { model
-            | lastErrors = model.lastErrors ++ [ Error "UNRECOGNISED_FILE" ("File '" ++ fileName ++ "' was not recognised") ]
+            | lastErrors = model.lastErrors ++ [ FileError "UNRECOGNISED_FILE" "File was unrecognised" fileName ]
         }
 
 

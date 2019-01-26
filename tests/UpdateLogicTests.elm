@@ -14,7 +14,7 @@ import BarcodeScanner
 import BarcodeScannerTests exposing (createBarcodeScannerData, expectSingleUnrecognisedLine, toPosix)
 import DataStructures exposing (EventDateAndTime, InteropFile, MinorProblemFix(..), SecondTab(..), WhichStopwatch(..))
 import Dict exposing (Dict)
-import Error exposing (Error)
+import Error exposing (FileError)
 import Errors exposing (expectError)
 import Expect exposing (Expectation)
 import FileHandling exposing (crlf)
@@ -838,7 +838,7 @@ suite =
                         | barcodeScannerData = createBarcodeScannerData (Dict.singleton 47 [ "A4580484" ]) [ "A123456" ] [ 11 ]
                         , eventDateAndTime = { parsedEventDateOnly | enteredTime = "09:00", validatedTime = Just (9 * 60) }
                         , stopwatches = doubleStopwatches
-                        , lastErrors = [ Error "TEST_ERROR" "Some test error message" ]
+                        , lastErrors = [ FileError "TEST_ERROR" "Some test error message" "somefile.txt" ]
                         , lastHeight = Just 700
                         , highlightedNumberCheckerId = Just 2
                         , numberCheckerEntries = [ AnnotatedNumberCheckerEntry 2 2 0 2 0 2 0 ]

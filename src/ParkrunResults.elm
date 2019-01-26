@@ -4,7 +4,7 @@ import BarcodeScanner exposing (BarcodeScannerData)
 import BarcodeScannerView exposing (barcodeScannerView)
 import Browser
 import DataStructures exposing (EventDateAndTime, SecondTab(..))
-import Error exposing (Error)
+import Error exposing (FileError)
 import EventDateAndTimeView exposing (eventDateAndTimeView)
 import Html exposing (Html, a, div, h1, h3, li, text, ul)
 import Html.Attributes exposing (attribute, class, href, id, style)
@@ -59,14 +59,18 @@ subscriptions model =
         ]
 
 
-errorView : List Error -> Html a
-errorView errors =
+errorView : FileError -> Html a
+errorView error =
+    div [] [ text ("Error with file '" ++ error.fileName ++ "': " ++ error.message) ]
+
+
+errorsView : List FileError -> Html a
+errorsView errors =
     if List.isEmpty errors then
         text ""
 
     else
-        div [ class "alert alert-danger" ]
-            (List.map (\error -> div [] [ text error.message ]) errors)
+        div [ class "alert alert-danger" ] (List.map errorView errors)
 
 
 getHeightAttribute : Maybe Int -> List (Html.Attribute a)
@@ -93,7 +97,7 @@ view model =
     div
         []
         [ h1 [ id "header" ] [ text "Parkrun results tidyup" ]
-        , errorView model.lastErrors
+        , errorsView model.lastErrors
         , div [ class "row" ]
             [ div (class "col-xs-6" :: getHeightAttribute model.lastHeight)
                 [ eventDateAndTimeView model.eventDateAndTime
