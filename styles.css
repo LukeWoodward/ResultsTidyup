@@ -149,3 +149,7 @@ tr.deleted-barcode-scanner-row {
     color: #aaaaaa;
     font-style: italic;
 }
+
+.no-barcode-scanner-files {
+    margin-top: 10px;
+}

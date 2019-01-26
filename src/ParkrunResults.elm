@@ -125,7 +125,11 @@ view model =
                     ]
                 , case model.secondTab of
                     BarcodeScannersTab ->
-                        div [] (List.map barcodeScannerView model.barcodeScannerData.files)
+                        if List.isEmpty model.barcodeScannerData.files then
+                            div [ class "alert alert-info no-barcode-scanner-files" ] [ text "No barcode scanner files have been loaded" ]
+
+                        else
+                            div [] (List.map barcodeScannerView model.barcodeScannerData.files)
 
                     NumberCheckerTab ->
                         numberCheckerView model.numberCheckerEntries model.numberCheckerManualEntryRow model.lastHeight
