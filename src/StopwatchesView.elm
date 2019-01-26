@@ -169,7 +169,7 @@ stopwatchInfoMessage stopwatches =
         message =
             case stopwatches of
                 None ->
-                    Just "No stopwatch files have been uploaded"
+                    Just "No stopwatch files have been loaded"
 
                 Single _ _ ->
                     Nothing
