@@ -241,6 +241,11 @@ validBarcodeScannerData2 =
     "A2044293,P0059,14/03/2018 09:49:44" ++ crlf
 
 
+validBarcodeScannerDataWithIncompleteRecordFirst : String
+validBarcodeScannerDataWithIncompleteRecordFirst =
+    ",P0033,14/03/2018 09:44:06" ++ crlf ++ validBarcodeScannerData1
+
+
 invalidBarcodeScannerData : String
 invalidBarcodeScannerData =
     "A4580442,P0000,14/03/2018 09:47:03" ++ crlf
@@ -278,6 +283,22 @@ parsedBarcodeScannerData1And2 =
         []
         []
         (toPosix "2018-03-14T09:49:44.000Z")
+
+
+parsedBarcodeScannerDataWithIncompleteRecordFirst : BarcodeScannerData
+parsedBarcodeScannerDataWithIncompleteRecordFirst =
+    BarcodeScannerData
+        [ BarcodeScannerFile "barcodes1.txt"
+            [ BarcodeScannerFileLine 1 (Ordinary "" (Just 33)) "14/03/2018 09:44:06" Unmodified
+            , BarcodeScannerFileLine 2 (Ordinary "A4580442" (Just 47)) "14/03/2018 09:47:03" Unmodified
+            ]
+        ]
+        (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
+        []
+        [ PositionAndTimePair 33 "14/03/2018 09:44:06" ]
+        []
+        []
+        (toPosix "2018-03-14T09:47:03.000Z")
 
 
 parsedEventDateOnly : EventDateAndTime
@@ -664,6 +685,15 @@ suite =
                                 (expectBarcodeScannerData parsedBarcodeScannerData1
                                     :: expectEventDateAndTime parsedEventDateOnly
                                     :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, EventDateAndTimeAssertion ]
+                                )
+                , test "Can upload a single barcode scanner file where the first line in the file is incomplete" <|
+                    \() ->
+                        update (FileDropped (InteropFile "barcodes1.txt" validBarcodeScannerDataWithIncompleteRecordFirst)) initModel
+                            |> Expect.all
+                                (expectBarcodeScannerData parsedBarcodeScannerDataWithIncompleteRecordFirst
+                                    :: expectEventDateAndTime parsedEventDateOnly
+                                    :: expectProblems (ProblemsContainer [ PositionMissingAthlete 33 ] [])
+                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, EventDateAndTimeAssertion, Problems ]
                                 )
                 , test "Can upload a single invalid barcode scanner file" <|
                     \() ->

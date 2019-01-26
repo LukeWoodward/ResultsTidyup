@@ -37,6 +37,7 @@ import Parser exposing ((|.), Parser, chompIf, chompWhile, end, int, run, symbol
 import Parsers exposing (digitsRange)
 import Ports exposing (recordEventStartTime)
 import Problems exposing (identifyProblems)
+import Regex exposing (Regex)
 import Result.Extra
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
 import Task exposing (Task)
@@ -264,18 +265,15 @@ handleNumberCheckerFileDrop fileText model =
             }
 
 
-barcodeScannerParser : Parser ()
-barcodeScannerParser =
-    symbol "A"
-        |. int
-        |. symbol ","
-        |. symbol "P"
-        |. digitsRange 1 5
+barcodeScannerRegex : Regex
+barcodeScannerRegex =
+    Regex.fromString "A[0-9]+,P[0-9]+,"
+        |> Maybe.withDefault Regex.never
 
 
 isPossibleBarcodeScannerFile : String -> Bool
 isPossibleBarcodeScannerFile fileText =
-    Result.Extra.isOk (run barcodeScannerParser fileText)
+    Regex.contains barcodeScannerRegex fileText
 
 
 handleBarcodeScannerFileDrop : String -> String -> Model -> Model
