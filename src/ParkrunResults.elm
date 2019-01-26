@@ -13,7 +13,7 @@ import MergedTable exposing (Stopwatches(..))
 import Model exposing (Model, initModel)
 import Msg exposing (Msg(..))
 import NumberCheckerView exposing (numberCheckerView)
-import Ports exposing (fileDrop, getInitialHeight, heightUpdated)
+import Ports exposing (filesDropped, getInitialHeight, heightUpdated)
 import Problems
 import ProblemsView exposing (problemsView)
 import StopwatchesView exposing (stopwatchesView)
@@ -54,7 +54,7 @@ init startTime =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ fileDrop FileDropped
+        [ filesDropped FilesDropped
         , heightUpdated ContainerHeightChanged
         ]
 
@@ -66,7 +66,7 @@ errorView errors =
 
     else
         div [ class "alert alert-danger" ]
-            (List.map (\error -> text error.message) errors)
+            (List.map (\error -> div [] [ text error.message ]) errors)
 
 
 getHeightAttribute : Maybe Int -> List (Html.Attribute a)

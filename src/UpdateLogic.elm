@@ -447,9 +447,9 @@ downloadBarcodeScannerDataCommand zone time model =
         |> downloadFile
 
 
-handleFileDrop : String -> String -> Model -> Model
-handleFileDrop fileName fileText model =
-    if String.contains "STARTOFEVENT" fileText then
+handleFileDropped : InteropFile -> Model -> Model
+handleFileDropped { fileName, fileText } model =
+    if String.startsWith "STARTOFEVENT" fileText then
         handleStopwatchFileDrop fileName fileText model
 
     else if isPossibleNumberCheckerFile fileText then
@@ -460,8 +460,23 @@ handleFileDrop fileName fileText model =
 
     else
         { model
-            | lastErrors = model.lastErrors ++ [ Error "UNRECOGNISED_FILE" "Unrecognised file dropped" ]
+            | lastErrors = model.lastErrors ++ [ Error "UNRECOGNISED_FILE" ("File '" ++ fileName ++ "' was not recognised") ]
         }
+
+
+handleFilesDropped : List InteropFile -> Model -> Model
+handleFilesDropped files model =
+    let
+        sortedFiles : List InteropFile
+        sortedFiles =
+            List.sortBy .fileName files
+                |> List.reverse
+
+        modelWithNoErrors : Model
+        modelWithNoErrors =
+            { model | lastErrors = [] }
+    in
+    List.foldr handleFileDropped modelWithNoErrors sortedFiles
 
 
 ensureNonNegative : Int -> Maybe Int
@@ -765,8 +780,8 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
-        FileDropped { fileName, fileText } ->
-            ( handleFileDrop fileName fileText model, Cmd.none )
+        FilesDropped files ->
+            ( handleFilesDropped files model, Cmd.none )
 
         ToggleTableRow index ->
             ( toggleTableRow index model, Cmd.none )

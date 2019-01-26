@@ -60,17 +60,29 @@ function handleWindowResize() {
 
 $(window).resize(handleWindowResize);
 
-function handleSingleFileLoad(file) {
+var allFilesDropped = [];
+
+function handleNextFileLoad(files, index) {
   var reader = new FileReader();
   reader.onload = function (e) {
-    app.ports.fileDrop.send({
-      fileName: file.name,
+    allFilesDropped.push({
+      fileName: files[index].name,
       // Replace UTF-8 byte-order marks for the benefit of IE.
       fileText: e.target.result.replace(/\ufeff/, "")
     });
+
+    if (allFilesDropped.length < files.length) {
+      handleNextFileLoad(files, index + 1);
+    }
+    else {
+      app.ports.filesDropped.send(allFilesDropped);
+      allFilesDropped = [];
+    }
   };
 
-  reader.readAsText(file, "UTF-8");
+  if (index < files.length) {
+    reader.readAsText(files[index], "UTF-8");
+  }
 }
 
 function handleLoad(files) {
@@ -80,9 +92,8 @@ function handleLoad(files) {
     return;
   }
 
-  for (var index = 0; index < files.length; index += 1) {
-    handleSingleFileLoad(files[index]);
-  }
+  allFilesDropped = [];
+  handleNextFileLoad(files, 0);
 }
 
 // The following functions have been adapted from

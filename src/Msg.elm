@@ -12,7 +12,7 @@ type NumberCheckerFieldChange
 
 type Msg
     = NoOp
-    | FileDropped InteropFile
+    | FilesDropped (List InteropFile)
     | ToggleTableRow Int
     | DeleteStopwatch WhichStopwatch
     | FlipStopwatches
