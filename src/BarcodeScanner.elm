@@ -14,6 +14,7 @@ module BarcodeScanner exposing
     , maxFinishToken
     , mergeScannerData
     , readBarcodeScannerData
+    , regenerate
     , toDownloadText
     )
 
@@ -103,13 +104,6 @@ type alias BarcodeScannerData =
     }
 
 
-type BarcodeScannerEntry
-    = Successful String Int String
-    | AthleteOnly String String
-    | FinishTokenOnly Int String
-    | MisScanned String String
-
-
 toMaybeError : Result e x -> Maybe e
 toMaybeError result =
     case result of
@@ -146,14 +140,14 @@ positionParser =
         |. end
 
 
-readLine : String -> Result UnrecognisedLine BarcodeScannerEntry
-readLine line =
+readLine : Int -> String -> Result UnrecognisedLine BarcodeScannerFileLine
+readLine lineNumber line =
     let
         parts : List String
         parts =
             String.split "," line
 
-        unrecognisedLine : String -> String -> Result UnrecognisedLine BarcodeScannerEntry
+        unrecognisedLine : String -> String -> Result UnrecognisedLine BarcodeScannerFileLine
         unrecognisedLine code message =
             UnrecognisedLine line code message
                 |> Err
@@ -199,7 +193,7 @@ readLine line =
                     )
 
             else if isPositionMissing then
-                Ok (AthleteOnly athlete time)
+                Ok (BarcodeScannerFileLine lineNumber (Ordinary athlete Nothing) time Unmodified)
 
             else
                 case positionNumber of
@@ -207,49 +201,49 @@ readLine line =
                         unrecognisedLine "INVALID_POSITION_ZERO" ("Invalid position record '" ++ position ++ "' found in barcode scanner file")
 
                     Just pos ->
-                        if isAthleteMissing then
-                            Ok (FinishTokenOnly pos time)
-
-                        else
-                            Ok (Successful athlete pos time)
+                        Ok (BarcodeScannerFileLine lineNumber (Ordinary athlete positionNumber) time Unmodified)
 
                     Nothing ->
                         unrecognisedLine "NON_NUMERIC_POSITION" ("Invalid position record '" ++ position ++ "' found in barcode scanner file")
 
         [ misScannedText, time ] ->
-            Ok (MisScanned misScannedText time)
+            Ok (BarcodeScannerFileLine lineNumber (MisScan misScannedText) time Unmodified)
 
         _ ->
             unrecognisedLine "NOT_TWO_OR_THREE_PARTS" ("Line " ++ line ++ " does not contain the expected two or three comma-separated parts")
 
 
-mergeEntry : BarcodeScannerEntry -> BarcodeScannerData -> BarcodeScannerData
-mergeEntry entry barcodeData =
-    case entry of
-        Successful athlete pos time ->
+mergeEntry : BarcodeScannerFileLine -> BarcodeScannerData -> BarcodeScannerData
+mergeEntry line barcodeData =
+    case line.contents of
+        Ordinary "" Nothing ->
+            -- Unexpected, do nothing.
+            barcodeData
+
+        Ordinary athlete Nothing ->
+            { barcodeData | athleteBarcodesOnly = List.append barcodeData.athleteBarcodesOnly [ AthleteAndTimePair athlete line.scanTime ] }
+
+        Ordinary "" (Just position) ->
+            { barcodeData | finishTokensOnly = List.append barcodeData.finishTokensOnly [ PositionAndTimePair position line.scanTime ] }
+
+        Ordinary athlete (Just pos) ->
             let
                 updater : Maybe (List AthleteAndTimePair) -> Maybe (List AthleteAndTimePair)
                 updater currentValue =
                     currentValue
                         |> Maybe.withDefault []
-                        |> List.append [ AthleteAndTimePair athlete time ]
+                        |> (\x -> List.append x [ AthleteAndTimePair athlete line.scanTime ])
                         |> Just
             in
             { barcodeData | scannedBarcodes = Dict.update pos updater barcodeData.scannedBarcodes }
 
-        AthleteOnly athlete time ->
-            { barcodeData | athleteBarcodesOnly = List.append barcodeData.athleteBarcodesOnly [ AthleteAndTimePair athlete time ] }
-
-        FinishTokenOnly finishToken time ->
-            { barcodeData | finishTokensOnly = List.append barcodeData.finishTokensOnly [ PositionAndTimePair finishToken time ] }
-
-        MisScanned misScannedText time ->
-            { barcodeData | misScannedItems = List.append barcodeData.misScannedItems [ MisScannedItem misScannedText time ] }
+        MisScan misScannedText ->
+            { barcodeData | misScannedItems = List.append barcodeData.misScannedItems [ MisScannedItem misScannedText line.scanTime ] }
 
 
-mergeEntries : List BarcodeScannerEntry -> BarcodeScannerData
-mergeEntries scannerEntries =
-    List.foldr mergeEntry empty scannerEntries
+mergeEntries : List BarcodeScannerFileLine -> BarcodeScannerData
+mergeEntries scannerFileLines =
+    List.foldl mergeEntry empty scannerFileLines
 
 
 mergeScannerDictEntry : ( Int, List AthleteAndTimePair ) -> Dict Int (List AthleteAndTimePair) -> Dict Int (List AthleteAndTimePair)
@@ -267,7 +261,7 @@ mergeScannerDictEntry ( pos, athleteAndTimePairs ) dict =
 
 mergeScannerDicts : Dict Int (List AthleteAndTimePair) -> Dict Int (List AthleteAndTimePair) -> Dict Int (List AthleteAndTimePair)
 mergeScannerDicts dict1 dict2 =
-    List.foldr mergeScannerDictEntry dict1 (Dict.toList dict2)
+    List.foldl mergeScannerDictEntry dict1 (Dict.toList dict2)
 
 
 maxDate : Maybe Posix -> Maybe Posix -> Maybe Posix
@@ -315,27 +309,6 @@ withFile file barcodeScannerData =
     { barcodeScannerData | files = barcodeScannerData.files ++ [ file ] }
 
 
-mapFileLine : Int -> BarcodeScannerEntry -> BarcodeScannerFileLine
-mapFileLine lineNumber entry =
-    case entry of
-        Successful athlete position date ->
-            BarcodeScannerFileLine lineNumber (Ordinary athlete (Just position)) date Unmodified
-
-        AthleteOnly athlete date ->
-            BarcodeScannerFileLine lineNumber (Ordinary athlete Nothing) date Unmodified
-
-        FinishTokenOnly position date ->
-            BarcodeScannerFileLine lineNumber (Ordinary "" (Just position)) date Unmodified
-
-        MisScanned text date ->
-            BarcodeScannerFileLine lineNumber (MisScan text) date Unmodified
-
-
-createFileLines : List BarcodeScannerEntry -> List BarcodeScannerFileLine
-createFileLines entries =
-    List.indexedMap (\index entry -> mapFileLine (index + 1) entry) entries
-
-
 mergeScannerData : BarcodeScannerData -> BarcodeScannerData -> BarcodeScannerData
 mergeScannerData data1 data2 =
     BarcodeScannerData
@@ -356,20 +329,16 @@ readBarcodeScannerData filename text =
 
     else
         let
-            lines : List (Result UnrecognisedLine BarcodeScannerEntry)
+            lines : List (Result UnrecognisedLine BarcodeScannerFileLine)
             lines =
                 text
                     |> splitLines
                     |> List.filter (not << String.isEmpty)
-                    |> List.map readLine
+                    |> List.indexedMap (\index line -> readLine (index + 1) line)
 
-            validLines : List BarcodeScannerEntry
+            validLines : List BarcodeScannerFileLine
             validLines =
                 List.filterMap Result.toMaybe lines
-
-            fileLines : List BarcodeScannerFileLine
-            fileLines =
-                createFileLines validLines
 
             unrecognisedLines : List UnrecognisedLine
             unrecognisedLines =
@@ -387,7 +356,7 @@ readBarcodeScannerData filename text =
             mergeEntries validLines
                 |> withUnrecognisedLines
                 |> withLastScanDate
-                |> withFile (BarcodeScannerFile filename fileLines)
+                |> withFile (BarcodeScannerFile filename validLines)
                 |> Ok
 
 
@@ -441,6 +410,35 @@ formatAthleteEntries ( position, athleteAndTimePairs ) =
                 (toScanTimeMillis athleteAndTimePair)
         )
         athleteAndTimePairs
+
+
+notDeleted : BarcodeScannerFileLine -> Bool
+notDeleted line =
+    case line.modificationStatus of
+        Deleted _ ->
+            False
+
+        _ ->
+            True
+
+
+{-| Recreates the barcode-scanner data from the entries in the files.
+-}
+regenerate : BarcodeScannerData -> BarcodeScannerData
+regenerate barcodeScannerData =
+    let
+        mergedData : BarcodeScannerData
+        mergedData =
+            List.map .lines barcodeScannerData.files
+                |> List.concat
+                |> List.filter notDeleted
+                |> mergeEntries
+    in
+    { mergedData
+        | unrecognisedLines = barcodeScannerData.unrecognisedLines
+        , lastScanDate = barcodeScannerData.lastScanDate
+        , files = barcodeScannerData.files
+    }
 
 
 toDownloadText : BarcodeScannerData -> String

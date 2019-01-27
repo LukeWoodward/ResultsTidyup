@@ -11,6 +11,7 @@ import BarcodeScanner
         , ModificationStatus(..)
         , mergeScannerData
         , readBarcodeScannerData
+        , regenerate
         )
 import Browser.Dom
 import DataStructures exposing (EventDateAndTime, InteropFile, MinorProblemFix(..), WhichStopwatch(..))
@@ -718,22 +719,16 @@ fixMinorProblem minorProblemFix model =
         newBarcodeScannerData =
             case minorProblemFix of
                 RemoveUnassociatedFinishToken position ->
-                    { oldBarcodeScannerData
-                        | finishTokensOnly =
-                            List.filter
-                                (\positionAndTimePair -> positionAndTimePair.position /= position)
-                                oldBarcodeScannerData.finishTokensOnly
-                        , files = deleteWithinFiles (deleteUnassociatedFinishPosition position) oldBarcodeScannerData.files
-                    }
+                    regenerate
+                        { oldBarcodeScannerData
+                            | files = deleteWithinFiles (deleteUnassociatedFinishPosition position) oldBarcodeScannerData.files
+                        }
 
                 RemoveUnassociatedAthlete athlete ->
-                    { oldBarcodeScannerData
-                        | athleteBarcodesOnly =
-                            List.filter
-                                (\athleteAndTimePair -> athleteAndTimePair.athlete /= athlete)
-                                oldBarcodeScannerData.athleteBarcodesOnly
-                        , files = deleteWithinFiles (deleteUnassociatedAthlete athlete) oldBarcodeScannerData.files
-                    }
+                    regenerate
+                        { oldBarcodeScannerData
+                            | files = deleteWithinFiles (deleteUnassociatedAthlete athlete) oldBarcodeScannerData.files
+                        }
 
                 RemoveDuplicateScans position athlete ->
                     { oldBarcodeScannerData

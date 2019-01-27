@@ -29,7 +29,7 @@ import Time exposing (Posix)
 
 dummyTime : String
 dummyTime =
-    "14/03/2018 09:47:53"
+    "14/03/2018 09:47:03"
 
 
 toPosix : String -> Maybe Posix
@@ -300,7 +300,7 @@ suite =
                         data =
                             BarcodeScannerData
                                 []
-                                (Dict.singleton 58 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:53" ])
+                                (Dict.singleton 58 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
                                 [ AthleteAndTimePair "A3097724" "14/03/2018 09:36:04" ]
                                 [ PositionAndTimePair 51 "14/03/2018 09:52:06" ]
                                 [ MisScannedItem "other" "14/03/2018 09:44:37" ]
@@ -313,7 +313,7 @@ suite =
                                 ++ crlf
                                 ++ "other,14/03/2018 09:44:37"
                                 ++ crlf
-                                ++ "A4580442,P0058,14/03/2018 09:47:53"
+                                ++ "A4580442,P0058,14/03/2018 09:47:03"
                                 ++ crlf
                                 ++ ",P0051,14/03/2018 09:52:06"
                                 ++ crlf

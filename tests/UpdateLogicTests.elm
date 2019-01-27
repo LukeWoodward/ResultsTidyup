@@ -10,6 +10,8 @@ import BarcodeScanner
         , LineContents(..)
         , ModificationStatus(..)
         , PositionAndTimePair
+        , empty
+        , regenerate
         )
 import BarcodeScannerTests exposing (createBarcodeScannerData, expectSingleUnrecognisedLine, toPosix)
 import DataStructures exposing (EventDateAndTime, InteropFile, MinorProblemFix(..), SecondTab(..), WhichStopwatch(..))
@@ -328,13 +330,6 @@ createBarcodeScannerDataForRemovingUnassociatedFinishTokens finishTokens =
         fakeAthlete index =
             "A" ++ String.fromInt (index + 1)
 
-        scannedBarcodes : Dict Int (List String)
-        scannedBarcodes =
-            finishTokens
-                |> deduplicate
-                |> List.indexedMap (\index position -> ( position, [ fakeAthlete index ] ))
-                |> Dict.fromList
-
         fileLines : List BarcodeScannerFileLine
         fileLines =
             finishTokens
@@ -345,13 +340,9 @@ createBarcodeScannerDataForRemovingUnassociatedFinishTokens finishTokens =
                         ]
                     )
                 |> List.concat
-
-        barcodeScannerData : BarcodeScannerData
-        barcodeScannerData =
-            createBarcodeScannerData scannedBarcodes [] finishTokens
     in
     { initModel
-        | barcodeScannerData = { barcodeScannerData | files = [ BarcodeScannerFile "barcodes1.txt" fileLines ] }
+        | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines ] }
         , problems = ProblemsContainer [] (List.indexedMap (\index position -> PositionWithAndWithoutAthlete position (fakeAthlete index)) finishTokens)
     }
 
@@ -359,30 +350,19 @@ createBarcodeScannerDataForRemovingUnassociatedFinishTokens finishTokens =
 createBarcodeScannerDataForRemovingUnassociatedAthletes : List String -> Model
 createBarcodeScannerDataForRemovingUnassociatedAthletes athletes =
     let
-        scannedBarcodes : Dict Int (List String)
-        scannedBarcodes =
-            athletes
-                |> deduplicate
-                |> List.indexedMap (\index athlete -> ( index + 1, [ athlete ] ))
-                |> Dict.fromList
-
         fileLines : List BarcodeScannerFileLine
         fileLines =
             athletes
                 |> List.indexedMap
                     (\index athlete ->
-                        [ BarcodeScannerFileLine (index * 2 + 1) (Ordinary athlete (Just index)) "14/03/2018 09:47:03" Unmodified
+                        [ BarcodeScannerFileLine (index * 2 + 1) (Ordinary athlete (Just (index + 1))) "14/03/2018 09:47:03" Unmodified
                         , BarcodeScannerFileLine (index * 2 + 2) (Ordinary athlete Nothing) "14/03/2018 09:47:03" Unmodified
                         ]
                     )
                 |> List.concat
-
-        barcodeScannerData : BarcodeScannerData
-        barcodeScannerData =
-            createBarcodeScannerData scannedBarcodes athletes []
     in
     { initModel
-        | barcodeScannerData = { barcodeScannerData | files = [ BarcodeScannerFile "barcodes1.txt" fileLines ] }
+        | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines ] }
         , problems = ProblemsContainer [] (List.indexedMap (\index athlete -> AthleteWithAndWithoutPosition athlete (index + 1)) athletes)
     }
 
@@ -1273,10 +1253,10 @@ suite =
                             |> Expect.all
                                 (expectBarcodeScannerData expectedBarcodeScannerData
                                     :: expectProblems
-                                        (ProblemsContainer []
+                                        (ProblemsContainer [ PositionWithMultipleAthletes 39 [ "A2", "A4", "A5", "A7" ] ]
                                             [ PositionWithAndWithoutAthlete 14 "A1"
-                                            , PositionWithAndWithoutAthlete 18 "A2"
-                                            , PositionWithAndWithoutAthlete 44 "A4"
+                                            , PositionWithAndWithoutAthlete 18 "A3"
+                                            , PositionWithAndWithoutAthlete 44 "A6"
                                             ]
                                         )
                                     :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems ]
@@ -1358,10 +1338,10 @@ suite =
                             |> Expect.all
                                 (expectBarcodeScannerData expectedBarcodeScannerData
                                     :: expectProblems
-                                        (ProblemsContainer []
+                                        (ProblemsContainer [ AthleteWithMultiplePositions "A5678" [ 2, 4, 5, 7 ] ]
                                             [ AthleteWithAndWithoutPosition "A1234" 1
-                                            , AthleteWithAndWithoutPosition "A3456" 2
-                                            , AthleteWithAndWithoutPosition "A9012" 4
+                                            , AthleteWithAndWithoutPosition "A3456" 3
+                                            , AthleteWithAndWithoutPosition "A9012" 6
                                             ]
                                         )
                                     :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems ]
@@ -1405,7 +1385,7 @@ suite =
                             |> Expect.all
                                 (expectBarcodeScannerData
                                     { initialBarcodeScannerData
-                                        | scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A1234" "14/03/2018 09:47:53" ]
+                                        | scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A1234" "14/03/2018 09:47:03" ]
                                         , files = deleteLinesWithinFile ifLineNumberGreaterThanOne initialBarcodeScannerData.files
                                     }
                                     :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
@@ -1426,7 +1406,7 @@ suite =
                             |> Expect.all
                                 (expectBarcodeScannerData
                                     { initialBarcodeScannerData
-                                        | scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A1234" "14/03/2018 09:47:53" ]
+                                        | scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A1234" "14/03/2018 09:47:03" ]
                                         , files = deleteLinesWithinFile ifLineNumberGreaterThanOne initialBarcodeScannerData.files
                                     }
                                     :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
@@ -1442,18 +1422,18 @@ suite =
                             startingScannerData =
                                 { initialBarcodeScannerData
                                     | files =
-                                        [ BarcodeScannerFile "barcodes1.txt" [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:53" Unmodified ]
-                                        , BarcodeScannerFile "barcodes2.txt" [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:53" Unmodified ]
+                                        [ BarcodeScannerFile "barcodes1.txt" [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" Unmodified ]
+                                        , BarcodeScannerFile "barcodes2.txt" [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" Unmodified ]
                                         ]
                                 }
 
                             finalBarcodeScannerData : BarcodeScannerData
                             finalBarcodeScannerData =
                                 { initialBarcodeScannerData
-                                    | scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A1234" "14/03/2018 09:47:53" ]
+                                    | scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A1234" "14/03/2018 09:47:03" ]
                                     , files =
-                                        [ BarcodeScannerFile "barcodes1.txt" [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:53" Unmodified ]
-                                        , BarcodeScannerFile "barcodes2.txt" [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:53" (Deleted (DuplicateScan "A1234" 27)) ]
+                                        [ BarcodeScannerFile "barcodes1.txt" [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" Unmodified ]
+                                        , BarcodeScannerFile "barcodes2.txt" [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" (Deleted (DuplicateScan "A1234" 27)) ]
                                         ]
                                 }
                         in
