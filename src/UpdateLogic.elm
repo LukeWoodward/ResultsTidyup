@@ -731,38 +731,16 @@ fixMinorProblem minorProblemFix model =
                         }
 
                 RemoveDuplicateScans position athlete ->
-                    { oldBarcodeScannerData
-                        | scannedBarcodes =
-                            Dict.update
-                                position
-                                (\x -> Maybe.map (removeMultipleOccurrencesOf athlete) x)
-                                oldBarcodeScannerData.scannedBarcodes
-                        , files = deleteDuplicateScansWithinFiles athlete position oldBarcodeScannerData.files
-                    }
+                    regenerate
+                        { oldBarcodeScannerData
+                            | files = deleteDuplicateScansWithinFiles athlete position oldBarcodeScannerData.files
+                        }
 
                 RemoveScansBeforeEventStart eventStartTimeMillis ->
-                    let
-                        isAfterEventStart : Scanned a -> Bool
-                        isAfterEventStart { scanTime } =
-                            case Maybe.map Time.posixToMillis (dateStringToPosix scanTime) of
-                                Just scanTimeMillis ->
-                                    scanTimeMillis >= eventStartTimeMillis
-
-                                Nothing ->
-                                    -- Assume after event start so don't filter out.
-                                    True
-                    in
-                    { oldBarcodeScannerData
-                        | scannedBarcodes =
-                            Dict.map (\_ values -> List.filter isAfterEventStart values) oldBarcodeScannerData.scannedBarcodes
-                                |> Dict.filter (\_ athletes -> not (List.isEmpty athletes))
-                        , athleteBarcodesOnly =
-                            List.filter isAfterEventStart oldBarcodeScannerData.athleteBarcodesOnly
-                        , finishTokensOnly =
-                            List.filter isAfterEventStart oldBarcodeScannerData.finishTokensOnly
-                        , files =
-                            deleteWithinFiles (deleteBeforeEventStart eventStartTimeMillis) oldBarcodeScannerData.files
-                    }
+                    regenerate
+                        { oldBarcodeScannerData
+                            | files = deleteWithinFiles (deleteBeforeEventStart eventStartTimeMillis) oldBarcodeScannerData.files
+                        }
     in
     { model | barcodeScannerData = newBarcodeScannerData }
         |> identifyProblemsIn
