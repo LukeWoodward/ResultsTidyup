@@ -33,3 +33,5 @@ type Msg
     | FixMinorProblem MinorProblemFix
     | ChangeSecondTab SecondTab
     | ClearErrors
+    | DownloadBarcodeScannerFile Int Zone Posix
+    | DeleteBarcodeScannerFile Int

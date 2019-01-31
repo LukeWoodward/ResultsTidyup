@@ -1,8 +1,9 @@
-module BarcodeScannerView exposing (barcodeScannerView)
+module BarcodeScannerView exposing (barcodeScannersView)
 
 import BarcodeScanner exposing (BarcodeScannerFile, BarcodeScannerFileLine, DeletionReason(..), LineContents(..), ModificationStatus(..))
-import Html exposing (Attribute, Html, div, h4, table, tbody, td, text, tr)
+import Html exposing (Attribute, Html, button, div, h4, table, tbody, td, text, tr)
 import Html.Attributes exposing (class, colspan, title)
+import Html.Events exposing (onClick)
 import Msg exposing (Msg(..))
 import ViewCommon exposing (tableHeaders)
 
@@ -79,10 +80,15 @@ barcodeScannerViewRow line =
         )
 
 
-barcodeScannerView : BarcodeScannerFile -> Html Msg
-barcodeScannerView file =
+barcodeScannerView : Int -> BarcodeScannerFile -> Html Msg
+barcodeScannerView index file =
     div []
-        [ h4 []
+        [ div
+            [ class "barcode-scanner-buttons" ]
+            [ button [ class "btn btn-primary btn-xs", onClick (GetCurrentDateForDownloadFile (DownloadBarcodeScannerFile index)) ] [ text "Download" ]
+            , button [ class "btn btn-primary btn-xs", onClick (DeleteBarcodeScannerFile index) ] [ text "Delete" ]
+            ]
+        , h4 []
             [ text "File: "
             , text file.name
             ]
@@ -94,3 +100,12 @@ barcodeScannerView file =
                 (List.map barcodeScannerViewRow file.lines)
             ]
         ]
+
+
+barcodeScannersView : List BarcodeScannerFile -> Html Msg
+barcodeScannersView files =
+    if List.isEmpty files then
+        div [ class "alert alert-info no-barcode-scanner-files" ] [ text "No barcode scanner files have been loaded" ]
+
+    else
+        div [] (List.indexedMap barcodeScannerView files)

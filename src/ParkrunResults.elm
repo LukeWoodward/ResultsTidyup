@@ -1,7 +1,7 @@
 module ParkrunResults exposing (main)
 
 import BarcodeScanner exposing (BarcodeScannerData)
-import BarcodeScannerView exposing (barcodeScannerView)
+import BarcodeScannerView exposing (barcodeScannersView)
 import Browser
 import DataStructures exposing (EventDateAndTime, SecondTab(..))
 import Error exposing (FileError)
@@ -125,11 +125,7 @@ view model =
                     ]
                 , case model.secondTab of
                     BarcodeScannersTab ->
-                        if List.isEmpty model.barcodeScannerData.files then
-                            div [ class "alert alert-info no-barcode-scanner-files" ] [ text "No barcode scanner files have been loaded" ]
-
-                        else
-                            div [] (List.map barcodeScannerView model.barcodeScannerData.files)
+                        barcodeScannersView model.barcodeScannerData.files
 
                     NumberCheckerTab ->
                         numberCheckerView model.numberCheckerEntries model.numberCheckerManualEntryRow model.lastHeight

@@ -10,6 +10,7 @@ module BarcodeScanner exposing
     , PositionAndTimePair
     , UnrecognisedLine
     , empty
+    , generateDownloadText
     , isEmpty
     , maxFinishToken
     , mergeScannerData
@@ -439,6 +440,31 @@ regenerate barcodeScannerData =
         , lastScanDate = barcodeScannerData.lastScanDate
         , files = barcodeScannerData.files
     }
+
+
+generateDownloadText : BarcodeScannerFile -> String
+generateDownloadText file =
+    let
+        contentsToString : LineContents -> String
+        contentsToString contents =
+            case contents of
+                Ordinary athlete Nothing ->
+                    athlete ++ ","
+
+                Ordinary athlete (Just position) ->
+                    athlete ++ "," ++ formatPosition position
+
+                MisScan text ->
+                    text
+
+        lineToString : BarcodeScannerFileLine -> String
+        lineToString line =
+            contentsToString line.contents ++ "," ++ line.scanTime ++ crlf
+    in
+    file.lines
+        |> List.filter notDeleted
+        |> List.map lineToString
+        |> String.join ""
 
 
 toDownloadText : BarcodeScannerData -> String

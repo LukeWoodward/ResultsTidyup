@@ -9,6 +9,7 @@ import BarcodeScanner
         , DeletionReason(..)
         , LineContents(..)
         , ModificationStatus(..)
+        , generateDownloadText
         , mergeScannerData
         , readBarcodeScannerData
         , regenerate
@@ -746,6 +747,55 @@ fixMinorProblem minorProblemFix model =
         |> identifyProblemsIn
 
 
+downloadSingleBarcodeScannerData : Int -> List BarcodeScannerFile -> Zone -> Posix -> Cmd Msg
+downloadSingleBarcodeScannerData index files zone time =
+    case ( index, files ) of
+        ( _, [] ) ->
+            Cmd.none
+
+        ( 0, first :: _ ) ->
+            let
+                fileContents : String
+                fileContents =
+                    generateDownloadText first
+
+                fileName : String
+                fileName =
+                    "parkrun_barcode_" ++ generateDownloadFilenameDatePart zone time ++ ".txt"
+            in
+            InteropFile fileName fileContents
+                |> downloadFile
+
+        ( _, _ :: rest ) ->
+            downloadSingleBarcodeScannerData (index - 1) rest zone time
+
+
+deleteAtIndex : Int -> List a -> List a
+deleteAtIndex index items =
+    case ( index, items ) of
+        ( _, [] ) ->
+            []
+
+        ( 0, _ :: rest ) ->
+            rest
+
+        ( _, first :: rest ) ->
+            first :: deleteAtIndex (index - 1) rest
+
+
+deleteBarcodeScannerFileAtIndex : Int -> Model -> Model
+deleteBarcodeScannerFileAtIndex index model =
+    let
+        barcodeScannerData : BarcodeScannerData
+        barcodeScannerData =
+            model.barcodeScannerData
+    in
+    identifyProblemsIn
+        { model
+            | barcodeScannerData = regenerate { barcodeScannerData | files = deleteAtIndex index model.barcodeScannerData.files }
+        }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -852,3 +902,9 @@ update msg model =
 
         ClearErrors ->
             ( { model | lastErrors = [] }, Cmd.none )
+
+        DownloadBarcodeScannerFile index zone time ->
+            ( model, downloadSingleBarcodeScannerData index model.barcodeScannerData.files zone time )
+
+        DeleteBarcodeScannerFile index ->
+            ( deleteBarcodeScannerFileAtIndex index model, Cmd.none )

@@ -153,3 +153,11 @@ tr.deleted-barcode-scanner-row {
 .no-barcode-scanner-files {
     margin-top: 10px;
 }
+
+div.barcode-scanner-buttons {
+    float: right;
+}
+
+div.barcode-scanner-buttons button {
+    margin-left: 15px;
+}

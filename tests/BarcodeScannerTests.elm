@@ -6,12 +6,14 @@ import BarcodeScanner
         , BarcodeScannerData
         , BarcodeScannerFile
         , BarcodeScannerFileLine
+        , DeletionReason(..)
         , LineContents(..)
         , MisScannedItem
         , ModificationStatus(..)
         , PositionAndTimePair
         , UnrecognisedLine
         , empty
+        , generateDownloadText
         , isEmpty
         , maxFinishToken
         , readBarcodeScannerData
@@ -272,8 +274,55 @@ suite =
                     maxFinishToken (createBarcodeScannerData (Dict.fromList [ ( 47, [ "A4580442" ] ), ( 59, [ "A456321" ] ), ( 33, [ "A464631" ] ) ]) [] [])
                         |> Expect.equal (Just 59)
             ]
+        , describe "generateDownloadText tests"
+            [ test "generateDownloadText returns an empty string for empty data" <|
+                \() ->
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [])
+                        |> Expect.equal ""
+            , test "generateDownloadText returns a string for a single scanned barcode" <|
+                \() ->
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ BarcodeScannerFileLine 1 (Ordinary "A123456" (Just 47)) "14/03/2018 09:47:03" Unmodified ])
+                        |> Expect.equal ("A123456,P0047,14/03/2018 09:47:03" ++ crlf)
+            , test "generateDownloadText returns a string for a single athlete with no finish token" <|
+                \() ->
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ BarcodeScannerFileLine 1 (Ordinary "A123456" Nothing) "19/09/2018 09:33:37" Unmodified ])
+                        |> Expect.equal ("A123456,,19/09/2018 09:33:37" ++ crlf)
+            , test "generateDownloadText returns a string for a single finish token with no athlete" <|
+                \() ->
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ BarcodeScannerFileLine 1 (Ordinary "" (Just 47)) "19/09/2018 09:40:09" Unmodified ])
+                        |> Expect.equal (",P0047,19/09/2018 09:40:09" ++ crlf)
+            , test "generateDownloadText returns a string for a single mis-scanned item" <|
+                \() ->
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ BarcodeScannerFileLine 1 (MisScan "&d084") "04/07/2018 09:42:22" Unmodified ])
+                        |> Expect.equal ("&d084,04/07/2018 09:42:22" ++ crlf)
+            , test "generateDownloadText returns an empty string for a deleted record" <|
+                \() ->
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ BarcodeScannerFileLine 1 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted BeforeEventStart) ])
+                        |> Expect.equal ""
+            , test "generateDownloadText returns the correct string for multiple items" <|
+                \() ->
+                    generateDownloadText
+                        (BarcodeScannerFile "barcodes.txt"
+                            [ BarcodeScannerFileLine 1 (Ordinary "A123456" (Just 47)) "14/03/2018 09:47:03" Unmodified
+                            , BarcodeScannerFileLine 2 (Ordinary "A123456" Nothing) "19/09/2018 09:33:37" Unmodified
+                            , BarcodeScannerFileLine 3 (Ordinary "" (Just 47)) "19/09/2018 09:40:09" Unmodified
+                            , BarcodeScannerFileLine 4 (MisScan "&d084") "04/07/2018 09:42:22" Unmodified
+                            , BarcodeScannerFileLine 5 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted BeforeEventStart)
+                            ]
+                        )
+                        |> Expect.equal
+                            ("A123456,P0047,14/03/2018 09:47:03"
+                                ++ crlf
+                                ++ "A123456,,19/09/2018 09:33:37"
+                                ++ crlf
+                                ++ ",P0047,19/09/2018 09:40:09"
+                                ++ crlf
+                                ++ "&d084,04/07/2018 09:42:22"
+                                ++ crlf
+                            )
+            ]
         , describe "toDownloadText tests"
-            [ test "toDownloadText returns an empty string for an empty data" <|
+            [ test "toDownloadText returns an empty string for empty data" <|
                 \() ->
                     toDownloadText BarcodeScanner.empty
                         |> Expect.equal ""
