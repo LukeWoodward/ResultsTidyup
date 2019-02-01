@@ -14,7 +14,7 @@ import BarcodeScanner
         , regenerate
         )
 import BarcodeScannerTests exposing (createBarcodeScannerData, expectSingleUnrecognisedLine, toPosix)
-import DataStructures exposing (EventDateAndTime, InteropFile, MinorProblemFix(..), SecondTab(..), WhichStopwatch(..))
+import DataStructures exposing (EventDateAndTime, InteropFile, ProblemFix(..), SecondTab(..), WhichStopwatch(..))
 import Dict exposing (Dict)
 import Error exposing (FileError)
 import Errors exposing (expectError)
@@ -25,7 +25,7 @@ import Merger exposing (MergeEntry(..))
 import Model exposing (Model, NumberCheckerManualEntryRow, NumericEntry, emptyNumberCheckerManualEntryRow, emptyNumericEntry, initModel)
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
-import Problems exposing (MinorProblem(..), Problem(..), ProblemsContainer)
+import Problems exposing (FixableProblem(..), Problem(..), ProblemsContainer)
 import Set
 import Stopwatch exposing (Stopwatch(..))
 import StopwatchTests
@@ -1170,7 +1170,7 @@ suite =
                                 :: defaultAssertionsExcept [ Stopwatches, NumberCheckerEntries ]
                             )
             ]
-        , describe "Fixing minor problems tests"
+        , describe "Fixing problems tests"
             [ describe "Removing unassociated finish position tests"
                 [ test "Can remove unassociated finish token" <|
                     \() ->
@@ -1191,7 +1191,7 @@ suite =
                                 }
                         in
                         initialModel
-                            |> update (FixMinorProblem (RemoveUnassociatedFinishToken 39))
+                            |> update (FixProblem (RemoveUnassociatedFinishToken 39))
                             |> Expect.all
                                 (expectBarcodeScannerData expectedBarcodeScannerData
                                     :: expectProblems
@@ -1222,7 +1222,7 @@ suite =
                                 }
                         in
                         initialModel
-                            |> update (FixMinorProblem (RemoveUnassociatedFinishToken 39))
+                            |> update (FixProblem (RemoveUnassociatedFinishToken 39))
                             |> Expect.all
                                 (expectBarcodeScannerData expectedBarcodeScannerData
                                     :: expectProblems
@@ -1242,7 +1242,7 @@ suite =
                                 createBarcodeScannerDataForRemovingUnassociatedFinishTokens [ 14, 18, 39, 44 ]
                         in
                         initialModel
-                            |> update (FixMinorProblem (RemoveUnassociatedFinishToken 27))
+                            |> update (FixProblem (RemoveUnassociatedFinishToken 27))
                             |> Expect.all
                                 (expectBarcodeScannerData initialModel.barcodeScannerData
                                     :: expectProblems
@@ -1276,7 +1276,7 @@ suite =
                                 }
                         in
                         initialModel
-                            |> update (FixMinorProblem (RemoveUnassociatedAthlete "A5678"))
+                            |> update (FixProblem (RemoveUnassociatedAthlete "A5678"))
                             |> Expect.all
                                 (expectBarcodeScannerData expectedBarcodeScannerData
                                     :: expectProblems
@@ -1307,7 +1307,7 @@ suite =
                                 }
                         in
                         initialModel
-                            |> update (FixMinorProblem (RemoveUnassociatedAthlete "A5678"))
+                            |> update (FixProblem (RemoveUnassociatedAthlete "A5678"))
                             |> Expect.all
                                 (expectBarcodeScannerData expectedBarcodeScannerData
                                     :: expectProblems
@@ -1327,7 +1327,7 @@ suite =
                                 createBarcodeScannerDataForRemovingUnassociatedAthletes [ "A1234", "A3456", "A5678", "A9012" ]
                         in
                         initialModel
-                            |> update (FixMinorProblem (RemoveUnassociatedAthlete "A9090"))
+                            |> update (FixProblem (RemoveUnassociatedAthlete "A9090"))
                             |> Expect.all
                                 (expectBarcodeScannerData initialModel.barcodeScannerData
                                     :: expectProblems
@@ -1354,7 +1354,7 @@ suite =
                                 initialModel.barcodeScannerData
                         in
                         initialModel
-                            |> update (FixMinorProblem (RemoveDuplicateScans 27 "A1234"))
+                            |> update (FixProblem (RemoveDuplicateScans 27 "A1234"))
                             |> Expect.all
                                 (expectBarcodeScannerData
                                     { initialBarcodeScannerData
@@ -1375,7 +1375,7 @@ suite =
                                 initialModel.barcodeScannerData
                         in
                         initialModel
-                            |> update (FixMinorProblem (RemoveDuplicateScans 27 "A1234"))
+                            |> update (FixProblem (RemoveDuplicateScans 27 "A1234"))
                             |> Expect.all
                                 (expectBarcodeScannerData
                                     { initialBarcodeScannerData
@@ -1411,7 +1411,7 @@ suite =
                                 }
                         in
                         { initModel | barcodeScannerData = startingScannerData }
-                            |> update (FixMinorProblem (RemoveDuplicateScans 27 "A1234"))
+                            |> update (FixProblem (RemoveDuplicateScans 27 "A1234"))
                             |> Expect.all
                                 (expectBarcodeScannerData finalBarcodeScannerData
                                     :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
@@ -1424,7 +1424,7 @@ suite =
                                 createBarcodeScannerDataForRemovingDuplicateScans 1
                         in
                         initialModel
-                            |> update (FixMinorProblem (RemoveDuplicateScans 27 "A1234"))
+                            |> update (FixProblem (RemoveDuplicateScans 27 "A1234"))
                             |> Expect.all
                                 (expectBarcodeScannerData initialModel.barcodeScannerData
                                     :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
@@ -1437,7 +1437,7 @@ suite =
                                 createBarcodeScannerDataForRemovingDuplicateScans 2
                         in
                         initialModel
-                            |> update (FixMinorProblem (RemoveDuplicateScans 25 "A1234"))
+                            |> update (FixProblem (RemoveDuplicateScans 25 "A1234"))
                             |> Expect.all
                                 (expectBarcodeScannerData initialModel.barcodeScannerData
                                     :: expectProblems (ProblemsContainer [] [ AthleteInSamePositionMultipleTimes "A1234" 27 ])
@@ -1451,7 +1451,7 @@ suite =
                                 createBarcodeScannerDataForRemovingDuplicateScans 2
                         in
                         initialModel
-                            |> update (FixMinorProblem (RemoveDuplicateScans 27 "A9999"))
+                            |> update (FixProblem (RemoveDuplicateScans 27 "A9999"))
                             |> Expect.all
                                 (expectBarcodeScannerData initialModel.barcodeScannerData
                                     :: expectProblems (ProblemsContainer [] [ AthleteInSamePositionMultipleTimes "A1234" 27 ])
@@ -1478,7 +1478,7 @@ suite =
                                 { barcodeScannerData | files = [ file ] }
                         in
                         { initModel | barcodeScannerData = barcodeScannerDataWithFiles }
-                            |> update (FixMinorProblem (RemoveDuplicateScans 27 "A1234"))
+                            |> update (FixProblem (RemoveDuplicateScans 27 "A1234"))
                             |> Expect.all
                                 (expectBarcodeScannerData barcodeScannerDataWithFiles
                                     :: expectProblems (ProblemsContainer [ PositionWithMultipleAthletes 27 [ "A1234", "A5678", "A3456", "A9012" ] ] [])
@@ -1490,7 +1490,7 @@ suite =
             [ test "Removing scans before 9am clears nothing" <|
                 \() ->
                     { initModel | barcodeScannerData = barcodeScannerDataForEventStartTimeFiltering }
-                        |> update (FixMinorProblem (RemoveScansBeforeEventStart baseEventStartTime))
+                        |> update (FixProblem (RemoveScansBeforeEventStart baseEventStartTime))
                         |> Expect.all
                             (expectBarcodeScannerData barcodeScannerDataForEventStartTimeFiltering
                                 :: expectProblems (ProblemsContainer [ AthleteMissingPosition "A345678", PositionMissingAthlete 19 ] [])
@@ -1499,7 +1499,7 @@ suite =
             , test "Removing scans before 9:30am clears genuine scan" <|
                 \() ->
                     { initModel | barcodeScannerData = barcodeScannerDataForEventStartTimeFiltering }
-                        |> update (FixMinorProblem (RemoveScansBeforeEventStart (baseEventStartTime + 30 * 60 * 1000)))
+                        |> update (FixProblem (RemoveScansBeforeEventStart (baseEventStartTime + 30 * 60 * 1000)))
                         |> Expect.all
                             (expectBarcodeScannerData
                                 { barcodeScannerDataForEventStartTimeFiltering
@@ -1512,7 +1512,7 @@ suite =
             , test "Removing scans before 10:00am clears genuine scan and athlete-barcode only" <|
                 \() ->
                     { initModel | barcodeScannerData = barcodeScannerDataForEventStartTimeFiltering }
-                        |> update (FixMinorProblem (RemoveScansBeforeEventStart (baseEventStartTime + 60 * 60 * 1000)))
+                        |> update (FixProblem (RemoveScansBeforeEventStart (baseEventStartTime + 60 * 60 * 1000)))
                         |> Expect.all
                             (expectBarcodeScannerData
                                 { barcodeScannerDataForEventStartTimeFiltering
@@ -1526,7 +1526,7 @@ suite =
             , test "Removing scans before 10:30am clears everything" <|
                 \() ->
                     { initModel | barcodeScannerData = barcodeScannerDataForEventStartTimeFiltering }
-                        |> update (FixMinorProblem (RemoveScansBeforeEventStart (baseEventStartTime + 90 * 60 * 1000)))
+                        |> update (FixProblem (RemoveScansBeforeEventStart (baseEventStartTime + 90 * 60 * 1000)))
                         |> Expect.all
                             (expectBarcodeScannerData
                                 { barcodeScannerDataForEventStartTimeFiltering
@@ -1559,7 +1559,7 @@ suite =
                             }
                     in
                     { initModel | barcodeScannerData = initialBarcodeScannerData }
-                        |> update (FixMinorProblem (RemoveScansBeforeEventStart (baseEventStartTime + 2 * 60 * 60 * 1000)))
+                        |> update (FixProblem (RemoveScansBeforeEventStart (baseEventStartTime + 2 * 60 * 60 * 1000)))
                         |> Expect.all
                             (expectBarcodeScannerData
                                 { initialBarcodeScannerData

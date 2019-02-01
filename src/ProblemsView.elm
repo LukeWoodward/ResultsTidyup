@@ -1,20 +1,20 @@
 module ProblemsView exposing (problemsView)
 
-import DataStructures exposing (MinorProblemFix(..))
+import DataStructures exposing (ProblemFix(..))
 import Html exposing (Html, button, div, h4, li, text, ul)
 import Html.Attributes exposing (class, type_)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg)
-import Problems exposing (MinorProblem(..), Problem, ProblemsContainer, problemToString)
+import Problems exposing (FixableProblem(..), Problem, ProblemsContainer, problemToString)
 
 
-majorProblemView : Problem -> Html Msg
-majorProblemView problem =
+nonFixableProblemView : Problem -> Html Msg
+nonFixableProblemView problem =
     li [] [ text (problemToString problem) ]
 
 
-majorProblemsView : List Problem -> Html Msg
-majorProblemsView problems =
+nonFixableProblemsView : List Problem -> Html Msg
+nonFixableProblemsView problems =
     if List.isEmpty problems then
         div [] []
 
@@ -30,13 +30,13 @@ majorProblemsView problems =
         in
         div [ class "alert alert-danger" ]
             [ h4 [] [ text problemsHeader ]
-            , ul [] (List.map majorProblemView problems)
+            , ul [] (List.map nonFixableProblemView problems)
             ]
 
 
-minorProblemView : MinorProblem -> Html Msg
-minorProblemView minorProblem =
-    case minorProblem of
+fixableProblemView : FixableProblem -> Html Msg
+fixableProblemView fixableProblem =
+    case fixableProblem of
         AthleteInSamePositionMultipleTimes athlete position ->
             li []
                 [ text "Athlete barcode "
@@ -47,7 +47,7 @@ minorProblemView minorProblem =
                 , button
                     [ type_ "button"
                     , class "btn btn-primary btn-sm"
-                    , onClick (Msg.FixMinorProblem (RemoveDuplicateScans position athlete))
+                    , onClick (Msg.FixProblem (RemoveDuplicateScans position athlete))
                     ]
                     [ text "Remove duplicates" ]
                 ]
@@ -62,7 +62,7 @@ minorProblemView minorProblem =
                 , button
                     [ type_ "button"
                     , class "btn btn-primary btn-sm"
-                    , onClick (Msg.FixMinorProblem (RemoveUnassociatedAthlete athlete))
+                    , onClick (Msg.FixProblem (RemoveUnassociatedAthlete athlete))
                     ]
                     [ text "Remove unassociated athlete barcode scan" ]
                 ]
@@ -77,7 +77,7 @@ minorProblemView minorProblem =
                 , button
                     [ type_ "button"
                     , class "btn btn-primary btn-sm"
-                    , onClick (Msg.FixMinorProblem (RemoveUnassociatedFinishToken position))
+                    , onClick (Msg.FixProblem (RemoveUnassociatedFinishToken position))
                     ]
                     [ text "Remove unassociated finish token scan" ]
                 ]
@@ -100,36 +100,36 @@ minorProblemView minorProblem =
                 , button
                     [ type_ "button"
                     , class "btn btn-primary btn-sm"
-                    , onClick (Msg.FixMinorProblem (RemoveScansBeforeEventStart eventStartTimeMillis))
+                    , onClick (Msg.FixProblem (RemoveScansBeforeEventStart eventStartTimeMillis))
                     ]
                     [ text "Remove barcodes scanned before event start" ]
                 ]
 
 
-minorProblemsView : List MinorProblem -> Html Msg
-minorProblemsView minorProblems =
-    if List.isEmpty minorProblems then
+fixableProblemsView : List FixableProblem -> Html Msg
+fixableProblemsView fixableProblems =
+    if List.isEmpty fixableProblems then
         div [] []
 
     else
         let
-            minorProblemsHeader : String
-            minorProblemsHeader =
-                if List.length minorProblems == 1 then
-                    "The following minor problem was found:"
+            fixableProblemsHeader : String
+            fixableProblemsHeader =
+                if List.length fixableProblems == 1 then
+                    "The following fixable problem was found:"
 
                 else
-                    "The following minor problems were found:"
+                    "The following fixable problems were found:"
         in
         div [ class "alert alert-warning" ]
-            [ h4 [] [ text minorProblemsHeader ]
-            , ul [] (List.map minorProblemView minorProblems)
+            [ h4 [] [ text fixableProblemsHeader ]
+            , ul [] (List.map fixableProblemView fixableProblems)
             ]
 
 
 problemsView : ProblemsContainer -> Html Msg
 problemsView problems =
     div []
-        [ majorProblemsView problems.problems
-        , minorProblemsView problems.minorProblems
+        [ nonFixableProblemsView problems.problems
+        , fixableProblemsView problems.fixableProblems
         ]

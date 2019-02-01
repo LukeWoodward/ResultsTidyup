@@ -15,7 +15,7 @@ import BarcodeScanner
         , regenerate
         )
 import Browser.Dom
-import DataStructures exposing (EventDateAndTime, InteropFile, MinorProblemFix(..), WhichStopwatch(..))
+import DataStructures exposing (EventDateAndTime, InteropFile, ProblemFix(..), WhichStopwatch(..))
 import DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart)
 import Dict
 import Error exposing (Error, FileError, mapError)
@@ -684,8 +684,8 @@ deleteDuplicateScansWithinFiles athlete position files =
         |> Tuple.first
 
 
-fixMinorProblem : MinorProblemFix -> Model -> Model
-fixMinorProblem minorProblemFix model =
+fixProblem : ProblemFix -> Model -> Model
+fixProblem problemFix model =
     let
         oldBarcodeScannerData : BarcodeScannerData
         oldBarcodeScannerData =
@@ -693,7 +693,7 @@ fixMinorProblem minorProblemFix model =
 
         newBarcodeScannerData : BarcodeScannerData
         newBarcodeScannerData =
-            case minorProblemFix of
+            case problemFix of
                 RemoveUnassociatedFinishToken position ->
                     regenerate
                         { oldBarcodeScannerData
@@ -863,8 +863,8 @@ update msg model =
         AddNumberCheckerRow ->
             addNumberCheckerRow model
 
-        FixMinorProblem minorProblemFix ->
-            ( fixMinorProblem minorProblemFix model, Cmd.none )
+        FixProblem problemFix ->
+            ( fixProblem problemFix model, Cmd.none )
 
         ChangeSecondTab newSecondTab ->
             ( { model | secondTab = newSecondTab }, Cmd.none )

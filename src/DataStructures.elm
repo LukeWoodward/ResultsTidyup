@@ -1,4 +1,4 @@
-module DataStructures exposing (EventDateAndTime, InteropFile, MinorProblemFix(..), SecondTab(..), WhichStopwatch(..))
+module DataStructures exposing (EventDateAndTime, InteropFile, ProblemFix(..), SecondTab(..), WhichStopwatch(..))
 
 import Time exposing (Posix)
 
@@ -27,7 +27,7 @@ type SecondTab
     | NumberCheckerTab
 
 
-type MinorProblemFix
+type ProblemFix
     = RemoveUnassociatedFinishToken Int
     | RemoveUnassociatedAthlete String
     | RemoveDuplicateScans Int String

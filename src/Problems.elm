@@ -1,4 +1,4 @@
-module Problems exposing (MinorProblem(..), Problem(..), ProblemsContainer, empty, identifyProblems, problemToString)
+module Problems exposing (FixableProblem(..), Problem(..), ProblemsContainer, empty, identifyProblems, problemToString)
 
 import BarcodeScanner exposing (BarcodeScannerData, MisScannedItem, UnrecognisedLine)
 import DataStructures exposing (EventDateAndTime)
@@ -21,7 +21,7 @@ type Problem
     | StopwatchesAndFinishTokensInconsistentWithNumberChecker
 
 
-type MinorProblem
+type FixableProblem
     = AthleteInSamePositionMultipleTimes String Int
     | AthleteWithAndWithoutPosition String Int
     | PositionWithAndWithoutAthlete Int String
@@ -30,7 +30,7 @@ type MinorProblem
 
 type alias ProblemsContainer =
     { problems : List Problem
-    , minorProblems : List MinorProblem
+    , fixableProblems : List FixableProblem
     }
 
 
@@ -198,10 +198,10 @@ identifyUnrecognisedBarcodeScannerLines unrecognisedLines =
         |> List.map UnrecognisedBarcodeScannerLine
 
 
-identifyDuplicateScans : Dict Int (List String) -> List MinorProblem
+identifyDuplicateScans : Dict Int (List String) -> List FixableProblem
 identifyDuplicateScans positionToAthletesDict =
     let
-        identifyDuplicates : ( Int, List String ) -> List MinorProblem
+        identifyDuplicates : ( Int, List String ) -> List FixableProblem
         identifyDuplicates ( position, athletes ) =
             repeatedItems athletes
                 |> List.map (\athlete -> AthleteInSamePositionMultipleTimes athlete position)
@@ -211,32 +211,32 @@ identifyDuplicateScans positionToAthletesDict =
         |> List.concatMap identifyDuplicates
 
 
-identifyAthletesWithAndWithoutPosition : Dict String (List Int) -> List String -> List MinorProblem
+identifyAthletesWithAndWithoutPosition : Dict String (List Int) -> List String -> List FixableProblem
 identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly =
     let
-        getMinorProblemIfSinglePosition : String -> Maybe MinorProblem
-        getMinorProblemIfSinglePosition athlete =
+        getFixableProblemIfSinglePosition : String -> Maybe FixableProblem
+        getFixableProblemIfSinglePosition athlete =
             Dict.get athlete athleteToPositionsDict
                 |> Maybe.andThen getSingleValue
                 |> Maybe.map (AthleteWithAndWithoutPosition athlete)
     in
-    List.filterMap getMinorProblemIfSinglePosition athleteBarcodesOnly
+    List.filterMap getFixableProblemIfSinglePosition athleteBarcodesOnly
 
 
-identifyPositionsWithAndWithoutAthlete : Dict Int (List String) -> List Int -> List MinorProblem
+identifyPositionsWithAndWithoutAthlete : Dict Int (List String) -> List Int -> List FixableProblem
 identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly =
     let
-        getMinorProblemIfSingleAthlete : Int -> Maybe MinorProblem
-        getMinorProblemIfSingleAthlete position =
+        getFixableProblemIfSingleAthlete : Int -> Maybe FixableProblem
+        getFixableProblemIfSingleAthlete position =
             Dict.get position positionToAthletesDict
                 |> Maybe.andThen getSingleValue
                 |> Maybe.map (PositionWithAndWithoutAthlete position)
     in
     finishTokensOnly
-        |> List.filterMap getMinorProblemIfSingleAthlete
+        |> List.filterMap getFixableProblemIfSingleAthlete
 
 
-identifyRecordsScannedBeforeEventStartTime : BarcodeScannerData -> String -> Int -> List MinorProblem
+identifyRecordsScannedBeforeEventStartTime : BarcodeScannerData -> String -> Int -> List FixableProblem
 identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString eventStartTimeMillis =
     let
         countDatesBeforeEventStart : List String -> Int
@@ -319,8 +319,8 @@ identifyProblems stopwatches barcodeScannerData eventDateAndTime =
             , identifyUnrecognisedBarcodeScannerLines barcodeScannerData.unrecognisedLines
             ]
 
-        allMinorProblems : List (List MinorProblem)
-        allMinorProblems =
+        allFixableProblems : List (List FixableProblem)
+        allFixableProblems =
             [ identifyDuplicateScans positionToAthletesDict
             , identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly
             , identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly
@@ -329,7 +329,7 @@ identifyProblems stopwatches barcodeScannerData eventDateAndTime =
             ]
     in
     { problems = List.concat allProblems
-    , minorProblems = List.concat allMinorProblems
+    , fixableProblems = List.concat allFixableProblems
     }
 
 
