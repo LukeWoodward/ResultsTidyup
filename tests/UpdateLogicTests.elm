@@ -31,7 +31,7 @@ import Stopwatch exposing (Stopwatch(..))
 import StopwatchTests
 import Test exposing (Test, describe, test)
 import Time
-import UpdateLogic exposing (createBarcodeScannerFileForDownload, createStopwatchFileForDownload, update)
+import UpdateLogic exposing (createStopwatchFileForDownload, update)
 
 
 expectNoCommand : ( Model, Cmd Msg ) -> Expectation
@@ -807,17 +807,6 @@ suite =
                                 :: defaultAssertionsExcept [ Stopwatches ]
                             )
             ]
-        , describe "Clear Barcode Scanner Data tests"
-            [ test "Clearing barcode scanner data when none to clear does nothing" <|
-                \() ->
-                    update ClearBarcodeScannerData initModel
-                        |> Expect.all defaultAssertions
-            , test "Clearing barcode scanner data when some to clear clears it" <|
-                \() ->
-                    { initModel | barcodeScannerData = createBarcodeScannerData (Dict.singleton 47 [ "A4580484" ]) [ "A123456" ] [ 11 ] }
-                        |> update ClearBarcodeScannerData
-                        |> Expect.all defaultAssertions
-            ]
         , describe "Clear All Data tests"
             [ test "Clearing all data when nothing to clear does nothing" <|
                 \() ->
@@ -883,20 +872,6 @@ suite =
                                 :: defaultAssertionsExcept [ Stopwatches, Command ]
                             )
             ]
-        , describe "Download barcode scanner data tests"
-            [ test "Can download barcode scanner data" <|
-                \() ->
-                    initModel
-                        |> update (FilesDropped [ InteropFile "barcodes1.txt" validBarcodeScannerData1 ])
-                        |> Tuple.first
-                        |> update (DownloadBarcodeScannerData Time.utc recentTime)
-                        |> Expect.all
-                            (expectACommand
-                                :: expectEventDateAndTime (EventDateAndTime "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z") "" Nothing)
-                                :: expectBarcodeScannerData parsedBarcodeScannerData1
-                                :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, EventDateAndTimeAssertion, Command ]
-                            )
-            ]
         , describe "Create stopwatch file for download tests"
             [ test "Can create a stopwatch file for download" <|
                 \() ->
@@ -916,19 +891,6 @@ suite =
 
                         _ ->
                             Expect.fail ("Expected merged data from two stopwatches, got '" ++ Debug.toString model.stopwatches ++ "' instead.")
-            ]
-        , describe "Create barcode scanner file for download tests"
-            [ test "Can create a barcode scanner file for download" <|
-                \() ->
-                    let
-                        model : Model
-                        model =
-                            initModel
-                                |> update (FilesDropped [ InteropFile "barcodes1.txt" validBarcodeScannerData1 ])
-                                |> Tuple.first
-                    in
-                    createBarcodeScannerFileForDownload Time.utc recentTime model.barcodeScannerData
-                        |> Expect.equal (InteropFile "parkrun_barcode_14072017024000.txt" validBarcodeScannerData1)
             ]
         , describe "Container height changed tests"
             [ test "Can update the container height" <|

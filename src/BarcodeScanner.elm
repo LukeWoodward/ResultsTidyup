@@ -16,7 +16,6 @@ module BarcodeScanner exposing
     , mergeScannerData
     , readBarcodeScannerData
     , regenerate
-    , toDownloadText
     )
 
 import DateHandling exposing (dateStringToPosix)
@@ -464,49 +463,4 @@ generateDownloadText file =
     file.lines
         |> List.filter notDeleted
         |> List.map lineToString
-        |> String.join ""
-
-
-toDownloadText : BarcodeScannerData -> String
-toDownloadText barcodeScannerData =
-    let
-        scannedBarcodeItems : List TimedItem
-        scannedBarcodeItems =
-            Dict.toList barcodeScannerData.scannedBarcodes
-                |> List.map formatAthleteEntries
-                |> List.concat
-
-        athleteBarcodeOnlyItems : List TimedItem
-        athleteBarcodeOnlyItems =
-            List.map
-                (\athleteAndTimePair ->
-                    TimedItem
-                        (athleteAndTimePair.athlete ++ ",," ++ athleteAndTimePair.scanTime)
-                        (toScanTimeMillis athleteAndTimePair)
-                )
-                barcodeScannerData.athleteBarcodesOnly
-
-        finishTokensOnlyItems : List TimedItem
-        finishTokensOnlyItems =
-            List.map
-                (\positionAndTimePair ->
-                    TimedItem
-                        ("," ++ formatPosition positionAndTimePair.position ++ "," ++ positionAndTimePair.scanTime)
-                        (toScanTimeMillis positionAndTimePair)
-                )
-                barcodeScannerData.finishTokensOnly
-
-        misScanItems : List TimedItem
-        misScanItems =
-            List.map
-                (\misScanItem ->
-                    TimedItem
-                        (misScanItem.scannedText ++ "," ++ misScanItem.scanTime)
-                        (toScanTimeMillis misScanItem)
-                )
-                barcodeScannerData.misScannedItems
-    in
-    List.concat [ scannedBarcodeItems, athleteBarcodeOnlyItems, finishTokensOnlyItems, misScanItems ]
-        |> List.sortBy .time
-        |> List.map (\item -> item.line ++ crlf)
         |> String.join ""

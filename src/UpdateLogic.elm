@@ -1,4 +1,4 @@
-module UpdateLogic exposing (createBarcodeScannerFileForDownload, createStopwatchFileForDownload, update)
+module UpdateLogic exposing (createStopwatchFileForDownload, update)
 
 import BarcodeScanner
     exposing
@@ -382,11 +382,6 @@ flipStopwatches model =
             }
 
 
-clearBarcodeScannerData : Model -> Model
-clearBarcodeScannerData model =
-    identifyProblemsIn { model | barcodeScannerData = BarcodeScanner.empty }
-
-
 clearAllData : Model -> Model
 clearAllData model =
     { initModel
@@ -409,20 +404,6 @@ createStopwatchFileForDownload zone time mergedTableRows =
     InteropFile fileName fileContents
 
 
-createBarcodeScannerFileForDownload : Zone -> Posix -> BarcodeScannerData -> InteropFile
-createBarcodeScannerFileForDownload zone time barcodeScannerData =
-    let
-        fileContents : String
-        fileContents =
-            BarcodeScanner.toDownloadText barcodeScannerData
-
-        fileName : String
-        fileName =
-            "parkrun_barcode_" ++ generateDownloadFilenameDatePart zone time ++ ".txt"
-    in
-    InteropFile fileName fileContents
-
-
 downloadFile : InteropFile -> Cmd Msg
 downloadFile interopFile =
     Download.string interopFile.fileName "text/csv" interopFile.fileText
@@ -440,12 +421,6 @@ downloadMergedStopwatchDataCommand zone time model =
         Double _ _ mergedTableRows ->
             createStopwatchFileForDownload zone time mergedTableRows
                 |> downloadFile
-
-
-downloadBarcodeScannerDataCommand : Zone -> Posix -> Model -> Cmd Msg
-downloadBarcodeScannerDataCommand zone time model =
-    createBarcodeScannerFileForDownload zone time model.barcodeScannerData
-        |> downloadFile
 
 
 handleFileDropped : InteropFile -> Model -> Model
@@ -814,9 +789,6 @@ update msg model =
         FlipStopwatches ->
             ( flipStopwatches model, Cmd.none )
 
-        ClearBarcodeScannerData ->
-            ( clearBarcodeScannerData model, Cmd.none )
-
         ClearAllData ->
             ( clearAllData model, Cmd.none )
 
@@ -827,9 +799,6 @@ update msg model =
 
         DownloadMergedStopwatchData zone time ->
             ( model, downloadMergedStopwatchDataCommand zone time model )
-
-        DownloadBarcodeScannerData zone time ->
-            ( model, downloadBarcodeScannerDataCommand zone time model )
 
         ContainerHeightChanged newHeight ->
             ( { model | lastHeight = Just newHeight }, Cmd.none )

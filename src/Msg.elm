@@ -16,11 +16,9 @@ type Msg
     | ToggleTableRow Int
     | DeleteStopwatch WhichStopwatch
     | FlipStopwatches
-    | ClearBarcodeScannerData
     | ClearAllData
     | GetCurrentDateForDownloadFile (Zone -> Posix -> Msg)
     | DownloadMergedStopwatchData Zone Posix
-    | DownloadBarcodeScannerData Zone Posix
     | ContainerHeightChanged Int
     | MouseEnterNumberCheckerRow Int
     | MouseLeaveNumberCheckerRow Int

@@ -154,14 +154,6 @@ deleteStopwatchButton which =
         }
 
 
-clearBarcodeScannerButton : Maybe TableHeaderButton
-clearBarcodeScannerButton =
-    Just
-        { change = ClearBarcodeScannerData
-        , buttonText = "Clear"
-        }
-
-
 stopwatchInfoMessage : Stopwatches -> Html a
 stopwatchInfoMessage stopwatches =
     let
@@ -299,7 +291,7 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                     [ class "table table-condensed table-bordered stopwatch-times" ]
                     [ tableHeadersWithButtons
                         [ TableHeaderWithButton "Position" Nothing
-                        , TableHeaderWithButton "Athletes" clearBarcodeScannerButton
+                        , TableHeaderWithButton "Athletes" Nothing
                         ]
                     , noStopwatchTableBody barcodeScannerData
                     ]
@@ -310,7 +302,7 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                 [ tableHeadersWithButtons
                     [ TableHeaderWithButton "Position" Nothing
                     , TableHeaderWithButton "Stopwatch 1" (deleteStopwatchButton StopwatchOne)
-                    , TableHeaderWithButton "Athletes" clearBarcodeScannerButton
+                    , TableHeaderWithButton "Athletes" Nothing
                     ]
                 , singleStopwatchTableBody stopwatchTimes barcodeScannerData
                 ]
@@ -322,7 +314,7 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                     [ TableHeaderWithButton "Position" Nothing
                     , TableHeaderWithButton "Stopwatch 1" (deleteStopwatchButton StopwatchOne)
                     , TableHeaderWithButton "Stopwatch 2" (deleteStopwatchButton StopwatchTwo)
-                    , TableHeaderWithButton "Athletes" clearBarcodeScannerButton
+                    , TableHeaderWithButton "Athletes" Nothing
                     ]
                 , mergedTableBody highlightedNumberCheckerId barcodeScannerData mergedTable
                 ]
@@ -355,16 +347,6 @@ stopwatchButtonsContent stopwatches =
                 [ text "Download"
                 , br [] []
                 , small [] [ text "merged times" ]
-                ]
-            , br [] []
-            , br [] []
-            , button
-                [ class "btn btn-primary btn-large"
-                , onClick (GetCurrentDateForDownloadFile DownloadBarcodeScannerData)
-                ]
-                [ text "Download"
-                , br [] []
-                , small [] [ text "all barcodes" ]
                 ]
             , br [] []
             , br [] []
