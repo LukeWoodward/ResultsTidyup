@@ -1,10 +1,14 @@
 module EventDateAndTimeView exposing (eventDateAndTimeView)
 
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
+import Bootstrap.Grid.Row as Row
 import DataStructures exposing (EventDateAndTime)
 import Html exposing (Html, button, div, h3, input, label, text)
 import Html.Attributes exposing (class, for, id, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Msg exposing (Msg(..))
+import ViewCommon exposing (smallButton)
 
 
 defaultEventTimes : List String
@@ -14,12 +18,7 @@ defaultEventTimes =
 
 eventTimeButton : String -> Html Msg
 eventTimeButton time =
-    button
-        [ type_ "button"
-        , class "btn btn-primary btn-xs event-time-button"
-        , onClick (EventTimeChanged time)
-        ]
-        [ text time ]
+    smallButton (EventTimeChanged time) [ class "event-time-button" ] time
 
 
 eventDateAndTimeView : EventDateAndTime -> Html Msg
@@ -42,12 +41,15 @@ eventDateAndTimeView eventDateAndTime =
                 "form-control"
     in
     div
-        [ class "form-horizontal" ]
+        []
         [ h3 []
             [ text "Date/time" ]
-        , div [ class "form-group" ]
-            [ label [ for "eventDateBox", class "col-xs-1 control-label" ] [ text "Date: " ]
-            , div [ class "col-xs-11" ]
+        , Grid.row [ Row.attrs [ class "col-form-label" ] ]
+            [ Grid.col
+                [ Col.xs1 ]
+                [ label [ for "eventDateBox", class "col-form-label" ] [ text "Date: " ] ]
+            , Grid.col
+                [ Col.xs5 ]
                 [ input
                     [ type_ "text"
                     , id "eventDateBox"
@@ -58,9 +60,12 @@ eventDateAndTimeView eventDateAndTime =
                     []
                 ]
             ]
-        , div [ class "form-group" ]
-            [ label [ for "eventTimeBox", class "col-xs-1 control-label" ] [ text "Time: " ]
-            , div [ class "col-xs-11" ]
+        , Grid.row [ Row.attrs [ class "col-form-label" ] ]
+            [ Grid.col
+                [ Col.xs1 ]
+                [ label [ for "eventTimeBox", class "col-form-label" ] [ text "Time: " ] ]
+            , Grid.col
+                [ Col.xs11 ]
                 (input
                     [ type_ "text"
                     , id "eventTimeBox"

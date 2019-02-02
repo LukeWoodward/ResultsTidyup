@@ -1,13 +1,15 @@
 module NumberCheckerView exposing (numberCheckerView)
 
-import Html exposing (Attribute, Html, button, div, h3, input, table, tbody, td, text, tr)
+import Bootstrap.Button as Button
+import Bootstrap.Table as Table
+import Html exposing (Attribute, Html, div, h3, input, text)
 import Html.Attributes exposing (class, colspan, disabled, id, type_, value)
 import Html.Events exposing (keyCode, on, onClick, onInput, onMouseEnter, onMouseLeave)
 import Json.Decode as Json
 import Model exposing (NumberCheckerManualEntryRow, NumericEntry)
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
-import ViewCommon exposing (intCell, tableHeaders)
+import ViewCommon exposing (intCell, smallButton, tableHeaders)
 
 
 onEnterKeypress : Msg -> Attribute Msg
@@ -23,29 +25,19 @@ onEnterKeypress msg =
     on "keydown" (Json.andThen isEnter keyCode)
 
 
-actionButtonsCell : Int -> Html Msg
+actionButtonsCell : Int -> Table.Cell Msg
 actionButtonsCell entryNumber =
-    td
-        [ class "delete-button-cell" ]
-        [ button
-            [ type_ "button"
-            , class "btn btn-primary btn-xs number-checker-command"
-            , onClick (EditNumberCheckerRow entryNumber)
-            ]
-            [ text "Edit" ]
-        , button
-            [ type_ "button"
-            , class "btn btn-primary btn-xs number-checker-command"
-            , onClick (DeleteNumberCheckerRow entryNumber)
-            ]
-            [ text "Delete" ]
+    Table.td
+        [ Table.cellAttr (class "delete-button-cell") ]
+        [ smallButton (EditNumberCheckerRow entryNumber) [ class "number-checker-command" ] "Edit"
+        , smallButton (DeleteNumberCheckerRow entryNumber) [ class "number-checker-command" ] "Delete"
         ]
 
 
-deltaCell : Int -> Html a
+deltaCell : Int -> Table.Cell a
 deltaCell delta =
     if delta == 0 then
-        td [ class "zero-delta" ] [ text "0" ]
+        Table.td [ Table.cellAttr (class "zero-delta") ] [ text "0" ]
 
     else
         let
@@ -57,7 +49,7 @@ deltaCell delta =
                 else
                     "−" ++ String.fromInt -delta
         in
-        td [ class "nonzero-delta" ] [ text stringDelta ]
+        Table.td [ Table.cellAttr (class "nonzero-delta") ] [ text stringDelta ]
 
 
 numberCheckerUnderlineClass : Int -> Maybe Int -> String
@@ -90,11 +82,11 @@ numberCheckerUnderlineAttributes className numberCheckerId highlightedNumberChec
             []
 
 
-numberCheckerRow : AnnotatedNumberCheckerEntry -> Html Msg
+numberCheckerRow : AnnotatedNumberCheckerEntry -> Table.Row Msg
 numberCheckerRow entry =
-    tr
-        [ onMouseEnter (MouseEnterNumberCheckerRow entry.entryNumber)
-        , onMouseLeave (MouseLeaveNumberCheckerRow entry.entryNumber)
+    Table.tr
+        [ Table.rowAttr (onMouseEnter (MouseEnterNumberCheckerRow entry.entryNumber))
+        , Table.rowAttr (onMouseLeave (MouseLeaveNumberCheckerRow entry.entryNumber))
         ]
         [ intCell entry.stopwatch1
         , deltaCell entry.stopwatch1Delta
@@ -122,10 +114,10 @@ isManualEntryAddButtonDisabled manualEntryRow =
         || (manualEntryRow.finishTokens.parsedValue == Nothing)
 
 
-enterNewRow : NumberCheckerManualEntryRow -> Html Msg
+enterNewRow : NumberCheckerManualEntryRow -> Table.Row Msg
 enterNewRow manualEntryRow =
-    tr [ class "number-checker-manual-entry-row" ]
-        [ td [ colspan 2 ]
+    Table.tr [ Table.rowAttr (class "number-checker-manual-entry-row") ]
+        [ Table.td [ Table.cellAttr (colspan 2) ]
             [ input
                 [ type_ "text"
                 , id "number-checker-stopwatch-1"
@@ -136,7 +128,7 @@ enterNewRow manualEntryRow =
                 ]
                 []
             ]
-        , td [ colspan 2 ]
+        , Table.td [ Table.cellAttr (colspan 2) ]
             [ input
                 [ type_ "text"
                 , class (manualEntryFieldClass manualEntryRow.stopwatch2)
@@ -146,7 +138,7 @@ enterNewRow manualEntryRow =
                 ]
                 []
             ]
-        , td [ colspan 2 ]
+        , Table.td [ Table.cellAttr (colspan 2) ]
             [ input
                 [ type_ "text"
                 , class (manualEntryFieldClass manualEntryRow.finishTokens)
@@ -156,14 +148,13 @@ enterNewRow manualEntryRow =
                 ]
                 []
             ]
-        , td []
-            [ button
-                [ type_ "button"
-                , class "btn btn-primary btn-xs"
+        , Table.td []
+            [ smallButton
+                AddNumberCheckerRow
+                [ class "number-checker-command"
                 , disabled (isManualEntryAddButtonDisabled manualEntryRow)
-                , onClick AddNumberCheckerRow
                 ]
-                [ text "Add" ]
+                "Add"
             ]
         ]
 
@@ -171,11 +162,11 @@ enterNewRow manualEntryRow =
 numberCheckerTable : List AnnotatedNumberCheckerEntry -> NumberCheckerManualEntryRow -> Html Msg
 numberCheckerTable entries manualEntryRow =
     let
-        emptyRows : List (Html Msg)
+        emptyRows : List (Table.Row Msg)
         emptyRows =
             if List.isEmpty entries then
-                [ tr []
-                    [ td [ colspan 7 ]
+                [ Table.tr []
+                    [ Table.td [ Table.cellAttr (colspan 7) ]
                         [ div [ class "no-number-checker-entries" ]
                             [ text "No number-checker data has been loaded." ]
                         ]
@@ -185,13 +176,14 @@ numberCheckerTable entries manualEntryRow =
             else
                 []
     in
-    table
-        [ class "table table-bordered table-hover number-checker-table" ]
-        [ tableHeaders [ "Stopwatch 1", "+/−", "Stopwatch 2", "+/−", "Finish tokens", "+/−", "" ]
-        , tbody
-            []
-            (emptyRows ++ List.map numberCheckerRow entries ++ [ enterNewRow manualEntryRow ])
-        ]
+    Table.table
+        { options = [ Table.bordered, Table.small, Table.hover, Table.attr (class "number-checker-table") ]
+        , thead = tableHeaders [ "Stopwatch 1", "+/−", "Stopwatch 2", "+/−", "Finish tokens", "+/−", "" ]
+        , tbody =
+            Table.tbody
+                []
+                (emptyRows ++ List.map numberCheckerRow entries ++ [ enterNewRow manualEntryRow ])
+        }
 
 
 numberCheckerView : List AnnotatedNumberCheckerEntry -> NumberCheckerManualEntryRow -> Maybe Int -> Html Msg

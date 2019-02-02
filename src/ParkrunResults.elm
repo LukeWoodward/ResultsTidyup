@@ -2,6 +2,10 @@ module ParkrunResults exposing (main)
 
 import BarcodeScanner exposing (BarcodeScannerData)
 import BarcodeScannerView exposing (barcodeScannersView)
+import Bootstrap.Alert as Alert
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
+import Bootstrap.Grid.Row as Row
 import Browser
 import DataStructures exposing (EventDateAndTime, SecondTab(..))
 import Error exposing (FileError)
@@ -19,11 +23,6 @@ import ProblemsView exposing (problemsView)
 import StopwatchesView exposing (stopwatchesView)
 import TimeHandling exposing (formatHoursAndMinutes)
 import UpdateLogic exposing (update)
-
-
-role : String -> Html.Attribute Msg
-role =
-    attribute "role"
 
 
 main : Program (Maybe Int) Model Msg
@@ -70,7 +69,8 @@ errorsView errors =
         text ""
 
     else
-        div [ class "alert alert-danger" ]
+        Alert.simpleDanger
+            []
             (span [ class "close", onClick ClearErrors ] [ text "×" ]
                 :: List.map errorView errors
             )
@@ -89,10 +89,10 @@ getHeightAttribute lastHeight =
 classAttributes : SecondTab -> SecondTab -> List (Html.Attribute Msg)
 classAttributes wantedTab actualTab =
     if wantedTab == actualTab then
-        [ class "active" ]
+        [ class "nav-link active" ]
 
     else
-        []
+        [ class "nav-link" ]
 
 
 view : Model -> Html Msg
@@ -101,24 +101,22 @@ view model =
         []
         [ h1 [ id "header" ] [ text "Parkrun results tidyup" ]
         , errorsView model.lastErrors
-        , div [ class "row" ]
-            [ div (class "col-xs-6" :: getHeightAttribute model.lastHeight)
+        , Grid.row []
+            [ Grid.col [ Col.xs6 ]
                 [ eventDateAndTimeView model.eventDateAndTime
                 , stopwatchesView model.stopwatches model.barcodeScannerData model.lastHeight model.highlightedNumberCheckerId
                 ]
-            , div (class "col-xs-6" :: getHeightAttribute model.lastHeight)
+            , Grid.col [ Col.xs6 ]
                 [ problemsView model.problems
                 , ul
                     [ class "nav nav-tabs" ]
                     [ li
-                        (role "presentation"
-                            :: onClick (ChangeSecondTab BarcodeScannersTab)
+                        (onClick (ChangeSecondTab BarcodeScannersTab)
                             :: classAttributes BarcodeScannersTab model.secondTab
                         )
                         [ a [ href "#" ] [ text "Barcode scanners" ] ]
                     , li
-                        (role "presentation"
-                            :: onClick (ChangeSecondTab NumberCheckerTab)
+                        (onClick (ChangeSecondTab NumberCheckerTab)
                             :: classAttributes NumberCheckerTab model.secondTab
                         )
                         [ a [ href "#" ] [ text "Number checker" ] ]

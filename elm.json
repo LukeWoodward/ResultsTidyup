@@ -16,9 +16,11 @@
             "elm/time": "1.0.0",
             "elm-community/maybe-extra": "5.0.0",
             "elm-community/result-extra": "2.2.1",
-            "rtfeldman/elm-iso8601-date-strings": "1.1.2"
+            "rtfeldman/elm-iso8601-date-strings": "1.1.2",
+            "rundis/elm-bootstrap": "5.1.0"
         },
         "indirect": {
+            "avh4/elm-color": "1.0.0",
             "elm/bytes": "1.0.7",
             "elm/url": "1.0.0",
             "elm/virtual-dom": "1.0.2"

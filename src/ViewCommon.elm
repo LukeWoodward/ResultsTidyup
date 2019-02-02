@@ -1,28 +1,37 @@
-module ViewCommon exposing (intCell, plainCell, tableHeaders)
+module ViewCommon exposing (intCell, plainCell, smallButton, tableHeaders)
 
-import Html exposing (Html, td, text, th, thead, tr)
+import Bootstrap.Button as Button
+import Bootstrap.Table as Table
+import Html exposing (Html, text)
+import Msg exposing (Msg)
 
 
-plainCell : String -> Html a
+plainCell : String -> Table.Cell a
 plainCell contents =
-    td [] [ text contents ]
+    Table.td [] [ text contents ]
 
 
-intCell : Int -> Html a
+intCell : Int -> Table.Cell a
 intCell contents =
     plainCell (String.fromInt contents)
 
 
-tableHeader : String -> Html a
+tableHeader : String -> Table.Cell a
 tableHeader headerText =
-    th [] [ text headerText ]
+    Table.th [] [ text headerText ]
 
 
-tableHeaders : List String -> Html a
+tableHeaders : List String -> Table.THead a
 tableHeaders headerTexts =
-    thead
-        []
-        [ tr
-            []
-            (List.map tableHeader headerTexts)
+    Table.simpleThead (List.map tableHeader headerTexts)
+
+
+smallButton : Msg -> List (Html.Attribute Msg) -> String -> Html Msg
+smallButton msg attributes contents =
+    Button.button
+        [ Button.primary
+        , Button.small
+        , Button.attrs attributes
+        , Button.onClick msg
         ]
+        [ text contents ]

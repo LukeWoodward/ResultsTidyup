@@ -1,21 +1,28 @@
 module StopwatchesView exposing (stopwatchesView)
 
 import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, isEmpty, maxFinishToken)
+import Bootstrap.Alert as Alert
+import Bootstrap.Table as Table
 import DataStructures exposing (WhichStopwatch(..))
 import Dict exposing (Dict)
-import Html exposing (Html, a, br, button, div, h3, input, label, small, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, a, br, button, div, h3, input, label, small, text)
 import Html.Attributes exposing (checked, class, for, href, id, rel, target, type_)
 import Html.Events exposing (onClick)
 import MergedTable exposing (MergedTableRow, Stopwatches(..))
 import Merger exposing (MergeEntry(..))
 import Msg exposing (Msg(..))
 import TimeHandling exposing (formatTime)
-import ViewCommon exposing (intCell, plainCell)
+import ViewCommon exposing (intCell, plainCell, smallButton)
 
 
 parkrunUrlResultsPrefix : String
 parkrunUrlResultsPrefix =
     "http://www.parkrun.org.uk/results/athleteresultshistory/?athleteNumber="
+
+
+tableOptions : List (Table.TableOption a)
+tableOptions =
+    [ Table.small, Table.bordered, Table.attr (class "stopwatch-times") ]
 
 
 type alias TableHeaderButton =
@@ -30,11 +37,11 @@ type alias TableHeaderWithButton =
     }
 
 
-barcodeScannerCell : BarcodeScannerData -> Int -> Maybe Int -> Maybe Int -> Html a
+barcodeScannerCell : BarcodeScannerData -> Int -> Maybe Int -> Maybe Int -> Table.Cell a
 barcodeScannerCell barcodeScannerData position numberCheckerId highlightedNumberCheckerId =
     case Dict.get position barcodeScannerData.scannedBarcodes of
         Just athleteAndTimePairs ->
-            td
+            Table.td
                 (numberCheckerUnderlineAttributes (Just "scanned-athlete") numberCheckerId highlightedNumberCheckerId)
                 (List.map athleteItem athleteAndTimePairs)
 
@@ -42,19 +49,19 @@ barcodeScannerCell barcodeScannerData position numberCheckerId highlightedNumber
             emptyBarcodeScannerCell numberCheckerId highlightedNumberCheckerId
 
 
-cell : String -> Maybe Int -> Maybe Int -> Html a
+cell : String -> Maybe Int -> Maybe Int -> Table.Cell a
 cell contents numberCheckerId highlightedNumberCheckerId =
-    td (numberCheckerUnderlineAttributes Nothing numberCheckerId highlightedNumberCheckerId) [ text contents ]
+    Table.td (numberCheckerUnderlineAttributes Nothing numberCheckerId highlightedNumberCheckerId) [ text contents ]
 
 
-timeCell : String -> Int -> Maybe Int -> Maybe Int -> Html a
+timeCell : String -> Int -> Maybe Int -> Maybe Int -> Table.Cell a
 timeCell className time numberCheckerId highlightedNumberCheckerId =
-    td (numberCheckerUnderlineAttributes (Just className) numberCheckerId highlightedNumberCheckerId) [ text (formatTime time) ]
+    Table.td (numberCheckerUnderlineAttributes (Just className) numberCheckerId highlightedNumberCheckerId) [ text (formatTime time) ]
 
 
-emptyBarcodeScannerCell : Maybe Int -> Maybe Int -> Html a
+emptyBarcodeScannerCell : Maybe Int -> Maybe Int -> Table.Cell a
 emptyBarcodeScannerCell maybeNumberCheckerId highlightedNumberCheckerId =
-    td (numberCheckerUnderlineAttributes (Just "no-scanned-athlete") maybeNumberCheckerId highlightedNumberCheckerId) [ text "−" ]
+    Table.td (numberCheckerUnderlineAttributes (Just "no-scanned-athlete") maybeNumberCheckerId highlightedNumberCheckerId) [ text "−" ]
 
 
 athleteItem : AthleteAndTimePair -> Html a
@@ -74,12 +81,12 @@ athleteItem athleteAndTimePair =
         ]
 
 
-emptyNumberCell : Html a
+emptyNumberCell : Table.Cell a
 emptyNumberCell =
-    td [ class "empty-cell" ] [ text "–" ]
+    Table.td [ Table.cellAttr (class "empty-cell") ] [ text "–" ]
 
 
-checkboxCell : Int -> Int -> Bool -> Maybe Int -> Maybe Int -> Html Msg
+checkboxCell : Int -> Int -> Bool -> Maybe Int -> Maybe Int -> Table.Cell Msg
 checkboxCell time index included numberCheckerId highlightedNumberCheckerId =
     let
         idText : String
@@ -94,7 +101,7 @@ checkboxCell time index included numberCheckerId highlightedNumberCheckerId =
             else
                 "stopwatch-time-label excluded"
     in
-    td
+    Table.td
         (numberCheckerUnderlineAttributes (Just "mismatch") numberCheckerId highlightedNumberCheckerId)
         [ input
             [ type_ "checkbox"
@@ -111,7 +118,7 @@ checkboxCell time index included numberCheckerId highlightedNumberCheckerId =
         ]
 
 
-tableHeaderWithButtons : TableHeaderWithButton -> Html Msg
+tableHeaderWithButtons : TableHeaderWithButton -> Table.Cell Msg
 tableHeaderWithButtons { headerText, buttonData } =
     let
         textElement : Html Msg
@@ -120,30 +127,20 @@ tableHeaderWithButtons { headerText, buttonData } =
     in
     case buttonData of
         Just { change, buttonText } ->
-            th
-                [ class "stopwatch-header" ]
-                [ button
-                    [ type_ "button"
-                    , onClick change
-                    , class "btn btn-primary btn-xs"
-                    ]
-                    [ text buttonText ]
+            Table.th
+                [ Table.cellAttr (class "stopwatch-header") ]
+                [ smallButton change [] buttonText
                 , br [] []
                 , textElement
                 ]
 
         Nothing ->
-            th [] [ textElement ]
+            Table.th [] [ textElement ]
 
 
-tableHeadersWithButtons : List TableHeaderWithButton -> Html Msg
+tableHeadersWithButtons : List TableHeaderWithButton -> Table.THead Msg
 tableHeadersWithButtons headerTexts =
-    thead
-        []
-        [ tr
-            []
-            (List.map tableHeaderWithButtons headerTexts)
-        ]
+    Table.simpleThead (List.map tableHeaderWithButtons headerTexts)
 
 
 deleteStopwatchButton : WhichStopwatch -> Maybe TableHeaderButton
@@ -171,8 +168,7 @@ stopwatchInfoMessage stopwatches =
     in
     case message of
         Just messageText ->
-            div [ class "alert alert-info" ]
-                [ text messageText ]
+            Alert.simpleInfo [] [ text messageText ]
 
         Nothing ->
             text ""
@@ -192,35 +188,35 @@ numberCheckerUnderlineClass numberCheckerId highlightedNumberCheckerId =
     highlightClassPrefix ++ "underlined number-checker-row-" ++ String.fromInt numberCheckerId
 
 
-numberCheckerUnderlineAttributes : Maybe String -> Maybe Int -> Maybe Int -> List (Html.Attribute a)
+numberCheckerUnderlineAttributes : Maybe String -> Maybe Int -> Maybe Int -> List (Table.CellOption a)
 numberCheckerUnderlineAttributes className numberCheckerId highlightedNumberCheckerId =
     case ( className, numberCheckerId ) of
         ( Just someClass, Just someNumberCheckerId ) ->
-            [ class (someClass ++ " " ++ numberCheckerUnderlineClass someNumberCheckerId highlightedNumberCheckerId) ]
+            [ Table.cellAttr (class (someClass ++ " " ++ numberCheckerUnderlineClass someNumberCheckerId highlightedNumberCheckerId)) ]
 
         ( Nothing, Just someNumberCheckerId ) ->
-            [ class (numberCheckerUnderlineClass someNumberCheckerId highlightedNumberCheckerId) ]
+            [ Table.cellAttr (class (numberCheckerUnderlineClass someNumberCheckerId highlightedNumberCheckerId)) ]
 
         ( Just someClass, Nothing ) ->
-            [ class someClass ]
+            [ Table.cellAttr (class someClass) ]
 
         ( Nothing, Nothing ) ->
             []
 
 
-rowWithNoStopwatchTime : BarcodeScannerData -> Int -> Int -> Html Msg
+rowWithNoStopwatchTime : BarcodeScannerData -> Int -> Int -> Table.Row Msg
 rowWithNoStopwatchTime barcodeScannerData blankTimeColumns position =
     let
-        cells : List (Html Msg)
+        cells : List (Table.Cell Msg)
         cells =
             [ intCell position ]
                 ++ List.repeat blankTimeColumns (plainCell "")
                 ++ [ barcodeScannerCell barcodeScannerData position Nothing Nothing ]
     in
-    tr [] cells
+    Table.tr [] cells
 
 
-noStopwatchTableBody : BarcodeScannerData -> Html Msg
+noStopwatchTableBody : BarcodeScannerData -> Table.TBody Msg
 noStopwatchTableBody barcodeScannerData =
     let
         maxPosition : Int
@@ -230,10 +226,10 @@ noStopwatchTableBody barcodeScannerData =
     in
     List.range 1 maxPosition
         |> List.map (rowWithNoStopwatchTime barcodeScannerData 0)
-        |> tbody []
+        |> Table.tbody []
 
 
-singleStopwatchTableBody : List Int -> BarcodeScannerData -> Html Msg
+singleStopwatchTableBody : List Int -> BarcodeScannerData -> Table.TBody Msg
 singleStopwatchTableBody stopwatchTimes barcodeScannerData =
     let
         maxPosition : Int
@@ -241,19 +237,19 @@ singleStopwatchTableBody stopwatchTimes barcodeScannerData =
             maxFinishToken barcodeScannerData
                 |> Maybe.withDefault 0
 
-        rowsWithStopwatches : List (Html Msg)
+        rowsWithStopwatches : List (Table.Row Msg)
         rowsWithStopwatches =
             List.indexedMap (stopwatchRow barcodeScannerData) stopwatchTimes
 
-        additionalRows : List (Html Msg)
+        additionalRows : List (Table.Row Msg)
         additionalRows =
             List.range (List.length stopwatchTimes + 1) maxPosition
                 |> List.map (rowWithNoStopwatchTime barcodeScannerData 1)
     in
-    tbody [] (rowsWithStopwatches ++ additionalRows)
+    Table.tbody [] (rowsWithStopwatches ++ additionalRows)
 
 
-mergedTableBody : Maybe Int -> BarcodeScannerData -> List MergedTableRow -> Html Msg
+mergedTableBody : Maybe Int -> BarcodeScannerData -> List MergedTableRow -> Table.TBody Msg
 mergedTableBody highlightedNumberCheckerId barcodeScannerData mergedTable =
     let
         maxPosition : Int
@@ -267,16 +263,16 @@ mergedTableBody highlightedNumberCheckerId barcodeScannerData mergedTable =
                 |> List.maximum
                 |> Maybe.withDefault 0
 
-        rowsWithStopwatches : List (Html Msg)
+        rowsWithStopwatches : List (Table.Row Msg)
         rowsWithStopwatches =
             List.map (mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData) mergedTable
 
-        additionalRows : List (Html Msg)
+        additionalRows : List (Table.Row Msg)
         additionalRows =
             List.range (maxPositionFromStopwatches + 1) maxPosition
                 |> List.map (rowWithNoStopwatchTime barcodeScannerData 2)
     in
-    tbody [] (rowsWithStopwatches ++ additionalRows)
+    Table.tbody [] (rowsWithStopwatches ++ additionalRows)
 
 
 stopwatchTable : Stopwatches -> BarcodeScannerData -> Maybe Int -> Html Msg
@@ -287,37 +283,40 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                 text ""
 
             else
-                table
-                    [ class "table table-condensed table-bordered stopwatch-times" ]
-                    [ tableHeadersWithButtons
-                        [ TableHeaderWithButton "Position" Nothing
-                        , TableHeaderWithButton "Athletes" Nothing
-                        ]
-                    , noStopwatchTableBody barcodeScannerData
-                    ]
+                Table.table
+                    { options = tableOptions
+                    , thead =
+                        tableHeadersWithButtons
+                            [ TableHeaderWithButton "Position" Nothing
+                            , TableHeaderWithButton "Athletes" Nothing
+                            ]
+                    , tbody = noStopwatchTableBody barcodeScannerData
+                    }
 
         Single _ stopwatchTimes ->
-            table
-                [ class "table table-condensed table-bordered stopwatch-times" ]
-                [ tableHeadersWithButtons
-                    [ TableHeaderWithButton "Position" Nothing
-                    , TableHeaderWithButton "Stopwatch 1" (deleteStopwatchButton StopwatchOne)
-                    , TableHeaderWithButton "Athletes" Nothing
-                    ]
-                , singleStopwatchTableBody stopwatchTimes barcodeScannerData
-                ]
+            Table.table
+                { options = tableOptions
+                , thead =
+                    tableHeadersWithButtons
+                        [ TableHeaderWithButton "Position" Nothing
+                        , TableHeaderWithButton "Stopwatch 1" (deleteStopwatchButton StopwatchOne)
+                        , TableHeaderWithButton "Athletes" Nothing
+                        ]
+                , tbody = singleStopwatchTableBody stopwatchTimes barcodeScannerData
+                }
 
         Double _ _ mergedTable ->
-            table
-                [ class "table table-condensed table-bordered stopwatch-times" ]
-                [ tableHeadersWithButtons
-                    [ TableHeaderWithButton "Position" Nothing
-                    , TableHeaderWithButton "Stopwatch 1" (deleteStopwatchButton StopwatchOne)
-                    , TableHeaderWithButton "Stopwatch 2" (deleteStopwatchButton StopwatchTwo)
-                    , TableHeaderWithButton "Athletes" Nothing
-                    ]
-                , mergedTableBody highlightedNumberCheckerId barcodeScannerData mergedTable
-                ]
+            Table.table
+                { options = tableOptions
+                , thead =
+                    tableHeadersWithButtons
+                        [ TableHeaderWithButton "Position" Nothing
+                        , TableHeaderWithButton "Stopwatch 1" (deleteStopwatchButton StopwatchOne)
+                        , TableHeaderWithButton "Stopwatch 2" (deleteStopwatchButton StopwatchTwo)
+                        , TableHeaderWithButton "Athletes" Nothing
+                        ]
+                , tbody = mergedTableBody highlightedNumberCheckerId barcodeScannerData mergedTable
+                }
 
 
 stopwatchButtonsContent : Stopwatches -> List (Html Msg)
@@ -361,19 +360,19 @@ stopwatchButtonsContent stopwatches =
             ]
 
 
-stopwatchRow : BarcodeScannerData -> Int -> Int -> Html a
+stopwatchRow : BarcodeScannerData -> Int -> Int -> Table.Row a
 stopwatchRow barcodeScannerData index time =
-    tr []
+    Table.tr []
         [ intCell (index + 1)
         , plainCell (formatTime time)
         , barcodeScannerCell barcodeScannerData (index + 1) Nothing Nothing
         ]
 
 
-mergedStopwatchRow : Maybe Int -> BarcodeScannerData -> MergedTableRow -> Html Msg
+mergedStopwatchRow : Maybe Int -> BarcodeScannerData -> MergedTableRow -> Table.Row Msg
 mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData row =
     let
-        indexCell : Html Msg
+        indexCell : Table.Cell Msg
         indexCell =
             case row.rowNumber of
                 Just num ->
@@ -382,7 +381,7 @@ mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData row =
                 Nothing ->
                     emptyNumberCell
 
-        thisBarcodeScannerCell : Html Msg
+        thisBarcodeScannerCell : Table.Cell Msg
         thisBarcodeScannerCell =
             case row.rowNumber of
                 Just num ->
@@ -393,7 +392,7 @@ mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData row =
     in
     case row.entry of
         ExactMatch time ->
-            tr
+            Table.tr
                 []
                 [ indexCell
                 , timeCell "exact-match" time row.underlines.stopwatch1 highlightedNumberCheckerId
@@ -402,7 +401,7 @@ mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData row =
                 ]
 
         NearMatch time1 time2 ->
-            tr
+            Table.tr
                 []
                 [ indexCell
                 , timeCell "near-match" time1 row.underlines.stopwatch1 highlightedNumberCheckerId
@@ -411,7 +410,7 @@ mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData row =
                 ]
 
         OneWatchOnly StopwatchOne time1 ->
-            tr
+            Table.tr
                 []
                 [ indexCell
                 , checkboxCell time1 row.index row.included row.underlines.stopwatch1 highlightedNumberCheckerId
@@ -420,7 +419,7 @@ mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData row =
                 ]
 
         OneWatchOnly StopwatchTwo time2 ->
-            tr
+            Table.tr
                 []
                 [ indexCell
                 , plainCell ""

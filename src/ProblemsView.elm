@@ -1,11 +1,13 @@
 module ProblemsView exposing (problemsView)
 
+import Bootstrap.Alert as Alert
 import DataStructures exposing (ProblemFix(..))
 import Html exposing (Html, button, div, h4, li, text, ul)
 import Html.Attributes exposing (class, type_)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg)
 import Problems exposing (FixableProblem(..), Problem, ProblemsContainer, problemToString)
+import ViewCommon exposing (smallButton)
 
 
 nonFixableProblemView : Problem -> Html Msg
@@ -28,7 +30,8 @@ nonFixableProblemsView problems =
                 else
                     "The following problems were found:"
         in
-        div [ class "alert alert-danger" ]
+        Alert.simpleDanger
+            []
             [ h4 [] [ text problemsHeader ]
             , ul [] (List.map nonFixableProblemView problems)
             ]
@@ -44,12 +47,7 @@ fixableProblemView fixableProblem =
                 , text " has been scanned with finish token "
                 , text (String.fromInt position)
                 , text " more than once "
-                , button
-                    [ type_ "button"
-                    , class "btn btn-primary btn-sm"
-                    , onClick (Msg.FixProblem (RemoveDuplicateScans position athlete))
-                    ]
-                    [ text "Remove duplicates" ]
+                , smallButton (Msg.FixProblem (RemoveDuplicateScans position athlete)) [] "Remove duplicates"
                 ]
 
         AthleteWithAndWithoutPosition athlete position ->
@@ -59,12 +57,7 @@ fixableProblemView fixableProblem =
                 , text " has been scanned with finish token "
                 , text (String.fromInt position)
                 , text " and also without a corresponding finish token "
-                , button
-                    [ type_ "button"
-                    , class "btn btn-primary btn-sm"
-                    , onClick (Msg.FixProblem (RemoveUnassociatedAthlete athlete))
-                    ]
-                    [ text "Remove unassociated athlete barcode scan" ]
+                , smallButton (Msg.FixProblem (RemoveUnassociatedAthlete athlete)) [] "Remove unassociated athlete barcode scan"
                 ]
 
         PositionWithAndWithoutAthlete position athlete ->
@@ -74,12 +67,7 @@ fixableProblemView fixableProblem =
                 , text " has been scanned with athlete barcode "
                 , text athlete
                 , text " and also without a corresponding athlete barcode "
-                , button
-                    [ type_ "button"
-                    , class "btn btn-primary btn-sm"
-                    , onClick (Msg.FixProblem (RemoveUnassociatedFinishToken position))
-                    ]
-                    [ text "Remove unassociated finish token scan" ]
+                , smallButton (Msg.FixProblem (RemoveUnassociatedFinishToken position)) [] "Remove unassociated finish token scan"
                 ]
 
         BarcodesScannedBeforeEventStart number eventStartTimeMillis eventStart ->
@@ -97,12 +85,7 @@ fixableProblemView fixableProblem =
                 , text " scanned before the event start ("
                 , text eventStart
                 , text ") "
-                , button
-                    [ type_ "button"
-                    , class "btn btn-primary btn-sm"
-                    , onClick (Msg.FixProblem (RemoveScansBeforeEventStart eventStartTimeMillis))
-                    ]
-                    [ text "Remove barcodes scanned before event start" ]
+                , smallButton (Msg.FixProblem (RemoveScansBeforeEventStart eventStartTimeMillis)) [] "Remove barcodes scanned before event start"
                 ]
 
 
@@ -121,7 +104,8 @@ fixableProblemsView fixableProblems =
                 else
                     "The following fixable problems were found:"
         in
-        div [ class "alert alert-warning" ]
+        Alert.simpleWarning
+            []
             [ h4 [] [ text fixableProblemsHeader ]
             , ul [] (List.map fixableProblemView fixableProblems)
             ]

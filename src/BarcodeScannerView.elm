@@ -1,11 +1,13 @@
 module BarcodeScannerView exposing (barcodeScannersView)
 
 import BarcodeScanner exposing (BarcodeScannerFile, BarcodeScannerFileLine, DeletionReason(..), LineContents(..), ModificationStatus(..))
-import Html exposing (Attribute, Html, button, div, h4, table, tbody, td, text, tr)
+import Bootstrap.Alert as Alert
+import Bootstrap.Table as Table
+import Html exposing (Attribute, Html, button, div, h4, text)
 import Html.Attributes exposing (class, colspan, title)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg(..))
-import ViewCommon exposing (tableHeaders)
+import ViewCommon exposing (smallButton, tableHeaders)
 
 
 maybeIntToString : Maybe Int -> String
@@ -34,29 +36,29 @@ deletionReasonToString reason =
             "Position " ++ String.fromInt position ++ " has been scanned with an athlete barcode elsewhere"
 
 
-barcodeScannerContents : LineContents -> List (Html Msg)
+barcodeScannerContents : LineContents -> List (Table.Cell Msg)
 barcodeScannerContents contents =
     case contents of
         Ordinary athlete position ->
-            [ td [] [ text athlete ]
-            , td [] [ text (maybeIntToString position) ]
+            [ Table.td [] [ text athlete ]
+            , Table.td [] [ text (maybeIntToString position) ]
             ]
 
         MisScan misScannedText ->
-            [ td [ colspan 2, class "misscanned", title "This item was not scanned properly." ] [ text misScannedText ] ]
+            [ Table.td [ Table.cellAttr (colspan 2), Table.cellAttr (class "misscanned"), Table.cellAttr (title "This item was not scanned properly.") ] [ text misScannedText ] ]
 
 
-modificationStatusCell : ModificationStatus -> Html Msg
+modificationStatusCell : ModificationStatus -> Table.Cell Msg
 modificationStatusCell status =
     case status of
         Unmodified ->
-            td [] [ text "Unmodified" ]
+            Table.td [] [ text "Unmodified" ]
 
         Deleted reason ->
-            td [] [ text "Deleted" ]
+            Table.td [] [ text "Deleted" ]
 
 
-barcodeScannerViewRow : BarcodeScannerFileLine -> Html Msg
+barcodeScannerViewRow : BarcodeScannerFileLine -> Table.Row Msg
 barcodeScannerViewRow line =
     let
         rowAttributes : List (Attribute Msg)
@@ -70,11 +72,11 @@ barcodeScannerViewRow line =
                     , title (deletionReasonToString deletionReason)
                     ]
     in
-    tr
-        rowAttributes
-        ([ td [] [ text (String.fromInt line.lineNumber) ] ]
+    Table.tr
+        (List.map Table.rowAttr rowAttributes)
+        ([ Table.td [] [ text (String.fromInt line.lineNumber) ] ]
             ++ barcodeScannerContents line.contents
-            ++ [ td [] [ text line.scanTime ]
+            ++ [ Table.td [] [ text line.scanTime ]
                , modificationStatusCell line.modificationStatus
                ]
         )
@@ -85,27 +87,25 @@ barcodeScannerView index file =
     div []
         [ div
             [ class "barcode-scanner-buttons" ]
-            [ button [ class "btn btn-primary btn-xs", onClick (GetCurrentDateForDownloadFile (DownloadBarcodeScannerFile index)) ] [ text "Download" ]
-            , button [ class "btn btn-primary btn-xs", onClick (DeleteBarcodeScannerFile index) ] [ text "Delete" ]
+            [ smallButton (GetCurrentDateForDownloadFile (DownloadBarcodeScannerFile index)) [] "Download"
+            , smallButton (DeleteBarcodeScannerFile index) [] "Delete"
             ]
         , h4 []
             [ text "File: "
             , text file.name
             ]
-        , table
-            [ class "table table-bordered table-condensed table-hover barcode-scanner-data" ]
-            [ tableHeaders [ "Line #", "Athlete", "Position", "Date/Time", "Status" ]
-            , tbody
-                []
-                (List.map barcodeScannerViewRow file.lines)
-            ]
+        , Table.table
+            { options = [ Table.bordered, Table.small, Table.hover, Table.attr (class "barcode-scanner-data") ]
+            , thead = tableHeaders [ "Line #", "Athlete", "Position", "Date/Time", "Status" ]
+            , tbody = Table.tbody [] (List.map barcodeScannerViewRow file.lines)
+            }
         ]
 
 
 barcodeScannersView : List BarcodeScannerFile -> Html Msg
 barcodeScannersView files =
     if List.isEmpty files then
-        div [ class "alert alert-info no-barcode-scanner-files" ] [ text "No barcode scanner files have been loaded" ]
+        Alert.simpleInfo [ class "no-barcode-scanner-files" ] [ text "No barcode scanner files have been loaded" ]
 
     else
         div [] (List.indexedMap barcodeScannerView files)
