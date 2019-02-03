@@ -2,6 +2,8 @@ module StopwatchesView exposing (stopwatchesView)
 
 import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, isEmpty, maxFinishToken)
 import Bootstrap.Alert as Alert
+import Bootstrap.Button as Button
+import Bootstrap.Tab as Tab
 import Bootstrap.Table as Table
 import DataStructures exposing (WhichStopwatch(..))
 import Dict exposing (Dict)
@@ -23,6 +25,18 @@ parkrunUrlResultsPrefix =
 tableOptions : List (Table.TableOption a)
 tableOptions =
     [ Table.small, Table.bordered, Table.attr (class "stopwatch-times") ]
+
+
+twoLineButton : Msg -> String -> String -> Html Msg
+twoLineButton msg firstLine secondLine =
+    Button.button
+        [ Button.primary
+        , Button.onClick msg
+        ]
+        [ text firstLine
+        , br [] []
+        , small [] [ text secondLine ]
+        ]
 
 
 type alias TableHeaderButton =
@@ -329,34 +343,13 @@ stopwatchButtonsContent stopwatches =
             []
 
         Double _ _ _ ->
-            [ button
-                [ class "btn btn-primary btn-large"
-                , onClick FlipStopwatches
-                ]
-                [ text "Flip"
-                , br [] []
-                , small [] [ text "stopwatches" ]
-                ]
+            [ twoLineButton FlipStopwatches "Flip" "stopwatches"
             , br [] []
             , br [] []
-            , button
-                [ class "btn btn-primary btn-large"
-                , onClick (GetCurrentDateForDownloadFile DownloadMergedStopwatchData)
-                ]
-                [ text "Download"
-                , br [] []
-                , small [] [ text "merged times" ]
-                ]
+            , twoLineButton (GetCurrentDateForDownloadFile DownloadMergedStopwatchData) "Download" "merged times"
             , br [] []
             , br [] []
-            , button
-                [ class "btn btn-primary btn-large"
-                , onClick ClearAllData
-                ]
-                [ text "Clear"
-                , br [] []
-                , small [] [ text "all data" ]
-                ]
+            , twoLineButton ClearAllData "Clear" "all data"
             ]
 
 
