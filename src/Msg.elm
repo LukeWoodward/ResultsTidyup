@@ -1,5 +1,6 @@
 module Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 
+import Bootstrap.Tab as Tab
 import DataStructures exposing (InteropFile, ProblemFix, SecondTab, WhichStopwatch(..))
 import Time exposing (Posix, Zone)
 
@@ -29,7 +30,7 @@ type Msg
     | AddNumberCheckerRow
     | EditNumberCheckerRow Int
     | FixProblem ProblemFix
-    | ChangeSecondTab SecondTab
+    | ChangeSecondTab Tab.State
     | ClearErrors
     | DownloadBarcodeScannerFile Int Zone Posix
     | DeleteBarcodeScannerFile Int

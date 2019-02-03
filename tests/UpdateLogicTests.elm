@@ -103,11 +103,6 @@ expectNumberCheckerManualEntryRow expectedManualEntryRow ( model, _ ) =
     Expect.equal expectedManualEntryRow model.numberCheckerManualEntryRow
 
 
-expectSecondTab : SecondTab -> ( Model, Cmd Msg ) -> Expectation
-expectSecondTab expectedSecondTab ( model, _ ) =
-    Expect.equal expectedSecondTab model.secondTab
-
-
 type Assertion
     = Command
     | Stopwatches
@@ -119,7 +114,6 @@ type Assertion
     | Problems
     | EventDateAndTimeAssertion
     | NumberCheckerManualEntryRowAssertion
-    | SecondTabAssertion
 
 
 defaultAssertionsExcept : List Assertion -> List (( Model, Cmd Msg ) -> Expectation)
@@ -177,11 +171,6 @@ defaultAssertionsExcept exceptions =
 
               else
                 Just (expectNumberCheckerManualEntryRow emptyNumberCheckerManualEntryRow)
-            , if List.member SecondTabAssertion exceptions then
-                Nothing
-
-              else
-                Just (expectSecondTab BarcodeScannersTab)
             ]
     in
     List.filterMap identity allMaybeAssertions
@@ -824,13 +813,11 @@ suite =
                         , numberCheckerEntries = [ AnnotatedNumberCheckerEntry 2 2 0 2 0 2 0 ]
                         , numberCheckerManualEntryRow = NumberCheckerManualEntryRow (NumericEntry "2" (Just 2)) (NumericEntry "2" (Just 2)) (NumericEntry "2" (Just 2))
                         , problems = ProblemsContainer [ Problems.MisScan "something" ] [ PositionWithAndWithoutAthlete 5 "A123" ]
-                        , secondTab = NumberCheckerTab
                     }
                         |> update ClearAllData
                         |> Expect.all
-                            (expectSecondTab NumberCheckerTab
-                                :: expectEventDateAndTime (EventDateAndTime "" Nothing "09:00" (Just (9 * 60)))
-                                :: defaultAssertionsExcept [ EventDateAndTimeAssertion, SecondTabAssertion ]
+                            (expectEventDateAndTime (EventDateAndTime "" Nothing "09:00" (Just (9 * 60)))
+                                :: defaultAssertionsExcept [ EventDateAndTimeAssertion ]
                             )
             ]
         , describe "Get current date for download file tests"
@@ -1569,24 +1556,6 @@ suite =
                                 }
                                 :: expectProblems (ProblemsContainer [ AthleteMissingPosition "A345678" ] [])
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems ]
-                            )
-            ]
-        , describe "ChangeSecondTab tests"
-            [ test "Can change from barcode scanner tab to number checker tab" <|
-                \() ->
-                    { initModel | secondTab = BarcodeScannersTab }
-                        |> update (ChangeSecondTab NumberCheckerTab)
-                        |> Expect.all
-                            (expectSecondTab NumberCheckerTab
-                                :: defaultAssertionsExcept [ SecondTabAssertion ]
-                            )
-            , test "Can change from number checker tab to barcode scanner tab" <|
-                \() ->
-                    { initModel | secondTab = NumberCheckerTab }
-                        |> update (ChangeSecondTab BarcodeScannersTab)
-                        |> Expect.all
-                            (expectSecondTab BarcodeScannersTab
-                                :: defaultAssertionsExcept [ SecondTabAssertion ]
                             )
             ]
         , describe "ClearErrors tests"

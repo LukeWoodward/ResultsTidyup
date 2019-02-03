@@ -1,6 +1,7 @@
 module Model exposing (Model, NumberCheckerManualEntryRow, NumericEntry, emptyNumberCheckerManualEntryRow, emptyNumericEntry, initModel)
 
 import BarcodeScanner exposing (BarcodeScannerData)
+import Bootstrap.Tab as Tab
 import DataStructures exposing (EventDateAndTime, SecondTab(..))
 import Error exposing (FileError)
 import MergedTable exposing (Stopwatches(..))
@@ -42,7 +43,7 @@ type alias Model =
     , problems : ProblemsContainer
     , eventDateAndTime : EventDateAndTime
     , numberCheckerManualEntryRow : NumberCheckerManualEntryRow
-    , secondTab : SecondTab
+    , secondTab : Tab.State
     }
 
 
@@ -57,5 +58,5 @@ initModel =
     , problems = Problems.empty
     , eventDateAndTime = EventDateAndTime "" Nothing "" Nothing
     , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
-    , secondTab = BarcodeScannersTab
+    , secondTab = Tab.initialState
     }

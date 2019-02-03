@@ -6,6 +6,7 @@ import Bootstrap.Alert as Alert
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
+import Bootstrap.Tab as Tab
 import Browser
 import DataStructures exposing (EventDateAndTime, SecondTab(..))
 import Error exposing (FileError)
@@ -108,25 +109,20 @@ view model =
                 ]
             , Grid.col [ Col.xs6 ]
                 [ problemsView model.problems
-                , ul
-                    [ class "nav nav-tabs" ]
-                    [ li
-                        (onClick (ChangeSecondTab BarcodeScannersTab)
-                            :: classAttributes BarcodeScannersTab model.secondTab
-                        )
-                        [ a [ href "#" ] [ text "Barcode scanners" ] ]
-                    , li
-                        (onClick (ChangeSecondTab NumberCheckerTab)
-                            :: classAttributes NumberCheckerTab model.secondTab
-                        )
-                        [ a [ href "#" ] [ text "Number checker" ] ]
-                    ]
-                , case model.secondTab of
-                    BarcodeScannersTab ->
-                        barcodeScannersView model.barcodeScannerData.files
-
-                    NumberCheckerTab ->
-                        numberCheckerView model.numberCheckerEntries model.numberCheckerManualEntryRow model.lastHeight
+                , Tab.config ChangeSecondTab
+                    |> Tab.items
+                        [ Tab.item
+                            { id = "barcodeScannersTab"
+                            , link = Tab.link [] [ text "Barcode scanners" ]
+                            , pane = Tab.pane [] [ barcodeScannersView model.barcodeScannerData.files ]
+                            }
+                        , Tab.item
+                            { id = "numberCheckerTab"
+                            , link = Tab.link [] [ text "Number checker" ]
+                            , pane = Tab.pane [] [ numberCheckerView model.numberCheckerEntries model.numberCheckerManualEntryRow model.lastHeight ]
+                            }
+                        ]
+                    |> Tab.view model.secondTab
                 ]
             ]
         ]
