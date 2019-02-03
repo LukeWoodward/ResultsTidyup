@@ -95,7 +95,7 @@ barcodeScannerView index file =
             , text file.name
             ]
         , Table.table
-            { options = [ Table.bordered, Table.small, Table.hover, Table.attr (class "barcode-scanner-data") ]
+            { options = [ Table.bordered, Table.small, Table.hover, Table.attr (class "barcode-scanner-table") ]
             , thead = tableHeaders [ "Line #", "Athlete", "Position", "Date/Time", "Status" ]
             , tbody = Table.tbody [] (List.map barcodeScannerViewRow file.lines)
             }

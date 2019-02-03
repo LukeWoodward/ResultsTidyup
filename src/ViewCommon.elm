@@ -3,6 +3,7 @@ module ViewCommon exposing (intCell, plainCell, smallButton, tableHeaders)
 import Bootstrap.Button as Button
 import Bootstrap.Table as Table
 import Html exposing (Html, text)
+import Html.Attributes exposing (class)
 import Msg exposing (Msg)
 
 
@@ -30,8 +31,7 @@ smallButton : Msg -> List (Html.Attribute Msg) -> String -> Html Msg
 smallButton msg attributes contents =
     Button.button
         [ Button.primary
-        , Button.small
-        , Button.attrs attributes
+        , Button.attrs (class "btn-xs" :: attributes)
         , Button.onClick msg
         ]
         [ text contents ]
