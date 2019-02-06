@@ -9,6 +9,7 @@ module BarcodeScanner exposing
     , ModificationStatus(..)
     , PositionAndTimePair
     , UnrecognisedLine
+    , WrongWayAroundStatus(..)
     , empty
     , generateDownloadText
     , isEmpty
@@ -79,11 +80,18 @@ type LineContents
     | MisScan String
 
 
+type WrongWayAroundStatus
+    = NotWrongWayAround
+    | FirstWrongWayAround Int Int
+    | SubsequentWrongWayAround
+
+
 type alias BarcodeScannerFileLine =
     { lineNumber : Int
     , contents : LineContents
     , scanTime : String
     , modificationStatus : ModificationStatus
+    , wrongWayAroundStatus : WrongWayAroundStatus
     }
 
 
@@ -140,6 +148,11 @@ positionParser =
         |. end
 
 
+okDefaultFileLine : Int -> LineContents -> String -> Result e BarcodeScannerFileLine
+okDefaultFileLine lineNumber contents scanTime =
+    Ok (BarcodeScannerFileLine lineNumber contents scanTime Unmodified NotWrongWayAround)
+
+
 readLine : Int -> String -> Result UnrecognisedLine BarcodeScannerFileLine
 readLine lineNumber line =
     let
@@ -193,7 +206,7 @@ readLine lineNumber line =
                     )
 
             else if isPositionMissing then
-                Ok (BarcodeScannerFileLine lineNumber (Ordinary athlete Nothing) time Unmodified)
+                okDefaultFileLine lineNumber (Ordinary athlete Nothing) time
 
             else
                 case positionNumber of
@@ -201,13 +214,13 @@ readLine lineNumber line =
                         unrecognisedLine "INVALID_POSITION_ZERO" ("Invalid position record '" ++ position ++ "' found in barcode scanner file")
 
                     Just pos ->
-                        Ok (BarcodeScannerFileLine lineNumber (Ordinary athlete positionNumber) time Unmodified)
+                        okDefaultFileLine lineNumber (Ordinary athlete positionNumber) time
 
                     Nothing ->
                         unrecognisedLine "NON_NUMERIC_POSITION" ("Invalid position record '" ++ position ++ "' found in barcode scanner file")
 
         [ misScannedText, time ] ->
-            Ok (BarcodeScannerFileLine lineNumber (MisScan misScannedText) time Unmodified)
+            okDefaultFileLine lineNumber (MisScan misScannedText) time
 
         _ ->
             unrecognisedLine "NOT_TWO_OR_THREE_PARTS" ("Line " ++ line ++ " does not contain the expected two or three comma-separated parts")

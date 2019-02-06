@@ -1,10 +1,11 @@
 module BarcodeScannerView exposing (barcodeScannersView)
 
-import BarcodeScanner exposing (BarcodeScannerFile, BarcodeScannerFileLine, DeletionReason(..), LineContents(..), ModificationStatus(..))
+import BarcodeScanner exposing (BarcodeScannerFile, BarcodeScannerFileLine, DeletionReason(..), LineContents(..), ModificationStatus(..), WrongWayAroundStatus(..))
 import Bootstrap.Alert as Alert
+import Bootstrap.Button as Button
 import Bootstrap.Table as Table
 import Html exposing (Attribute, Html, button, div, h4, text)
-import Html.Attributes exposing (class, colspan, title)
+import Html.Attributes exposing (class, colspan, rowspan, title)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg(..))
 import ViewCommon exposing (smallButton, tableHeaders)
@@ -58,6 +59,29 @@ modificationStatusCell status =
             Table.td [] [ text "Deleted" ]
 
 
+wrongWayAroundStatusCell : WrongWayAroundStatus -> List (Table.Cell Msg)
+wrongWayAroundStatusCell wrongWayAroundStatus =
+    case wrongWayAroundStatus of
+        NotWrongWayAround ->
+            [ Table.td [] [] ]
+
+        FirstWrongWayAround first last ->
+            let
+                rowCount : Int
+                rowCount =
+                    last + 1 - first
+            in
+            [ Table.td
+                [ Table.cellAttr (rowspan rowCount)
+                , Table.cellAttr (class "swap-barcodes-around-button-cell")
+                ]
+                [ Button.button [ Button.primary ] [ text "Swap barcodes around" ] ]
+            ]
+
+        SubsequentWrongWayAround ->
+            []
+
+
 barcodeScannerViewRow : BarcodeScannerFileLine -> Table.Row Msg
 barcodeScannerViewRow line =
     let
@@ -79,6 +103,7 @@ barcodeScannerViewRow line =
             ++ [ Table.td [] [ text line.scanTime ]
                , modificationStatusCell line.modificationStatus
                ]
+            ++ wrongWayAroundStatusCell line.wrongWayAroundStatus
         )
 
 
@@ -96,7 +121,7 @@ barcodeScannerView index file =
             ]
         , Table.table
             { options = [ Table.bordered, Table.small, Table.hover, Table.attr (class "barcode-scanner-table") ]
-            , thead = tableHeaders [ "Line #", "Athlete", "Position", "Date/Time", "Status" ]
+            , thead = tableHeaders [ "Line #", "Athlete", "Position", "Date/Time", "Status", "Action" ]
             , tbody = Table.tbody [] (List.map barcodeScannerViewRow file.lines)
             }
         ]

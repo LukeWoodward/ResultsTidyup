@@ -169,3 +169,7 @@ div.barcode-scanner-buttons button {
     line-height  : .5;
     border-radius : .2rem;
 }
+
+td.swap-barcodes-around-button-cell {
+    vertical-align: middle;
+}

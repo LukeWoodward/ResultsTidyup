@@ -45,6 +45,7 @@ import Stopwatch exposing (Stopwatch(..), readStopwatchData)
 import Task exposing (Task)
 import Time exposing (Posix, Zone)
 import TimeHandling exposing (parseHoursAndMinutes)
+import WrongWayAround exposing (identifyBarcodesScannedTheWrongWayAround)
 
 
 maxNearMatchDistance : Int
@@ -298,7 +299,7 @@ handleBarcodeScannerFileDrop fileName fileText model =
         case result of
             Ok scannerData ->
                 { model
-                    | barcodeScannerData = mergeScannerData model.barcodeScannerData scannerData
+                    | barcodeScannerData = identifyBarcodesScannedTheWrongWayAround (mergeScannerData model.barcodeScannerData scannerData)
                 }
                     |> setEventDateAndTimeIn
                     |> identifyProblemsIn
@@ -684,6 +685,12 @@ deleteDuplicateScansWithinFiles athlete position files =
         |> Tuple.first
 
 
+regenerateWithWrongWayArounds : BarcodeScannerData -> BarcodeScannerData
+regenerateWithWrongWayArounds barcodeScannerData =
+    identifyBarcodesScannedTheWrongWayAround barcodeScannerData
+        |> regenerate
+
+
 fixProblem : ProblemFix -> Model -> Model
 fixProblem problemFix model =
     let
@@ -695,25 +702,25 @@ fixProblem problemFix model =
         newBarcodeScannerData =
             case problemFix of
                 RemoveUnassociatedFinishToken position ->
-                    regenerate
+                    regenerateWithWrongWayArounds
                         { oldBarcodeScannerData
                             | files = deleteWithinFiles (deleteUnassociatedFinishPosition position) oldBarcodeScannerData.files
                         }
 
                 RemoveUnassociatedAthlete athlete ->
-                    regenerate
+                    regenerateWithWrongWayArounds
                         { oldBarcodeScannerData
                             | files = deleteWithinFiles (deleteUnassociatedAthlete athlete) oldBarcodeScannerData.files
                         }
 
                 RemoveDuplicateScans position athlete ->
-                    regenerate
+                    regenerateWithWrongWayArounds
                         { oldBarcodeScannerData
                             | files = deleteDuplicateScansWithinFiles athlete position oldBarcodeScannerData.files
                         }
 
                 RemoveScansBeforeEventStart eventStartTimeMillis ->
-                    regenerate
+                    regenerateWithWrongWayArounds
                         { oldBarcodeScannerData
                             | files = deleteWithinFiles (deleteBeforeEventStart eventStartTimeMillis) oldBarcodeScannerData.files
                         }
@@ -767,7 +774,7 @@ deleteBarcodeScannerFileAtIndex index model =
     in
     identifyProblemsIn
         { model
-            | barcodeScannerData = regenerate { barcodeScannerData | files = deleteAtIndex index model.barcodeScannerData.files }
+            | barcodeScannerData = regenerateWithWrongWayArounds { barcodeScannerData | files = deleteAtIndex index model.barcodeScannerData.files }
         }
 
 
