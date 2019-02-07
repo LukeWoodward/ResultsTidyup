@@ -658,8 +658,16 @@ deleteDuplicateScansWithinFile athlete position file startingFound =
 
         ( transformedLines, finalFound ) =
             transformLines file.lines startingFound
+
+        newMaxScanDate : Maybe Posix
+        newMaxScanDate =
+            transformedLines
+                |> List.filterMap (\line -> dateStringToPosix line.scanTime)
+                |> List.map Time.posixToMillis
+                |> List.maximum
+                |> Maybe.map Time.millisToPosix
     in
-    ( BarcodeScannerFile file.name transformedLines, finalFound )
+    ( BarcodeScannerFile file.name transformedLines newMaxScanDate, finalFound )
 
 
 deleteDuplicateScansWithinFilesInternal : String -> Int -> List BarcodeScannerFile -> Bool -> ( List BarcodeScannerFile, Bool )

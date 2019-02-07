@@ -140,8 +140,10 @@ suite =
                         |> Expect.equal
                             (Ok
                                 (BarcodeScannerData
-                                    [ BarcodeScannerFile "barcodes1.txt"
+                                    [ BarcodeScannerFile
+                                        "barcodes1.txt"
                                         [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
+                                        (toPosix "2018-03-14T09:47:03.000Z")
                                     ]
                                     (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
                                     []
@@ -157,8 +159,10 @@ suite =
                         |> Expect.equal
                             (Ok
                                 (BarcodeScannerData
-                                    [ BarcodeScannerFile "barcodes2.txt"
+                                    [ BarcodeScannerFile
+                                        "barcodes2.txt"
                                         [ ordinaryFileLine 1 "A4580442" Nothing "14/03/2018 09:47:03" ]
+                                        (toPosix "2018-03-14T09:47:03.000Z")
                                     ]
                                     Dict.empty
                                     [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]
@@ -174,8 +178,10 @@ suite =
                         |> Expect.equal
                             (Ok
                                 (BarcodeScannerData
-                                    [ BarcodeScannerFile "barcodes3.txt"
+                                    [ BarcodeScannerFile
+                                        "barcodes3.txt"
                                         [ ordinaryFileLine 1 "" (Just 47) "14/03/2018 09:47:03" ]
+                                        (toPosix "2018-03-14T09:47:03.000Z")
                                     ]
                                     Dict.empty
                                     []
@@ -191,8 +197,10 @@ suite =
                         |> Expect.equal
                             (Ok
                                 (BarcodeScannerData
-                                    [ BarcodeScannerFile "barcodes4.txt"
+                                    [ BarcodeScannerFile
+                                        "barcodes4.txt"
                                         [ BarcodeScannerFileLine 1 (MisScan "&d084") "14/03/2018 09:47:03" Unmodified NotWrongWayAround ]
+                                        (toPosix "2018-03-14T09:47:03.000Z")
                                     ]
                                     Dict.empty
                                     []
@@ -208,8 +216,10 @@ suite =
                         |> Expect.equal
                             (Ok
                                 (BarcodeScannerData
-                                    [ BarcodeScannerFile "barcodes5.txt"
+                                    [ BarcodeScannerFile
+                                        "barcodes5.txt"
                                         [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
+                                        (toPosix "2018-03-14T09:47:03.000Z")
                                     ]
                                     (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
                                     []
@@ -225,10 +235,12 @@ suite =
                         |> Expect.equal
                             (Ok
                                 (BarcodeScannerData
-                                    [ BarcodeScannerFile "barcodes6.txt"
+                                    [ BarcodeScannerFile
+                                        "barcodes6.txt"
                                         [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
                                         , ordinaryFileLine 2 "A1866207" (Just 47) "14/03/2018 09:48:44"
                                         ]
+                                        (toPosix "2018-03-14T09:48:44.000Z")
                                     ]
                                     (Dict.singleton 47
                                         [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03"
@@ -282,38 +294,40 @@ suite =
         , describe "generateDownloadText tests"
             [ test "generateDownloadText returns an empty string for empty data" <|
                 \() ->
-                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [])
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [] Nothing)
                         |> Expect.equal ""
             , test "generateDownloadText returns a string for a single scanned barcode" <|
                 \() ->
-                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03" ])
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03" ] Nothing)
                         |> Expect.equal ("A123456,P0047,14/03/2018 09:47:03" ++ crlf)
             , test "generateDownloadText returns a string for a single athlete with no finish token" <|
                 \() ->
-                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ ordinaryFileLine 1 "A123456" Nothing "19/09/2018 09:33:37" ])
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ ordinaryFileLine 1 "A123456" Nothing "19/09/2018 09:33:37" ] Nothing)
                         |> Expect.equal ("A123456,,19/09/2018 09:33:37" ++ crlf)
             , test "generateDownloadText returns a string for a single finish token with no athlete" <|
                 \() ->
-                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ ordinaryFileLine 1 "" (Just 47) "19/09/2018 09:40:09" ])
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ ordinaryFileLine 1 "" (Just 47) "19/09/2018 09:40:09" ] Nothing)
                         |> Expect.equal (",P0047,19/09/2018 09:40:09" ++ crlf)
             , test "generateDownloadText returns a string for a single mis-scanned item" <|
                 \() ->
-                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ BarcodeScannerFileLine 1 (MisScan "&d084") "04/07/2018 09:42:22" Unmodified NotWrongWayAround ])
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ BarcodeScannerFileLine 1 (MisScan "&d084") "04/07/2018 09:42:22" Unmodified NotWrongWayAround ] Nothing)
                         |> Expect.equal ("&d084,04/07/2018 09:42:22" ++ crlf)
             , test "generateDownloadText returns an empty string for a deleted record" <|
                 \() ->
-                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ BarcodeScannerFileLine 1 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted BeforeEventStart) NotWrongWayAround ])
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ BarcodeScannerFileLine 1 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted BeforeEventStart) NotWrongWayAround ] Nothing)
                         |> Expect.equal ""
             , test "generateDownloadText returns the correct string for multiple items" <|
                 \() ->
                     generateDownloadText
-                        (BarcodeScannerFile "barcodes.txt"
+                        (BarcodeScannerFile
+                            "barcodes.txt"
                             [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03"
                             , ordinaryFileLine 2 "A123456" Nothing "19/09/2018 09:33:37"
                             , ordinaryFileLine 3 "" (Just 47) "19/09/2018 09:40:09"
                             , BarcodeScannerFileLine 4 (MisScan "&d084") "04/07/2018 09:42:22" Unmodified NotWrongWayAround
                             , BarcodeScannerFileLine 5 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted BeforeEventStart) NotWrongWayAround
                             ]
+                            Nothing
                         )
                         |> Expect.equal
                             ("A123456,P0047,14/03/2018 09:47:03"

@@ -98,6 +98,7 @@ type alias BarcodeScannerFileLine =
 type alias BarcodeScannerFile =
     { name : String
     , lines : List BarcodeScannerFileLine
+    , maxScanDate : Maybe Posix
     }
 
 
@@ -317,9 +318,9 @@ withLastScanDate barcodeScannerData =
     { barcodeScannerData | lastScanDate = lastScanDate }
 
 
-withFile : BarcodeScannerFile -> BarcodeScannerData -> BarcodeScannerData
-withFile file barcodeScannerData =
-    { barcodeScannerData | files = barcodeScannerData.files ++ [ file ] }
+withFile : String -> List BarcodeScannerFileLine -> BarcodeScannerData -> BarcodeScannerData
+withFile filename lines barcodeScannerData =
+    { barcodeScannerData | files = barcodeScannerData.files ++ [ BarcodeScannerFile filename lines barcodeScannerData.lastScanDate ] }
 
 
 mergeScannerData : BarcodeScannerData -> BarcodeScannerData -> BarcodeScannerData
@@ -369,7 +370,7 @@ readBarcodeScannerData filename text =
             mergeEntries validLines
                 |> withUnrecognisedLines
                 |> withLastScanDate
-                |> withFile (BarcodeScannerFile filename validLines)
+                |> withFile filename validLines
                 |> Ok
 
 

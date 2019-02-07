@@ -23,7 +23,7 @@ createBarcodeScannerDataForWrongWayAroundTests lineContents =
             BarcodeScannerFileLine (index + 1) contents "14/03/2018 09:47:03" Unmodified NotWrongWayAround
     in
     BarcodeScannerData
-        [ BarcodeScannerFile "barcodes1.txt" (List.indexedMap createLine lineContents) ]
+        [ BarcodeScannerFile "barcodes1.txt" (List.indexedMap createLine lineContents) Nothing ]
         Dict.empty
         []
         []

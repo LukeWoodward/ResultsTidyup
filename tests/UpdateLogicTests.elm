@@ -255,8 +255,10 @@ invalidBarcodeScannerData =
 parsedBarcodeScannerData1 : BarcodeScannerData
 parsedBarcodeScannerData1 =
     BarcodeScannerData
-        [ BarcodeScannerFile "barcodes1.txt"
+        [ BarcodeScannerFile
+            "barcodes1.txt"
             [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
+            (toPosix "2018-03-14T09:47:03.000Z")
         ]
         (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
         []
@@ -269,10 +271,14 @@ parsedBarcodeScannerData1 =
 parsedBarcodeScannerData1And2 : BarcodeScannerData
 parsedBarcodeScannerData1And2 =
     BarcodeScannerData
-        [ BarcodeScannerFile "barcodes1.txt"
+        [ BarcodeScannerFile
+            "barcodes1.txt"
             [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
-        , BarcodeScannerFile "barcodes2.txt"
+            (toPosix "2018-03-14T09:47:03.000Z")
+        , BarcodeScannerFile
+            "barcodes2.txt"
             [ ordinaryFileLine 1 "A2044293" (Just 59) "14/03/2018 09:49:44" ]
+            (toPosix "2018-03-14T09:49:44.000Z")
         ]
         (Dict.fromList
             [ ( 47, [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ] )
@@ -289,10 +295,12 @@ parsedBarcodeScannerData1And2 =
 parsedBarcodeScannerDataWithIncompleteRecordFirst : BarcodeScannerData
 parsedBarcodeScannerDataWithIncompleteRecordFirst =
     BarcodeScannerData
-        [ BarcodeScannerFile "barcodes1.txt"
+        [ BarcodeScannerFile
+            "barcodes1.txt"
             [ ordinaryFileLine 1 "" (Just 33) "14/03/2018 09:44:06"
             , ordinaryFileLine 2 "A4580442" (Just 47) "14/03/2018 09:47:03"
             ]
+            (toPosix "2018-03-14T09:47:03.000Z")
         ]
         (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
         []
@@ -332,7 +340,7 @@ createBarcodeScannerDataForRemovingUnassociatedFinishTokens finishTokens =
                 |> List.concat
     in
     { initModel
-        | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines ] }
+        | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines Nothing ] }
         , problems = ProblemsContainer [] (List.indexedMap (\index position -> PositionWithAndWithoutAthlete position (fakeAthlete index)) finishTokens)
     }
 
@@ -352,7 +360,7 @@ createBarcodeScannerDataForRemovingUnassociatedAthletes athletes =
                 |> List.concat
     in
     { initModel
-        | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines ] }
+        | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines Nothing ] }
         , problems = ProblemsContainer [] (List.indexedMap (\index athlete -> AthleteWithAndWithoutPosition athlete (index + 1)) athletes)
     }
 
@@ -373,7 +381,7 @@ createBarcodeScannerDataForRemovingDuplicateScans numberOfTimes =
                     )
     in
     { initModel
-        | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines ] }
+        | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines (toPosix "2018-03-14T09:47:03.000Z") ] }
         , problems =
             ProblemsContainer []
                 (if numberOfTimes > 1 then
@@ -503,11 +511,13 @@ createNumberCheckerManualEntryRow stopwatch1 stopwatch2 finishTokens =
 barcodeScannerDataForEventStartTimeFiltering : BarcodeScannerData
 barcodeScannerDataForEventStartTimeFiltering =
     { files =
-        [ BarcodeScannerFile "barcodes1.txt"
+        [ BarcodeScannerFile
+            "barcodes1.txt"
             [ ordinaryFileLine 1 "A123456" (Just 27) "14/03/2018 09:22:08"
             , ordinaryFileLine 2 "A345678" Nothing "14/03/2018 09:47:54"
             , ordinaryFileLine 3 "" (Just 19) "14/03/2018 10:11:16"
             ]
+            Nothing
         ]
     , scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A123456" "14/03/2018 09:22:08" ]
     , athleteBarcodesOnly = [ AthleteAndTimePair "A345678" "14/03/2018 09:47:54" ]
@@ -580,7 +590,7 @@ getBarcodeScannerDataWithFiles numbers =
         files : List BarcodeScannerFile
         files =
             List.map String.fromInt numbers
-                |> List.map (\num -> BarcodeScannerFile (num ++ ".txt") [])
+                |> List.map (\num -> BarcodeScannerFile (num ++ ".txt") [] Nothing)
     in
     { empty | files = files }
 
@@ -1379,12 +1389,16 @@ suite =
                             initialBarcodeScannerData =
                                 createBarcodeScannerData (Dict.singleton 27 [ "A1234", "A1234" ]) [] []
 
+                            scanTime : Maybe Time.Posix
+                            scanTime =
+                                toPosix "2018-03-14T09:47:03.000Z"
+
                             startingScannerData : BarcodeScannerData
                             startingScannerData =
                                 { initialBarcodeScannerData
                                     | files =
-                                        [ BarcodeScannerFile "barcodes1.txt" [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ]
-                                        , BarcodeScannerFile "barcodes2.txt" [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ]
+                                        [ BarcodeScannerFile "barcodes1.txt" [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ] scanTime
+                                        , BarcodeScannerFile "barcodes2.txt" [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ] scanTime
                                         ]
                                 }
 
@@ -1393,8 +1407,14 @@ suite =
                                 { initialBarcodeScannerData
                                     | scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A1234" "14/03/2018 09:47:03" ]
                                     , files =
-                                        [ BarcodeScannerFile "barcodes1.txt" [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ]
-                                        , BarcodeScannerFile "barcodes2.txt" [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" (Deleted (DuplicateScan "A1234" 27)) NotWrongWayAround ]
+                                        [ BarcodeScannerFile
+                                            "barcodes1.txt"
+                                            [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ]
+                                            scanTime
+                                        , BarcodeScannerFile
+                                            "barcodes2.txt"
+                                            [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" (Deleted (DuplicateScan "A1234" 27)) NotWrongWayAround ]
+                                            scanTime
                                         ]
                                 }
                         in
@@ -1450,12 +1470,14 @@ suite =
                         let
                             file : BarcodeScannerFile
                             file =
-                                BarcodeScannerFile "barcodes1.txt"
+                                BarcodeScannerFile
+                                    "barcodes1.txt"
                                     [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A5678" (Just 27) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 3 "A3456" (Just 27) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 4 "A9012" (Just 27) "14/03/2018 09:47:03"
                                     ]
+                                    (toPosix "2018-03-14T09:47:03.000Z")
 
                             barcodeScannerData : BarcodeScannerData
                             barcodeScannerData =
