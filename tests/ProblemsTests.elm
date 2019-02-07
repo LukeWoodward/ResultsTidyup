@@ -1,6 +1,6 @@
 module ProblemsTests exposing (suite)
 
-import BarcodeScanner exposing (BarcodeScannerData, MisScannedItem, UnrecognisedLine)
+import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, MisScannedItem, UnrecognisedLine)
 import BarcodeScannerTests exposing (createBarcodeScannerData, toPosix)
 import DataStructures exposing (EventDateAndTime)
 import Dict exposing (Dict)
@@ -47,37 +47,85 @@ suite =
                         |> Expect.equal (ProblemsContainer [] [])
             , test "identifyProblems returns no problems for three athletes with three different positions" <|
                 \() ->
-                    identifyProblems None
+                    identifyProblems
+                        None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A987654" ] ) ]) [] [])
                         emptyEventDateAndTime
                         |> Expect.equal (ProblemsContainer [] [])
+            , test "identifyProblems returns no problem for two barcode scanner files with two equal last-scan dates" <|
+                \() ->
+                    let
+                        barcodeScannerData : BarcodeScannerData
+                        barcodeScannerData =
+                            BarcodeScannerData
+                                [ BarcodeScannerFile "barcodes1.txt" [] (toPosix "2018-03-14T09:47:03.000Z")
+                                , BarcodeScannerFile "barcodes2.txt" [] (toPosix "2018-03-14T09:49:08.000Z")
+                                ]
+                                Dict.empty
+                                []
+                                []
+                                []
+                                []
+                                Nothing
+                    in
+                    identifyProblems
+                        None
+                        barcodeScannerData
+                        emptyEventDateAndTime
+                        |> Expect.equal (ProblemsContainer [] [])
+            , test "identifyProblems returns a problem for two barcode scanner files with two different last-scan dates" <|
+                \() ->
+                    let
+                        barcodeScannerData : BarcodeScannerData
+                        barcodeScannerData =
+                            BarcodeScannerData
+                                [ BarcodeScannerFile "barcodes1.txt" [] (toPosix "2018-03-14T09:47:03.000Z")
+                                , BarcodeScannerFile "barcodes2.txt" [] (toPosix "2018-03-21T09:47:03.000Z")
+                                ]
+                                Dict.empty
+                                []
+                                []
+                                []
+                                []
+                                Nothing
+                    in
+                    identifyProblems
+                        None
+                        barcodeScannerData
+                        emptyEventDateAndTime
+                        |> Expect.equal (ProblemsContainer [ InconsistentBarcodeScannerDates "14/03/2018" "21/03/2018" ] [])
             , test "identifyProblems returns a problem for an athlete with two repeated positions" <|
                 \() ->
-                    identifyProblems None
+                    identifyProblems
+                        None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A123456" ] ) ]) [] [])
                         emptyEventDateAndTime
                         |> Expect.equal (ProblemsContainer [ AthleteWithMultiplePositions "A123456" [ 12, 19 ] ] [])
             , test "identifyProblems returns a problem for an athlete with three repeated positions" <|
                 \() ->
-                    identifyProblems None
+                    identifyProblems
+                        None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A123456" ] ), ( 19, [ "A123456" ] ) ]) [] [])
                         emptyEventDateAndTime
                         |> Expect.equal (ProblemsContainer [ AthleteWithMultiplePositions "A123456" [ 12, 16, 19 ] ] [])
             , test "identifyProblems returns two problems for two athletes with repeated positions" <|
                 \() ->
-                    identifyProblems None
+                    identifyProblems
+                        None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A123456" ] ), ( 25, [ "A252525" ] ) ]) [] [])
                         emptyEventDateAndTime
                         |> Expect.equal (ProblemsContainer [ AthleteWithMultiplePositions "A123456" [ 12, 19 ], AthleteWithMultiplePositions "A252525" [ 16, 25 ] ] [])
             , test "identifyProblems returns a problem for a position with two athletes" <|
                 \() ->
-                    identifyProblems None
+                    identifyProblems
+                        None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456", "A252525" ] ), ( 19, [ "A987654" ] ) ]) [] [])
                         emptyEventDateAndTime
                         |> Expect.equal (ProblemsContainer [ PositionWithMultipleAthletes 12 [ "A123456", "A252525" ] ] [])
             , test "identifyProblems returns a problem for a position with three athletes" <|
                 \() ->
-                    identifyProblems None
+                    identifyProblems
+                        None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456", "A252525", "A748159" ] ), ( 19, [ "A987654" ] ) ]) [] [])
                         emptyEventDateAndTime
                         |> Expect.equal (ProblemsContainer [ PositionWithMultipleAthletes 12 [ "A123456", "A252525", "A748159" ] ] [])
@@ -118,7 +166,10 @@ suite =
                         |> Expect.equal (ProblemsContainer [ AthleteMissingPosition "A951623" ] [])
             , test "identifyProblems returns multiple problems for multiple athletes with no position" <|
                 \() ->
-                    identifyProblems None (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A987654" ] ) ]) [ "A321456", "A951623" ] []) emptyEventDateAndTime
+                    identifyProblems
+                        None
+                        (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A987654" ] ) ]) [ "A321456", "A951623" ] [])
+                        emptyEventDateAndTime
                         |> Expect.equal (ProblemsContainer [ AthleteMissingPosition "A321456", AthleteMissingPosition "A951623" ] [])
             , test "identifyProblems returns a single problem for a position with no athlete" <|
                 \() ->

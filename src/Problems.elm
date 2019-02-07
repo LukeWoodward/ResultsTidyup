@@ -2,7 +2,7 @@ module Problems exposing (FixableProblem(..), Problem(..), ProblemsContainer, em
 
 import BarcodeScanner exposing (BarcodeScannerData, MisScannedItem, UnrecognisedLine)
 import DataStructures exposing (EventDateAndTime)
-import DateHandling exposing (dateStringToPosix)
+import DateHandling exposing (dateStringToPosix, dateToString)
 import Dict exposing (Dict)
 import MergedTable exposing (Stopwatches(..))
 import Set exposing (Set)
@@ -10,7 +10,8 @@ import Time exposing (posixToMillis)
 
 
 type Problem
-    = AthleteWithMultiplePositions String (List Int)
+    = InconsistentBarcodeScannerDates String String
+    | AthleteWithMultiplePositions String (List Int)
     | PositionWithMultipleAthletes Int (List String)
     | PositionOffEndOfTimes Int Int
     | AthleteMissingPosition String
@@ -70,6 +71,39 @@ getAthleteToPositionsDict positionToAthletesDict =
             Dict.update athlete (updater position) dict
     in
     List.foldr mergeItem Dict.empty flattenedDict
+
+
+hasDifferentValues : List comparable -> Maybe ( comparable, comparable )
+hasDifferentValues list =
+    case list of
+        first :: second :: rest ->
+            if first /= second then
+                Just ( first, second )
+
+            else
+                hasDifferentValues (second :: rest)
+
+        _ ->
+            Nothing
+
+
+identifyInconsistentBarcodeScannerDates : BarcodeScannerData -> List Problem
+identifyInconsistentBarcodeScannerDates barcodeScannerData =
+    let
+        maxScanDates : List String
+        maxScanDates =
+            List.filterMap .maxScanDate barcodeScannerData.files
+                |> List.map Time.posixToMillis
+                |> deduplicate
+                |> List.map Time.millisToPosix
+                |> List.map dateToString
+    in
+    case hasDifferentValues maxScanDates of
+        Just ( first, second ) ->
+            [ InconsistentBarcodeScannerDates first second ]
+
+        Nothing ->
+            []
 
 
 identifyAthletesWithMultiplePositions : Dict String (List Int) -> List Problem
@@ -310,7 +344,8 @@ identifyProblems stopwatches barcodeScannerData eventDateAndTime =
 
         allProblems : List (List Problem)
         allProblems =
-            [ identifyAthletesWithMultiplePositions athleteToPositionsDict
+            [ identifyInconsistentBarcodeScannerDates barcodeScannerData
+            , identifyAthletesWithMultiplePositions athleteToPositionsDict
             , identifyPositionsWithMultipleAthletes positionToAthletesDict
             , identifyPositionsOffEndOfTimes stopwatches positionToAthletesDict
             , identifyAthletesWithNoPositions athleteBarcodesOnly athleteToPositionsDict
@@ -336,6 +371,9 @@ identifyProblems stopwatches barcodeScannerData eventDateAndTime =
 problemToString : Problem -> String
 problemToString problem =
     case problem of
+        InconsistentBarcodeScannerDates earlierDate laterDate ->
+            "Inconsistent dates were found among the barcode scanner files (" ++ earlierDate ++ " and " ++ laterDate ++ ").  Please check that you have uploaded files from the same date"
+
         AthleteWithMultiplePositions athlete positions ->
             "Athlete barcode " ++ athlete ++ " has been scanned with more than one finish token: " ++ String.join ", " (List.map String.fromInt positions)
 
