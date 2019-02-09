@@ -447,10 +447,17 @@ regenerate barcodeScannerData =
                 |> List.concat
                 |> List.filter notDeleted
                 |> mergeEntries
+
+        newMaxScanDate : Maybe Posix
+        newMaxScanDate =
+            List.filterMap .maxScanDate barcodeScannerData.files
+                |> List.map Time.posixToMillis
+                |> List.maximum
+                |> Maybe.map Time.millisToPosix
     in
     { mergedData
         | unrecognisedLines = barcodeScannerData.unrecognisedLines
-        , lastScanDate = barcodeScannerData.lastScanDate
+        , lastScanDate = newMaxScanDate
         , files = barcodeScannerData.files
     }
 

@@ -177,6 +177,11 @@ defaultAssertionsExcept exceptions =
     List.filterMap identity allMaybeAssertions
 
 
+defaultTime : Maybe Time.Posix
+defaultTime =
+    toPosix "2018-03-14T09:47:03.000Z"
+
+
 defaultAssertions : List (( Model, Cmd Msg ) -> Expectation)
 defaultAssertions =
     defaultAssertionsExcept []
@@ -258,14 +263,14 @@ parsedBarcodeScannerData1 =
         [ BarcodeScannerFile
             "barcodes1.txt"
             [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
-            (toPosix "2018-03-14T09:47:03.000Z")
+            defaultTime
         ]
         (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
         []
         []
         []
         []
-        (toPosix "2018-03-14T09:47:03.000Z")
+        defaultTime
 
 
 parsedBarcodeScannerData1And2 : BarcodeScannerData
@@ -274,7 +279,7 @@ parsedBarcodeScannerData1And2 =
         [ BarcodeScannerFile
             "barcodes1.txt"
             [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
-            (toPosix "2018-03-14T09:47:03.000Z")
+            defaultTime
         , BarcodeScannerFile
             "barcodes2.txt"
             [ ordinaryFileLine 1 "A2044293" (Just 59) "14/03/2018 09:49:44" ]
@@ -300,14 +305,14 @@ parsedBarcodeScannerDataWithIncompleteRecordFirst =
             [ ordinaryFileLine 1 "" (Just 33) "14/03/2018 09:44:06"
             , ordinaryFileLine 2 "A4580442" (Just 47) "14/03/2018 09:47:03"
             ]
-            (toPosix "2018-03-14T09:47:03.000Z")
+            defaultTime
         ]
         (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
         []
         [ PositionAndTimePair 33 "14/03/2018 09:44:06" ]
         []
         []
-        (toPosix "2018-03-14T09:47:03.000Z")
+        defaultTime
 
 
 parsedEventDateOnly : EventDateAndTime
@@ -381,7 +386,7 @@ createBarcodeScannerDataForRemovingDuplicateScans numberOfTimes =
                     )
     in
     { initModel
-        | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines (toPosix "2018-03-14T09:47:03.000Z") ] }
+        | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines defaultTime ] }
         , problems =
             ProblemsContainer []
                 (if numberOfTimes > 1 then
@@ -590,9 +595,17 @@ getBarcodeScannerDataWithFiles numbers =
         files : List BarcodeScannerFile
         files =
             List.map String.fromInt numbers
-                |> List.map (\num -> BarcodeScannerFile (num ++ ".txt") [] Nothing)
+                |> List.map (\num -> BarcodeScannerFile (num ++ ".txt") [] defaultTime)
+
+        lastScanDate : Maybe Time.Posix
+        lastScanDate =
+            if List.isEmpty numbers then
+                Nothing
+
+            else
+                defaultTime
     in
-    { empty | files = files }
+    { empty | files = files, lastScanDate = lastScanDate }
 
 
 {-| 2018-03-14T09:00:00
@@ -1389,17 +1402,14 @@ suite =
                             initialBarcodeScannerData =
                                 createBarcodeScannerData (Dict.singleton 27 [ "A1234", "A1234" ]) [] []
 
-                            scanTime : Maybe Time.Posix
-                            scanTime =
-                                toPosix "2018-03-14T09:47:03.000Z"
-
                             startingScannerData : BarcodeScannerData
                             startingScannerData =
                                 { initialBarcodeScannerData
                                     | files =
-                                        [ BarcodeScannerFile "barcodes1.txt" [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ] scanTime
-                                        , BarcodeScannerFile "barcodes2.txt" [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ] scanTime
+                                        [ BarcodeScannerFile "barcodes1.txt" [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ] defaultTime
+                                        , BarcodeScannerFile "barcodes2.txt" [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ] defaultTime
                                         ]
+                                    , lastScanDate = defaultTime
                                 }
 
                             finalBarcodeScannerData : BarcodeScannerData
@@ -1410,12 +1420,13 @@ suite =
                                         [ BarcodeScannerFile
                                             "barcodes1.txt"
                                             [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ]
-                                            scanTime
+                                            defaultTime
                                         , BarcodeScannerFile
                                             "barcodes2.txt"
                                             [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" (Deleted (DuplicateScan "A1234" 27)) NotWrongWayAround ]
-                                            scanTime
+                                            defaultTime
                                         ]
+                                    , lastScanDate = defaultTime
                                 }
                         in
                         { initModel | barcodeScannerData = startingScannerData }
@@ -1477,7 +1488,7 @@ suite =
                                     , ordinaryFileLine 3 "A3456" (Just 27) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 4 "A9012" (Just 27) "14/03/2018 09:47:03"
                                     ]
-                                    (toPosix "2018-03-14T09:47:03.000Z")
+                                    defaultTime
 
                             barcodeScannerData : BarcodeScannerData
                             barcodeScannerData =
@@ -1485,7 +1496,7 @@ suite =
 
                             barcodeScannerDataWithFiles : BarcodeScannerData
                             barcodeScannerDataWithFiles =
-                                { barcodeScannerData | files = [ file ] }
+                                { barcodeScannerData | files = [ file ], lastScanDate = defaultTime }
                         in
                         { initModel | barcodeScannerData = barcodeScannerDataWithFiles }
                             |> update (FixProblem (RemoveDuplicateScans 27 "A1234"))
@@ -1641,6 +1652,11 @@ suite =
             [ test "DeleteBarcodeScannerFile does nothing for empty data" <|
                 \() ->
                     update (DeleteBarcodeScannerFile 0) initModel
+                        |> Expect.all defaultAssertions
+            , test "DeleteBarcodeScannerFile deletes single file" <|
+                \() ->
+                    { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1 ] }
+                        |> update (DeleteBarcodeScannerFile 0)
                         |> Expect.all defaultAssertions
             , test "DeleteBarcodeScannerFile deletes file at first index of three" <|
                 \() ->
