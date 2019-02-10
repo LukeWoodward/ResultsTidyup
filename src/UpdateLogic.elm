@@ -1,4 +1,4 @@
-module UpdateLogic exposing (createStopwatchFileForDownload, update)
+module UpdateLogic exposing (createStopwatchFileForDownload, regenerateWithWrongWayArounds, update)
 
 import BarcodeScanner
     exposing
@@ -9,6 +9,7 @@ import BarcodeScanner
         , DeletionReason(..)
         , LineContents(..)
         , ModificationStatus(..)
+        , WrongWayAroundStatus(..)
         , generateDownloadText
         , mergeScannerData
         , readBarcodeScannerData
@@ -786,6 +787,86 @@ deleteBarcodeScannerFileAtIndex index model =
         }
 
 
+swapBarcodesAroundInLines : Int -> Int -> List BarcodeScannerFileLine -> List BarcodeScannerFileLine
+swapBarcodesAroundInLines first last lines =
+    case lines of
+        [] ->
+            []
+
+        singleLine :: [] ->
+            if singleLine.lineNumber == last then
+                [ { singleLine | modificationStatus = Deleted EndOfWrongWayAroundSection, wrongWayAroundStatus = NotWrongWayAround } ]
+
+            else
+                [ singleLine ]
+
+        firstLine :: secondLine :: remainingLines ->
+            if firstLine.lineNumber == last then
+                { firstLine | modificationStatus = Deleted EndOfWrongWayAroundSection, wrongWayAroundStatus = NotWrongWayAround } :: secondLine :: remainingLines
+
+            else if first <= firstLine.lineNumber && firstLine.lineNumber < last then
+                case ( firstLine.contents, secondLine.contents ) of
+                    ( Ordinary _ thisPosition, Ordinary nextAthlete _ ) ->
+                        { firstLine
+                            | contents = Ordinary nextAthlete thisPosition
+                            , modificationStatus = BarcodesSwapped
+                            , wrongWayAroundStatus = NotWrongWayAround
+                        }
+                            :: swapBarcodesAroundInLines first last (secondLine :: remainingLines)
+
+                    _ ->
+                        -- Mis-scans?  Unexpected.
+                        firstLine :: swapBarcodesAroundInLines first last (secondLine :: remainingLines)
+
+            else
+                firstLine :: swapBarcodesAroundInLines first last (secondLine :: remainingLines)
+
+
+swapBarcodesAroundInFile : Int -> Int -> BarcodeScannerFile -> BarcodeScannerFile
+swapBarcodesAroundInFile first last file =
+    { file | lines = swapBarcodesAroundInLines first last file.lines }
+
+
+swapBarcodesAround : String -> Int -> Int -> Model -> Model
+swapBarcodesAround fileName first last model =
+    let
+        matchingFileMaybe : Maybe BarcodeScannerFile
+        matchingFileMaybe =
+            List.filter (\f -> f.name == fileName) model.barcodeScannerData.files
+                |> List.head
+    in
+    case matchingFileMaybe of
+        Just matchingFile ->
+            let
+                swappedFile : BarcodeScannerFile
+                swappedFile =
+                    swapBarcodesAroundInFile first last matchingFile
+
+                swapFileBackIn : BarcodeScannerFile -> BarcodeScannerFile
+                swapFileBackIn file =
+                    if file.name == fileName then
+                        swappedFile
+
+                    else
+                        file
+
+                originalBarcodeScannerData : BarcodeScannerData
+                originalBarcodeScannerData =
+                    model.barcodeScannerData
+            in
+            identifyProblemsIn
+                { model
+                    | barcodeScannerData =
+                        regenerateWithWrongWayArounds
+                            { originalBarcodeScannerData
+                                | files = List.map swapFileBackIn originalBarcodeScannerData.files
+                            }
+                }
+
+        Nothing ->
+            model
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -892,3 +973,6 @@ update msg model =
 
         DeleteBarcodeScannerFile index ->
             ( deleteBarcodeScannerFileAtIndex index model, Cmd.none )
+
+        SwapBarcodes fileName first last ->
+            ( swapBarcodesAround fileName first last model, Cmd.none )

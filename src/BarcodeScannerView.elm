@@ -36,6 +36,9 @@ deletionReasonToString reason =
         FinishTokenScannedWithAthleteElsewhere position ->
             "Position " ++ String.fromInt position ++ " has been scanned with an athlete barcode elsewhere"
 
+        EndOfWrongWayAroundSection ->
+            "This line was at the end of a section of barcodes scanned the wrong way around"
+
 
 barcodeScannerContents : LineContents -> List (Table.Cell Msg)
 barcodeScannerContents contents =
@@ -55,12 +58,15 @@ modificationStatusCell status =
         Unmodified ->
             Table.td [] [ text "Unmodified" ]
 
+        BarcodesSwapped ->
+            Table.td [] [ text "Athlete shifted up from line below" ]
+
         Deleted reason ->
             Table.td [] [ text "Deleted" ]
 
 
-wrongWayAroundStatusCell : WrongWayAroundStatus -> List (Table.Cell Msg)
-wrongWayAroundStatusCell wrongWayAroundStatus =
+wrongWayAroundStatusCell : String -> WrongWayAroundStatus -> List (Table.Cell Msg)
+wrongWayAroundStatusCell fileName wrongWayAroundStatus =
     case wrongWayAroundStatus of
         NotWrongWayAround ->
             [ Table.td [] [] ]
@@ -75,20 +81,28 @@ wrongWayAroundStatusCell wrongWayAroundStatus =
                 [ Table.cellAttr (rowspan rowCount)
                 , Table.cellAttr (class "swap-barcodes-around-button-cell")
                 ]
-                [ Button.button [ Button.primary ] [ text "Swap barcodes around" ] ]
+                [ Button.button
+                    [ Button.primary
+                    , Button.onClick (SwapBarcodes fileName first last)
+                    ]
+                    [ text "Swap barcodes around" ]
+                ]
             ]
 
         SubsequentWrongWayAround ->
             []
 
 
-barcodeScannerViewRow : BarcodeScannerFileLine -> Table.Row Msg
-barcodeScannerViewRow line =
+barcodeScannerViewRow : String -> BarcodeScannerFileLine -> Table.Row Msg
+barcodeScannerViewRow fileName line =
     let
         rowAttributes : List (Attribute Msg)
         rowAttributes =
             case line.modificationStatus of
                 Unmodified ->
+                    []
+
+                BarcodesSwapped ->
                     []
 
                 Deleted deletionReason ->
@@ -103,7 +117,7 @@ barcodeScannerViewRow line =
             ++ [ Table.td [] [ text line.scanTime ]
                , modificationStatusCell line.modificationStatus
                ]
-            ++ wrongWayAroundStatusCell line.wrongWayAroundStatus
+            ++ wrongWayAroundStatusCell fileName line.wrongWayAroundStatus
         )
 
 
@@ -122,7 +136,7 @@ barcodeScannerView index file =
         , Table.table
             { options = [ Table.bordered, Table.small, Table.hover, Table.attr (class "barcode-scanner-table") ]
             , thead = tableHeaders [ "Line #", "Athlete", "Position", "Date/Time", "Status", "Action" ]
-            , tbody = Table.tbody [] (List.map barcodeScannerViewRow file.lines)
+            , tbody = Table.tbody [] (List.map (barcodeScannerViewRow file.name) file.lines)
             }
         ]
 

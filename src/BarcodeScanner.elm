@@ -68,10 +68,12 @@ type DeletionReason
     | DuplicateScan String Int
     | AthleteScannedWithFinishTokenElsewhere String
     | FinishTokenScannedWithAthleteElsewhere Int
+    | EndOfWrongWayAroundSection
 
 
 type ModificationStatus
     = Unmodified
+    | BarcodesSwapped
     | Deleted DeletionReason
 
 

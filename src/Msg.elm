@@ -34,3 +34,4 @@ type Msg
     | ClearErrors
     | DownloadBarcodeScannerFile Int Zone Posix
     | DeleteBarcodeScannerFile Int
+    | SwapBarcodes String Int Int

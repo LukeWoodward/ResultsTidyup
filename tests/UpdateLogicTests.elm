@@ -32,7 +32,7 @@ import Stopwatch exposing (Stopwatch(..))
 import StopwatchTests
 import Test exposing (Test, describe, test)
 import Time
-import UpdateLogic exposing (createStopwatchFileForDownload, update)
+import UpdateLogic exposing (createStopwatchFileForDownload, regenerateWithWrongWayArounds, update)
 
 
 expectNoCommand : ( Model, Cmd Msg ) -> Expectation
@@ -606,6 +606,18 @@ getBarcodeScannerDataWithFiles numbers =
                 defaultTime
     in
     { empty | files = files, lastScanDate = lastScanDate }
+
+
+createInitialBarcodeScannerDataForSwappingBarcodes : List BarcodeScannerFile -> BarcodeScannerData
+createInitialBarcodeScannerDataForSwappingBarcodes files =
+    BarcodeScannerData files Dict.empty [] [] [] [] Nothing
+        |> regenerateWithWrongWayArounds
+
+
+createExpectedBarcodeScannerDataForSwappingBarcodes : List BarcodeScannerFile -> BarcodeScannerData
+createExpectedBarcodeScannerDataForSwappingBarcodes files =
+    BarcodeScannerData files Dict.empty [] [] [] [] Nothing
+        |> regenerate
 
 
 {-| 2018-03-14T09:00:00
@@ -1696,6 +1708,122 @@ suite =
                         |> update (DeleteBarcodeScannerFile -1)
                         |> Expect.all
                             (expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2, 3 ])
+                                :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
+                            )
+            ]
+        , describe "swapBarcodes tests"
+            [ test "swapBarcodes does nothing for empty data" <|
+                \() ->
+                    update (SwapBarcodes "barcodes1.txt" 1 2) initModel
+                        |> Expect.all defaultAssertions
+            , test "swapBarcodes swaps data for single barcode pair the wrong way around" <|
+                \() ->
+                    let
+                        initialBarcodeData : BarcodeScannerData
+                        initialBarcodeData =
+                            createInitialBarcodeScannerDataForSwappingBarcodes
+                                [ BarcodeScannerFile "barcodes1.txt"
+                                    [ ordinaryFileLine 1 "" (Just 47) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "A123456" Nothing "14/03/2018 09:48:41"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:41.000Z")
+                                ]
+
+                        expectedBarcodeData : BarcodeScannerData
+                        expectedBarcodeData =
+                            createExpectedBarcodeScannerDataForSwappingBarcodes
+                                [ BarcodeScannerFile "barcodes1.txt"
+                                    [ BarcodeScannerFileLine 1 (Ordinary "A123456" (Just 47)) "14/03/2018 09:47:03" BarcodesSwapped NotWrongWayAround
+                                    , BarcodeScannerFileLine 2 (Ordinary "A123456" Nothing) "14/03/2018 09:48:41" (Deleted EndOfWrongWayAroundSection) NotWrongWayAround
+                                    ]
+                                    (toPosix "2018-03-14T09:48:41.000Z")
+                                ]
+                    in
+                    { initModel | barcodeScannerData = initialBarcodeData }
+                        |> update (SwapBarcodes "barcodes1.txt" 1 2)
+                        |> Expect.all
+                            (expectBarcodeScannerData expectedBarcodeData
+                                :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
+                            )
+            , test "swapBarcodes swaps data for double barcode pair the wrong way around" <|
+                \() ->
+                    let
+                        initialBarcodeData : BarcodeScannerData
+                        initialBarcodeData =
+                            createInitialBarcodeScannerDataForSwappingBarcodes
+                                [ BarcodeScannerFile "barcodes1.txt"
+                                    [ ordinaryFileLine 1 "" (Just 47) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "A123456" (Just 40) "14/03/2018 09:48:41"
+                                    , ordinaryFileLine 3 "A565656" Nothing "14/03/2018 09:49:06"
+                                    ]
+                                    (toPosix "2018-03-14T09:49:06.000Z")
+                                ]
+
+                        expectedBarcodeData : BarcodeScannerData
+                        expectedBarcodeData =
+                            createExpectedBarcodeScannerDataForSwappingBarcodes
+                                [ BarcodeScannerFile "barcodes1.txt"
+                                    [ BarcodeScannerFileLine 1 (Ordinary "A123456" (Just 47)) "14/03/2018 09:47:03" BarcodesSwapped NotWrongWayAround
+                                    , BarcodeScannerFileLine 2 (Ordinary "A565656" (Just 40)) "14/03/2018 09:48:41" BarcodesSwapped NotWrongWayAround
+                                    , BarcodeScannerFileLine 3 (Ordinary "A565656" Nothing) "14/03/2018 09:49:06" (Deleted EndOfWrongWayAroundSection) NotWrongWayAround
+                                    ]
+                                    (toPosix "2018-03-14T09:49:06.000Z")
+                                ]
+                    in
+                    { initModel | barcodeScannerData = initialBarcodeData }
+                        |> update (SwapBarcodes "barcodes1.txt" 1 3)
+                        |> Expect.all
+                            (expectBarcodeScannerData expectedBarcodeData
+                                :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
+                            )
+            , test "swapBarcodes swaps data for single barcode pair the wrong way around with ordinary record afterwards" <|
+                \() ->
+                    let
+                        initialBarcodeData : BarcodeScannerData
+                        initialBarcodeData =
+                            createInitialBarcodeScannerDataForSwappingBarcodes
+                                [ BarcodeScannerFile "barcodes1.txt"
+                                    [ ordinaryFileLine 1 "" (Just 47) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "A123456" Nothing "14/03/2018 09:48:41"
+                                    , ordinaryFileLine 3 "A565656" (Just 40) "14/03/2018 09:49:06"
+                                    ]
+                                    (toPosix "2018-03-14T09:49:06.000Z")
+                                ]
+
+                        expectedBarcodeData : BarcodeScannerData
+                        expectedBarcodeData =
+                            createExpectedBarcodeScannerDataForSwappingBarcodes
+                                [ BarcodeScannerFile "barcodes1.txt"
+                                    [ BarcodeScannerFileLine 1 (Ordinary "A123456" (Just 47)) "14/03/2018 09:47:03" BarcodesSwapped NotWrongWayAround
+                                    , BarcodeScannerFileLine 2 (Ordinary "A123456" Nothing) "14/03/2018 09:48:41" (Deleted EndOfWrongWayAroundSection) NotWrongWayAround
+                                    , ordinaryFileLine 3 "A565656" (Just 40) "14/03/2018 09:49:06"
+                                    ]
+                                    (toPosix "2018-03-14T09:49:06.000Z")
+                                ]
+                    in
+                    { initModel | barcodeScannerData = initialBarcodeData }
+                        |> update (SwapBarcodes "barcodes1.txt" 1 2)
+                        |> Expect.all
+                            (expectBarcodeScannerData expectedBarcodeData
+                                :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
+                            )
+            , test "swapBarcodes does nothing for mismatched filename" <|
+                \() ->
+                    let
+                        initialBarcodeData : BarcodeScannerData
+                        initialBarcodeData =
+                            createInitialBarcodeScannerDataForSwappingBarcodes
+                                [ BarcodeScannerFile "barcodes1.txt"
+                                    [ ordinaryFileLine 1 "" (Just 47) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "A123456" Nothing "14/03/2018 09:48:41"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:41.000Z")
+                                ]
+                    in
+                    { initModel | barcodeScannerData = initialBarcodeData }
+                        |> update (SwapBarcodes "wrong_filename.txt" 1 2)
+                        |> Expect.all
+                            (expectBarcodeScannerData initialBarcodeData
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
                             )
             ]
