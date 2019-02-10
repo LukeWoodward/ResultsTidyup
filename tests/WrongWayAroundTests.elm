@@ -5,8 +5,8 @@ import BarcodeScanner
         ( BarcodeScannerData
         , BarcodeScannerFile
         , BarcodeScannerFileLine
+        , DeletionStatus(..)
         , LineContents(..)
-        , ModificationStatus(..)
         , WrongWayAroundStatus(..)
         )
 import Dict
@@ -20,7 +20,7 @@ createBarcodeScannerDataForWrongWayAroundTests lineContents =
     let
         createLine : Int -> LineContents -> BarcodeScannerFileLine
         createLine index contents =
-            BarcodeScannerFileLine (index + 1) contents "14/03/2018 09:47:03" Unmodified NotWrongWayAround
+            BarcodeScannerFileLine (index + 1) contents "14/03/2018 09:47:03" NotDeleted NotWrongWayAround
     in
     BarcodeScannerData
         [ BarcodeScannerFile "barcodes1.txt" (List.indexedMap createLine lineContents) Nothing ]

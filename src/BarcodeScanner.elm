@@ -4,9 +4,9 @@ module BarcodeScanner exposing
     , BarcodeScannerFile
     , BarcodeScannerFileLine
     , DeletionReason(..)
+    , DeletionStatus(..)
     , LineContents(..)
     , MisScannedItem
-    , ModificationStatus(..)
     , PositionAndTimePair
     , UnrecognisedLine
     , WrongWayAroundStatus(..)
@@ -71,9 +71,8 @@ type DeletionReason
     | EndOfWrongWayAroundSection
 
 
-type ModificationStatus
-    = Unmodified
-    | BarcodesSwapped
+type DeletionStatus
+    = NotDeleted
     | Deleted DeletionReason
 
 
@@ -92,7 +91,7 @@ type alias BarcodeScannerFileLine =
     { lineNumber : Int
     , contents : LineContents
     , scanTime : String
-    , modificationStatus : ModificationStatus
+    , deletionStatus : DeletionStatus
     , wrongWayAroundStatus : WrongWayAroundStatus
     }
 
@@ -153,7 +152,7 @@ positionParser =
 
 okDefaultFileLine : Int -> LineContents -> String -> Result e BarcodeScannerFileLine
 okDefaultFileLine lineNumber contents scanTime =
-    Ok (BarcodeScannerFileLine lineNumber contents scanTime Unmodified NotWrongWayAround)
+    Ok (BarcodeScannerFileLine lineNumber contents scanTime NotDeleted NotWrongWayAround)
 
 
 readLine : Int -> String -> Result UnrecognisedLine BarcodeScannerFileLine
@@ -430,11 +429,11 @@ formatAthleteEntries ( position, athleteAndTimePairs ) =
 
 notDeleted : BarcodeScannerFileLine -> Bool
 notDeleted line =
-    case line.modificationStatus of
+    case line.deletionStatus of
         Deleted _ ->
             False
 
-        _ ->
+        NotDeleted ->
             True
 
 

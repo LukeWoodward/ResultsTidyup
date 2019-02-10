@@ -7,9 +7,9 @@ import BarcodeScanner
         , BarcodeScannerFile
         , BarcodeScannerFileLine
         , DeletionReason(..)
+        , DeletionStatus(..)
         , LineContents(..)
         , MisScannedItem
-        , ModificationStatus(..)
         , PositionAndTimePair
         , UnrecognisedLine
         , WrongWayAroundStatus(..)
@@ -36,7 +36,7 @@ dummyTime =
 
 ordinaryFileLine : Int -> String -> Maybe Int -> String -> BarcodeScannerFileLine
 ordinaryFileLine lineNumber athlete finishToken scanTime =
-    BarcodeScannerFileLine lineNumber (Ordinary athlete finishToken) scanTime Unmodified NotWrongWayAround
+    BarcodeScannerFileLine lineNumber (Ordinary athlete finishToken) scanTime NotDeleted NotWrongWayAround
 
 
 toPosix : String -> Maybe Posix
@@ -199,7 +199,7 @@ suite =
                                 (BarcodeScannerData
                                     [ BarcodeScannerFile
                                         "barcodes4.txt"
-                                        [ BarcodeScannerFileLine 1 (MisScan "&d084") "14/03/2018 09:47:03" Unmodified NotWrongWayAround ]
+                                        [ BarcodeScannerFileLine 1 (MisScan "&d084") "14/03/2018 09:47:03" NotDeleted NotWrongWayAround ]
                                         (toPosix "2018-03-14T09:47:03.000Z")
                                     ]
                                     Dict.empty
@@ -310,7 +310,7 @@ suite =
                         |> Expect.equal (",P0047,19/09/2018 09:40:09" ++ crlf)
             , test "generateDownloadText returns a string for a single mis-scanned item" <|
                 \() ->
-                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ BarcodeScannerFileLine 1 (MisScan "&d084") "04/07/2018 09:42:22" Unmodified NotWrongWayAround ] Nothing)
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ BarcodeScannerFileLine 1 (MisScan "&d084") "04/07/2018 09:42:22" NotDeleted NotWrongWayAround ] Nothing)
                         |> Expect.equal ("&d084,04/07/2018 09:42:22" ++ crlf)
             , test "generateDownloadText returns an empty string for a deleted record" <|
                 \() ->
@@ -324,7 +324,7 @@ suite =
                             [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03"
                             , ordinaryFileLine 2 "A123456" Nothing "19/09/2018 09:33:37"
                             , ordinaryFileLine 3 "" (Just 47) "19/09/2018 09:40:09"
-                            , BarcodeScannerFileLine 4 (MisScan "&d084") "04/07/2018 09:42:22" Unmodified NotWrongWayAround
+                            , BarcodeScannerFileLine 4 (MisScan "&d084") "04/07/2018 09:42:22" NotDeleted NotWrongWayAround
                             , BarcodeScannerFileLine 5 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted BeforeEventStart) NotWrongWayAround
                             ]
                             Nothing

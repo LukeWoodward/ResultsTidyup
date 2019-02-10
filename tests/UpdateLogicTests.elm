@@ -7,8 +7,8 @@ import BarcodeScanner
         , BarcodeScannerFile
         , BarcodeScannerFileLine
         , DeletionReason(..)
+        , DeletionStatus(..)
         , LineContents(..)
-        , ModificationStatus(..)
         , PositionAndTimePair
         , WrongWayAroundStatus(..)
         , empty
@@ -358,8 +358,8 @@ createBarcodeScannerDataForRemovingUnassociatedAthletes athletes =
             athletes
                 |> List.indexedMap
                     (\index athlete ->
-                        [ BarcodeScannerFileLine (index * 2 + 1) (Ordinary athlete (Just (index + 1))) "14/03/2018 09:47:03" Unmodified NotWrongWayAround
-                        , BarcodeScannerFileLine (index * 2 + 2) (Ordinary athlete Nothing) "14/03/2018 09:47:03" Unmodified NotWrongWayAround
+                        [ BarcodeScannerFileLine (index * 2 + 1) (Ordinary athlete (Just (index + 1))) "14/03/2018 09:47:03" NotDeleted NotWrongWayAround
+                        , BarcodeScannerFileLine (index * 2 + 2) (Ordinary athlete Nothing) "14/03/2018 09:47:03" NotDeleted NotWrongWayAround
                         ]
                     )
                 |> List.concat
@@ -382,7 +382,7 @@ createBarcodeScannerDataForRemovingDuplicateScans numberOfTimes =
             List.range 1 numberOfTimes
                 |> List.map
                     (\index ->
-                        BarcodeScannerFileLine index (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" Unmodified NotWrongWayAround
+                        BarcodeScannerFileLine index (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" NotDeleted NotWrongWayAround
                     )
     in
     { initModel
@@ -546,7 +546,7 @@ deleteLinesWithinFile deleter files =
 ifLineNumberIn : List Int -> BarcodeScannerFileLine -> BarcodeScannerFileLine
 ifLineNumberIn linesToDelete line =
     if List.member line.lineNumber linesToDelete then
-        { line | modificationStatus = Deleted BeforeEventStart }
+        { line | deletionStatus = Deleted BeforeEventStart }
 
     else
         line
@@ -557,7 +557,7 @@ ifAthlete athlete line =
     case line.contents of
         Ordinary someAthlete Nothing ->
             if athlete == someAthlete then
-                { line | modificationStatus = Deleted (AthleteScannedWithFinishTokenElsewhere athlete) }
+                { line | deletionStatus = Deleted (AthleteScannedWithFinishTokenElsewhere athlete) }
 
             else
                 line
@@ -571,7 +571,7 @@ ifFinishPosition position line =
     case line.contents of
         Ordinary "" somePosition ->
             if somePosition == Just position then
-                { line | modificationStatus = Deleted (FinishTokenScannedWithAthleteElsewhere position) }
+                { line | deletionStatus = Deleted (FinishTokenScannedWithAthleteElsewhere position) }
 
             else
                 line
@@ -583,7 +583,7 @@ ifFinishPosition position line =
 ifLineNumberGreaterThanOne : BarcodeScannerFileLine -> BarcodeScannerFileLine
 ifLineNumberGreaterThanOne line =
     if line.lineNumber > 1 then
-        { line | modificationStatus = Deleted (DuplicateScan "A1234" 27) }
+        { line | deletionStatus = Deleted (DuplicateScan "A1234" 27) }
 
     else
         line
@@ -1578,7 +1578,7 @@ suite =
                             case file.lines of
                                 first :: second :: rest ->
                                     { file
-                                        | lines = first :: BarcodeScannerFileLine 2 (Ordinary "A345678" Nothing) "This is not a valid time" Unmodified NotWrongWayAround :: rest
+                                        | lines = first :: BarcodeScannerFileLine 2 (Ordinary "A345678" Nothing) "This is not a valid time" NotDeleted NotWrongWayAround :: rest
                                     }
 
                                 _ ->
@@ -1733,7 +1733,7 @@ suite =
                         expectedBarcodeData =
                             createExpectedBarcodeScannerDataForSwappingBarcodes
                                 [ BarcodeScannerFile "barcodes1.txt"
-                                    [ BarcodeScannerFileLine 1 (Ordinary "A123456" (Just 47)) "14/03/2018 09:47:03" BarcodesSwapped NotWrongWayAround
+                                    [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03"
                                     , BarcodeScannerFileLine 2 (Ordinary "A123456" Nothing) "14/03/2018 09:48:41" (Deleted EndOfWrongWayAroundSection) NotWrongWayAround
                                     ]
                                     (toPosix "2018-03-14T09:48:41.000Z")
@@ -1763,8 +1763,8 @@ suite =
                         expectedBarcodeData =
                             createExpectedBarcodeScannerDataForSwappingBarcodes
                                 [ BarcodeScannerFile "barcodes1.txt"
-                                    [ BarcodeScannerFileLine 1 (Ordinary "A123456" (Just 47)) "14/03/2018 09:47:03" BarcodesSwapped NotWrongWayAround
-                                    , BarcodeScannerFileLine 2 (Ordinary "A565656" (Just 40)) "14/03/2018 09:48:41" BarcodesSwapped NotWrongWayAround
+                                    [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "A565656" (Just 40) "14/03/2018 09:48:41"
                                     , BarcodeScannerFileLine 3 (Ordinary "A565656" Nothing) "14/03/2018 09:49:06" (Deleted EndOfWrongWayAroundSection) NotWrongWayAround
                                     ]
                                     (toPosix "2018-03-14T09:49:06.000Z")
@@ -1794,7 +1794,7 @@ suite =
                         expectedBarcodeData =
                             createExpectedBarcodeScannerDataForSwappingBarcodes
                                 [ BarcodeScannerFile "barcodes1.txt"
-                                    [ BarcodeScannerFileLine 1 (Ordinary "A123456" (Just 47)) "14/03/2018 09:47:03" BarcodesSwapped NotWrongWayAround
+                                    [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03"
                                     , BarcodeScannerFileLine 2 (Ordinary "A123456" Nothing) "14/03/2018 09:48:41" (Deleted EndOfWrongWayAroundSection) NotWrongWayAround
                                     , ordinaryFileLine 3 "A565656" (Just 40) "14/03/2018 09:49:06"
                                     ]

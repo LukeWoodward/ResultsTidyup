@@ -7,8 +7,8 @@ import BarcodeScanner
         , BarcodeScannerFile
         , BarcodeScannerFileLine
         , DeletionReason(..)
+        , DeletionStatus(..)
         , LineContents(..)
-        , ModificationStatus(..)
         , WrongWayAroundStatus(..)
         , generateDownloadText
         , mergeScannerData
@@ -570,7 +570,7 @@ deleteUnassociatedAthlete athlete line =
     case line.contents of
         Ordinary someAthlete Nothing ->
             if athlete == someAthlete then
-                { line | modificationStatus = Deleted (AthleteScannedWithFinishTokenElsewhere athlete) }
+                { line | deletionStatus = Deleted (AthleteScannedWithFinishTokenElsewhere athlete) }
 
             else
                 line
@@ -587,7 +587,7 @@ deleteUnassociatedFinishPosition position line =
     case line.contents of
         Ordinary "" somePosition ->
             if somePosition == Just position then
-                { line | modificationStatus = Deleted (FinishTokenScannedWithAthleteElsewhere position) }
+                { line | deletionStatus = Deleted (FinishTokenScannedWithAthleteElsewhere position) }
 
             else
                 line
@@ -604,7 +604,7 @@ deleteBeforeEventStart eventStartTimeMillis line =
     case Maybe.map Time.posixToMillis (dateStringToPosix line.scanTime) of
         Just scanTimeMillis ->
             if scanTimeMillis < eventStartTimeMillis then
-                { line | modificationStatus = Deleted BeforeEventStart }
+                { line | deletionStatus = Deleted BeforeEventStart }
 
             else
                 line
@@ -625,7 +625,7 @@ deleteDuplicateScansWithinLine athlete position line found =
         Ordinary someAthlete somePosition ->
             if someAthlete == athlete && somePosition == Just position then
                 if found then
-                    ( { line | modificationStatus = Deleted (DuplicateScan athlete position) }, True )
+                    ( { line | deletionStatus = Deleted (DuplicateScan athlete position) }, True )
 
                 else
                     -- The first matching record has been found.
@@ -795,21 +795,20 @@ swapBarcodesAroundInLines first last lines =
 
         singleLine :: [] ->
             if singleLine.lineNumber == last then
-                [ { singleLine | modificationStatus = Deleted EndOfWrongWayAroundSection, wrongWayAroundStatus = NotWrongWayAround } ]
+                [ { singleLine | deletionStatus = Deleted EndOfWrongWayAroundSection, wrongWayAroundStatus = NotWrongWayAround } ]
 
             else
                 [ singleLine ]
 
         firstLine :: secondLine :: remainingLines ->
             if firstLine.lineNumber == last then
-                { firstLine | modificationStatus = Deleted EndOfWrongWayAroundSection, wrongWayAroundStatus = NotWrongWayAround } :: secondLine :: remainingLines
+                { firstLine | deletionStatus = Deleted EndOfWrongWayAroundSection, wrongWayAroundStatus = NotWrongWayAround } :: secondLine :: remainingLines
 
             else if first <= firstLine.lineNumber && firstLine.lineNumber < last then
                 case ( firstLine.contents, secondLine.contents ) of
                     ( Ordinary _ thisPosition, Ordinary nextAthlete _ ) ->
                         { firstLine
                             | contents = Ordinary nextAthlete thisPosition
-                            , modificationStatus = BarcodesSwapped
                             , wrongWayAroundStatus = NotWrongWayAround
                         }
                             :: swapBarcodesAroundInLines first last (secondLine :: remainingLines)
