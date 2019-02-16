@@ -115,48 +115,6 @@ suite =
                     toggleRowInTable 99 sampleMergedTable
                         |> Expect.equal sampleMergedTable
             ]
-        , describe "deleteStopwatchFromTable tests"
-            [ test "Deletes stopwatch-one time from single ExactMatch entry" <|
-                \() ->
-                    deleteStopwatchFromTable StopwatchOne [ wrapEntry entry1 ]
-                        |> Expect.equal [ 259 ]
-            , test "Deletes stopwatch-two time from single ExactMatch entry" <|
-                \() ->
-                    deleteStopwatchFromTable StopwatchTwo [ wrapEntry entry1 ]
-                        |> Expect.equal [ 259 ]
-            , test "Deletes stopwatch-one time from single NearMatch entry" <|
-                \() ->
-                    deleteStopwatchFromTable StopwatchOne [ wrapEntry entry2 ]
-                        |> Expect.equal [ 285 ]
-            , test "Deletes stopwatch-two time from single NearMatch entry" <|
-                \() ->
-                    deleteStopwatchFromTable StopwatchTwo [ wrapEntry entry2 ]
-                        |> Expect.equal [ 284 ]
-            , test "Deletes stopwatch-one time from single stopwatch-two-only entry" <|
-                \() ->
-                    deleteStopwatchFromTable StopwatchOne [ wrapEntry entry3 ]
-                        |> Expect.equal [ 303 ]
-            , test "Deletes stopwatch-two time from single stopwatch-two-only entry" <|
-                \() ->
-                    deleteStopwatchFromTable StopwatchTwo [ wrapEntry entry3 ]
-                        |> Expect.equal []
-            , test "Deletes stopwatch-one time from single stopwatch-one-only entry" <|
-                \() ->
-                    deleteStopwatchFromTable StopwatchOne [ wrapEntry entry4 ]
-                        |> Expect.equal []
-            , test "Deletes stopwatch-two time from single stopwatch-one-only entry" <|
-                \() ->
-                    deleteStopwatchFromTable StopwatchTwo [ wrapEntry entry4 ]
-                        |> Expect.equal [ 355 ]
-            , test "Deletes stopwatch-one times from all entries" <|
-                \() ->
-                    deleteStopwatchFromTable StopwatchOne (List.map wrapEntry [ entry1, entry2, entry3, entry4 ])
-                        |> Expect.equal [ 259, 285, 303 ]
-            , test "Deletes stopwatch-two times from all entries" <|
-                \() ->
-                    deleteStopwatchFromTable StopwatchTwo (List.map wrapEntry [ entry1, entry2, entry3, entry4 ])
-                        |> Expect.equal [ 259, 284, 355 ]
-            ]
         , describe "flipTable tests"
             [ test "Flips a table of entries" <|
                 \() ->

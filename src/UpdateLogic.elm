@@ -23,9 +23,9 @@ import Error exposing (Error, FileError, mapError)
 import File.Download as Download
 import MergedTable
     exposing
-        ( MergedTableRow
+        ( DoubleStopwatchData
+        , MergedTableRow
         , Stopwatches(..)
-        , deleteStopwatchFromTable
         , flipTable
         , generateInitialTable
         , outputMergedTable
@@ -74,8 +74,8 @@ hasFileAlreadyBeenUploaded newFileName stopwatches =
         Single existingFilename _ ->
             newFileName == existingFilename
 
-        Double existingFilename1 existingFilename2 _ ->
-            newFileName == existingFilename1 || newFileName == existingFilename2
+        Double doubleStopwatchData ->
+            newFileName == doubleStopwatchData.filename1 || newFileName == doubleStopwatchData.filename2
 
 
 underlineStopwatches : Stopwatches -> List AnnotatedNumberCheckerEntry -> Stopwatches
@@ -91,8 +91,11 @@ underlineStopwatches stopwatches numberCheckerEntries =
             Single _ _ ->
                 stopwatches
 
-            Double fileName1 fileName2 mergedTable ->
-                Double fileName1 fileName2 (underlineTable numberCheckerEntries mergedTable)
+            Double doubleStopwatchData ->
+                Double
+                    { doubleStopwatchData
+                        | mergedTableRows = underlineTable numberCheckerEntries doubleStopwatchData.mergedTableRows
+                    }
 
 
 handleEventDateChange : String -> Model -> Model
@@ -206,9 +209,15 @@ handleStopwatchFileDrop fileName fileText model =
                                     mergedTable =
                                         generateInitialTable mergedDetails
                                 in
-                                Double existingFilename fileName mergedTable
+                                Double
+                                    { times1 = firstStopwatch
+                                    , times2 = newStopwatch
+                                    , filename1 = existingFilename
+                                    , filename2 = fileName
+                                    , mergedTableRows = mergedTable
+                                    }
 
-                            Double _ _ _ ->
+                            Double _ ->
                                 model.stopwatches
 
                     underlinedStopwatches =
@@ -318,16 +327,16 @@ toggleTableRow index model =
         Single _ _ ->
             model
 
-        Double fileName1 fileName2 currentMergedTable ->
+        Double doubleStopwatchData ->
             let
                 newMergedTable : List MergedTableRow
                 newMergedTable =
-                    currentMergedTable
+                    doubleStopwatchData.mergedTableRows
                         |> toggleRowInTable index
                         |> underlineTable model.numberCheckerEntries
             in
             { model
-                | stopwatches = Double fileName1 fileName2 newMergedTable
+                | stopwatches = Double { doubleStopwatchData | mergedTableRows = newMergedTable }
             }
 
 
@@ -343,23 +352,23 @@ deleteStopwatch which model =
         ( Single _ _, StopwatchTwo ) ->
             model
 
-        ( Double fileName1 fileName2 mergedRows, _ ) ->
+        ( Double doubleStopwatchData, StopwatchOne ) ->
             let
-                fileNameToKeep : String
-                fileNameToKeep =
-                    case which of
-                        StopwatchOne ->
-                            fileName2
-
-                        StopwatchTwo ->
-                            fileName1
+                newStopwatches : Stopwatches
+                newStopwatches =
+                    Single doubleStopwatchData.filename2 doubleStopwatchData.times2
             in
             identifyProblemsIn
-                { model
-                    | stopwatches =
-                        deleteStopwatchFromTable which mergedRows
-                            |> Single fileNameToKeep
-                }
+                { model | stopwatches = newStopwatches }
+
+        ( Double doubleStopwatchData, StopwatchTwo ) ->
+            let
+                newStopwatches : Stopwatches
+                newStopwatches =
+                    Single doubleStopwatchData.filename1 doubleStopwatchData.times1
+            in
+            identifyProblemsIn
+                { model | stopwatches = newStopwatches }
 
 
 flipStopwatches : Model -> Model
@@ -371,17 +380,24 @@ flipStopwatches model =
         Single _ _ ->
             model
 
-        Double filename1 filename2 mergedRows ->
+        Double oldDoubleStopwatchData ->
             let
-                newStopwatches : List MergedTableRow
-                newStopwatches =
-                    mergedRows
+                newMergedTableRows : List MergedTableRow
+                newMergedTableRows =
+                    oldDoubleStopwatchData.mergedTableRows
                         |> flipTable
                         |> underlineTable model.numberCheckerEntries
+
+                newDoubleStopwatchData : DoubleStopwatchData
+                newDoubleStopwatchData =
+                    { times1 = oldDoubleStopwatchData.times2
+                    , times2 = oldDoubleStopwatchData.times1
+                    , filename1 = oldDoubleStopwatchData.filename2
+                    , filename2 = oldDoubleStopwatchData.filename1
+                    , mergedTableRows = newMergedTableRows
+                    }
             in
-            { model
-                | stopwatches = Double filename2 filename1 newStopwatches
-            }
+            { model | stopwatches = Double newDoubleStopwatchData }
 
 
 clearAllData : Model -> Model
@@ -420,8 +436,8 @@ downloadMergedStopwatchDataCommand zone time model =
         Single _ _ ->
             Cmd.none
 
-        Double _ _ mergedTableRows ->
-            createStopwatchFileForDownload zone time mergedTableRows
+        Double doubleStopwatchData ->
+            createStopwatchFileForDownload zone time doubleStopwatchData.mergedTableRows
                 |> downloadFile
 
 
@@ -523,15 +539,15 @@ deleteNumberCheckerEntry entryNumber model =
                 |> reannotate
     in
     case model.stopwatches of
-        Double filename1 filename2 oldMergedTable ->
+        Double doubleStopwatchData ->
             let
                 newMergedTable : List MergedTableRow
                 newMergedTable =
-                    underlineTable newNumberCheckerEntries oldMergedTable
+                    underlineTable newNumberCheckerEntries doubleStopwatchData.mergedTableRows
             in
             { model
                 | numberCheckerEntries = newNumberCheckerEntries
-                , stopwatches = Double filename1 filename2 newMergedTable
+                , stopwatches = Double { doubleStopwatchData | mergedTableRows = newMergedTable }
             }
 
         Single _ _ ->

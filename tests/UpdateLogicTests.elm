@@ -220,7 +220,13 @@ doubleStopwatches =
             , { index = 3, rowNumber = Just 4, entry = OneWatchOnly StopwatchTwo 611, included = True, underlines = noUnderlines }
             ]
     in
-    Double "stopwatch1.txt" "stopwatch2.txt" expectedEntries
+    Double
+        { times1 = [ 191, 464, 603 ]
+        , times2 = [ 191, 463, 611 ]
+        , filename1 = "stopwatch1.txt"
+        , filename2 = "stopwatch2.txt"
+        , mergedTableRows = expectedEntries
+        }
 
 
 flippedDoubleStopwatches : Stopwatches
@@ -234,7 +240,13 @@ flippedDoubleStopwatches =
             , { index = 3, rowNumber = Just 4, entry = OneWatchOnly StopwatchOne 611, included = True, underlines = noUnderlines }
             ]
     in
-    Double "stopwatch2.txt" "stopwatch1.txt" expectedEntries
+    Double
+        { times1 = [ 191, 463, 611 ]
+        , times2 = [ 191, 464, 603 ]
+        , filename1 = "stopwatch2.txt"
+        , filename2 = "stopwatch1.txt"
+        , mergedTableRows = expectedEntries
+        }
 
 
 validBarcodeScannerData1 : String
@@ -908,8 +920,8 @@ suite =
                                 |> Tuple.first
                     in
                     case model.stopwatches of
-                        Double _ _ mergedTableRows ->
-                            createStopwatchFileForDownload Time.utc recentTime mergedTableRows
+                        Double doubleStopwatchData ->
+                            createStopwatchFileForDownload Time.utc recentTime doubleStopwatchData.mergedTableRows
                                 |> Expect.equal (InteropFile "parkrun_timer_14072017024000.txt" expectedMergedStopwatchFileContents)
 
                         _ ->

@@ -177,7 +177,7 @@ stopwatchInfoMessage stopwatches =
                 Single _ _ ->
                     Nothing
 
-                Double _ _ _ ->
+                Double _ ->
                     Nothing
     in
     case message of
@@ -319,7 +319,7 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                 , tbody = singleStopwatchTableBody stopwatchTimes barcodeScannerData
                 }
 
-        Double _ _ mergedTable ->
+        Double doubleStopwatchData ->
             Table.table
                 { options = tableOptions
                 , thead =
@@ -329,7 +329,7 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                         , TableHeaderWithButton "Stopwatch 2" (deleteStopwatchButton StopwatchTwo)
                         , TableHeaderWithButton "Athletes" Nothing
                         ]
-                , tbody = mergedTableBody highlightedNumberCheckerId barcodeScannerData mergedTable
+                , tbody = mergedTableBody highlightedNumberCheckerId barcodeScannerData doubleStopwatchData.mergedTableRows
                 }
 
 
@@ -342,7 +342,7 @@ stopwatchButtonsContent stopwatches =
         Single _ _ ->
             []
 
-        Double _ _ _ ->
+        Double _ ->
             [ twoLineButton FlipStopwatches "Flip" "stopwatches"
             , br [] []
             , br [] []

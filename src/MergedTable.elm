@@ -1,8 +1,8 @@
 module MergedTable exposing
-    ( MergedTableRow
+    ( DoubleStopwatchData
+    , MergedTableRow
     , Stopwatches(..)
     , Underlines
-    , deleteStopwatchFromTable
     , flipTable
     , generateInitialTable
     , noUnderlines
@@ -19,10 +19,19 @@ import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import TimeHandling exposing (formatTimeWithHours)
 
 
+type alias DoubleStopwatchData =
+    { times1 : List Int
+    , times2 : List Int
+    , filename1 : String
+    , filename2 : String
+    , mergedTableRows : List MergedTableRow
+    }
+
+
 type Stopwatches
     = None
     | Single String (List Int)
-    | Double String String (List MergedTableRow)
+    | Double DoubleStopwatchData
 
 
 type alias Underlines =
@@ -111,34 +120,6 @@ toggleRowInTableInternal toggledIndex currentRowNumber rows =
 toggleRowInTable : Int -> List MergedTableRow -> List MergedTableRow
 toggleRowInTable index rows =
     toggleRowInTableInternal index 1 rows
-
-
-{-| Deletes a time from a row and returns the remaining time, if there is
-still a remaining time.
--}
-deleteTimeFromRow : WhichStopwatch -> MergedTableRow -> Maybe Int
-deleteTimeFromRow which row =
-    case ( row.entry, which ) of
-        ( ExactMatch time, _ ) ->
-            Just time
-
-        ( NearMatch _ time2, StopwatchOne ) ->
-            Just time2
-
-        ( NearMatch time1 _, StopwatchTwo ) ->
-            Just time1
-
-        ( OneWatchOnly someStopwatch time, _ ) ->
-            if someStopwatch == which then
-                Nothing
-
-            else
-                Just time
-
-
-deleteStopwatchFromTable : WhichStopwatch -> List MergedTableRow -> List Int
-deleteStopwatchFromTable whichToDelete mergedRows =
-    List.filterMap (deleteTimeFromRow whichToDelete) mergedRows
 
 
 flipStopwatch : WhichStopwatch -> WhichStopwatch

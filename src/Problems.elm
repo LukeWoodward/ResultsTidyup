@@ -163,11 +163,11 @@ identifyPositionsOffEndOfTimes stopwatches positionToAthletesDict =
         Single _ times ->
             checkPositionOffEndOfTimes (List.length times) positionToAthletesDict
 
-        Double _ _ mergedTable ->
+        Double doubleStopwatchData ->
             let
                 stopwatchTimeCount : Int
                 stopwatchTimeCount =
-                    List.filterMap .rowNumber mergedTable
+                    List.filterMap .rowNumber doubleStopwatchData.mergedTableRows
                         |> List.maximum
                         |> Maybe.withDefault 0
             in
