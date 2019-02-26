@@ -159,6 +159,6 @@ fixableProblemsView fixableProblems =
 problemsView : ProblemsContainer -> Html Msg
 problemsView problems =
     div []
-        [ nonFixableProblemsView problems.problems
-        , fixableProblemsView problems.fixableProblems
+        [ fixableProblemsView problems.fixableProblems
+        , nonFixableProblemsView problems.problems
         ]
