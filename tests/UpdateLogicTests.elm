@@ -249,6 +249,17 @@ flippedDoubleStopwatches =
         }
 
 
+stopwatchesForAdjusting : Int -> Int -> Stopwatches
+stopwatchesForAdjusting stopwatch1Offset stopwatch2Offset =
+    Double
+        { times1 = [ 191 + stopwatch1Offset, 464 + stopwatch1Offset, 603 + stopwatch1Offset ]
+        , times2 = [ 191 + stopwatch2Offset, 463 + stopwatch2Offset, 611 + stopwatch2Offset ]
+        , filename1 = "stopwatch1.txt"
+        , filename2 = "stopwatch2.txt"
+        , mergedTableRows = []
+        }
+
+
 validBarcodeScannerData1 : String
 validBarcodeScannerData1 =
     "A4580442,P0047,14/03/2018 09:47:03" ++ crlf
@@ -1614,6 +1625,40 @@ suite =
                                 }
                                 :: expectProblems (ProblemsContainer [ AthleteMissingPosition "A345678" ] [])
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems ]
+                            )
+            ]
+        , describe "AdjustStopwatch tests"
+            [ test "Can adjust stopwatch 1 adding some time to it" <|
+                \() ->
+                    { initModel | stopwatches = stopwatchesForAdjusting -19 0 }
+                        |> update (FixProblem (AdjustStopwatch StopwatchOne 19))
+                        |> Expect.all
+                            (expectStopwatches doubleStopwatches
+                                :: defaultAssertionsExcept [ Stopwatches ]
+                            )
+            , test "Can adjust stopwatch 1 taking some time from it" <|
+                \() ->
+                    { initModel | stopwatches = stopwatchesForAdjusting 46 0 }
+                        |> update (FixProblem (AdjustStopwatch StopwatchOne -46))
+                        |> Expect.all
+                            (expectStopwatches doubleStopwatches
+                                :: defaultAssertionsExcept [ Stopwatches ]
+                            )
+            , test "Can adjust stopwatch 2 adding some time to it" <|
+                \() ->
+                    { initModel | stopwatches = stopwatchesForAdjusting 0 -22 }
+                        |> update (FixProblem (AdjustStopwatch StopwatchTwo 22))
+                        |> Expect.all
+                            (expectStopwatches doubleStopwatches
+                                :: defaultAssertionsExcept [ Stopwatches ]
+                            )
+            , test "Can adjust stopwatch 2 taking some time from it" <|
+                \() ->
+                    { initModel | stopwatches = stopwatchesForAdjusting 0 37 }
+                        |> update (FixProblem (AdjustStopwatch StopwatchTwo -37))
+                        |> Expect.all
+                            (expectStopwatches doubleStopwatches
+                                :: defaultAssertionsExcept [ Stopwatches ]
                             )
             ]
         , describe "ClearErrors tests"

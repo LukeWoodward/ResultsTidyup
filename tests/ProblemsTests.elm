@@ -331,5 +331,33 @@ suite =
                         )
                         lateEventDateAndTime
                         |> Expect.equal (ProblemsContainer [ PositionMissingAthlete 19 ] [ BarcodesScannedBeforeEventStart 1 (baseEventStartTime + 60 * 60 * 1000) "14/03/2018 10:00" ])
+            , test "identifyProblems returns no problems for stopwatches in sync" <|
+                \() ->
+                    identifyProblems
+                        (Double
+                            { times1 = [ 1000, 1100, 1200 ]
+                            , times2 = [ 1000, 1100, 1200 ]
+                            , filename1 = "stopwatches1.txt"
+                            , filename2 = "stopwatches2.txt"
+                            , mergedTableRows = []
+                            }
+                        )
+                        BarcodeScanner.empty
+                        emptyEventDateAndTime
+                        |> Expect.equal (ProblemsContainer [] [])
+            , test "identifyProblems returns a problems for stopwatches not in sync" <|
+                \() ->
+                    identifyProblems
+                        (Double
+                            { times1 = [ 1000, 1100, 1200 ]
+                            , times2 = [ 1005, 1105, 1205 ]
+                            , filename1 = "stopwatches1.txt"
+                            , filename2 = "stopwatches2.txt"
+                            , mergedTableRows = []
+                            }
+                        )
+                        BarcodeScanner.empty
+                        emptyEventDateAndTime
+                        |> Expect.equal (ProblemsContainer [] [ StopwatchTimeOffset -5 ])
             ]
         ]

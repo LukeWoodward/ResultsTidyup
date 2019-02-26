@@ -32,3 +32,4 @@ type ProblemFix
     | RemoveUnassociatedAthlete String
     | RemoveDuplicateScans Int String
     | RemoveScansBeforeEventStart Int
+    | AdjustStopwatch WhichStopwatch Int

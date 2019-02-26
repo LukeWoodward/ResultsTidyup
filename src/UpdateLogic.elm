@@ -177,6 +177,26 @@ identifyProblemsIn model =
     }
 
 
+createMergedTable : List Int -> List Int -> String -> String -> Stopwatches
+createMergedTable times1 times2 filename1 filename2 =
+    let
+        mergedDetails : List MergeEntry
+        mergedDetails =
+            merge maxNearMatchDistance times1 times2
+
+        mergedTable : List MergedTableRow
+        mergedTable =
+            generateInitialTable mergedDetails
+    in
+    Double
+        { times1 = times1
+        , times2 = times2
+        , filename1 = filename1
+        , filename2 = filename2
+        , mergedTableRows = mergedTable
+        }
+
+
 handleStopwatchFileDrop : String -> String -> Model -> Model
 handleStopwatchFileDrop fileName fileText model =
     case readStopwatchData fileText of
@@ -200,22 +220,7 @@ handleStopwatchFileDrop fileName fileText model =
                                 Single fileName newStopwatch
 
                             Single existingFilename firstStopwatch ->
-                                let
-                                    mergedDetails : List MergeEntry
-                                    mergedDetails =
-                                        merge maxNearMatchDistance firstStopwatch newStopwatch
-
-                                    mergedTable : List MergedTableRow
-                                    mergedTable =
-                                        generateInitialTable mergedDetails
-                                in
-                                Double
-                                    { times1 = firstStopwatch
-                                    , times2 = newStopwatch
-                                    , filename1 = existingFilename
-                                    , filename2 = fileName
-                                    , mergedTableRows = mergedTable
-                                    }
+                                createMergedTable firstStopwatch newStopwatch existingFilename fileName
 
                             Double _ ->
                                 model.stopwatches
@@ -749,8 +754,39 @@ fixProblem problemFix model =
                         { oldBarcodeScannerData
                             | files = deleteWithinFiles (deleteBeforeEventStart eventStartTimeMillis) oldBarcodeScannerData.files
                         }
+
+                AdjustStopwatch whichStopwatch offset ->
+                    -- This problem-fix applies no change to the barcode-scanner data.
+                    oldBarcodeScannerData
+
+        oldStopwatches : Stopwatches
+        oldStopwatches =
+            model.stopwatches
+
+        newStopwatches : Stopwatches
+        newStopwatches =
+            case ( oldStopwatches, problemFix ) of
+                ( Double doubleStopwatchData, AdjustStopwatch whichStopwatch offset ) ->
+                    let
+                        adjustedStopwatches : DoubleStopwatchData
+                        adjustedStopwatches =
+                            case whichStopwatch of
+                                StopwatchOne ->
+                                    { doubleStopwatchData | times1 = List.map (\time -> time + offset) doubleStopwatchData.times1 }
+
+                                StopwatchTwo ->
+                                    { doubleStopwatchData | times2 = List.map (\time -> time + offset) doubleStopwatchData.times2 }
+
+                        mergedStopwatches =
+                            createMergedTable adjustedStopwatches.times1 adjustedStopwatches.times2 adjustedStopwatches.filename1 adjustedStopwatches.filename2
+                    in
+                    underlineStopwatches mergedStopwatches model.numberCheckerEntries
+
+                _ ->
+                    -- Not two stopwatches or some other problem-fix.
+                    oldStopwatches
     in
-    { model | barcodeScannerData = newBarcodeScannerData }
+    { model | barcodeScannerData = newBarcodeScannerData, stopwatches = newStopwatches }
         |> identifyProblemsIn
 
 

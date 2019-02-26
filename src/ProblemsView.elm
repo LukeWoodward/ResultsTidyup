@@ -1,7 +1,7 @@
 module ProblemsView exposing (problemsView)
 
 import Bootstrap.Alert as Alert
-import DataStructures exposing (ProblemFix(..))
+import DataStructures exposing (ProblemFix(..), WhichStopwatch(..))
 import Html exposing (Html, button, div, h4, li, text, ul)
 import Html.Attributes exposing (class, type_)
 import Html.Events exposing (onClick)
@@ -86,6 +86,51 @@ fixableProblemView fixableProblem =
                 , text eventStart
                 , text ") "
                 , smallButton (Msg.FixProblem (RemoveScansBeforeEventStart eventStartTimeMillis)) [] "Remove barcodes scanned before event start"
+                ]
+
+        StopwatchTimeOffset offset ->
+            let
+                offsetDescription : String
+                offsetDescription =
+                    if abs offset == 1 then
+                        "1 second"
+
+                    else
+                        String.fromInt (abs offset) ++ " seconds"
+
+                laterStopwatch : String
+                laterStopwatch =
+                    if offset < 0 then
+                        "stopwatch 1"
+
+                    else
+                        "stopwatch 2"
+
+                stopwatch1AdjustText : String
+                stopwatch1AdjustText =
+                    if offset < 0 then
+                        "Stopwatch 1 is slow - add " ++ offsetDescription
+
+                    else
+                        "Stopwatch 1 is fast - take off " ++ offsetDescription
+
+                stopwatch2AdjustText : String
+                stopwatch2AdjustText =
+                    if offset < 0 then
+                        "Stopwatch 2 is fast - take off " ++ offsetDescription
+
+                    else
+                        "Stopwatch 2 is slow - add " ++ offsetDescription
+            in
+            li []
+                [ text "There seems to be a difference of "
+                , text offsetDescription
+                , text " between the stopwatches, with "
+                , text laterStopwatch
+                , text " being the one started later."
+                , smallButton (Msg.FixProblem (AdjustStopwatch StopwatchOne -offset)) [] stopwatch1AdjustText
+                , text " "
+                , smallButton (Msg.FixProblem (AdjustStopwatch StopwatchTwo offset)) [] stopwatch2AdjustText
                 ]
 
 
