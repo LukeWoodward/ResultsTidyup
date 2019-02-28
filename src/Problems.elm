@@ -113,8 +113,13 @@ identifyAthletesWithMultiplePositions athleteToPositionsDict =
     let
         identifier : ( String, List Int ) -> Maybe Problem
         identifier ( athlete, positions ) =
-            if List.length (deduplicate positions) > 1 then
-                Just (AthleteWithMultiplePositions athlete positions)
+            let
+                dedupedPositions : List Int
+                dedupedPositions =
+                    deduplicate positions
+            in
+            if List.length dedupedPositions > 1 then
+                Just (AthleteWithMultiplePositions athlete dedupedPositions)
 
             else
                 Nothing
@@ -128,8 +133,13 @@ identifyPositionsWithMultipleAthletes positionToAthletesDict =
     let
         identifier : ( Int, List String ) -> Maybe Problem
         identifier ( position, athletes ) =
-            if List.length (deduplicate athletes) > 1 then
-                Just (PositionWithMultipleAthletes position athletes)
+            let
+                dedupedAthletes : List String
+                dedupedAthletes =
+                    deduplicate athletes
+            in
+            if List.length dedupedAthletes > 1 then
+                Just (PositionWithMultipleAthletes position dedupedAthletes)
 
             else
                 Nothing

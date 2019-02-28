@@ -1537,7 +1537,7 @@ suite =
                             |> update (FixProblem (RemoveDuplicateScans 27 "A1234"))
                             |> Expect.all
                                 (expectBarcodeScannerData barcodeScannerDataWithFiles
-                                    :: expectProblems (ProblemsContainer [ PositionWithMultipleAthletes 27 [ "A1234", "A5678", "A3456", "A9012" ] ] [])
+                                    :: expectProblems (ProblemsContainer [ PositionWithMultipleAthletes 27 [ "A1234", "A3456", "A5678", "A9012" ] ] [])
                                     :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems ]
                                 )
                 ]

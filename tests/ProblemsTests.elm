@@ -108,6 +108,13 @@ suite =
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A123456" ] ), ( 19, [ "A123456" ] ) ]) [] [])
                         emptyEventDateAndTime
                         |> Expect.equal (ProblemsContainer [ AthleteWithMultiplePositions "A123456" [ 12, 16, 19 ] ] [])
+            , test "identifyProblems returns a problem for an athlete with three positions two of which are the same" <|
+                \() ->
+                    identifyProblems
+                        None
+                        (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A123456", "A123456" ] ) ]) [] [])
+                        emptyEventDateAndTime
+                        |> Expect.equal (ProblemsContainer [ AthleteWithMultiplePositions "A123456" [ 12, 16 ] ] [ AthleteInSamePositionMultipleTimes "A123456" 16 ])
             , test "identifyProblems returns two problems for two athletes with repeated positions" <|
                 \() ->
                     identifyProblems
@@ -129,13 +136,20 @@ suite =
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456", "A252525", "A748159" ] ), ( 19, [ "A987654" ] ) ]) [] [])
                         emptyEventDateAndTime
                         |> Expect.equal (ProblemsContainer [ PositionWithMultipleAthletes 12 [ "A123456", "A252525", "A748159" ] ] [])
+            , test "identifyProblems returns a problem for a position with three athletes, two of which are the same" <|
+                \() ->
+                    identifyProblems
+                        None
+                        (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456", "A252525", "A252525" ] ), ( 19, [ "A987654" ] ) ]) [] [])
+                        emptyEventDateAndTime
+                        |> Expect.equal (ProblemsContainer [ PositionWithMultipleAthletes 12 [ "A123456", "A252525" ] ] [ AthleteInSamePositionMultipleTimes "A252525" 12 ])
             , test "identifyProblems returns two problems for two positions with two athletes" <|
                 \() ->
                     identifyProblems
                         None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456", "A252525" ] ), ( 19, [ "A987654", "A748159" ] ) ]) [] [])
                         emptyEventDateAndTime
-                        |> Expect.equal (ProblemsContainer [ PositionWithMultipleAthletes 12 [ "A123456", "A252525" ], PositionWithMultipleAthletes 19 [ "A987654", "A748159" ] ] [])
+                        |> Expect.equal (ProblemsContainer [ PositionWithMultipleAthletes 12 [ "A123456", "A252525" ], PositionWithMultipleAthletes 19 [ "A748159", "A987654" ] ] [])
             , test "identifyProblems returns no problems for a finish position not off the end" <|
                 \() ->
                     identifyProblems
@@ -345,7 +359,7 @@ suite =
                         BarcodeScanner.empty
                         emptyEventDateAndTime
                         |> Expect.equal (ProblemsContainer [] [])
-            , test "identifyProblems returns a problems for stopwatches not in sync" <|
+            , test "identifyProblems returns a problem for stopwatches not in sync" <|
                 \() ->
                     identifyProblems
                         (Double
