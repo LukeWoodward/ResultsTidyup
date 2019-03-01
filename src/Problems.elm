@@ -1,4 +1,4 @@
-module Problems exposing (FixableProblem(..), Problem(..), ProblemsContainer, empty, identifyProblems, problemToString)
+module Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..), identifyProblems)
 
 import BarcodeScanner exposing (BarcodeScannerData, MisScannedItem, UnrecognisedLine)
 import DataStructures exposing (EventDateAndTime)
@@ -10,7 +10,15 @@ import StopwatchOffsetDetection exposing (getStopwatchTimeOffset)
 import Time exposing (posixToMillis)
 
 
-type Problem
+type FixableProblem
+    = BarcodesScannedBeforeEventStart Int Int String
+    | AthleteInSamePositionMultipleTimes String Int
+    | AthleteWithAndWithoutPosition String Int
+    | PositionWithAndWithoutAthlete Int String
+    | StopwatchTimeOffset Int
+
+
+type NonFixableProblem
     = InconsistentBarcodeScannerDates String String
     | AthleteWithMultiplePositions String (List Int)
     | PositionWithMultipleAthletes Int (List String)
@@ -23,23 +31,9 @@ type Problem
     | StopwatchesAndFinishTokensInconsistentWithNumberChecker
 
 
-type FixableProblem
-    = BarcodesScannedBeforeEventStart Int Int String
-    | AthleteInSamePositionMultipleTimes String Int
-    | AthleteWithAndWithoutPosition String Int
-    | PositionWithAndWithoutAthlete Int String
-    | StopwatchTimeOffset Int
-
-
-type alias ProblemsContainer =
-    { problems : List Problem
-    , fixableProblems : List FixableProblem
-    }
-
-
-empty : ProblemsContainer
-empty =
-    ProblemsContainer [] []
+type Problem
+    = Fixable FixableProblem
+    | NonFixable NonFixableProblem
 
 
 flattenItem : ( Int, List String ) -> List ( Int, String )
@@ -102,7 +96,7 @@ identifyInconsistentBarcodeScannerDates barcodeScannerData =
     in
     case hasDifferentValues maxScanDates of
         Just ( first, second ) ->
-            [ InconsistentBarcodeScannerDates first second ]
+            [ NonFixable (InconsistentBarcodeScannerDates first second) ]
 
         Nothing ->
             []
@@ -119,7 +113,7 @@ identifyAthletesWithMultiplePositions athleteToPositionsDict =
                     deduplicate positions
             in
             if List.length dedupedPositions > 1 then
-                Just (AthleteWithMultiplePositions athlete dedupedPositions)
+                Just (NonFixable (AthleteWithMultiplePositions athlete dedupedPositions))
 
             else
                 Nothing
@@ -139,7 +133,7 @@ identifyPositionsWithMultipleAthletes positionToAthletesDict =
                     deduplicate athletes
             in
             if List.length dedupedAthletes > 1 then
-                Just (PositionWithMultipleAthletes position dedupedAthletes)
+                Just (NonFixable (PositionWithMultipleAthletes position dedupedAthletes))
 
             else
                 Nothing
@@ -159,7 +153,7 @@ checkPositionOffEndOfTimes stopwatchTimeCount positionToAthletesDict =
     in
     case maxOverPosition of
         Just maxPosition ->
-            [ PositionOffEndOfTimes stopwatchTimeCount maxPosition ]
+            [ NonFixable (PositionOffEndOfTimes stopwatchTimeCount maxPosition) ]
 
         Nothing ->
             []
@@ -222,67 +216,67 @@ identifyAthletesWithNoPositions : List String -> Dict String (List Int) -> List 
 identifyAthletesWithNoPositions unpairedAthletes athleteToPositionsDict =
     deduplicate unpairedAthletes
         |> List.filter (\athlete -> not (Dict.member athlete athleteToPositionsDict))
-        |> List.map AthleteMissingPosition
+        |> List.map (NonFixable << AthleteMissingPosition)
 
 
 identifyPositionsWithNoAthletes : List Int -> Dict Int (List String) -> List Problem
 identifyPositionsWithNoAthletes unpairedPositions positionToAthletesDict =
     deduplicate unpairedPositions
         |> List.filter (\position -> not (Dict.member position positionToAthletesDict))
-        |> List.map PositionMissingAthlete
+        |> List.map (NonFixable << PositionMissingAthlete)
 
 
 identifyMisScannedItems : List MisScannedItem -> List Problem
 identifyMisScannedItems misScannedItems =
     List.map .scannedText misScannedItems
-        |> List.map MisScan
+        |> List.map (NonFixable << MisScan)
 
 
 identifyUnrecognisedBarcodeScannerLines : List UnrecognisedLine -> List Problem
 identifyUnrecognisedBarcodeScannerLines unrecognisedLines =
     List.map .line unrecognisedLines
-        |> List.map UnrecognisedBarcodeScannerLine
+        |> List.map (NonFixable << UnrecognisedBarcodeScannerLine)
 
 
-identifyDuplicateScans : Dict Int (List String) -> List FixableProblem
+identifyDuplicateScans : Dict Int (List String) -> List Problem
 identifyDuplicateScans positionToAthletesDict =
     let
-        identifyDuplicates : ( Int, List String ) -> List FixableProblem
+        identifyDuplicates : ( Int, List String ) -> List Problem
         identifyDuplicates ( position, athletes ) =
             repeatedItems athletes
-                |> List.map (\athlete -> AthleteInSamePositionMultipleTimes athlete position)
+                |> List.map (\athlete -> Fixable (AthleteInSamePositionMultipleTimes athlete position))
     in
     Dict.toList positionToAthletesDict
         |> List.filter (\( position, athletes ) -> List.length athletes > 1)
         |> List.concatMap identifyDuplicates
 
 
-identifyAthletesWithAndWithoutPosition : Dict String (List Int) -> List String -> List FixableProblem
+identifyAthletesWithAndWithoutPosition : Dict String (List Int) -> List String -> List Problem
 identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly =
     let
-        getFixableProblemIfSinglePosition : String -> Maybe FixableProblem
+        getFixableProblemIfSinglePosition : String -> Maybe Problem
         getFixableProblemIfSinglePosition athlete =
             Dict.get athlete athleteToPositionsDict
                 |> Maybe.andThen getSingleValue
-                |> Maybe.map (AthleteWithAndWithoutPosition athlete)
+                |> Maybe.map (Fixable << AthleteWithAndWithoutPosition athlete)
     in
     List.filterMap getFixableProblemIfSinglePosition athleteBarcodesOnly
 
 
-identifyPositionsWithAndWithoutAthlete : Dict Int (List String) -> List Int -> List FixableProblem
+identifyPositionsWithAndWithoutAthlete : Dict Int (List String) -> List Int -> List Problem
 identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly =
     let
-        getFixableProblemIfSingleAthlete : Int -> Maybe FixableProblem
+        getFixableProblemIfSingleAthlete : Int -> Maybe Problem
         getFixableProblemIfSingleAthlete position =
             Dict.get position positionToAthletesDict
                 |> Maybe.andThen getSingleValue
-                |> Maybe.map (PositionWithAndWithoutAthlete position)
+                |> Maybe.map (Fixable << PositionWithAndWithoutAthlete position)
     in
     finishTokensOnly
         |> List.filterMap getFixableProblemIfSingleAthlete
 
 
-identifyRecordsScannedBeforeEventStartTime : BarcodeScannerData -> String -> Int -> List FixableProblem
+identifyRecordsScannedBeforeEventStartTime : BarcodeScannerData -> String -> Int -> List Problem
 identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString eventStartTimeMillis =
     let
         countDatesBeforeEventStart : List String -> Int
@@ -320,10 +314,10 @@ identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsSt
         []
 
     else
-        [ BarcodesScannedBeforeEventStart totalNumberOfScansBeforeEventStart eventStartTimeMillis eventStartTimeAsString ]
+        [ Fixable (BarcodesScannedBeforeEventStart totalNumberOfScansBeforeEventStart eventStartTimeMillis eventStartTimeAsString) ]
 
 
-identifyStopwatchTimeOffset : Stopwatches -> List FixableProblem
+identifyStopwatchTimeOffset : Stopwatches -> List Problem
 identifyStopwatchTimeOffset stopwatches =
     let
         offset : Int
@@ -334,10 +328,10 @@ identifyStopwatchTimeOffset stopwatches =
         []
 
     else
-        [ StopwatchTimeOffset offset ]
+        [ Fixable (StopwatchTimeOffset offset) ]
 
 
-identifyProblems : Stopwatches -> BarcodeScannerData -> EventDateAndTime -> ProblemsContainer
+identifyProblems : Stopwatches -> BarcodeScannerData -> EventDateAndTime -> List Problem
 identifyProblems stopwatches barcodeScannerData eventDateAndTime =
     let
         positionToAthletesDict : Dict Int (List String)
@@ -370,7 +364,13 @@ identifyProblems stopwatches barcodeScannerData eventDateAndTime =
 
         allProblems : List (List Problem)
         allProblems =
-            [ identifyInconsistentBarcodeScannerDates barcodeScannerData
+            [ Maybe.map (identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString) eventStartTimeMillis
+                |> Maybe.withDefault []
+            , identifyStopwatchTimeOffset stopwatches
+            , identifyDuplicateScans positionToAthletesDict
+            , identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly
+            , identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly
+            , identifyInconsistentBarcodeScannerDates barcodeScannerData
             , identifyAthletesWithMultiplePositions athleteToPositionsDict
             , identifyPositionsWithMultipleAthletes positionToAthletesDict
             , identifyPositionsOffEndOfTimes stopwatches positionToAthletesDict
@@ -379,51 +379,5 @@ identifyProblems stopwatches barcodeScannerData eventDateAndTime =
             , identifyMisScannedItems barcodeScannerData.misScannedItems
             , identifyUnrecognisedBarcodeScannerLines barcodeScannerData.unrecognisedLines
             ]
-
-        allFixableProblems : List (List FixableProblem)
-        allFixableProblems =
-            [ Maybe.map (identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString) eventStartTimeMillis
-                |> Maybe.withDefault []
-            , identifyStopwatchTimeOffset stopwatches
-            , identifyDuplicateScans positionToAthletesDict
-            , identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly
-            , identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly
-            ]
     in
-    { problems = List.concat allProblems
-    , fixableProblems = List.concat allFixableProblems
-    }
-
-
-problemToString : Problem -> String
-problemToString problem =
-    case problem of
-        InconsistentBarcodeScannerDates earlierDate laterDate ->
-            "Inconsistent dates were found among the barcode scanner files (" ++ earlierDate ++ " and " ++ laterDate ++ ").  Please check that you have uploaded files from the same date"
-
-        AthleteWithMultiplePositions athlete positions ->
-            "Athlete barcode " ++ athlete ++ " has been scanned with more than one finish token: " ++ String.join ", " (List.map String.fromInt positions)
-
-        PositionWithMultipleAthletes position athletes ->
-            "Multiple athlete barcodes have been scanned with finish token " ++ String.fromInt position ++ ": " ++ String.join ", " athletes
-
-        PositionOffEndOfTimes numberOfTimes maxPosition ->
-            "The highest finish token scanned was " ++ String.fromInt maxPosition ++ " but there are only " ++ String.fromInt numberOfTimes ++ " times recorded on the stopwatch(es)"
-
-        AthleteMissingPosition athlete ->
-            "Athlete barcode " ++ athlete ++ " was scanned without a corresponding finish token"
-
-        PositionMissingAthlete position ->
-            "Finish token " ++ String.fromInt position ++ " was scanned without a corresponding athlete barcode"
-
-        MisScan misScannedText ->
-            "An unrecognised item '" ++ misScannedText ++ "' was scanned"
-
-        UnrecognisedBarcodeScannerLine line ->
-            "The line '" ++ line ++ "' in a barcode scanner file was not recognised"
-
-        StopwatchesInconsistentWithNumberChecker ->
-            "TODO"
-
-        StopwatchesAndFinishTokensInconsistentWithNumberChecker ->
-            "TODO"
+    List.concat allProblems

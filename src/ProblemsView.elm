@@ -6,25 +6,59 @@ import Html exposing (Html, button, div, h4, li, text, ul)
 import Html.Attributes exposing (class, type_)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg)
-import Problems exposing (FixableProblem(..), Problem, ProblemsContainer, problemToString)
+import Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..))
 import ViewCommon exposing (smallButton)
 
 
-nonFixableProblemView : Problem -> Html Msg
+nonFixableProblemToString : NonFixableProblem -> String
+nonFixableProblemToString problem =
+    case problem of
+        InconsistentBarcodeScannerDates earlierDate laterDate ->
+            "Inconsistent dates were found among the barcode scanner files (" ++ earlierDate ++ " and " ++ laterDate ++ ").  Please check that you have uploaded files from the same date"
+
+        AthleteWithMultiplePositions athlete positions ->
+            "Athlete barcode " ++ athlete ++ " has been scanned with more than one finish token: " ++ String.join ", " (List.map String.fromInt positions)
+
+        PositionWithMultipleAthletes position athletes ->
+            "Multiple athlete barcodes have been scanned with finish token " ++ String.fromInt position ++ ": " ++ String.join ", " athletes
+
+        PositionOffEndOfTimes numberOfTimes maxPosition ->
+            "The highest finish token scanned was " ++ String.fromInt maxPosition ++ " but there are only " ++ String.fromInt numberOfTimes ++ " times recorded on the stopwatch(es)"
+
+        AthleteMissingPosition athlete ->
+            "Athlete barcode " ++ athlete ++ " was scanned without a corresponding finish token"
+
+        PositionMissingAthlete position ->
+            "Finish token " ++ String.fromInt position ++ " was scanned without a corresponding athlete barcode"
+
+        MisScan misScannedText ->
+            "An unrecognised item '" ++ misScannedText ++ "' was scanned"
+
+        UnrecognisedBarcodeScannerLine line ->
+            "The line '" ++ line ++ "' in a barcode scanner file was not recognised"
+
+        StopwatchesInconsistentWithNumberChecker ->
+            "TODO"
+
+        StopwatchesAndFinishTokensInconsistentWithNumberChecker ->
+            "TODO"
+
+
+nonFixableProblemView : NonFixableProblem -> Html Msg
 nonFixableProblemView problem =
-    li [] [ text (problemToString problem) ]
+    li [] [ text (nonFixableProblemToString problem) ]
 
 
-nonFixableProblemsView : List Problem -> Html Msg
-nonFixableProblemsView problems =
-    if List.isEmpty problems then
+nonFixableProblemsView : List (Html Msg) -> Html Msg
+nonFixableProblemsView nonFixableProblems =
+    if List.isEmpty nonFixableProblems then
         div [] []
 
     else
         let
             problemsHeader : String
             problemsHeader =
-                if List.length problems == 1 then
+                if List.length nonFixableProblems == 1 then
                     "The following problem was found:"
 
                 else
@@ -33,7 +67,7 @@ nonFixableProblemsView problems =
         Alert.simpleDanger
             []
             [ h4 [] [ text problemsHeader ]
-            , ul [] (List.map nonFixableProblemView problems)
+            , ul [] nonFixableProblems
             ]
 
 
@@ -134,7 +168,7 @@ fixableProblemView fixableProblem =
                 ]
 
 
-fixableProblemsView : List FixableProblem -> Html Msg
+fixableProblemsView : List (Html Msg) -> Html Msg
 fixableProblemsView fixableProblems =
     if List.isEmpty fixableProblems then
         div [] []
@@ -152,13 +186,36 @@ fixableProblemsView fixableProblems =
         Alert.simpleWarning
             []
             [ h4 [] [ text fixableProblemsHeader ]
-            , ul [] (List.map fixableProblemView fixableProblems)
+            , ul [] fixableProblems
             ]
 
 
-problemsView : ProblemsContainer -> Html Msg
+problemView : Problem -> ( Maybe (Html Msg), Maybe (Html Msg) )
+problemView problem =
+    case problem of
+        Fixable fixableProblem ->
+            ( Just (fixableProblemView fixableProblem), Nothing )
+
+        NonFixable nonFixableProblem ->
+            ( Nothing, Just (nonFixableProblemView nonFixableProblem) )
+
+
+problemsView : List Problem -> Html Msg
 problemsView problems =
+    let
+        splitProblems : List ( Maybe (Html Msg), Maybe (Html Msg) )
+        splitProblems =
+            List.map problemView problems
+
+        fixableProblems : List (Html Msg)
+        fixableProblems =
+            List.filterMap Tuple.first splitProblems
+
+        nonFixableProblems : List (Html Msg)
+        nonFixableProblems =
+            List.filterMap Tuple.second splitProblems
+    in
     div []
-        [ fixableProblemsView problems.fixableProblems
-        , nonFixableProblemsView problems.problems
+        [ fixableProblemsView fixableProblems
+        , nonFixableProblemsView nonFixableProblems
         ]

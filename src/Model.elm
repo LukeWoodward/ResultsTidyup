@@ -6,7 +6,7 @@ import DataStructures exposing (EventDateAndTime, SecondTab(..))
 import Error exposing (FileError)
 import MergedTable exposing (Stopwatches(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
-import Problems exposing (ProblemsContainer)
+import Problems exposing (Problem)
 import Time exposing (Posix)
 
 
@@ -40,7 +40,7 @@ type alias Model =
     , lastHeight : Maybe Int
     , highlightedNumberCheckerId : Maybe Int
     , barcodeScannerData : BarcodeScannerData
-    , problems : ProblemsContainer
+    , problems : List Problem
     , eventDateAndTime : EventDateAndTime
     , numberCheckerManualEntryRow : NumberCheckerManualEntryRow
     , secondTab : Tab.State
@@ -55,7 +55,7 @@ initModel =
     , lastHeight = Nothing
     , highlightedNumberCheckerId = Nothing
     , barcodeScannerData = BarcodeScanner.empty
-    , problems = Problems.empty
+    , problems = []
     , eventDateAndTime = EventDateAndTime "" Nothing "" Nothing
     , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
     , secondTab = Tab.initialState
