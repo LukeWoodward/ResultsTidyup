@@ -361,23 +361,20 @@ identifyProblems stopwatches barcodeScannerData eventDateAndTime =
         eventStartTimeAsString : String
         eventStartTimeAsString =
             eventDateAndTime.enteredDate ++ " " ++ eventDateAndTime.enteredTime
-
-        allProblems : List (List Problem)
-        allProblems =
-            [ Maybe.map (identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString) eventStartTimeMillis
-                |> Maybe.withDefault []
-            , identifyStopwatchTimeOffset stopwatches
-            , identifyDuplicateScans positionToAthletesDict
-            , identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly
-            , identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly
-            , identifyInconsistentBarcodeScannerDates barcodeScannerData
-            , identifyAthletesWithMultiplePositions athleteToPositionsDict
-            , identifyPositionsWithMultipleAthletes positionToAthletesDict
-            , identifyPositionsOffEndOfTimes stopwatches positionToAthletesDict
-            , identifyAthletesWithNoPositions athleteBarcodesOnly athleteToPositionsDict
-            , identifyPositionsWithNoAthletes finishTokensOnly positionToAthletesDict
-            , identifyMisScannedItems barcodeScannerData.misScannedItems
-            , identifyUnrecognisedBarcodeScannerLines barcodeScannerData.unrecognisedLines
-            ]
     in
-    List.concat allProblems
+    List.concat
+        [ Maybe.map (identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString) eventStartTimeMillis
+            |> Maybe.withDefault []
+        , identifyStopwatchTimeOffset stopwatches
+        , identifyDuplicateScans positionToAthletesDict
+        , identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly
+        , identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly
+        , identifyInconsistentBarcodeScannerDates barcodeScannerData
+        , identifyAthletesWithMultiplePositions athleteToPositionsDict
+        , identifyPositionsWithMultipleAthletes positionToAthletesDict
+        , identifyPositionsOffEndOfTimes stopwatches positionToAthletesDict
+        , identifyAthletesWithNoPositions athleteBarcodesOnly athleteToPositionsDict
+        , identifyPositionsWithNoAthletes finishTokensOnly positionToAthletesDict
+        , identifyMisScannedItems barcodeScannerData.misScannedItems
+        , identifyUnrecognisedBarcodeScannerLines barcodeScannerData.unrecognisedLines
+        ]
