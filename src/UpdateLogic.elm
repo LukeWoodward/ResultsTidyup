@@ -33,13 +33,13 @@ import MergedTable
         , underlineTable
         )
 import Merger exposing (MergeEntry, merge)
-import Model exposing (Model, NumberCheckerManualEntryRow, NumericEntry, emptyNumberCheckerManualEntryRow, initModel)
+import Model exposing (Model, NumberCheckerManualEntryRow, NumericEntry, ProblemEntry, emptyNumberCheckerManualEntryRow, initModel)
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, addAndAnnotate, annotate, parseNumberCheckerFile, reannotate)
 import Parser exposing ((|.), Parser, chompIf, chompWhile, end, int, run, symbol)
 import Parsers exposing (digitsRange)
 import Ports exposing (recordEventStartTime)
-import Problems exposing (identifyProblems)
+import Problems exposing (Problem, identifyProblems)
 import Regex exposing (Regex)
 import Result.Extra
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
@@ -170,10 +170,28 @@ setEventDateAndTimeIn model =
             model
 
 
+mergeProblems : List ProblemEntry -> List Problem -> List ProblemEntry
+mergeProblems currentProblemEntries newProblems =
+    let
+        currentlyIgnoredProblems : List Problem
+        currentlyIgnoredProblems =
+            List.filter .ignored currentProblemEntries
+                |> List.map .problem
+    in
+    List.indexedMap
+        (\index problem -> ProblemEntry problem index (List.member problem currentlyIgnoredProblems))
+        newProblems
+
+
 identifyProblemsIn : Model -> Model
 identifyProblemsIn model =
+    let
+        newProblems : List Problem
+        newProblems =
+            identifyProblems model.stopwatches model.barcodeScannerData model.eventDateAndTime
+    in
     { model
-        | problems = identifyProblems model.stopwatches model.barcodeScannerData model.eventDateAndTime
+        | problems = mergeProblems model.problems newProblems
     }
 
 
@@ -918,6 +936,24 @@ swapBarcodesAround fileName first last model =
             model
 
 
+ignoreProblem : Int -> Model -> Model
+ignoreProblem problemIndex model =
+    let
+        ignoreProblemIfIndexMatches : ProblemEntry -> ProblemEntry
+        ignoreProblemIfIndexMatches problem =
+            if problem.index == problemIndex then
+                { problem | ignored = True }
+
+            else
+                problem
+
+        newProblems : List ProblemEntry
+        newProblems =
+            List.map ignoreProblemIfIndexMatches model.problems
+    in
+    { model | problems = newProblems }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -1027,3 +1063,6 @@ update msg model =
 
         SwapBarcodes fileName first last ->
             ( swapBarcodesAround fileName first last model, Cmd.none )
+
+        IgnoreProblem problemIndex ->
+            ( ignoreProblem problemIndex model, Cmd.none )

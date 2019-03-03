@@ -5,6 +5,7 @@ import DataStructures exposing (ProblemFix(..), WhichStopwatch(..))
 import Html exposing (Html, button, div, h4, li, text, ul)
 import Html.Attributes exposing (class, type_)
 import Html.Events exposing (onClick)
+import Model exposing (ProblemEntry)
 import Msg exposing (Msg)
 import Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..))
 import ViewCommon exposing (smallButton)
@@ -44,9 +45,14 @@ nonFixableProblemToString problem =
             "TODO"
 
 
-nonFixableProblemView : NonFixableProblem -> Html Msg
-nonFixableProblemView problem =
-    li [] [ text (nonFixableProblemToString problem) ]
+nonFixableProblemView : Int -> NonFixableProblem -> Html Msg
+nonFixableProblemView index problem =
+    li
+        []
+        [ text (nonFixableProblemToString problem)
+        , text " "
+        , smallButton (Msg.IgnoreProblem index) [] "Ignore"
+        ]
 
 
 nonFixableProblemsView : List (Html Msg) -> Html Msg
@@ -71,8 +77,8 @@ nonFixableProblemsView nonFixableProblems =
             ]
 
 
-fixableProblemView : FixableProblem -> Html Msg
-fixableProblemView fixableProblem =
+fixableProblemView : Int -> FixableProblem -> Html Msg
+fixableProblemView index fixableProblem =
     case fixableProblem of
         AthleteInSamePositionMultipleTimes athlete position ->
             li []
@@ -82,6 +88,8 @@ fixableProblemView fixableProblem =
                 , text (String.fromInt position)
                 , text " more than once "
                 , smallButton (Msg.FixProblem (RemoveDuplicateScans position athlete)) [] "Remove duplicates"
+                , text " "
+                , smallButton (Msg.IgnoreProblem index) [] "Ignore"
                 ]
 
         AthleteWithAndWithoutPosition athlete position ->
@@ -92,6 +100,8 @@ fixableProblemView fixableProblem =
                 , text (String.fromInt position)
                 , text " and also without a corresponding finish token "
                 , smallButton (Msg.FixProblem (RemoveUnassociatedAthlete athlete)) [] "Remove unassociated athlete barcode scan"
+                , text " "
+                , smallButton (Msg.IgnoreProblem index) [] "Ignore"
                 ]
 
         PositionWithAndWithoutAthlete position athlete ->
@@ -102,6 +112,8 @@ fixableProblemView fixableProblem =
                 , text athlete
                 , text " and also without a corresponding athlete barcode "
                 , smallButton (Msg.FixProblem (RemoveUnassociatedFinishToken position)) [] "Remove unassociated finish token scan"
+                , text " "
+                , smallButton (Msg.IgnoreProblem index) [] "Ignore"
                 ]
 
         BarcodesScannedBeforeEventStart number eventStartTimeMillis eventStart ->
@@ -120,6 +132,8 @@ fixableProblemView fixableProblem =
                 , text eventStart
                 , text ") "
                 , smallButton (Msg.FixProblem (RemoveScansBeforeEventStart eventStartTimeMillis)) [] "Remove barcodes scanned before event start"
+                , text " "
+                , smallButton (Msg.IgnoreProblem index) [] "Ignore"
                 ]
 
         StopwatchTimeOffset offset ->
@@ -165,6 +179,8 @@ fixableProblemView fixableProblem =
                 , smallButton (Msg.FixProblem (AdjustStopwatch StopwatchOne -offset)) [] stopwatch1AdjustText
                 , text " "
                 , smallButton (Msg.FixProblem (AdjustStopwatch StopwatchTwo offset)) [] stopwatch2AdjustText
+                , text " "
+                , smallButton (Msg.IgnoreProblem index) [] "Ignore"
                 ]
 
 
@@ -190,22 +206,26 @@ fixableProblemsView fixableProblems =
             ]
 
 
-problemView : Problem -> ( Maybe (Html Msg), Maybe (Html Msg) )
-problemView problem =
-    case problem of
+problemView : ProblemEntry -> ( Maybe (Html Msg), Maybe (Html Msg) )
+problemView problemEntry =
+    case problemEntry.problem of
         Fixable fixableProblem ->
-            ( Just (fixableProblemView fixableProblem), Nothing )
+            ( Just (fixableProblemView problemEntry.index fixableProblem), Nothing )
 
         NonFixable nonFixableProblem ->
-            ( Nothing, Just (nonFixableProblemView nonFixableProblem) )
+            ( Nothing, Just (nonFixableProblemView problemEntry.index nonFixableProblem) )
 
 
-problemsView : List Problem -> Html Msg
+problemsView : List ProblemEntry -> Html Msg
 problemsView problems =
     let
+        nonIgnoredProblems : List ProblemEntry
+        nonIgnoredProblems =
+            List.filter (not << .ignored) problems
+
         splitProblems : List ( Maybe (Html Msg), Maybe (Html Msg) )
         splitProblems =
-            List.map problemView problems
+            List.map problemView nonIgnoredProblems
 
         fixableProblems : List (Html Msg)
         fixableProblems =

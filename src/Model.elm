@@ -1,4 +1,12 @@
-module Model exposing (Model, NumberCheckerManualEntryRow, NumericEntry, emptyNumberCheckerManualEntryRow, emptyNumericEntry, initModel)
+module Model exposing
+    ( Model
+    , NumberCheckerManualEntryRow
+    , NumericEntry
+    , ProblemEntry
+    , emptyNumberCheckerManualEntryRow
+    , emptyNumericEntry
+    , initModel
+    )
 
 import BarcodeScanner exposing (BarcodeScannerData)
 import Bootstrap.Tab as Tab
@@ -33,6 +41,13 @@ emptyNumberCheckerManualEntryRow =
     NumberCheckerManualEntryRow emptyNumericEntry emptyNumericEntry emptyNumericEntry
 
 
+type alias ProblemEntry =
+    { problem : Problem
+    , index : Int
+    , ignored : Bool
+    }
+
+
 type alias Model =
     { stopwatches : Stopwatches
     , lastErrors : List FileError
@@ -40,7 +55,7 @@ type alias Model =
     , lastHeight : Maybe Int
     , highlightedNumberCheckerId : Maybe Int
     , barcodeScannerData : BarcodeScannerData
-    , problems : List Problem
+    , problems : List ProblemEntry
     , eventDateAndTime : EventDateAndTime
     , numberCheckerManualEntryRow : NumberCheckerManualEntryRow
     , secondTab : Tab.State
