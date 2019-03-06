@@ -4,17 +4,17 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <title>Parkrun results tidyup</title>
+  <title>Results tidyup</title>
   <link rel="stylesheet" href="bootstrap.min.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<div id="parkrun-results-container" class="main-content container-fluid">
-  <div id="parkrun-results"></div>
+<div id="results-tidyup-container" class="main-content container-fluid">
+  <div id="results-tidyup"></div>
 </div>
 
-<script src="parkrun-results.js"></script>
+<script src="results-tidyup.js"></script>
 <script src="jquery-3.3.1.js"></script>
 <script>
 var startTime = parseInt(window.localStorage.getItem("eventStartTime"), 10);
@@ -22,8 +22,8 @@ if (isNaN(startTime)) {
     startTime = null;
 }
 
-var app = Elm.ParkrunResults.init({
-    node: document.getElementById("parkrun-results"),
+var app = Elm.ResultsTidyup.init({
+    node: document.getElementById("results-tidyup"),
     flags: startTime
 });
 
@@ -108,7 +108,7 @@ function drop(e) {
   handleLoad(e.dataTransfer.files);
 }
 
-var dropzone = document.getElementById("parkrun-results-container");
+var dropzone = document.getElementById("results-tidyup-container");
 dropzone.addEventListener("dragenter", stopDefaultBehaviour, false);
 dropzone.addEventListener("dragover", stopDefaultBehaviour, false);
 dropzone.addEventListener("drop", drop, false);

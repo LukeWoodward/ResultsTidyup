@@ -1,3 +1,3 @@
 @echo off
 
-elm make src/ParkrunResults.elm --output parkrun-results.js
+elm make src/ResultsTidyup.elm --output results-tidyup.js

@@ -1,4 +1,4 @@
-module ParkrunResults exposing (main)
+module ResultsTidyup exposing (main)
 
 import BarcodeScanner exposing (BarcodeScannerData)
 import BarcodeScannerView exposing (barcodeScannersView)
