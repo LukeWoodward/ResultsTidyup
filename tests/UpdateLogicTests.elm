@@ -953,7 +953,7 @@ suite =
                     case model.stopwatches of
                         Double doubleStopwatchData ->
                             createStopwatchFileForDownload Time.utc recentTime doubleStopwatchData.mergedTableRows
-                                |> Expect.equal (InteropFile "parkrun_timer_14072017024000.txt" expectedMergedStopwatchFileContents)
+                                |> Expect.equal (InteropFile "results_tidyup_timer_14072017024000.txt" expectedMergedStopwatchFileContents)
 
                         _ ->
                             Expect.fail ("Expected merged data from two stopwatches, got '" ++ Debug.toString model.stopwatches ++ "' instead.")

@@ -440,7 +440,7 @@ createStopwatchFileForDownload zone time mergedTableRows =
 
         fileName : String
         fileName =
-            "parkrun_timer_" ++ generateDownloadFilenameDatePart zone time ++ ".txt"
+            "results_tidyup_timer_" ++ generateDownloadFilenameDatePart zone time ++ ".txt"
     in
     InteropFile fileName fileContents
 
@@ -822,7 +822,7 @@ downloadSingleBarcodeScannerData index files zone time =
 
                 fileName : String
                 fileName =
-                    "parkrun_barcode_" ++ generateDownloadFilenameDatePart zone time ++ ".txt"
+                    "results_tidyup_barcode_" ++ generateDownloadFilenameDatePart zone time ++ ".txt"
             in
             InteropFile fileName fileContents
                 |> downloadFile

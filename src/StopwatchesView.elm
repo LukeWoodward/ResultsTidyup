@@ -17,8 +17,8 @@ import TimeHandling exposing (formatTime)
 import ViewCommon exposing (intCell, plainCell, smallButton)
 
 
-parkrunUrlResultsPrefix : String
-parkrunUrlResultsPrefix =
+urlResultsPrefix : String
+urlResultsPrefix =
     "http://www.parkrun.org.uk/results/athleteresultshistory/?athleteNumber="
 
 
@@ -88,7 +88,7 @@ athleteItem athleteAndTimePair =
         []
         [ a
             [ rel "nofollow"
-            , href (parkrunUrlResultsPrefix ++ String.dropLeft 1 athlete)
+            , href (urlResultsPrefix ++ String.dropLeft 1 athlete)
             , target "_blank"
             ]
             [ text athlete ]

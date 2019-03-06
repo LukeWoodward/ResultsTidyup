@@ -100,7 +100,7 @@ view : Model -> Html Msg
 view model =
     div
         []
-        [ h1 [ id "header" ] [ text "Parkrun results tidyup" ]
+        [ h1 [ id "header" ] [ text "Results tidy-up" ]
         , errorsView model.lastErrors
         , Grid.row []
             [ Grid.col [ Col.xs6 ]
