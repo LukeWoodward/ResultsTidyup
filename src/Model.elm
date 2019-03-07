@@ -59,6 +59,7 @@ type alias Model =
     , eventDateAndTime : EventDateAndTime
     , numberCheckerManualEntryRow : NumberCheckerManualEntryRow
     , secondTab : Tab.State
+    , barcodeScannerTab : Tab.State
     }
 
 
@@ -74,4 +75,5 @@ initModel =
     , eventDateAndTime = EventDateAndTime "" Nothing "" Nothing
     , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
     , secondTab = Tab.initialState
+    , barcodeScannerTab = Tab.initialState
     }

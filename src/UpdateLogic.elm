@@ -1052,6 +1052,9 @@ update msg model =
         ChangeSecondTab newSecondTab ->
             ( { model | secondTab = newSecondTab }, Cmd.none )
 
+        ChangeBarcodeScannerTab newBarcodeScannerTab ->
+            ( { model | barcodeScannerTab = newBarcodeScannerTab }, Cmd.none )
+
         ClearErrors ->
             ( { model | lastErrors = [] }, Cmd.none )
 

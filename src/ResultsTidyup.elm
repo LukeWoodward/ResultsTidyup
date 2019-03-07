@@ -114,7 +114,7 @@ view model =
                         [ Tab.item
                             { id = "barcodeScannersTab"
                             , link = Tab.link [] [ text "Barcode scanners" ]
-                            , pane = Tab.pane [] [ barcodeScannersView model.barcodeScannerData.files ]
+                            , pane = Tab.pane [] [ barcodeScannersView model ]
                             }
                         , Tab.item
                             { id = "numberCheckerTab"

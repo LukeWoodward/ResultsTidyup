@@ -3,10 +3,12 @@ module BarcodeScannerView exposing (barcodeScannersView)
 import BarcodeScanner exposing (BarcodeScannerFile, BarcodeScannerFileLine, DeletionReason(..), DeletionStatus(..), LineContents(..), WrongWayAroundStatus(..))
 import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button
+import Bootstrap.Tab as Tab
 import Bootstrap.Table as Table
 import Html exposing (Attribute, Html, button, div, h4, text)
 import Html.Attributes exposing (class, colspan, rowspan, title)
 import Html.Events exposing (onClick)
+import Model exposing (Model)
 import Msg exposing (Msg(..))
 import ViewCommon exposing (smallButton, tableHeaders)
 
@@ -122,10 +124,6 @@ barcodeScannerView index file =
             [ smallButton (GetCurrentDateForDownloadFile (DownloadBarcodeScannerFile index)) [] "Download"
             , smallButton (DeleteBarcodeScannerFile index) [] "Delete"
             ]
-        , h4 []
-            [ text "File: "
-            , text file.name
-            ]
         , Table.table
             { options = [ Table.bordered, Table.small, Table.hover, Table.attr (class "barcode-scanner-table") ]
             , thead = tableHeaders [ "Line #", "Athlete", "Position", "Date/Time", "Action" ]
@@ -134,10 +132,24 @@ barcodeScannerView index file =
         ]
 
 
-barcodeScannersView : List BarcodeScannerFile -> Html Msg
-barcodeScannersView files =
-    if List.isEmpty files then
+barcodeScannerTabView : Int -> BarcodeScannerFile -> Tab.Item Msg
+barcodeScannerTabView index file =
+    Tab.item
+        { id = "barcodeScannerTab" ++ String.fromInt index
+        , link = Tab.link [] [ text file.name ]
+        , pane = Tab.pane [] [ barcodeScannerView index file ]
+        }
+
+
+barcodeScannersView : Model -> Html Msg
+barcodeScannersView model =
+    if List.isEmpty model.barcodeScannerData.files then
         Alert.simpleInfo [ class "no-barcode-scanner-files" ] [ text "No barcode scanner files have been loaded" ]
 
     else
-        div [] (List.indexedMap barcodeScannerView files)
+        div []
+            [ h4 [] [ text "Barcode scanner files" ]
+            , Tab.config ChangeBarcodeScannerTab
+                |> Tab.items (List.indexedMap barcodeScannerTabView model.barcodeScannerData.files)
+                |> Tab.view model.barcodeScannerTab
+            ]

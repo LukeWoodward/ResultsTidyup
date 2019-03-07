@@ -31,6 +31,7 @@ type Msg
     | EditNumberCheckerRow Int
     | FixProblem ProblemFix
     | ChangeSecondTab Tab.State
+    | ChangeBarcodeScannerTab Tab.State
     | ClearErrors
     | DownloadBarcodeScannerFile Int Zone Posix
     | DeleteBarcodeScannerFile Int
