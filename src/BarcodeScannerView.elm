@@ -87,7 +87,18 @@ barcodeScannerViewRow fileName line =
         rowAttributes =
             case line.deletionStatus of
                 NotDeleted ->
-                    []
+                    case line.contents of
+                        MisScan _ ->
+                            [ class "barcode-scanner-row-error" ]
+
+                        Ordinary _ Nothing ->
+                            [ class "barcode-scanner-row-warning" ]
+
+                        Ordinary "" _ ->
+                            [ class "barcode-scanner-row-warning" ]
+
+                        Ordinary _ _ ->
+                            [ class "barcode-scanner-row-ok" ]
 
                 Deleted deletionReason ->
                     [ class "deleted-barcode-scanner-row"

@@ -1,12 +1,12 @@
-td.exact-match {
+td.exact-match, tr.barcode-scanner-row-ok {
     background-color: #ccffcc;
 }
 
-td.near-match {
+td.near-match, tr.barcode-scanner-row-warning {
     background-color: #ffffcc;
 }
 
-td.mismatch {
+td.mismatch, tr.barcode-scanner-row-error {
     background-color: #ffcccc;
 }
 
