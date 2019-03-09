@@ -267,7 +267,7 @@ underlineTable numberCheckerEntries mergedRows =
 
 header : List String
 header =
-    [ "STARTOFEVENT,01/01/2001 00:00:00,junsd_stopwatch", "0,01/01/2001 00:00:00" ]
+    [ "STARTOFEVENT,01/01/2001 00:00:00,results_tidyup", "0,01/01/2001 00:00:00" ]
 
 
 footer : String

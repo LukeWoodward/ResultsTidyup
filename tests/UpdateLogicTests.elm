@@ -468,7 +468,7 @@ recentTime =
 
 expectedMergedStopwatchFileContents : String
 expectedMergedStopwatchFileContents =
-    "STARTOFEVENT,01/01/2001 00:00:00,junsd_stopwatch"
+    "STARTOFEVENT,01/01/2001 00:00:00,results_tidyup"
         ++ crlf
         ++ "0,01/01/2001 00:00:00"
         ++ crlf
