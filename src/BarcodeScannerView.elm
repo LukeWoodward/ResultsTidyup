@@ -5,7 +5,7 @@ import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button
 import Bootstrap.Tab as Tab
 import Bootstrap.Table as Table
-import Html exposing (Attribute, Html, button, div, h4, text)
+import Html exposing (Attribute, Html, button, div, h4, small, text)
 import Html.Attributes exposing (class, colspan, rowspan, title)
 import Html.Events exposing (onClick)
 import Model exposing (Model)
@@ -132,11 +132,51 @@ barcodeScannerView index file =
         ]
 
 
+isNotDeleted : BarcodeScannerFileLine -> Bool
+isNotDeleted line =
+    line.deletionStatus == NotDeleted
+
+
+isMisScan : BarcodeScannerFileLine -> Bool
+isMisScan line =
+    case line.contents of
+        Ordinary _ _ ->
+            False
+
+        MisScan _ ->
+            isNotDeleted line
+
+
+hasMissingItem : BarcodeScannerFileLine -> Bool
+hasMissingItem line =
+    case line.contents of
+        Ordinary "" _ ->
+            isNotDeleted line
+
+        Ordinary _ Nothing ->
+            isNotDeleted line
+
+        _ ->
+            False
+
+
+getBarcodeScannerTabClass : BarcodeScannerFile -> String
+getBarcodeScannerTabClass file =
+    if List.any isMisScan file.lines then
+        "barcode-scanner-file-error"
+
+    else if List.any hasMissingItem file.lines then
+        "barcode-scanner-file-warning"
+
+    else
+        "barcode-scanner-file-ok"
+
+
 barcodeScannerTabView : Int -> BarcodeScannerFile -> Tab.Item Msg
 barcodeScannerTabView index file =
     Tab.item
         { id = "barcodeScannerTab" ++ String.fromInt index
-        , link = Tab.link [] [ text file.name ]
+        , link = Tab.link [ class (getBarcodeScannerTabClass file) ] [ small [] [ text file.name ] ]
         , pane = Tab.pane [] [ barcodeScannerView index file ]
         }
 

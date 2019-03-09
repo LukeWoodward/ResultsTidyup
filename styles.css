@@ -1,12 +1,24 @@
-td.exact-match, tr.barcode-scanner-row-ok {
+button.btn.nav-link.barcode-scanner-file-ok {
+    background-color: #e6ffe6;
+}
+
+td.exact-match, tr.barcode-scanner-row-ok, button.btn.nav-link.active.barcode-scanner-file-ok {
     background-color: #ccffcc;
 }
 
-td.near-match, tr.barcode-scanner-row-warning {
+button.btn.nav-link.barcode-scanner-file-warning {
+    background-color: #ffffe6;
+}
+
+td.near-match, tr.barcode-scanner-row-warning, button.btn.nav-link.active.barcode-scanner-file-warning {
     background-color: #ffffcc;
 }
 
-td.mismatch, tr.barcode-scanner-row-error {
+button.btn.nav-link.barcode-scanner-file-error {
+    background-color: #ffe6e6;
+}
+
+td.mismatch, tr.barcode-scanner-row-error, button.btn.nav-link.active.barcode-scanner-file-error {
     background-color: #ffcccc;
 }
 
