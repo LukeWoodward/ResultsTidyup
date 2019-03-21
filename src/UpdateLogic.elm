@@ -541,10 +541,31 @@ addNumberCheckerRow model =
     in
     case ( manualEntryRow.stopwatch1.parsedValue, manualEntryRow.stopwatch2.parsedValue, manualEntryRow.finishTokens.parsedValue ) of
         ( Just stopwatch1, Just stopwatch2, Just finishTokens ) ->
-            ( { model
-                | numberCheckerEntries =
+            let
+                newNumberCheckerEntries : List AnnotatedNumberCheckerEntry
+                newNumberCheckerEntries =
                     addAndAnnotate (NumberCheckerEntry stopwatch1 stopwatch2 finishTokens) model.numberCheckerEntries
+
+                newStopwatches : Stopwatches
+                newStopwatches =
+                    case model.stopwatches of
+                        Double doubleStopwatchData ->
+                            Double
+                                { doubleStopwatchData
+                                    | mergedTableRows =
+                                        underlineTable newNumberCheckerEntries doubleStopwatchData.mergedTableRows
+                                }
+
+                        Single _ _ ->
+                            model.stopwatches
+
+                        None ->
+                            model.stopwatches
+            in
+            ( { model
+                | numberCheckerEntries = newNumberCheckerEntries
                 , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
+                , stopwatches = newStopwatches
               }
             , focus "number-checker-stopwatch-1"
             )
