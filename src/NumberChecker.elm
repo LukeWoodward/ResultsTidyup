@@ -92,7 +92,7 @@ failIfEmpty list =
         Ok list
 
 
-sortNumberCheckerEntries : List NumberCheckerEntry -> List NumberCheckerEntry
+sortNumberCheckerEntries : List { a | finishTokens : Int } -> List { a | finishTokens : Int }
 sortNumberCheckerEntries entries =
     List.sortBy .finishTokens entries
 
@@ -112,6 +112,11 @@ parseNumberCheckerFile fileText =
 unannotateEntry : AnnotatedNumberCheckerEntry -> NumberCheckerEntry
 unannotateEntry entry =
     NumberCheckerEntry entry.stopwatch1 entry.stopwatch2 entry.finishTokens
+
+
+removeDeltas : AnnotatedNumberCheckerEntry -> NumberCheckerEntryWithActual
+removeDeltas entry =
+    NumberCheckerEntryWithActual entry.stopwatch1 entry.stopwatch2 entry.finishTokens entry.actual
 
 
 addActualNumber : NumberCheckerEntry -> Int -> NumberCheckerEntryWithActual
@@ -220,6 +225,6 @@ addAndAnnotate newEntry existingAnnotatedEntries =
 
 reannotate : List AnnotatedNumberCheckerEntry -> List AnnotatedNumberCheckerEntry
 reannotate entries =
-    List.map unannotateEntry entries
+    List.map removeDeltas entries
         |> sortNumberCheckerEntries
-        |> annotate
+        |> calculateDeltas
