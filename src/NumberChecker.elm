@@ -14,6 +14,14 @@ type alias NumberCheckerEntry =
     }
 
 
+type alias NumberCheckerEntryWithActual =
+    { stopwatch1 : Int
+    , stopwatch2 : Int
+    , finishTokens : Int
+    , actual : Int
+    }
+
+
 {-| Type alias for an annotated row of the number-checker table.
 -}
 type alias AnnotatedNumberCheckerEntry =
@@ -101,28 +109,24 @@ parseNumberCheckerFile fileText =
         |> Result.map sortNumberCheckerEntries
 
 
-annotateEntry : NumberCheckerEntry -> Int -> Int -> Int -> Int -> Int -> AnnotatedNumberCheckerEntry
-annotateEntry { stopwatch1, stopwatch2, finishTokens } entryNumber stopwatch1Diff stopwatch2Diff finishTokensDiff actual =
-    AnnotatedNumberCheckerEntry entryNumber stopwatch1 stopwatch1Diff stopwatch2 stopwatch2Diff finishTokens finishTokensDiff actual
-
-
 unannotateEntry : AnnotatedNumberCheckerEntry -> NumberCheckerEntry
 unannotateEntry entry =
     NumberCheckerEntry entry.stopwatch1 entry.stopwatch2 entry.finishTokens
 
 
-annotateInternal : Int -> Int -> NumberCheckerEntry -> List NumberCheckerEntry -> List AnnotatedNumberCheckerEntry
-annotateInternal previousRowNumber previousActualNumber previousEntry entries =
+addActualNumber : NumberCheckerEntry -> Int -> NumberCheckerEntryWithActual
+addActualNumber { stopwatch1, stopwatch2, finishTokens } actual =
+    NumberCheckerEntryWithActual stopwatch1 stopwatch2 finishTokens actual
+
+
+addActualNumbersInternal : Int -> NumberCheckerEntry -> List NumberCheckerEntry -> List NumberCheckerEntryWithActual
+addActualNumbersInternal previousActualNumber previousEntry entries =
     case entries of
         [] ->
             []
 
         firstEntry :: rest ->
             let
-                thisRowNumber : Int
-                thisRowNumber =
-                    previousRowNumber + 1
-
                 stopwatch1Diff : Int
                 stopwatch1Diff =
                     firstEntry.stopwatch1 - previousEntry.stopwatch1
@@ -135,30 +139,75 @@ annotateInternal previousRowNumber previousActualNumber previousEntry entries =
                 finishTokensDiff =
                     firstEntry.finishTokens - previousEntry.finishTokens
 
-                firstAnnotatedEntry : AnnotatedNumberCheckerEntry
-                firstAnnotatedEntry =
+                firstEntryWithActual : NumberCheckerEntryWithActual
+                firstEntryWithActual =
                     if stopwatch1Diff == stopwatch2Diff && stopwatch1Diff == finishTokensDiff then
                         -- Most common case: all agree
-                        annotateEntry firstEntry thisRowNumber 0 0 0 (previousActualNumber + stopwatch1Diff)
+                        addActualNumber firstEntry (previousActualNumber + stopwatch1Diff)
 
                     else if stopwatch1Diff == stopwatch2Diff then
                         -- Finish tokens looks to be off...
-                        annotateEntry firstEntry thisRowNumber 0 0 (finishTokensDiff - stopwatch1Diff) (previousActualNumber + stopwatch1Diff)
+                        addActualNumber firstEntry (previousActualNumber + stopwatch1Diff)
 
                     else
                         -- Anything else: take finish tokens to be authoritative
-                        annotateEntry firstEntry thisRowNumber (stopwatch1Diff - finishTokensDiff) (stopwatch2Diff - finishTokensDiff) 0 (previousActualNumber + finishTokensDiff)
+                        addActualNumber firstEntry (previousActualNumber + finishTokensDiff)
+
+                remainingEntriesWithActual : List NumberCheckerEntryWithActual
+                remainingEntriesWithActual =
+                    addActualNumbersInternal firstEntryWithActual.actual firstEntry rest
+            in
+            firstEntryWithActual :: remainingEntriesWithActual
+
+
+addActualNumbers : List NumberCheckerEntry -> List NumberCheckerEntryWithActual
+addActualNumbers entries =
+    addActualNumbersInternal 0 (NumberCheckerEntry 0 0 0) entries
+
+
+calculateDeltasInternal : Int -> NumberCheckerEntryWithActual -> List NumberCheckerEntryWithActual -> List AnnotatedNumberCheckerEntry
+calculateDeltasInternal previousRowNumber previousEntry entries =
+    case entries of
+        [] ->
+            []
+
+        firstEntry :: rest ->
+            let
+                thisRowNumber : Int
+                thisRowNumber =
+                    previousRowNumber + 1
+
+                actualDiff : Int
+                actualDiff =
+                    firstEntry.actual - previousEntry.actual
+
+                firstAnnotatedEntry : AnnotatedNumberCheckerEntry
+                firstAnnotatedEntry =
+                    { entryNumber = thisRowNumber
+                    , stopwatch1 = firstEntry.stopwatch1
+                    , stopwatch1Delta = (firstEntry.stopwatch1 - previousEntry.stopwatch1) - actualDiff
+                    , stopwatch2 = firstEntry.stopwatch2
+                    , stopwatch2Delta = (firstEntry.stopwatch2 - previousEntry.stopwatch2) - actualDiff
+                    , finishTokens = firstEntry.finishTokens
+                    , finishTokensDelta = (firstEntry.finishTokens - previousEntry.finishTokens) - actualDiff
+                    , actual = firstEntry.actual
+                    }
 
                 restAnnotatedEntries : List AnnotatedNumberCheckerEntry
                 restAnnotatedEntries =
-                    annotateInternal thisRowNumber firstAnnotatedEntry.actual firstEntry rest
+                    calculateDeltasInternal thisRowNumber firstEntry rest
             in
             firstAnnotatedEntry :: restAnnotatedEntries
 
 
+calculateDeltas : List NumberCheckerEntryWithActual -> List AnnotatedNumberCheckerEntry
+calculateDeltas entries =
+    calculateDeltasInternal 0 (NumberCheckerEntryWithActual 0 0 0 0) entries
+
+
 annotate : List NumberCheckerEntry -> List AnnotatedNumberCheckerEntry
 annotate entries =
-    annotateInternal 0 0 (NumberCheckerEntry 0 0 0) entries
+    calculateDeltas (addActualNumbers entries)
 
 
 addAndAnnotate : NumberCheckerEntry -> List AnnotatedNumberCheckerEntry -> List AnnotatedNumberCheckerEntry
