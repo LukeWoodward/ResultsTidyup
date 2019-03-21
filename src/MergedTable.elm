@@ -38,12 +38,13 @@ type alias Underlines =
     { position : Maybe Int
     , stopwatch1 : Maybe Int
     , stopwatch2 : Maybe Int
+    , actual : Maybe Int
     }
 
 
 noUnderlines : Underlines
 noUnderlines =
-    Underlines Nothing Nothing Nothing
+    Underlines Nothing Nothing Nothing Nothing
 
 
 type alias MergedTableRow =
@@ -159,6 +160,7 @@ type alias NumberDicts =
     { stopwatch1 : Dict Int Int
     , stopwatch2 : Dict Int Int
     , finishTokens : Dict Int Int
+    , actual : Dict Int Int
     }
 
 
@@ -171,8 +173,8 @@ getNextEntry currentPosn nextPosn numberDict =
         Nothing
 
 
-underlineTableInternal : NumberDicts -> Int -> Int -> Int -> List MergedTableRow -> List MergedTableRow
-underlineTableInternal numberDicts sw1Posn sw2Posn ftoksPosn mergedRows =
+underlineTableInternal : NumberDicts -> Int -> Int -> Int -> Int -> List MergedTableRow -> List MergedTableRow
+underlineTableInternal numberDicts sw1Posn sw2Posn ftoksPosn actualPosn mergedRows =
     case mergedRows of
         [] ->
             []
@@ -217,11 +219,20 @@ underlineTableInternal numberDicts sw1Posn sw2Posn ftoksPosn mergedRows =
                     else
                         ftoksPosn
 
+                nextActualPosn : Int
+                nextActualPosn =
+                    if firstRow.included then
+                        actualPosn + 1
+
+                    else
+                        actualPosn
+
                 newUnderlines : Underlines
                 newUnderlines =
                     { stopwatch1 = getNextEntry sw1Posn nextSw1Posn numberDicts.stopwatch1
                     , stopwatch2 = getNextEntry sw2Posn nextSw2Posn numberDicts.stopwatch2
                     , position = getNextEntry ftoksPosn nextFtoksPosn numberDicts.finishTokens
+                    , actual = getNextEntry actualPosn nextActualPosn numberDicts.actual
                     }
 
                 underlinedFirstRow : MergedTableRow
@@ -230,7 +241,7 @@ underlineTableInternal numberDicts sw1Posn sw2Posn ftoksPosn mergedRows =
 
                 underlinedRestRows : List MergedTableRow
                 underlinedRestRows =
-                    underlineTableInternal numberDicts nextSw1Posn nextSw2Posn nextFtoksPosn restRows
+                    underlineTableInternal numberDicts nextSw1Posn nextSw2Posn nextFtoksPosn nextActualPosn restRows
             in
             underlinedFirstRow :: underlinedRestRows
 
@@ -261,8 +272,14 @@ underlineTable numberCheckerEntries mergedRows =
             numberCheckerEntries
                 |> List.map .finishTokens
                 |> createMappingDict
+
+        actualNumbers : Dict Int Int
+        actualNumbers =
+            numberCheckerEntries
+                |> List.map .actual
+                |> createMappingDict
     in
-    underlineTableInternal (NumberDicts stopwatch1Numbers stopwatch2Numbers finishTokensNumbers) 0 0 0 mergedRows
+    underlineTableInternal (NumberDicts stopwatch1Numbers stopwatch2Numbers finishTokensNumbers actualNumbers) 0 0 0 0 mergedRows
 
 
 header : List String

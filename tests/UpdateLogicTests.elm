@@ -457,6 +457,7 @@ parsedNumberCheckerData =
       , stopwatch2Delta = -1
       , finishTokens = 5
       , finishTokensDelta = 0
+      , actual = 5
       }
     ]
 
@@ -492,6 +493,7 @@ sampleNumberCheckerData =
       , stopwatch2Delta = -1
       , finishTokens = 5
       , finishTokensDelta = 0
+      , actual = 5
       }
     , { entryNumber = 2
       , stopwatch1 = 11
@@ -500,6 +502,7 @@ sampleNumberCheckerData =
       , stopwatch2Delta = 0
       , finishTokens = 11
       , finishTokensDelta = 0
+      , actual = 11
       }
     , { entryNumber = 3
       , stopwatch1 = 18
@@ -508,6 +511,7 @@ sampleNumberCheckerData =
       , stopwatch2Delta = 0
       , finishTokens = 17
       , finishTokensDelta = -1
+      , actual = 18
       }
     ]
 
@@ -521,6 +525,7 @@ sampleNumberCheckerDataWithSecondItemRemoved =
       , stopwatch2Delta = -1
       , finishTokens = 5
       , finishTokensDelta = 0
+      , actual = 5
       }
     , { entryNumber = 2
       , stopwatch1 = 18
@@ -529,6 +534,7 @@ sampleNumberCheckerDataWithSecondItemRemoved =
       , stopwatch2Delta = 0
       , finishTokens = 17
       , finishTokensDelta = -1
+      , actual = 18
       }
     ]
 
@@ -886,7 +892,7 @@ suite =
                         , lastErrors = [ FileError "TEST_ERROR" "Some test error message" "somefile.txt" ]
                         , lastHeight = Just 700
                         , highlightedNumberCheckerId = Just 2
-                        , numberCheckerEntries = [ AnnotatedNumberCheckerEntry 2 2 0 2 0 2 0 ]
+                        , numberCheckerEntries = [ AnnotatedNumberCheckerEntry 2 2 0 2 0 2 0 2 ]
                         , numberCheckerManualEntryRow = NumberCheckerManualEntryRow (NumericEntry "2" (Just 2)) (NumericEntry "2" (Just 2)) (NumericEntry "2" (Just 2))
                         , problems =
                             [ ProblemEntry (Fixable (PositionWithAndWithoutAthlete 5 "A123")) 1 False
@@ -1192,6 +1198,7 @@ suite =
                                   , stopwatch1Delta = 0
                                   , stopwatch2 = 12
                                   , stopwatch2Delta = 0
+                                  , actual = 12
                                   }
                                 ]
                                 :: expectACommand

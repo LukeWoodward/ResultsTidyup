@@ -5,6 +5,8 @@ import Maybe.Extra
 import Result.Extra
 
 
+{-| Type alias for a row of number-checker data read from a file.
+-}
 type alias NumberCheckerEntry =
     { stopwatch1 : Int
     , stopwatch2 : Int
@@ -12,6 +14,8 @@ type alias NumberCheckerEntry =
     }
 
 
+{-| Type alias for an annotated row of the number-checker table.
+-}
 type alias AnnotatedNumberCheckerEntry =
     { entryNumber : Int
     , stopwatch1 : Int
@@ -20,6 +24,7 @@ type alias AnnotatedNumberCheckerEntry =
     , stopwatch2Delta : Int
     , finishTokens : Int
     , finishTokensDelta : Int
+    , actual : Int
     }
 
 
@@ -96,9 +101,9 @@ parseNumberCheckerFile fileText =
         |> Result.map sortNumberCheckerEntries
 
 
-annotateEntry : NumberCheckerEntry -> Int -> Int -> Int -> Int -> AnnotatedNumberCheckerEntry
-annotateEntry { stopwatch1, stopwatch2, finishTokens } entryNumber stopwatch1Diff stopwatch2Diff finishTokensDiff =
-    AnnotatedNumberCheckerEntry entryNumber stopwatch1 stopwatch1Diff stopwatch2 stopwatch2Diff finishTokens finishTokensDiff
+annotateEntry : NumberCheckerEntry -> Int -> Int -> Int -> Int -> Int -> AnnotatedNumberCheckerEntry
+annotateEntry { stopwatch1, stopwatch2, finishTokens } entryNumber stopwatch1Diff stopwatch2Diff finishTokensDiff actual =
+    AnnotatedNumberCheckerEntry entryNumber stopwatch1 stopwatch1Diff stopwatch2 stopwatch2Diff finishTokens finishTokensDiff actual
 
 
 unannotateEntry : AnnotatedNumberCheckerEntry -> NumberCheckerEntry
@@ -106,8 +111,8 @@ unannotateEntry entry =
     NumberCheckerEntry entry.stopwatch1 entry.stopwatch2 entry.finishTokens
 
 
-annotateInternal : Int -> NumberCheckerEntry -> List NumberCheckerEntry -> List AnnotatedNumberCheckerEntry
-annotateInternal previousRowNumber previousEntry entries =
+annotateInternal : Int -> Int -> NumberCheckerEntry -> List NumberCheckerEntry -> List AnnotatedNumberCheckerEntry
+annotateInternal previousRowNumber previousActualNumber previousEntry entries =
     case entries of
         [] ->
             []
@@ -134,26 +139,26 @@ annotateInternal previousRowNumber previousEntry entries =
                 firstAnnotatedEntry =
                     if stopwatch1Diff == stopwatch2Diff && stopwatch1Diff == finishTokensDiff then
                         -- Most common case: all agree
-                        annotateEntry firstEntry thisRowNumber 0 0 0
+                        annotateEntry firstEntry thisRowNumber 0 0 0 (previousActualNumber + stopwatch1Diff)
 
                     else if stopwatch1Diff == stopwatch2Diff then
                         -- Finish tokens looks to be off...
-                        annotateEntry firstEntry thisRowNumber 0 0 (finishTokensDiff - stopwatch1Diff)
+                        annotateEntry firstEntry thisRowNumber 0 0 (finishTokensDiff - stopwatch1Diff) (previousActualNumber + stopwatch1Diff)
 
                     else
                         -- Anything else: take finish tokens to be authoritative
-                        annotateEntry firstEntry thisRowNumber (stopwatch1Diff - finishTokensDiff) (stopwatch2Diff - finishTokensDiff) 0
+                        annotateEntry firstEntry thisRowNumber (stopwatch1Diff - finishTokensDiff) (stopwatch2Diff - finishTokensDiff) 0 (previousActualNumber + finishTokensDiff)
 
                 restAnnotatedEntries : List AnnotatedNumberCheckerEntry
                 restAnnotatedEntries =
-                    annotateInternal thisRowNumber firstEntry rest
+                    annotateInternal thisRowNumber firstAnnotatedEntry.actual firstEntry rest
             in
             firstAnnotatedEntry :: restAnnotatedEntries
 
 
 annotate : List NumberCheckerEntry -> List AnnotatedNumberCheckerEntry
 annotate entries =
-    annotateInternal 0 (NumberCheckerEntry 0 0 0) entries
+    annotateInternal 0 0 (NumberCheckerEntry 0 0 0) entries
 
 
 addAndAnnotate : NumberCheckerEntry -> List AnnotatedNumberCheckerEntry -> List AnnotatedNumberCheckerEntry

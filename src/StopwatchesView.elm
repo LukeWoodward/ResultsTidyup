@@ -369,7 +369,7 @@ mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData row =
         indexCell =
             case row.rowNumber of
                 Just num ->
-                    cell (String.fromInt num) row.underlines.position highlightedNumberCheckerId
+                    cell (String.fromInt num) row.underlines.actual highlightedNumberCheckerId
 
                 Nothing ->
                     emptyNumberCell

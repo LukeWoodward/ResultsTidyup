@@ -94,6 +94,7 @@ numberCheckerRow entry =
         , deltaCell entry.stopwatch2Delta
         , intCell entry.finishTokens
         , deltaCell entry.finishTokensDelta
+        , intCell entry.actual
         , actionButtonsCell entry.entryNumber
         ]
 
@@ -148,6 +149,7 @@ enterNewRow manualEntryRow =
                 ]
                 []
             ]
+        , Table.td [] []
         , Table.td []
             [ smallButton
                 AddNumberCheckerRow
@@ -166,7 +168,7 @@ numberCheckerTable entries manualEntryRow =
         emptyRows =
             if List.isEmpty entries then
                 [ Table.tr []
-                    [ Table.td [ Table.cellAttr (colspan 7) ]
+                    [ Table.td [ Table.cellAttr (colspan 8) ]
                         [ div [ class "no-number-checker-entries" ]
                             [ text "No number-checker data has been loaded." ]
                         ]
@@ -178,7 +180,7 @@ numberCheckerTable entries manualEntryRow =
     in
     Table.table
         { options = [ Table.bordered, Table.small, Table.hover, Table.attr (class "number-checker-table") ]
-        , thead = tableHeaders [ "Stopwatch 1", "+/−", "Stopwatch 2", "+/−", "Finish tokens", "+/−", "" ]
+        , thead = tableHeaders [ "Stopwatch 1", "+/−", "Stopwatch 2", "+/−", "Finish tokens", "+/−", "Actual", "" ]
         , tbody =
             Table.tbody
                 []
