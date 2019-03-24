@@ -124,8 +124,8 @@ addActualNumber { stopwatch1, stopwatch2, finishTokens } actual =
     NumberCheckerEntryWithActual stopwatch1 stopwatch2 finishTokens actual
 
 
-addActualNumbersInternal : Int -> NumberCheckerEntry -> List NumberCheckerEntry -> List NumberCheckerEntryWithActual
-addActualNumbersInternal previousActualNumber previousEntry entries =
+addActualNumbersInternal : NumberCheckerEntryWithActual -> List NumberCheckerEntry -> List NumberCheckerEntryWithActual
+addActualNumbersInternal previousEntry entries =
     case entries of
         [] ->
             []
@@ -148,26 +148,26 @@ addActualNumbersInternal previousActualNumber previousEntry entries =
                 firstEntryWithActual =
                     if stopwatch1Diff == stopwatch2Diff && stopwatch1Diff == finishTokensDiff then
                         -- Most common case: all agree
-                        addActualNumber firstEntry (previousActualNumber + stopwatch1Diff)
+                        addActualNumber firstEntry (previousEntry.actual + stopwatch1Diff)
 
                     else if stopwatch1Diff == stopwatch2Diff then
                         -- Finish tokens looks to be off...
-                        addActualNumber firstEntry (previousActualNumber + stopwatch1Diff)
+                        addActualNumber firstEntry (previousEntry.actual + stopwatch1Diff)
 
                     else
                         -- Anything else: take finish tokens to be authoritative
-                        addActualNumber firstEntry (previousActualNumber + finishTokensDiff)
+                        addActualNumber firstEntry (previousEntry.actual + finishTokensDiff)
 
                 remainingEntriesWithActual : List NumberCheckerEntryWithActual
                 remainingEntriesWithActual =
-                    addActualNumbersInternal firstEntryWithActual.actual firstEntry rest
+                    addActualNumbersInternal firstEntryWithActual rest
             in
             firstEntryWithActual :: remainingEntriesWithActual
 
 
 addActualNumbers : List NumberCheckerEntry -> List NumberCheckerEntryWithActual
 addActualNumbers entries =
-    addActualNumbersInternal 0 (NumberCheckerEntry 0 0 0) entries
+    addActualNumbersInternal (NumberCheckerEntryWithActual 0 0 0 0) entries
 
 
 calculateDeltasInternal : Int -> NumberCheckerEntryWithActual -> List NumberCheckerEntryWithActual -> List AnnotatedNumberCheckerEntry
