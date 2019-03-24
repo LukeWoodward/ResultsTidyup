@@ -124,6 +124,34 @@ addActualNumber { stopwatch1, stopwatch2, finishTokens } actual =
     NumberCheckerEntryWithActual stopwatch1 stopwatch2 finishTokens actual
 
 
+getActualNumberFromPrevious : NumberCheckerEntry -> NumberCheckerEntryWithActual -> NumberCheckerEntryWithActual
+getActualNumberFromPrevious thisEntry previousEntry =
+    let
+        stopwatch1Diff : Int
+        stopwatch1Diff =
+            thisEntry.stopwatch1 - previousEntry.stopwatch1
+
+        stopwatch2Diff : Int
+        stopwatch2Diff =
+            thisEntry.stopwatch2 - previousEntry.stopwatch2
+
+        finishTokensDiff : Int
+        finishTokensDiff =
+            thisEntry.finishTokens - previousEntry.finishTokens
+    in
+    if stopwatch1Diff == stopwatch2Diff && stopwatch1Diff == finishTokensDiff then
+        -- Most common case: all agree
+        addActualNumber thisEntry (previousEntry.actual + stopwatch1Diff)
+
+    else if stopwatch1Diff == stopwatch2Diff then
+        -- Finish tokens looks to be off...
+        addActualNumber thisEntry (previousEntry.actual + stopwatch1Diff)
+
+    else
+        -- Anything else: take finish tokens to be authoritative
+        addActualNumber thisEntry (previousEntry.actual + finishTokensDiff)
+
+
 addActualNumbersInternal : NumberCheckerEntryWithActual -> List NumberCheckerEntry -> List NumberCheckerEntryWithActual
 addActualNumbersInternal previousEntry entries =
     case entries of
@@ -132,31 +160,9 @@ addActualNumbersInternal previousEntry entries =
 
         firstEntry :: rest ->
             let
-                stopwatch1Diff : Int
-                stopwatch1Diff =
-                    firstEntry.stopwatch1 - previousEntry.stopwatch1
-
-                stopwatch2Diff : Int
-                stopwatch2Diff =
-                    firstEntry.stopwatch2 - previousEntry.stopwatch2
-
-                finishTokensDiff : Int
-                finishTokensDiff =
-                    firstEntry.finishTokens - previousEntry.finishTokens
-
                 firstEntryWithActual : NumberCheckerEntryWithActual
                 firstEntryWithActual =
-                    if stopwatch1Diff == stopwatch2Diff && stopwatch1Diff == finishTokensDiff then
-                        -- Most common case: all agree
-                        addActualNumber firstEntry (previousEntry.actual + stopwatch1Diff)
-
-                    else if stopwatch1Diff == stopwatch2Diff then
-                        -- Finish tokens looks to be off...
-                        addActualNumber firstEntry (previousEntry.actual + stopwatch1Diff)
-
-                    else
-                        -- Anything else: take finish tokens to be authoritative
-                        addActualNumber firstEntry (previousEntry.actual + finishTokensDiff)
+                    getActualNumberFromPrevious firstEntry previousEntry
 
                 remainingEntriesWithActual : List NumberCheckerEntryWithActual
                 remainingEntriesWithActual =
@@ -215,12 +221,33 @@ annotate entries =
     calculateDeltas (addActualNumbers entries)
 
 
+getPreviousEntry : List NumberCheckerEntryWithActual -> NumberCheckerEntry -> NumberCheckerEntryWithActual
+getPreviousEntry currentEntries newEntry =
+    List.filter (\entry -> entry.finishTokens < newEntry.finishTokens) currentEntries
+        |> sortNumberCheckerEntries
+        |> List.reverse
+        |> List.head
+        |> Maybe.withDefault (NumberCheckerEntryWithActual 0 0 0 0)
+
+
 addAndAnnotate : NumberCheckerEntry -> List AnnotatedNumberCheckerEntry -> List AnnotatedNumberCheckerEntry
 addAndAnnotate newEntry existingAnnotatedEntries =
-    List.map unannotateEntry existingAnnotatedEntries
-        |> (::) newEntry
+    let
+        entriesWithoutDeltas : List NumberCheckerEntryWithActual
+        entriesWithoutDeltas =
+            List.map removeDeltas existingAnnotatedEntries
+
+        previousEntry : NumberCheckerEntryWithActual
+        previousEntry =
+            getPreviousEntry entriesWithoutDeltas newEntry
+
+        newEntryWithActual : NumberCheckerEntryWithActual
+        newEntryWithActual =
+            getActualNumberFromPrevious newEntry previousEntry
+    in
+    sortNumberCheckerEntries (newEntryWithActual :: entriesWithoutDeltas)
         |> sortNumberCheckerEntries
-        |> annotate
+        |> calculateDeltas
 
 
 reannotate : List AnnotatedNumberCheckerEntry -> List AnnotatedNumberCheckerEntry
