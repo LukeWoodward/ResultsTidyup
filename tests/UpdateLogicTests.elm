@@ -516,6 +516,70 @@ sampleNumberCheckerData =
     ]
 
 
+sampleNumberCheckerDataIncremented : List AnnotatedNumberCheckerEntry
+sampleNumberCheckerDataIncremented =
+    [ { entryNumber = 1
+      , stopwatch1 = 5
+      , stopwatch1Delta = 0
+      , stopwatch2 = 4
+      , stopwatch2Delta = -1
+      , finishTokens = 5
+      , finishTokensDelta = 0
+      , actual = 5
+      }
+    , { entryNumber = 2
+      , stopwatch1 = 11
+      , stopwatch1Delta = -1
+      , stopwatch2 = 10
+      , stopwatch2Delta = -1
+      , finishTokens = 11
+      , finishTokensDelta = -1
+      , actual = 12
+      }
+    , { entryNumber = 3
+      , stopwatch1 = 18
+      , stopwatch1Delta = 0
+      , stopwatch2 = 17
+      , stopwatch2Delta = 0
+      , finishTokens = 17
+      , finishTokensDelta = -1
+      , actual = 19
+      }
+    ]
+
+
+sampleNumberCheckerDataDecremented : List AnnotatedNumberCheckerEntry
+sampleNumberCheckerDataDecremented =
+    [ { entryNumber = 1
+      , stopwatch1 = 5
+      , stopwatch1Delta = 0
+      , stopwatch2 = 4
+      , stopwatch2Delta = -1
+      , finishTokens = 5
+      , finishTokensDelta = 0
+      , actual = 5
+      }
+    , { entryNumber = 2
+      , stopwatch1 = 11
+      , stopwatch1Delta = 1
+      , stopwatch2 = 10
+      , stopwatch2Delta = 1
+      , finishTokens = 11
+      , finishTokensDelta = 1
+      , actual = 10
+      }
+    , { entryNumber = 3
+      , stopwatch1 = 18
+      , stopwatch1Delta = 0
+      , stopwatch2 = 17
+      , stopwatch2Delta = 0
+      , finishTokens = 17
+      , finishTokensDelta = -1
+      , actual = 17
+      }
+    ]
+
+
 sampleNumberCheckerDataWithSecondItemRemoved : List AnnotatedNumberCheckerEntry
 sampleNumberCheckerDataWithSecondItemRemoved =
     [ { entryNumber = 1
@@ -1203,6 +1267,26 @@ suite =
                                 ]
                                 :: expectACommand
                                 :: defaultAssertionsExcept [ Command, NumberCheckerEntries ]
+                            )
+            ]
+        , describe "IncrementNumberCheckerRow tests"
+            [ test "Can increment an actual entry of a number-checker row" <|
+                \() ->
+                    { initModel | numberCheckerEntries = sampleNumberCheckerData }
+                        |> update (IncrementNumberCheckerRowActualCount 2)
+                        |> Expect.all
+                            (expectNumberCheckerEntries sampleNumberCheckerDataIncremented
+                                :: defaultAssertionsExcept [ NumberCheckerEntries ]
+                            )
+            ]
+        , describe "DecrementNumberCheckerRow tests"
+            [ test "Can decrement an actual entry of a number-checker row" <|
+                \() ->
+                    { initModel | numberCheckerEntries = sampleNumberCheckerData }
+                        |> update (DecrementNumberCheckerRowActualCount 2)
+                        |> Expect.all
+                            (expectNumberCheckerEntries sampleNumberCheckerDataDecremented
+                                :: defaultAssertionsExcept [ NumberCheckerEntries ]
                             )
             ]
         , describe "Edit number checker row tests"

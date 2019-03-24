@@ -533,6 +533,26 @@ handleNumberCheckerFieldChange fieldChange newValue model =
     { model | numberCheckerManualEntryRow = newNumberCheckerManualEntryRow }
 
 
+reunderlineStopwatchTable : Model -> Model
+reunderlineStopwatchTable model =
+    case model.stopwatches of
+        Double doubleStopwatchData ->
+            let
+                newMergedTable : List MergedTableRow
+                newMergedTable =
+                    underlineTable model.numberCheckerEntries doubleStopwatchData.mergedTableRows
+            in
+            { model
+                | stopwatches = Double { doubleStopwatchData | mergedTableRows = newMergedTable }
+            }
+
+        Single _ _ ->
+            model
+
+        None ->
+            model
+
+
 addNumberCheckerRow : Model -> ( Model, Cmd Msg )
 addNumberCheckerRow model =
     let
@@ -545,28 +565,12 @@ addNumberCheckerRow model =
                 newNumberCheckerEntries : List AnnotatedNumberCheckerEntry
                 newNumberCheckerEntries =
                     addAndAnnotate (NumberCheckerEntry stopwatch1 stopwatch2 finishTokens) model.numberCheckerEntries
-
-                newStopwatches : Stopwatches
-                newStopwatches =
-                    case model.stopwatches of
-                        Double doubleStopwatchData ->
-                            Double
-                                { doubleStopwatchData
-                                    | mergedTableRows =
-                                        underlineTable newNumberCheckerEntries doubleStopwatchData.mergedTableRows
-                                }
-
-                        Single _ _ ->
-                            model.stopwatches
-
-                        None ->
-                            model.stopwatches
             in
-            ( { model
-                | numberCheckerEntries = newNumberCheckerEntries
-                , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
-                , stopwatches = newStopwatches
-              }
+            ( reunderlineStopwatchTable
+                { model
+                    | numberCheckerEntries = newNumberCheckerEntries
+                    , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
+                }
             , focus "number-checker-stopwatch-1"
             )
 
@@ -582,23 +586,7 @@ deleteNumberCheckerEntry entryNumber model =
             List.filter (\e -> e.entryNumber /= entryNumber) model.numberCheckerEntries
                 |> reannotate
     in
-    case model.stopwatches of
-        Double doubleStopwatchData ->
-            let
-                newMergedTable : List MergedTableRow
-                newMergedTable =
-                    underlineTable newNumberCheckerEntries doubleStopwatchData.mergedTableRows
-            in
-            { model
-                | numberCheckerEntries = newNumberCheckerEntries
-                , stopwatches = Double { doubleStopwatchData | mergedTableRows = newMergedTable }
-            }
-
-        Single _ _ ->
-            { model | numberCheckerEntries = newNumberCheckerEntries }
-
-        None ->
-            { model | numberCheckerEntries = newNumberCheckerEntries }
+    reunderlineStopwatchTable { model | numberCheckerEntries = newNumberCheckerEntries }
 
 
 removeMultipleOccurrencesOf : String -> List AthleteAndTimePair -> List AthleteAndTimePair
@@ -975,6 +963,30 @@ ignoreProblem problemIndex model =
     { model | problems = newProblems }
 
 
+modifyNumberCheckerRowsInternal : Bool -> Int -> Int -> List AnnotatedNumberCheckerEntry -> List AnnotatedNumberCheckerEntry
+modifyNumberCheckerRowsInternal foundEntry offset entryNumber currentRows =
+    case currentRows of
+        [] ->
+            []
+
+        firstRow :: restRows ->
+            if foundEntry || firstRow.entryNumber == entryNumber then
+                { firstRow | actual = firstRow.actual + offset } :: modifyNumberCheckerRowsInternal True offset entryNumber restRows
+
+            else
+                firstRow :: modifyNumberCheckerRowsInternal False offset entryNumber restRows
+
+
+modifyNumberCheckerRows : Int -> Int -> Model -> Model
+modifyNumberCheckerRows offset entryNumber model =
+    reunderlineStopwatchTable
+        { model
+            | numberCheckerEntries =
+                modifyNumberCheckerRowsInternal False offset entryNumber model.numberCheckerEntries
+                    |> reannotate
+        }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -1066,6 +1078,12 @@ update msg model =
 
         AddNumberCheckerRow ->
             addNumberCheckerRow model
+
+        IncrementNumberCheckerRowActualCount entryNumber ->
+            ( modifyNumberCheckerRows 1 entryNumber model, Cmd.none )
+
+        DecrementNumberCheckerRowActualCount entryNumber ->
+            ( modifyNumberCheckerRows -1 entryNumber model, Cmd.none )
 
         FixProblem problemFix ->
             ( fixProblem problemFix model, Cmd.none )

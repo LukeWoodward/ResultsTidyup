@@ -12,6 +12,16 @@ import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import ViewCommon exposing (intCell, smallButton, tableHeaders)
 
 
+minus : String
+minus =
+    "−"
+
+
+plusOrMinus : String
+plusOrMinus =
+    "+/" ++ minus
+
+
 onEnterKeypress : Msg -> Attribute Msg
 onEnterKeypress msg =
     let
@@ -34,7 +44,7 @@ actionButtonsCell entryNumber =
         ]
 
 
-deltaCell : Int -> Table.Cell a
+deltaCell : Int -> Table.Cell Msg
 deltaCell delta =
     if delta == 0 then
         Table.td [ Table.cellAttr (class "zero-delta") ] [ text "0" ]
@@ -47,9 +57,19 @@ deltaCell delta =
                     "+" ++ String.fromInt delta
 
                 else
-                    "−" ++ String.fromInt -delta
+                    minus ++ String.fromInt -delta
         in
         Table.td [ Table.cellAttr (class "nonzero-delta") ] [ text stringDelta ]
+
+
+actualEntryCell : AnnotatedNumberCheckerEntry -> Table.Cell Msg
+actualEntryCell entry =
+    Table.td []
+        [ text (String.fromInt entry.actual)
+        , text " "
+        , smallButton (IncrementNumberCheckerRowActualCount entry.entryNumber) [ class "number-checker-command" ] "+"
+        , smallButton (DecrementNumberCheckerRowActualCount entry.entryNumber) [ class "number-checker-command" ] minus
+        ]
 
 
 numberCheckerUnderlineClass : Int -> Maybe Int -> String
@@ -94,7 +114,7 @@ numberCheckerRow entry =
         , deltaCell entry.stopwatch2Delta
         , intCell entry.finishTokens
         , deltaCell entry.finishTokensDelta
-        , intCell entry.actual
+        , actualEntryCell entry
         , actionButtonsCell entry.entryNumber
         ]
 
@@ -180,7 +200,7 @@ numberCheckerTable entries manualEntryRow =
     in
     Table.table
         { options = [ Table.bordered, Table.small, Table.hover, Table.attr (class "number-checker-table") ]
-        , thead = tableHeaders [ "Stopwatch 1", "+/−", "Stopwatch 2", "+/−", "Finish tokens", "+/−", "Actual", "" ]
+        , thead = tableHeaders [ "Stopwatch 1", plusOrMinus, "Stopwatch 2", plusOrMinus, "Finish tokens", plusOrMinus, "Actual", "" ]
         , tbody =
             Table.tbody
                 []

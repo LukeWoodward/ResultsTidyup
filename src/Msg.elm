@@ -29,6 +29,8 @@ type Msg
     | NumberCheckerFieldChanged NumberCheckerFieldChange String
     | AddNumberCheckerRow
     | EditNumberCheckerRow Int
+    | IncrementNumberCheckerRowActualCount Int
+    | DecrementNumberCheckerRowActualCount Int
     | FixProblem ProblemFix
     | ChangeSecondTab Tab.State
     | ChangeBarcodeScannerTab Tab.State
