@@ -6,9 +6,10 @@ import Html exposing (Attribute, Html, div, h3, input, text)
 import Html.Attributes exposing (class, colspan, disabled, id, type_, value)
 import Html.Events exposing (keyCode, on, onClick, onInput, onMouseEnter, onMouseLeave)
 import Json.Decode as Json
-import Model exposing (NumberCheckerManualEntryRow, NumericEntry)
+import Model exposing (NumberCheckerManualEntryRow)
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
+import NumericEntry exposing (NumericEntry)
 import ViewCommon exposing (intCell, smallButton, tableHeaders)
 
 

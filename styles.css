@@ -185,3 +185,7 @@ div.barcode-scanner-buttons button {
 td.swap-barcodes-around-button-cell {
     vertical-align: middle;
 }
+
+div.validation-error {
+    color: #dc3545;
+}

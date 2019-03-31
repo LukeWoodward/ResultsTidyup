@@ -1,5 +1,7 @@
 module Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 
+import BarcodeScanner exposing (LineContents)
+import BarcodeScannerEditing exposing (BarcodeScannerEditDetails, BarcodeScannerRowEditLocation)
 import Bootstrap.Tab as Tab
 import DataStructures exposing (InteropFile, ProblemFix, SecondTab, WhichStopwatch(..))
 import Time exposing (Posix, Zone)
@@ -39,3 +41,6 @@ type Msg
     | DeleteBarcodeScannerFile Int
     | SwapBarcodes String Int Int
     | IgnoreProblem Int
+    | ShowBarcodeScannerEditModal BarcodeScannerRowEditLocation LineContents
+    | BarcodeScannerEdit BarcodeScannerEditDetails
+    | CloseBarcodeScannerEditModal

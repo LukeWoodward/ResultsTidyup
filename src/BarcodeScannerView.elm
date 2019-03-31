@@ -1,13 +1,23 @@
 module BarcodeScannerView exposing (barcodeScannersView)
 
-import BarcodeScanner exposing (BarcodeScannerFile, BarcodeScannerFileLine, DeletionReason(..), DeletionStatus(..), LineContents(..), WrongWayAroundStatus(..))
+import BarcodeScanner
+    exposing
+        ( BarcodeScannerFile
+        , BarcodeScannerFileLine
+        , DeletionReason(..)
+        , DeletionStatus(..)
+        , LineContents(..)
+        , WrongWayAroundStatus(..)
+        )
+import BarcodeScannerEditModal exposing (barcodeScannerEditModal)
+import BarcodeScannerEditing exposing (BarcodeScannerRowEditLocation)
 import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button
 import Bootstrap.Tab as Tab
 import Bootstrap.Table as Table
 import Html exposing (Attribute, Html, button, div, h4, small, text)
 import Html.Attributes exposing (class, colspan, rowspan, title)
-import Html.Events exposing (onClick)
+import Html.Events exposing (onClick, onDoubleClick)
 import Model exposing (Model)
 import Msg exposing (Msg(..))
 import ViewCommon exposing (smallButton, tableHeaders)
@@ -82,25 +92,32 @@ wrongWayAroundStatusCell fileName wrongWayAroundStatus =
             []
 
 
-barcodeScannerViewRow : String -> BarcodeScannerFileLine -> Table.Row Msg
-barcodeScannerViewRow fileName line =
+barcodeScannerViewRow : Int -> String -> BarcodeScannerFileLine -> Table.Row Msg
+barcodeScannerViewRow fileIndex fileName line =
     let
         rowAttributes : List (Attribute Msg)
         rowAttributes =
             case line.deletionStatus of
                 NotDeleted ->
-                    case line.contents of
-                        MisScan _ ->
-                            [ class "barcode-scanner-row-error" ]
+                    let
+                        className : String
+                        className =
+                            case line.contents of
+                                MisScan _ ->
+                                    "barcode-scanner-row-error"
 
-                        Ordinary _ Nothing ->
-                            [ class "barcode-scanner-row-warning" ]
+                                Ordinary _ Nothing ->
+                                    "barcode-scanner-row-warning"
 
-                        Ordinary "" _ ->
-                            [ class "barcode-scanner-row-warning" ]
+                                Ordinary "" _ ->
+                                    "barcode-scanner-row-warning"
 
-                        Ordinary _ _ ->
-                            [ class "barcode-scanner-row-ok" ]
+                                Ordinary _ _ ->
+                                    "barcode-scanner-row-ok"
+                    in
+                    [ class className
+                    , onDoubleClick (ShowBarcodeScannerEditModal (BarcodeScannerRowEditLocation fileIndex line.lineNumber) line.contents)
+                    ]
 
                 Deleted deletionReason ->
                     [ class "deleted-barcode-scanner-row"
@@ -127,7 +144,7 @@ barcodeScannerView index file =
         , Table.table
             { options = [ Table.bordered, Table.small, Table.hover, Table.attr (class "barcode-scanner-table") ]
             , thead = tableHeaders [ "Line #", "Athlete", "Position", "Date/Time", "Action" ]
-            , tbody = Table.tbody [] (List.map (barcodeScannerViewRow file.name) file.lines)
+            , tbody = Table.tbody [] (List.map (barcodeScannerViewRow index file.name) file.lines)
             }
         ]
 
@@ -192,4 +209,5 @@ barcodeScannersView model =
             , Tab.config ChangeBarcodeScannerTab
                 |> Tab.items (List.indexedMap barcodeScannerTabView model.barcodeScannerData.files)
                 |> Tab.view model.barcodeScannerTab
+            , barcodeScannerEditModal model
             ]

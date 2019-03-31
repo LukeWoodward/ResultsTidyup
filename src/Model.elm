@@ -1,27 +1,22 @@
 module Model exposing
     ( Model
     , NumberCheckerManualEntryRow
-    , NumericEntry
     , ProblemEntry
     , emptyNumberCheckerManualEntryRow
     , emptyNumericEntry
     , initModel
     )
 
-import BarcodeScanner exposing (BarcodeScannerData)
+import BarcodeScanner exposing (BarcodeScannerData, LineContents)
+import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails)
 import Bootstrap.Tab as Tab
 import DataStructures exposing (EventDateAndTime, SecondTab(..))
 import Error exposing (FileError)
 import MergedTable exposing (Stopwatches(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
+import NumericEntry exposing (NumericEntry)
 import Problems exposing (Problem)
 import Time exposing (Posix)
-
-
-type alias NumericEntry =
-    { enteredValue : String
-    , parsedValue : Maybe Int
-    }
 
 
 emptyNumericEntry : NumericEntry
@@ -60,6 +55,7 @@ type alias Model =
     , numberCheckerManualEntryRow : NumberCheckerManualEntryRow
     , secondTab : Tab.State
     , barcodeScannerTab : Tab.State
+    , barcodeScannerRowEditDetails : Maybe BarcodeScannerRowEditDetails
     }
 
 
@@ -76,4 +72,5 @@ initModel =
     , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
     , secondTab = Tab.initialState
     , barcodeScannerTab = Tab.initialState
+    , barcodeScannerRowEditDetails = Nothing
     }

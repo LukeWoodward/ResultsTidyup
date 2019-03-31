@@ -15,6 +15,7 @@ import BarcodeScanner
         , readBarcodeScannerData
         , regenerate
         )
+import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, updateEditDetails)
 import Browser.Dom
 import DataStructures exposing (EventDateAndTime, InteropFile, ProblemFix(..), WhichStopwatch(..))
 import DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart)
@@ -33,9 +34,10 @@ import MergedTable
         , underlineTable
         )
 import Merger exposing (MergeEntry, merge)
-import Model exposing (Model, NumberCheckerManualEntryRow, NumericEntry, ProblemEntry, emptyNumberCheckerManualEntryRow, initModel)
+import Model exposing (Model, NumberCheckerManualEntryRow, ProblemEntry, emptyNumberCheckerManualEntryRow, initModel)
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, addAndAnnotate, annotate, parseNumberCheckerFile, reannotate)
+import NumericEntry exposing (NumericEntry, numericEntryFromInt)
 import Parser exposing ((|.), Parser, chompIf, chompWhile, end, int, run, symbol)
 import Parsers exposing (digitsRange)
 import Ports exposing (recordEventStartTime)
@@ -1042,10 +1044,6 @@ update msg model =
                 numberCheckerEntryToEdit =
                     List.filter (\e -> e.entryNumber == entryNumber) model.numberCheckerEntries
                         |> List.head
-
-                makeNumericEntry : Int -> NumericEntry
-                makeNumericEntry value =
-                    NumericEntry (String.fromInt value) (Just value)
             in
             case numberCheckerEntryToEdit of
                 Just entry ->
@@ -1056,7 +1054,10 @@ update msg model =
                     in
                     ( { modelWithEntryDeleted
                         | numberCheckerManualEntryRow =
-                            NumberCheckerManualEntryRow (makeNumericEntry entry.stopwatch1) (makeNumericEntry entry.stopwatch2) (makeNumericEntry entry.finishTokens)
+                            NumberCheckerManualEntryRow
+                                (numericEntryFromInt entry.stopwatch1)
+                                (numericEntryFromInt entry.stopwatch2)
+                                (numericEntryFromInt entry.finishTokens)
                       }
                     , Cmd.none
                     )
@@ -1108,3 +1109,22 @@ update msg model =
 
         IgnoreProblem problemIndex ->
             ( ignoreProblem problemIndex model, Cmd.none )
+
+        ShowBarcodeScannerEditModal location contents ->
+            ( { model
+                | barcodeScannerRowEditDetails =
+                    Just (BarcodeScannerEditing.startEditing location contents)
+              }
+            , Cmd.none
+            )
+
+        BarcodeScannerEdit editChange ->
+            let
+                newEditDetails : Maybe BarcodeScannerRowEditDetails
+                newEditDetails =
+                    Maybe.map (updateEditDetails editChange) model.barcodeScannerRowEditDetails
+            in
+            ( { model | barcodeScannerRowEditDetails = newEditDetails }, Cmd.none )
+
+        CloseBarcodeScannerEditModal ->
+            ( { model | barcodeScannerRowEditDetails = Nothing }, Cmd.none )

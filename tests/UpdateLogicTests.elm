@@ -27,14 +27,13 @@ import Model
     exposing
         ( Model
         , NumberCheckerManualEntryRow
-        , NumericEntry
         , ProblemEntry
         , emptyNumberCheckerManualEntryRow
-        , emptyNumericEntry
         , initModel
         )
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
+import NumericEntry exposing (NumericEntry, emptyNumericEntry)
 import Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..))
 import Set
 import Stopwatch exposing (Stopwatch(..))
