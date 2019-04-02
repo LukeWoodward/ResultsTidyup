@@ -21,6 +21,7 @@ import DataStructures exposing (EventDateAndTime, InteropFile, ProblemFix(..), W
 import DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart)
 import Dict
 import Error exposing (Error, FileError, mapError)
+import EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeChange)
 import File.Download as Download
 import MergedTable
     exposing
@@ -47,7 +48,6 @@ import Result.Extra
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
 import Task exposing (Task)
 import Time exposing (Posix, Zone)
-import TimeHandling exposing (parseHoursAndMinutes)
 import WrongWayAround exposing (identifyBarcodesScannedTheWrongWayAround)
 
 
@@ -92,56 +92,6 @@ underlineStopwatches stopwatches numberCheckerEntries =
                     { doubleStopwatchData
                         | mergedTableRows = underlineTable numberCheckerEntries doubleStopwatchData.mergedTableRows
                     }
-
-
-handleEventDateChange : String -> Model -> Model
-handleEventDateChange newEventDate model =
-    let
-        newParsedDate : Maybe Posix
-        newParsedDate =
-            newEventDate
-                ++ " 00:00:00"
-                |> dateStringToPosix
-
-        oldEventDateAndTime : EventDateAndTime
-        oldEventDateAndTime =
-            model.eventDateAndTime
-
-        newEventDateAndTime : EventDateAndTime
-        newEventDateAndTime =
-            { oldEventDateAndTime
-                | enteredDate = newEventDate
-                , validatedDate = newParsedDate
-            }
-    in
-    identifyProblemsIn { model | eventDateAndTime = newEventDateAndTime }
-
-
-handleEventTimeChange : String -> Model -> ( Model, Cmd Msg )
-handleEventTimeChange newEventTime model =
-    let
-        newParsedTime : Maybe Int
-        newParsedTime =
-            parseHoursAndMinutes newEventTime
-                |> Result.toMaybe
-
-        oldEventDateAndTime : EventDateAndTime
-        oldEventDateAndTime =
-            model.eventDateAndTime
-
-        newEventDateAndTime : EventDateAndTime
-        newEventDateAndTime =
-            { oldEventDateAndTime
-                | enteredTime = newEventTime
-                , validatedTime = newParsedTime
-            }
-
-        command : Cmd Msg
-        command =
-            Maybe.map recordEventStartTime newParsedTime
-                |> Maybe.withDefault Cmd.none
-    in
-    ( identifyProblemsIn { model | eventDateAndTime = newEventDateAndTime }, command )
 
 
 setEventDateAndTimeIn : Model -> Model
@@ -1063,10 +1013,20 @@ update msg model =
             ( deleteNumberCheckerEntry entryNumber model, Cmd.none )
 
         EventDateChanged newEventDate ->
-            ( handleEventDateChange newEventDate model, Cmd.none )
+            ( identifyProblemsIn (handleEventDateChange newEventDate model), Cmd.none )
 
         EventTimeChanged newEventTime ->
-            handleEventTimeChange newEventTime model
+            let
+                modelWithNewTime : Model
+                modelWithNewTime =
+                    handleEventTimeChange newEventTime model
+
+                command : Cmd Msg
+                command =
+                    Maybe.map recordEventStartTime modelWithNewTime.eventDateAndTime.validatedTime
+                        |> Maybe.withDefault Cmd.none
+            in
+            ( identifyProblemsIn modelWithNewTime, command )
 
         NumberCheckerFieldChanged fieldChange newValue ->
             ( handleNumberCheckerFieldChange fieldChange newValue model, Cmd.none )
