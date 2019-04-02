@@ -34,12 +34,20 @@ type BarcodeScannerFieldBeingEdited
     | Both
 
 
+type BarcodeScannerValidationError
+    = InvalidAthleteNumber
+    | InvalidFinishPosition
+    | InvalidAthleteNumberAndFinishPosition
+    | NeitherSelected
+
+
 type alias BarcodeScannerRowEditDetails =
     { location : BarcodeScannerRowEditLocation
     , currentContents : LineContents
     , athleteEntered : NumericEntry
     , finishPositionEntered : NumericEntry
     , fieldBeingEdited : BarcodeScannerFieldBeingEdited
+    , validationError : Maybe BarcodeScannerValidationError
     }
 
 
@@ -49,21 +57,14 @@ type BarcodeScannerEditDetails
     | FinishPositionChanged String
 
 
-type BarcodeScannerValidationError
-    = InvalidAthleteNumber
-    | InvalidFinishPosition
-    | InvalidAthleteNumberAndFinishPosition
-    | NeitherSelected
-
-
 startEditing : BarcodeScannerRowEditLocation -> LineContents -> BarcodeScannerRowEditDetails
 startEditing location contents =
     case contents of
         Ordinary athlete finishPosition ->
-            BarcodeScannerRowEditDetails location contents (numericEntryFromAthleteNumber athlete) (numericEntryFromMaybeInt finishPosition) Both
+            validate (BarcodeScannerRowEditDetails location contents (numericEntryFromAthleteNumber athlete) (numericEntryFromMaybeInt finishPosition) Both Nothing)
 
         MisScan misScannedText ->
-            BarcodeScannerRowEditDetails location contents emptyNumericEntry emptyNumericEntry Neither
+            validate (BarcodeScannerRowEditDetails location contents emptyNumericEntry emptyNumericEntry Neither Nothing)
 
 
 updateEditDetails : BarcodeScannerEditDetails -> BarcodeScannerRowEditDetails -> BarcodeScannerRowEditDetails
@@ -76,10 +77,10 @@ updateEditDetails editDetails currentDetails =
             else
                 case newEditedField of
                     AthleteOnly ->
-                        { currentDetails | fieldBeingEdited = AthleteOnly }
+                        validate { currentDetails | fieldBeingEdited = AthleteOnly }
 
                     FinishPositionOnly ->
-                        { currentDetails | fieldBeingEdited = FinishPositionOnly }
+                        validate { currentDetails | fieldBeingEdited = FinishPositionOnly }
 
                     Both ->
                         currentDetails
@@ -88,42 +89,47 @@ updateEditDetails editDetails currentDetails =
                         currentDetails
 
         AthleteChanged newAthlete ->
-            { currentDetails | athleteEntered = numericEntryFromAthleteNumber newAthlete }
+            validate { currentDetails | athleteEntered = numericEntryFromAthleteNumber newAthlete }
 
         FinishPositionChanged newFinishPosition ->
-            { currentDetails | finishPositionEntered = numericEntryFromString newFinishPosition }
+            validate { currentDetails | finishPositionEntered = numericEntryFromString newFinishPosition }
 
 
-validate : BarcodeScannerRowEditDetails -> Maybe BarcodeScannerValidationError
+validate : BarcodeScannerRowEditDetails -> BarcodeScannerRowEditDetails
 validate currentDetails =
-    case currentDetails.fieldBeingEdited of
-        Neither ->
-            Just NeitherSelected
+    let
+        validationError : Maybe BarcodeScannerValidationError
+        validationError =
+            case currentDetails.fieldBeingEdited of
+                Neither ->
+                    Just NeitherSelected
 
-        AthleteOnly ->
-            if isValidEntry currentDetails.athleteEntered then
-                Nothing
+                AthleteOnly ->
+                    if isValidEntry currentDetails.athleteEntered then
+                        Nothing
 
-            else
-                Just InvalidAthleteNumber
+                    else
+                        Just InvalidAthleteNumber
 
-        FinishPositionOnly ->
-            if isValidEntry currentDetails.finishPositionEntered then
-                Nothing
+                FinishPositionOnly ->
+                    if isValidEntry currentDetails.finishPositionEntered then
+                        Nothing
 
-            else
-                Just InvalidFinishPosition
+                    else
+                        Just InvalidFinishPosition
 
-        Both ->
-            case ( isValidEntry currentDetails.athleteEntered, isValidEntry currentDetails.finishPositionEntered ) of
-                ( False, False ) ->
-                    Just InvalidAthleteNumberAndFinishPosition
+                Both ->
+                    case ( isValidEntry currentDetails.athleteEntered, isValidEntry currentDetails.finishPositionEntered ) of
+                        ( False, False ) ->
+                            Just InvalidAthleteNumberAndFinishPosition
 
-                ( False, True ) ->
-                    Just InvalidAthleteNumber
+                        ( False, True ) ->
+                            Just InvalidAthleteNumber
 
-                ( True, False ) ->
-                    Just InvalidFinishPosition
+                        ( True, False ) ->
+                            Just InvalidFinishPosition
 
-                ( True, True ) ->
-                    Nothing
+                        ( True, True ) ->
+                            Nothing
+    in
+    { currentDetails | validationError = validationError }

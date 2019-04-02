@@ -153,7 +153,7 @@ editBarcodeScannerRowModalBody rowEditDetails =
         [ Maybe.map generateMisScannedTextRow misScannedText
         , Just athleteRow
         , Just finishPositionRow
-        , Maybe.map generateValidationRow (BarcodeScannerEditing.validate rowEditDetails)
+        , Maybe.map generateValidationRow rowEditDetails.validationError
         ]
         |> Grid.containerFluid []
 
@@ -198,6 +198,14 @@ barcodeScannerEditModal model =
         |> Modal.body [] [ dialogBody model.barcodeScannerRowEditDetails ]
         |> Modal.footer []
             [ Button.button
+                [ Button.outlinePrimary, Button.danger ]
+                [ text "Delete" ]
+            , Button.button
+                [ Button.outlinePrimary
+                , Button.disabled (Maybe.andThen .validationError model.barcodeScannerRowEditDetails /= Nothing)
+                ]
+                [ text "Update" ]
+            , Button.button
                 [ Button.outlinePrimary
                 , Button.attrs [ onClick CloseBarcodeScannerEditModal ]
                 ]
