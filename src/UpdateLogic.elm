@@ -56,12 +56,6 @@ maxNearMatchDistance =
     1
 
 
-type alias Scanned a =
-    { a
-        | scanTime : String
-    }
-
-
 focus : String -> Cmd Msg
 focus elementId =
     Task.attempt (\_ -> NoOp) (Browser.Dom.focus elementId)
