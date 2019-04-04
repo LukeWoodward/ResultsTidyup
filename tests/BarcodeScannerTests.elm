@@ -1,4 +1,4 @@
-module BarcodeScannerTests exposing (createBarcodeScannerData, expectSingleUnrecognisedLine, ordinaryFileLine, suite, toPosix)
+module BarcodeScannerTests exposing (createBarcodeScannerData, expectSingleUnrecognisedLine, suite)
 
 import BarcodeScanner
     exposing
@@ -24,39 +24,14 @@ import Error exposing (Error)
 import Errors exposing (expectError)
 import Expect exposing (Expectation)
 import FileHandling exposing (crlf)
-import Iso8601
 import Test exposing (Test, describe, test)
+import TestData exposing (ordinaryFileLine, toPosix)
 import Time exposing (Posix)
 
 
 dummyTime : String
 dummyTime =
     "14/03/2018 09:47:03"
-
-
-ordinaryFileLine : Int -> String -> Maybe Int -> String -> BarcodeScannerFileLine
-ordinaryFileLine lineNumber athlete finishToken scanTime =
-    BarcodeScannerFileLine lineNumber (Ordinary athlete finishToken) scanTime NotDeleted NotWrongWayAround
-
-
-toPosix : String -> Maybe Posix
-toPosix timeString =
-    let
-        parsedTime : Maybe Posix
-        parsedTime =
-            Iso8601.toTime timeString
-                |> Result.toMaybe
-    in
-    case parsedTime of
-        Just _ ->
-            parsedTime
-
-        Nothing ->
-            let
-                _ =
-                    Debug.log "Warning: time did not parse as ISO-8601 date string" timeString
-            in
-            Nothing
 
 
 createBarcodeScannerData : Dict Int (List String) -> List String -> List Int -> BarcodeScannerData

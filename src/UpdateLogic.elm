@@ -35,10 +35,17 @@ import MergedTable
         , underlineTable
         )
 import Merger exposing (MergeEntry, merge)
-import Model exposing (Model, NumberCheckerManualEntryRow, ProblemEntry, emptyNumberCheckerManualEntryRow, initModel)
-import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
-import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, addAndAnnotate, annotate, parseNumberCheckerFile, reannotate)
-import NumericEntry exposing (NumericEntry, numericEntryFromInt)
+import Model exposing (Model, NumberCheckerManualEntryRow, ProblemEntry, initModel)
+import Msg exposing (Msg(..))
+import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, annotate, parseNumberCheckerFile, reannotate)
+import NumberCheckerEditing
+    exposing
+        ( addNumberCheckerRow
+        , deleteNumberCheckerEntry
+        , editNumberCheckerRow
+        , handleNumberCheckerFieldChange
+        , modifyNumberCheckerRows
+        )
 import Parser exposing ((|.), Parser, chompIf, chompWhile, end, int, run, symbol)
 import Parsers exposing (digitsRange)
 import Ports exposing (recordEventStartTime)
@@ -442,43 +449,6 @@ handleFilesDropped files model =
     List.foldr handleFileDropped modelWithNoErrors sortedFiles
 
 
-ensureNonNegative : Int -> Maybe Int
-ensureNonNegative intValue =
-    if intValue < 0 then
-        Nothing
-
-    else
-        Just intValue
-
-
-handleNumberCheckerFieldChange : NumberCheckerFieldChange -> String -> Model -> Model
-handleNumberCheckerFieldChange fieldChange newValue model =
-    let
-        oldNumberCheckerRow : NumberCheckerManualEntryRow
-        oldNumberCheckerRow =
-            model.numberCheckerManualEntryRow
-
-        newEntry : NumericEntry
-        newEntry =
-            String.toInt newValue
-                |> Maybe.andThen ensureNonNegative
-                |> NumericEntry newValue
-
-        newNumberCheckerManualEntryRow : NumberCheckerManualEntryRow
-        newNumberCheckerManualEntryRow =
-            case fieldChange of
-                Stopwatch1 ->
-                    { oldNumberCheckerRow | stopwatch1 = newEntry }
-
-                Stopwatch2 ->
-                    { oldNumberCheckerRow | stopwatch2 = newEntry }
-
-                FinishTokens ->
-                    { oldNumberCheckerRow | finishTokens = newEntry }
-    in
-    { model | numberCheckerManualEntryRow = newNumberCheckerManualEntryRow }
-
-
 reunderlineStopwatchTable : Model -> Model
 reunderlineStopwatchTable model =
     case model.stopwatches of
@@ -497,42 +467,6 @@ reunderlineStopwatchTable model =
 
         None ->
             model
-
-
-addNumberCheckerRow : Model -> ( Model, Cmd Msg )
-addNumberCheckerRow model =
-    let
-        manualEntryRow =
-            model.numberCheckerManualEntryRow
-    in
-    case ( manualEntryRow.stopwatch1.parsedValue, manualEntryRow.stopwatch2.parsedValue, manualEntryRow.finishTokens.parsedValue ) of
-        ( Just stopwatch1, Just stopwatch2, Just finishTokens ) ->
-            let
-                newNumberCheckerEntries : List AnnotatedNumberCheckerEntry
-                newNumberCheckerEntries =
-                    addAndAnnotate (NumberCheckerEntry stopwatch1 stopwatch2 finishTokens) model.numberCheckerEntries
-            in
-            ( reunderlineStopwatchTable
-                { model
-                    | numberCheckerEntries = newNumberCheckerEntries
-                    , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
-                }
-            , focus "number-checker-stopwatch-1"
-            )
-
-        _ ->
-            ( model, Cmd.none )
-
-
-deleteNumberCheckerEntry : Int -> Model -> Model
-deleteNumberCheckerEntry entryNumber model =
-    let
-        newNumberCheckerEntries : List AnnotatedNumberCheckerEntry
-        newNumberCheckerEntries =
-            List.filter (\e -> e.entryNumber /= entryNumber) model.numberCheckerEntries
-                |> reannotate
-    in
-    reunderlineStopwatchTable { model | numberCheckerEntries = newNumberCheckerEntries }
 
 
 removeMultipleOccurrencesOf : String -> List AthleteAndTimePair -> List AthleteAndTimePair
@@ -909,28 +843,13 @@ ignoreProblem problemIndex model =
     { model | problems = newProblems }
 
 
-modifyNumberCheckerRowsInternal : Bool -> Int -> Int -> List AnnotatedNumberCheckerEntry -> List AnnotatedNumberCheckerEntry
-modifyNumberCheckerRowsInternal foundEntry offset entryNumber currentRows =
-    case currentRows of
-        [] ->
-            []
+select : Bool -> a -> a -> a
+select condition trueValue falseValue =
+    if condition then
+        trueValue
 
-        firstRow :: restRows ->
-            if foundEntry || firstRow.entryNumber == entryNumber then
-                { firstRow | actual = firstRow.actual + offset } :: modifyNumberCheckerRowsInternal True offset entryNumber restRows
-
-            else
-                firstRow :: modifyNumberCheckerRowsInternal False offset entryNumber restRows
-
-
-modifyNumberCheckerRows : Int -> Int -> Model -> Model
-modifyNumberCheckerRows offset entryNumber model =
-    reunderlineStopwatchTable
-        { model
-            | numberCheckerEntries =
-                modifyNumberCheckerRowsInternal False offset entryNumber model.numberCheckerEntries
-                    |> reannotate
-        }
+    else
+        falseValue
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -983,34 +902,10 @@ update msg model =
             ( newModel, Cmd.none )
 
         EditNumberCheckerRow entryNumber ->
-            let
-                numberCheckerEntryToEdit : Maybe AnnotatedNumberCheckerEntry
-                numberCheckerEntryToEdit =
-                    List.filter (\e -> e.entryNumber == entryNumber) model.numberCheckerEntries
-                        |> List.head
-            in
-            case numberCheckerEntryToEdit of
-                Just entry ->
-                    let
-                        modelWithEntryDeleted : Model
-                        modelWithEntryDeleted =
-                            deleteNumberCheckerEntry entryNumber model
-                    in
-                    ( { modelWithEntryDeleted
-                        | numberCheckerManualEntryRow =
-                            NumberCheckerManualEntryRow
-                                (numericEntryFromInt entry.stopwatch1)
-                                (numericEntryFromInt entry.stopwatch2)
-                                (numericEntryFromInt entry.finishTokens)
-                      }
-                    , Cmd.none
-                    )
-
-                Nothing ->
-                    ( model, Cmd.none )
+            ( reunderlineStopwatchTable (editNumberCheckerRow entryNumber model), Cmd.none )
 
         DeleteNumberCheckerRow entryNumber ->
-            ( deleteNumberCheckerEntry entryNumber model, Cmd.none )
+            ( reunderlineStopwatchTable (deleteNumberCheckerEntry entryNumber model), Cmd.none )
 
         EventDateChanged newEventDate ->
             ( identifyProblemsIn (handleEventDateChange newEventDate model), Cmd.none )
@@ -1032,13 +927,21 @@ update msg model =
             ( handleNumberCheckerFieldChange fieldChange newValue model, Cmd.none )
 
         AddNumberCheckerRow ->
-            addNumberCheckerRow model
+            let
+                ( addedToModel, issueFocusCommand ) =
+                    addNumberCheckerRow model
+
+                command : Cmd Msg
+                command =
+                    select issueFocusCommand (focus "number-checker-stopwatch-1") Cmd.none
+            in
+            ( reunderlineStopwatchTable addedToModel, command )
 
         IncrementNumberCheckerRowActualCount entryNumber ->
-            ( modifyNumberCheckerRows 1 entryNumber model, Cmd.none )
+            ( reunderlineStopwatchTable (modifyNumberCheckerRows 1 entryNumber model), Cmd.none )
 
         DecrementNumberCheckerRowActualCount entryNumber ->
-            ( modifyNumberCheckerRows -1 entryNumber model, Cmd.none )
+            ( reunderlineStopwatchTable (modifyNumberCheckerRows -1 entryNumber model), Cmd.none )
 
         FixProblem problemFix ->
             ( fixProblem problemFix model, Cmd.none )

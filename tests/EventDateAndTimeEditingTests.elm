@@ -1,11 +1,11 @@
 module EventDateAndTimeEditingTests exposing (suite)
 
-import BarcodeScannerTests exposing (toPosix)
 import DataStructures exposing (EventDateAndTime)
 import EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeChange)
 import Expect
 import Model exposing (initModel)
 import Test exposing (Test, describe, test)
+import TestData exposing (toPosix)
 
 
 suite : Test

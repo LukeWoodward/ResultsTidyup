@@ -14,7 +14,7 @@ import BarcodeScanner
         , empty
         , regenerate
         )
-import BarcodeScannerTests exposing (createBarcodeScannerData, expectSingleUnrecognisedLine, ordinaryFileLine, toPosix)
+import BarcodeScannerTests exposing (createBarcodeScannerData, expectSingleUnrecognisedLine)
 import DataStructures exposing (EventDateAndTime, InteropFile, ProblemFix(..), SecondTab(..), WhichStopwatch(..))
 import Dict exposing (Dict)
 import Error exposing (FileError)
@@ -39,6 +39,7 @@ import Set
 import Stopwatch exposing (Stopwatch(..))
 import StopwatchTests
 import Test exposing (Test, describe, test)
+import TestData exposing (..)
 import Time
 import UpdateLogic exposing (createStopwatchFileForDownload, regenerateWithWrongWayArounds, update)
 
@@ -195,11 +196,6 @@ defaultAssertionsExcept exceptions =
     List.filterMap identity allMaybeAssertions
 
 
-defaultTime : Maybe Time.Posix
-defaultTime =
-    toPosix "2018-03-14T09:47:03.000Z"
-
-
 defaultAssertions : List (( Model, Cmd Msg ) -> Expectation)
 defaultAssertions =
     defaultAssertionsExcept []
@@ -210,155 +206,6 @@ singleStopwatch =
     case StopwatchTests.expectedParsedSampleData of
         StopwatchData times ->
             Single "stopwatch1.txt" times
-
-
-sampleStopwatchData2 : String
-sampleStopwatchData2 =
-    "STARTOFEVENT,01/01/2001 00:00:00,klmnopqrst\n"
-        ++ "0,01/01/2001 00:00:00\n"
-        ++ "1,01/01/2001 00:03:11,00:03:11\n"
-        ++ "2,01/01/2001 00:07:43,00:07:43\n"
-        ++ "3,01/01/2001 00:10:11,00:10:11\n"
-        ++ "ENDOFEVENT,01/01/2001 00:15:51\n"
-
-
-parsedStopwatchTimes2 : List Int
-parsedStopwatchTimes2 =
-    [ 191, 463, 611 ]
-
-
-doubleStopwatches : Stopwatches
-doubleStopwatches =
-    let
-        expectedEntries : List MergedTableRow
-        expectedEntries =
-            [ { index = 0, rowNumber = Just 1, entry = ExactMatch 191, included = True, underlines = noUnderlines }
-            , { index = 1, rowNumber = Just 2, entry = NearMatch 464 463, included = True, underlines = noUnderlines }
-            , { index = 2, rowNumber = Just 3, entry = OneWatchOnly StopwatchOne 603, included = True, underlines = noUnderlines }
-            , { index = 3, rowNumber = Just 4, entry = OneWatchOnly StopwatchTwo 611, included = True, underlines = noUnderlines }
-            ]
-    in
-    Double
-        { times1 = [ 191, 464, 603 ]
-        , times2 = [ 191, 463, 611 ]
-        , filename1 = "stopwatch1.txt"
-        , filename2 = "stopwatch2.txt"
-        , mergedTableRows = expectedEntries
-        }
-
-
-flippedDoubleStopwatches : Stopwatches
-flippedDoubleStopwatches =
-    let
-        expectedEntries : List MergedTableRow
-        expectedEntries =
-            [ { index = 0, rowNumber = Just 1, entry = ExactMatch 191, included = True, underlines = noUnderlines }
-            , { index = 1, rowNumber = Just 2, entry = NearMatch 463 464, included = True, underlines = noUnderlines }
-            , { index = 2, rowNumber = Just 3, entry = OneWatchOnly StopwatchTwo 603, included = True, underlines = noUnderlines }
-            , { index = 3, rowNumber = Just 4, entry = OneWatchOnly StopwatchOne 611, included = True, underlines = noUnderlines }
-            ]
-    in
-    Double
-        { times1 = [ 191, 463, 611 ]
-        , times2 = [ 191, 464, 603 ]
-        , filename1 = "stopwatch2.txt"
-        , filename2 = "stopwatch1.txt"
-        , mergedTableRows = expectedEntries
-        }
-
-
-stopwatchesForAdjusting : Int -> Int -> Stopwatches
-stopwatchesForAdjusting stopwatch1Offset stopwatch2Offset =
-    Double
-        { times1 = [ 191 + stopwatch1Offset, 464 + stopwatch1Offset, 603 + stopwatch1Offset ]
-        , times2 = [ 191 + stopwatch2Offset, 463 + stopwatch2Offset, 611 + stopwatch2Offset ]
-        , filename1 = "stopwatch1.txt"
-        , filename2 = "stopwatch2.txt"
-        , mergedTableRows = []
-        }
-
-
-validBarcodeScannerData1 : String
-validBarcodeScannerData1 =
-    "A4580442,P0047,14/03/2018 09:47:03" ++ crlf
-
-
-validBarcodeScannerData2 : String
-validBarcodeScannerData2 =
-    "A2044293,P0059,14/03/2018 09:49:44" ++ crlf
-
-
-validBarcodeScannerDataWithIncompleteRecordFirst : String
-validBarcodeScannerDataWithIncompleteRecordFirst =
-    ",P0033,14/03/2018 09:44:06" ++ crlf ++ validBarcodeScannerData1
-
-
-invalidBarcodeScannerData : String
-invalidBarcodeScannerData =
-    "A4580442,P0000,14/03/2018 09:47:03" ++ crlf
-
-
-parsedBarcodeScannerData1 : BarcodeScannerData
-parsedBarcodeScannerData1 =
-    BarcodeScannerData
-        [ BarcodeScannerFile
-            "barcodes1.txt"
-            [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
-            defaultTime
-        ]
-        (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
-        []
-        []
-        []
-        []
-        defaultTime
-
-
-parsedBarcodeScannerData1And2 : BarcodeScannerData
-parsedBarcodeScannerData1And2 =
-    BarcodeScannerData
-        [ BarcodeScannerFile
-            "barcodes1.txt"
-            [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
-            defaultTime
-        , BarcodeScannerFile
-            "barcodes2.txt"
-            [ ordinaryFileLine 1 "A2044293" (Just 59) "14/03/2018 09:49:44" ]
-            (toPosix "2018-03-14T09:49:44.000Z")
-        ]
-        (Dict.fromList
-            [ ( 47, [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ] )
-            , ( 59, [ AthleteAndTimePair "A2044293" "14/03/2018 09:49:44" ] )
-            ]
-        )
-        []
-        []
-        []
-        []
-        (toPosix "2018-03-14T09:49:44.000Z")
-
-
-parsedBarcodeScannerDataWithIncompleteRecordFirst : BarcodeScannerData
-parsedBarcodeScannerDataWithIncompleteRecordFirst =
-    BarcodeScannerData
-        [ BarcodeScannerFile
-            "barcodes1.txt"
-            [ ordinaryFileLine 1 "" (Just 33) "14/03/2018 09:44:06"
-            , ordinaryFileLine 2 "A4580442" (Just 47) "14/03/2018 09:47:03"
-            ]
-            defaultTime
-        ]
-        (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
-        []
-        [ PositionAndTimePair 33 "14/03/2018 09:44:06" ]
-        []
-        []
-        defaultTime
-
-
-parsedEventDateOnly : EventDateAndTime
-parsedEventDateOnly =
-    EventDateAndTime "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z") "" Nothing
 
 
 deduplicate : List comparable -> List comparable
@@ -435,191 +282,6 @@ createBarcodeScannerDataForRemovingDuplicateScans numberOfTimes =
             else
                 []
     }
-
-
-validNumberCheckerData : String
-validNumberCheckerData =
-    "5,4,5"
-
-
-invalidNumberCheckerData : String
-invalidNumberCheckerData =
-    "1,2,3,4,5,6"
-
-
-parsedNumberCheckerData : List AnnotatedNumberCheckerEntry
-parsedNumberCheckerData =
-    [ { entryNumber = 1
-      , stopwatch1 = 5
-      , stopwatch1Delta = 0
-      , stopwatch2 = 4
-      , stopwatch2Delta = -1
-      , finishTokens = 5
-      , finishTokensDelta = 0
-      , actual = 5
-      }
-    ]
-
-
-recentTime : Time.Posix
-recentTime =
-    Time.millisToPosix 1500000000000
-
-
-expectedMergedStopwatchFileContents : String
-expectedMergedStopwatchFileContents =
-    "STARTOFEVENT,01/01/2001 00:00:00,results_tidyup"
-        ++ crlf
-        ++ "0,01/01/2001 00:00:00"
-        ++ crlf
-        ++ "1,01/01/2001 00:03:11,00:03:11"
-        ++ crlf
-        ++ "2,01/01/2001 00:07:43,00:07:43"
-        ++ crlf
-        ++ "3,01/01/2001 00:10:03,00:10:03"
-        ++ crlf
-        ++ "4,01/01/2001 00:10:11,00:10:11"
-        ++ crlf
-        ++ "ENDOFEVENT,01/01/2001 01:59:59"
-
-
-sampleNumberCheckerData : List AnnotatedNumberCheckerEntry
-sampleNumberCheckerData =
-    [ { entryNumber = 1
-      , stopwatch1 = 5
-      , stopwatch1Delta = 0
-      , stopwatch2 = 4
-      , stopwatch2Delta = -1
-      , finishTokens = 5
-      , finishTokensDelta = 0
-      , actual = 5
-      }
-    , { entryNumber = 2
-      , stopwatch1 = 11
-      , stopwatch1Delta = 0
-      , stopwatch2 = 10
-      , stopwatch2Delta = 0
-      , finishTokens = 11
-      , finishTokensDelta = 0
-      , actual = 11
-      }
-    , { entryNumber = 3
-      , stopwatch1 = 18
-      , stopwatch1Delta = 0
-      , stopwatch2 = 17
-      , stopwatch2Delta = 0
-      , finishTokens = 17
-      , finishTokensDelta = -1
-      , actual = 18
-      }
-    ]
-
-
-sampleNumberCheckerDataIncremented : List AnnotatedNumberCheckerEntry
-sampleNumberCheckerDataIncremented =
-    [ { entryNumber = 1
-      , stopwatch1 = 5
-      , stopwatch1Delta = 0
-      , stopwatch2 = 4
-      , stopwatch2Delta = -1
-      , finishTokens = 5
-      , finishTokensDelta = 0
-      , actual = 5
-      }
-    , { entryNumber = 2
-      , stopwatch1 = 11
-      , stopwatch1Delta = -1
-      , stopwatch2 = 10
-      , stopwatch2Delta = -1
-      , finishTokens = 11
-      , finishTokensDelta = -1
-      , actual = 12
-      }
-    , { entryNumber = 3
-      , stopwatch1 = 18
-      , stopwatch1Delta = 0
-      , stopwatch2 = 17
-      , stopwatch2Delta = 0
-      , finishTokens = 17
-      , finishTokensDelta = -1
-      , actual = 19
-      }
-    ]
-
-
-sampleNumberCheckerDataDecremented : List AnnotatedNumberCheckerEntry
-sampleNumberCheckerDataDecremented =
-    [ { entryNumber = 1
-      , stopwatch1 = 5
-      , stopwatch1Delta = 0
-      , stopwatch2 = 4
-      , stopwatch2Delta = -1
-      , finishTokens = 5
-      , finishTokensDelta = 0
-      , actual = 5
-      }
-    , { entryNumber = 2
-      , stopwatch1 = 11
-      , stopwatch1Delta = 1
-      , stopwatch2 = 10
-      , stopwatch2Delta = 1
-      , finishTokens = 11
-      , finishTokensDelta = 1
-      , actual = 10
-      }
-    , { entryNumber = 3
-      , stopwatch1 = 18
-      , stopwatch1Delta = 0
-      , stopwatch2 = 17
-      , stopwatch2Delta = 0
-      , finishTokens = 17
-      , finishTokensDelta = -1
-      , actual = 17
-      }
-    ]
-
-
-sampleNumberCheckerDataWithSecondItemRemoved : List AnnotatedNumberCheckerEntry
-sampleNumberCheckerDataWithSecondItemRemoved =
-    [ { entryNumber = 1
-      , stopwatch1 = 5
-      , stopwatch1Delta = 0
-      , stopwatch2 = 4
-      , stopwatch2Delta = -1
-      , finishTokens = 5
-      , finishTokensDelta = 0
-      , actual = 5
-      }
-    , { entryNumber = 2
-      , stopwatch1 = 18
-      , stopwatch1Delta = 0
-      , stopwatch2 = 17
-      , stopwatch2Delta = 0
-      , finishTokens = 17
-      , finishTokensDelta = -1
-      , actual = 18
-      }
-    ]
-
-
-expectNoChangeForNumberCheckerManualEntryRow : NumberCheckerManualEntryRow -> Expectation
-expectNoChangeForNumberCheckerManualEntryRow manualEntryRow =
-    { initModel | numberCheckerManualEntryRow = manualEntryRow }
-        |> update AddNumberCheckerRow
-        |> Expect.all
-            (expectNumberCheckerManualEntryRow manualEntryRow
-                :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
-            )
-
-
-createNumericEntry : Int -> NumericEntry
-createNumericEntry value =
-    NumericEntry (String.fromInt value) (Just value)
-
-
-createNumberCheckerManualEntryRow : Int -> Int -> Int -> NumberCheckerManualEntryRow
-createNumberCheckerManualEntryRow stopwatch1 stopwatch2 finishTokens =
-    NumberCheckerManualEntryRow (createNumericEntry stopwatch1) (createNumericEntry stopwatch2) (createNumericEntry finishTokens)
 
 
 barcodeScannerDataForEventStartTimeFiltering : BarcodeScannerData
@@ -1067,32 +729,6 @@ suite =
                             (expectNumberCheckerEntries sampleNumberCheckerDataWithSecondItemRemoved
                                 :: defaultAssertionsExcept [ NumberCheckerEntries ]
                             )
-            , test "Deleting a non-existent number-checker row has no effect when no stopwatches loaded" <|
-                \() ->
-                    { initModel | numberCheckerEntries = sampleNumberCheckerData }
-                        |> update (DeleteNumberCheckerRow 7)
-                        |> Expect.all
-                            (expectNumberCheckerEntries sampleNumberCheckerData
-                                :: defaultAssertionsExcept [ NumberCheckerEntries ]
-                            )
-            , test "Can delete a number-checker row when one stopwatch loaded" <|
-                \() ->
-                    { initModel | numberCheckerEntries = sampleNumberCheckerData, stopwatches = singleStopwatch }
-                        |> update (DeleteNumberCheckerRow 2)
-                        |> Expect.all
-                            (expectNumberCheckerEntries sampleNumberCheckerDataWithSecondItemRemoved
-                                :: expectStopwatches singleStopwatch
-                                :: defaultAssertionsExcept [ Stopwatches, NumberCheckerEntries ]
-                            )
-            , test "Deleting a non-existent number-checker row has no effect when one stopwatch loaded" <|
-                \() ->
-                    { initModel | numberCheckerEntries = sampleNumberCheckerData, stopwatches = singleStopwatch }
-                        |> update (DeleteNumberCheckerRow 7)
-                        |> Expect.all
-                            (expectNumberCheckerEntries sampleNumberCheckerData
-                                :: expectStopwatches singleStopwatch
-                                :: defaultAssertionsExcept [ Stopwatches, NumberCheckerEntries ]
-                            )
             ]
         , describe "Event date changed tests"
             [ test "Setting a valid date sets the validated date" <|
@@ -1192,34 +828,7 @@ suite =
                             )
             ]
         , describe "Add number checker row tests"
-            [ test "Cannot enter a number-checker row with no valid entries" <|
-                \() ->
-                    expectNoChangeForNumberCheckerManualEntryRow emptyNumberCheckerManualEntryRow
-            , test "Cannot enter a number-checker row with only a valid value for stopwatch 1" <|
-                \() ->
-                    NumberCheckerManualEntryRow (NumericEntry "24" (Just 24)) emptyNumericEntry emptyNumericEntry
-                        |> expectNoChangeForNumberCheckerManualEntryRow
-            , test "Cannot enter a number-checker row with only a valid value for stopwatch 2" <|
-                \() ->
-                    NumberCheckerManualEntryRow emptyNumericEntry (NumericEntry "38" (Just 38)) emptyNumericEntry
-                        |> expectNoChangeForNumberCheckerManualEntryRow
-            , test "Cannot enter a number-checker row with only a valid value for stopwatches 1 and 2" <|
-                \() ->
-                    NumberCheckerManualEntryRow (NumericEntry "24" (Just 24)) (NumericEntry "38" (Just 38)) emptyNumericEntry
-                        |> expectNoChangeForNumberCheckerManualEntryRow
-            , test "Cannot enter a number-checker row with only a valid value for finish tokens" <|
-                \() ->
-                    NumberCheckerManualEntryRow emptyNumericEntry emptyNumericEntry (NumericEntry "17" (Just 17))
-                        |> expectNoChangeForNumberCheckerManualEntryRow
-            , test "Cannot enter a number-checker row with only a valid value for stopwatch 1 and finish tokens" <|
-                \() ->
-                    NumberCheckerManualEntryRow (NumericEntry "24" (Just 24)) emptyNumericEntry (NumericEntry "17" (Just 17))
-                        |> expectNoChangeForNumberCheckerManualEntryRow
-            , test "Cannot enter a number-checker row with only a valid value for stopwatch 2 and finish tokens" <|
-                \() ->
-                    NumberCheckerManualEntryRow emptyNumericEntry (NumericEntry "38" (Just 38)) (NumericEntry "17" (Just 17))
-                        |> expectNoChangeForNumberCheckerManualEntryRow
-            , test "Can enter a number-checker row with all valid values" <|
+            [ test "Can enter a number-checker row with all valid values" <|
                 \() ->
                     { initModel | numberCheckerManualEntryRow = createNumberCheckerManualEntryRow 12 12 12 }
                         |> update AddNumberCheckerRow
@@ -1268,33 +877,6 @@ suite =
                             (expectNumberCheckerEntries sampleNumberCheckerDataWithSecondItemRemoved
                                 :: expectNumberCheckerManualEntryRow (createNumberCheckerManualEntryRow 11 10 11)
                                 :: defaultAssertionsExcept [ NumberCheckerEntries, NumberCheckerManualEntryRowAssertion ]
-                            )
-            , test "Editing a non-existent number-checker row has no effect when no stopwatches loaded" <|
-                \() ->
-                    { initModel | numberCheckerEntries = sampleNumberCheckerData }
-                        |> update (EditNumberCheckerRow 7)
-                        |> Expect.all
-                            (expectNumberCheckerEntries sampleNumberCheckerData
-                                :: defaultAssertionsExcept [ NumberCheckerEntries ]
-                            )
-            , test "Can edit a number-checker row when one stopwatch loaded" <|
-                \() ->
-                    { initModel | numberCheckerEntries = sampleNumberCheckerData, stopwatches = singleStopwatch }
-                        |> update (EditNumberCheckerRow 2)
-                        |> Expect.all
-                            (expectNumberCheckerEntries sampleNumberCheckerDataWithSecondItemRemoved
-                                :: expectNumberCheckerManualEntryRow (createNumberCheckerManualEntryRow 11 10 11)
-                                :: expectStopwatches singleStopwatch
-                                :: defaultAssertionsExcept [ Stopwatches, NumberCheckerEntries, NumberCheckerManualEntryRowAssertion ]
-                            )
-            , test "Editing a non-existent number-checker row has no effect when one stopwatch loaded" <|
-                \() ->
-                    { initModel | numberCheckerEntries = sampleNumberCheckerData, stopwatches = singleStopwatch }
-                        |> update (EditNumberCheckerRow 7)
-                        |> Expect.all
-                            (expectNumberCheckerEntries sampleNumberCheckerData
-                                :: expectStopwatches singleStopwatch
-                                :: defaultAssertionsExcept [ Stopwatches, NumberCheckerEntries ]
                             )
             ]
         , describe "Fixing problems tests"

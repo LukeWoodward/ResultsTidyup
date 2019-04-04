@@ -1,7 +1,7 @@
 module ProblemsTests exposing (suite)
 
 import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, MisScannedItem, UnrecognisedLine)
-import BarcodeScannerTests exposing (createBarcodeScannerData, toPosix)
+import BarcodeScannerTests exposing (createBarcodeScannerData)
 import DataStructures exposing (EventDateAndTime)
 import Dict exposing (Dict)
 import Errors exposing (expectError)
@@ -9,6 +9,7 @@ import Expect
 import MergedTable exposing (Stopwatches(..))
 import Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..), identifyProblems)
 import Test exposing (Test, describe, test)
+import TestData exposing (toPosix)
 
 
 emptyEventDateAndTime : EventDateAndTime
