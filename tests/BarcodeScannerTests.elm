@@ -12,7 +12,6 @@ import BarcodeScanner
         , MisScannedItem
         , PositionAndTimePair
         , UnrecognisedLine
-        , WrongWayAroundStatus(..)
         , empty
         , generateDownloadText
         , isEmpty
@@ -174,7 +173,7 @@ suite =
                                 (BarcodeScannerData
                                     [ BarcodeScannerFile
                                         "barcodes4.txt"
-                                        [ BarcodeScannerFileLine 1 (MisScan "&d084") "14/03/2018 09:47:03" NotDeleted NotWrongWayAround ]
+                                        [ BarcodeScannerFileLine 1 (MisScan "&d084") "14/03/2018 09:47:03" NotDeleted ]
                                         (toPosix "2018-03-14T09:47:03.000Z")
                                     ]
                                     Dict.empty
@@ -285,11 +284,11 @@ suite =
                         |> Expect.equal (",P0047,19/09/2018 09:40:09" ++ crlf)
             , test "generateDownloadText returns a string for a single mis-scanned item" <|
                 \() ->
-                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ BarcodeScannerFileLine 1 (MisScan "&d084") "04/07/2018 09:42:22" NotDeleted NotWrongWayAround ] Nothing)
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ BarcodeScannerFileLine 1 (MisScan "&d084") "04/07/2018 09:42:22" NotDeleted ] Nothing)
                         |> Expect.equal ("&d084,04/07/2018 09:42:22" ++ crlf)
             , test "generateDownloadText returns an empty string for a deleted record" <|
                 \() ->
-                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ BarcodeScannerFileLine 1 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted BeforeEventStart) NotWrongWayAround ] Nothing)
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ BarcodeScannerFileLine 1 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted BeforeEventStart) ] Nothing)
                         |> Expect.equal ""
             , test "generateDownloadText returns the correct string for multiple items" <|
                 \() ->
@@ -299,8 +298,8 @@ suite =
                             [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03"
                             , ordinaryFileLine 2 "A123456" Nothing "19/09/2018 09:33:37"
                             , ordinaryFileLine 3 "" (Just 47) "19/09/2018 09:40:09"
-                            , BarcodeScannerFileLine 4 (MisScan "&d084") "04/07/2018 09:42:22" NotDeleted NotWrongWayAround
-                            , BarcodeScannerFileLine 5 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted BeforeEventStart) NotWrongWayAround
+                            , BarcodeScannerFileLine 4 (MisScan "&d084") "04/07/2018 09:42:22" NotDeleted
+                            , BarcodeScannerFileLine 5 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted BeforeEventStart)
                             ]
                             Nothing
                         )

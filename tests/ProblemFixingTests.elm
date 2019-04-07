@@ -10,7 +10,6 @@ import BarcodeScanner
         , DeletionStatus(..)
         , LineContents(..)
         , PositionAndTimePair
-        , WrongWayAroundStatus(..)
         , empty
         , regenerate
         )
@@ -23,10 +22,10 @@ import Model exposing (Model, NumberCheckerManualEntryRow, ProblemEntry, emptyNu
 import ProblemFixing exposing (fixProblem)
 import Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..))
 import Test exposing (Test, describe, test)
-import TestData exposing (defaultTime, doubleStopwatches, ordinaryFileLine, stopwatchesForAdjusting)
+import TestData exposing (defaultTime, doubleStopwatches, ordinaryFileLine, stopwatchesForAdjusting, toPosix)
 
 
-createBarcodeScannerDataForRemovingUnassociatedFinishTokens : List Int -> Model
+createBarcodeScannerDataForRemovingUnassociatedFinishTokens : List Int -> BarcodeScannerData
 createBarcodeScannerDataForRemovingUnassociatedFinishTokens finishTokens =
     let
         fakeAthlete : Int -> String
@@ -44,13 +43,10 @@ createBarcodeScannerDataForRemovingUnassociatedFinishTokens finishTokens =
                     )
                 |> List.concat
     in
-    { initModel
-        | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines Nothing ] }
-        , problems = List.indexedMap (\index position -> ProblemEntry (Fixable (PositionWithAndWithoutAthlete position (fakeAthlete index))) index False) finishTokens
-    }
+    regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines Nothing ] }
 
 
-createBarcodeScannerDataForRemovingUnassociatedAthletes : List String -> Model
+createBarcodeScannerDataForRemovingUnassociatedAthletes : List String -> BarcodeScannerData
 createBarcodeScannerDataForRemovingUnassociatedAthletes athletes =
     let
         fileLines : List BarcodeScannerFileLine
@@ -58,19 +54,16 @@ createBarcodeScannerDataForRemovingUnassociatedAthletes athletes =
             athletes
                 |> List.indexedMap
                     (\index athlete ->
-                        [ BarcodeScannerFileLine (index * 2 + 1) (Ordinary athlete (Just (index + 1))) "14/03/2018 09:47:03" NotDeleted NotWrongWayAround
-                        , BarcodeScannerFileLine (index * 2 + 2) (Ordinary athlete Nothing) "14/03/2018 09:47:03" NotDeleted NotWrongWayAround
+                        [ BarcodeScannerFileLine (index * 2 + 1) (Ordinary athlete (Just (index + 1))) "14/03/2018 09:47:03" NotDeleted
+                        , BarcodeScannerFileLine (index * 2 + 2) (Ordinary athlete Nothing) "14/03/2018 09:47:03" NotDeleted
                         ]
                     )
                 |> List.concat
     in
-    { initModel
-        | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines Nothing ] }
-        , problems = List.indexedMap (\index athlete -> ProblemEntry (Fixable (AthleteWithAndWithoutPosition athlete (index + 1))) index False) athletes
-    }
+    regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines Nothing ] }
 
 
-createBarcodeScannerDataForRemovingDuplicateScans : Int -> Model
+createBarcodeScannerDataForRemovingDuplicateScans : Int -> BarcodeScannerData
 createBarcodeScannerDataForRemovingDuplicateScans numberOfTimes =
     let
         barcodeScannerData : BarcodeScannerData
@@ -82,18 +75,10 @@ createBarcodeScannerDataForRemovingDuplicateScans numberOfTimes =
             List.range 1 numberOfTimes
                 |> List.map
                     (\index ->
-                        BarcodeScannerFileLine index (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" NotDeleted NotWrongWayAround
+                        BarcodeScannerFileLine index (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" NotDeleted
                     )
     in
-    { initModel
-        | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines defaultTime ] }
-        , problems =
-            if numberOfTimes > 1 then
-                [ ProblemEntry (Fixable (AthleteInSamePositionMultipleTimes "A1234" 27)) 0 False ]
-
-            else
-                []
-    }
+    regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines defaultTime ] }
 
 
 barcodeScannerDataForEventStartTimeFiltering : BarcodeScannerData
@@ -184,6 +169,28 @@ baseEventStartTime =
     1521018000000
 
 
+createBarcodeScannerDataForSwappingBarcodes : List BarcodeScannerFile -> BarcodeScannerData
+createBarcodeScannerDataForSwappingBarcodes files =
+    BarcodeScannerData files Dict.empty [] [] [] [] Nothing
+        |> regenerate
+
+
+runTestForFixingProblem : ProblemFix -> BarcodeScannerData -> BarcodeScannerData -> Expectation
+runTestForFixingProblem problemFix initialBarcodeScannerData expectedBarcodeScannerData =
+    let
+        initialModel : Model
+        initialModel =
+            { initModel | barcodeScannerData = initialBarcodeScannerData }
+
+        actualModel : Model
+        actualModel =
+            fixProblem problemFix initialModel
+    in
+    Expect.equal
+        { initialModel | barcodeScannerData = expectedBarcodeScannerData }
+        actualModel
+
+
 suite : Test
 suite =
     describe "ProblemFixing tests"
@@ -191,153 +198,89 @@ suite =
             [ test "Can remove unassociated finish token" <|
                 \() ->
                     let
-                        initialModel : Model
-                        initialModel =
-                            createBarcodeScannerDataForRemovingUnassociatedFinishTokens [ 14, 18, 39, 44 ]
-
                         initialBarcodeScannerData : BarcodeScannerData
                         initialBarcodeScannerData =
-                            initialModel.barcodeScannerData
+                            createBarcodeScannerDataForRemovingUnassociatedFinishTokens [ 14, 18, 39, 44 ]
 
                         expectedBarcodeScannerData : BarcodeScannerData
                         expectedBarcodeScannerData =
                             regenerate
                                 { initialBarcodeScannerData
                                     | finishTokensOnly = List.filter (\x -> x.position /= 39) initialBarcodeScannerData.finishTokensOnly
-                                    , files = deleteLinesWithinFile (ifFinishPosition 39) initialModel.barcodeScannerData.files
+                                    , files = deleteLinesWithinFile (ifFinishPosition 39) initialBarcodeScannerData.files
                                 }
-
-                        actualModel : Model
-                        actualModel =
-                            fixProblem (RemoveUnassociatedFinishToken 39) initialModel
                     in
-                    Expect.equal
-                        { initialModel
-                            | barcodeScannerData = expectedBarcodeScannerData
-                            , problems = actualModel.problems
-                        }
-                        actualModel
+                    runTestForFixingProblem (RemoveUnassociatedFinishToken 39) initialBarcodeScannerData expectedBarcodeScannerData
             , test "Can remove unassociated finish token if it occurs multiple times" <|
                 \() ->
                     let
-                        initialModel : Model
-                        initialModel =
-                            createBarcodeScannerDataForRemovingUnassociatedFinishTokens [ 14, 39, 18, 39, 39, 44, 39 ]
-
                         initialBarcodeScannerData : BarcodeScannerData
                         initialBarcodeScannerData =
-                            initialModel.barcodeScannerData
+                            createBarcodeScannerDataForRemovingUnassociatedFinishTokens [ 14, 39, 18, 39, 39, 44, 39 ]
 
                         expectedBarcodeScannerData : BarcodeScannerData
                         expectedBarcodeScannerData =
                             { initialBarcodeScannerData
                                 | finishTokensOnly = List.filter (\x -> x.position /= 39) initialBarcodeScannerData.finishTokensOnly
-                                , files = deleteLinesWithinFile (ifFinishPosition 39) initialModel.barcodeScannerData.files
+                                , files = deleteLinesWithinFile (ifFinishPosition 39) initialBarcodeScannerData.files
                             }
-
-                        actualModel : Model
-                        actualModel =
-                            fixProblem (RemoveUnassociatedFinishToken 39) initialModel
                     in
-                    Expect.equal
-                        { initialModel
-                            | barcodeScannerData = expectedBarcodeScannerData
-                            , problems = actualModel.problems
-                        }
-                        actualModel
+                    runTestForFixingProblem (RemoveUnassociatedFinishToken 39) initialBarcodeScannerData expectedBarcodeScannerData
             , test "Removing unassociated finish token when it never occurs has no effect" <|
                 \() ->
                     let
-                        initialModel : Model
-                        initialModel =
+                        initialBarcodeScannerData : BarcodeScannerData
+                        initialBarcodeScannerData =
                             createBarcodeScannerDataForRemovingUnassociatedFinishTokens [ 14, 18, 39, 44 ]
-
-                        actualModel : Model
-                        actualModel =
-                            fixProblem (RemoveUnassociatedFinishToken 27) initialModel
                     in
-                    Expect.equal initialModel actualModel
+                    runTestForFixingProblem (RemoveUnassociatedFinishToken 27) initialBarcodeScannerData initialBarcodeScannerData
             , describe "Removing unassociated athlete tests"
                 [ test "Can remove unassociated athlete" <|
                     \() ->
                         let
-                            initialModel : Model
-                            initialModel =
-                                createBarcodeScannerDataForRemovingUnassociatedAthletes [ "A1234", "A3456", "A5678", "A9012" ]
-
                             initialBarcodeScannerData : BarcodeScannerData
                             initialBarcodeScannerData =
-                                initialModel.barcodeScannerData
+                                createBarcodeScannerDataForRemovingUnassociatedAthletes [ "A1234", "A3456", "A5678", "A9012" ]
 
                             expectedBarcodeScannerData : BarcodeScannerData
                             expectedBarcodeScannerData =
                                 { initialBarcodeScannerData
                                     | athleteBarcodesOnly = List.filter (\x -> x.athlete /= "A5678") initialBarcodeScannerData.athleteBarcodesOnly
-                                    , files = deleteLinesWithinFile (ifAthlete "A5678") initialModel.barcodeScannerData.files
+                                    , files = deleteLinesWithinFile (ifAthlete "A5678") initialBarcodeScannerData.files
                                 }
-
-                            actualModel : Model
-                            actualModel =
-                                fixProblem (RemoveUnassociatedAthlete "A5678") initialModel
                         in
-                        Expect.equal
-                            { initialModel
-                                | barcodeScannerData = expectedBarcodeScannerData
-                                , problems = actualModel.problems
-                            }
-                            actualModel
+                        runTestForFixingProblem (RemoveUnassociatedAthlete "A5678") initialBarcodeScannerData expectedBarcodeScannerData
                 , test "Can remove unassociated athlete if they occur multiple times" <|
                     \() ->
                         let
-                            initialModel : Model
-                            initialModel =
-                                createBarcodeScannerDataForRemovingUnassociatedAthletes [ "A1234", "A5678", "A3456", "A5678", "A5678", "A9012", "A5678" ]
-
                             initialBarcodeScannerData : BarcodeScannerData
                             initialBarcodeScannerData =
-                                initialModel.barcodeScannerData
+                                createBarcodeScannerDataForRemovingUnassociatedAthletes [ "A1234", "A5678", "A3456", "A5678", "A5678", "A9012", "A5678" ]
 
                             expectedBarcodeScannerData : BarcodeScannerData
                             expectedBarcodeScannerData =
                                 { initialBarcodeScannerData
                                     | athleteBarcodesOnly = List.filter (\x -> x.athlete /= "A5678") initialBarcodeScannerData.athleteBarcodesOnly
-                                    , files = deleteLinesWithinFile (ifAthlete "A5678") initialModel.barcodeScannerData.files
+                                    , files = deleteLinesWithinFile (ifAthlete "A5678") initialBarcodeScannerData.files
                                 }
-
-                            actualModel : Model
-                            actualModel =
-                                fixProblem (RemoveUnassociatedAthlete "A5678") initialModel
                         in
-                        Expect.equal
-                            { initialModel
-                                | barcodeScannerData = expectedBarcodeScannerData
-                                , problems = actualModel.problems
-                            }
-                            actualModel
+                        runTestForFixingProblem (RemoveUnassociatedAthlete "A5678") initialBarcodeScannerData expectedBarcodeScannerData
                 , test "Removing unassociated athlete when it never occurs has no effect" <|
                     \() ->
                         let
-                            initialModel : Model
-                            initialModel =
+                            initialBarcodeScannerData : BarcodeScannerData
+                            initialBarcodeScannerData =
                                 createBarcodeScannerDataForRemovingUnassociatedAthletes [ "A1234", "A3456", "A5678", "A9012" ]
-
-                            actualModel : Model
-                            actualModel =
-                                fixProblem (RemoveUnassociatedAthlete "A9090") initialModel
                         in
-                        Expect.equal initialModel actualModel
+                        runTestForFixingProblem (RemoveUnassociatedAthlete "A9090") initialBarcodeScannerData initialBarcodeScannerData
                 ]
             , describe "Removing duplicate scans test"
                 [ test "Can remove scan that occurs twice" <|
                     \() ->
                         let
-                            initialModel : Model
-                            initialModel =
-                                createBarcodeScannerDataForRemovingDuplicateScans 2
-
                             initialBarcodeScannerData : BarcodeScannerData
                             initialBarcodeScannerData =
-                                initialModel.barcodeScannerData
+                                createBarcodeScannerDataForRemovingDuplicateScans 2
 
                             expectedBarcodeScannerData : BarcodeScannerData
                             expectedBarcodeScannerData =
@@ -345,27 +288,14 @@ suite =
                                     | scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A1234" "14/03/2018 09:47:03" ]
                                     , files = deleteLinesWithinFile ifLineNumberGreaterThanOne initialBarcodeScannerData.files
                                 }
-
-                            actualModel : Model
-                            actualModel =
-                                fixProblem (RemoveDuplicateScans 27 "A1234") initialModel
                         in
-                        Expect.equal
-                            { initialModel
-                                | barcodeScannerData = expectedBarcodeScannerData
-                                , problems = actualModel.problems
-                            }
-                            actualModel
+                        runTestForFixingProblem (RemoveDuplicateScans 27 "A1234") initialBarcodeScannerData expectedBarcodeScannerData
                 , test "Can remove scan that occurs more than twice" <|
                     \() ->
                         let
-                            initialModel : Model
-                            initialModel =
-                                createBarcodeScannerDataForRemovingDuplicateScans 5
-
                             initialBarcodeScannerData : BarcodeScannerData
                             initialBarcodeScannerData =
-                                initialModel.barcodeScannerData
+                                createBarcodeScannerDataForRemovingDuplicateScans 5
 
                             expectedBarcodeScannerData : BarcodeScannerData
                             expectedBarcodeScannerData =
@@ -373,17 +303,8 @@ suite =
                                     | scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A1234" "14/03/2018 09:47:03" ]
                                     , files = deleteLinesWithinFile ifLineNumberGreaterThanOne initialBarcodeScannerData.files
                                 }
-
-                            actualModel : Model
-                            actualModel =
-                                fixProblem (RemoveDuplicateScans 27 "A1234") initialModel
                         in
-                        Expect.equal
-                            { initialModel
-                                | barcodeScannerData = expectedBarcodeScannerData
-                                , problems = actualModel.problems
-                            }
-                            actualModel
+                        runTestForFixingProblem (RemoveDuplicateScans 27 "A1234") initialBarcodeScannerData expectedBarcodeScannerData
                 , test "Can remove scan that occurs twice in two different files" <|
                     \() ->
                         let
@@ -401,8 +322,8 @@ suite =
                                     , lastScanDate = defaultTime
                                 }
 
-                            finalBarcodeScannerData : BarcodeScannerData
-                            finalBarcodeScannerData =
+                            expectedBarcodeScannerData : BarcodeScannerData
+                            expectedBarcodeScannerData =
                                 { initialBarcodeScannerData
                                     | scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A1234" "14/03/2018 09:47:03" ]
                                     , files =
@@ -412,60 +333,37 @@ suite =
                                             defaultTime
                                         , BarcodeScannerFile
                                             "barcodes2.txt"
-                                            [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" (Deleted (DuplicateScan "A1234" 27)) NotWrongWayAround ]
+                                            [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" (Deleted (DuplicateScan "A1234" 27)) ]
                                             defaultTime
                                         ]
                                     , lastScanDate = defaultTime
                                 }
-
-                            actualModel : Model
-                            actualModel =
-                                fixProblem
-                                    (RemoveDuplicateScans 27 "A1234")
-                                    { initModel | barcodeScannerData = startingBarcodeScannerData }
                         in
-                        Expect.equal
-                            { initModel
-                                | barcodeScannerData = finalBarcodeScannerData
-                                , problems = actualModel.problems
-                            }
-                            actualModel
+                        runTestForFixingProblem (RemoveDuplicateScans 27 "A1234") startingBarcodeScannerData expectedBarcodeScannerData
                 , test "Attempting to remove duplicate scan when not duplicate does nothing" <|
                     \() ->
                         let
-                            initialModel : Model
-                            initialModel =
+                            initialBarcodeScannerData : BarcodeScannerData
+                            initialBarcodeScannerData =
                                 createBarcodeScannerDataForRemovingDuplicateScans 1
-
-                            actualModel : Model
-                            actualModel =
-                                fixProblem (RemoveDuplicateScans 27 "A1234") initialModel
                         in
-                        Expect.equal initialModel actualModel
+                        runTestForFixingProblem (RemoveDuplicateScans 27 "A1234") initialBarcodeScannerData initialBarcodeScannerData
                 , test "Attempting to remove duplicate scan when finish position wrong does nothing" <|
                     \() ->
                         let
-                            initialModel : Model
-                            initialModel =
+                            initialBarcodeScannerData : BarcodeScannerData
+                            initialBarcodeScannerData =
                                 createBarcodeScannerDataForRemovingDuplicateScans 2
-
-                            actualModel : Model
-                            actualModel =
-                                fixProblem (RemoveDuplicateScans 25 "A1234") initialModel
                         in
-                        Expect.equal initialModel actualModel
+                        runTestForFixingProblem (RemoveDuplicateScans 25 "A1234") initialBarcodeScannerData initialBarcodeScannerData
                 , test "Attempting to remove duplicate scan when athlete wrong does nothing" <|
                     \() ->
                         let
-                            initialModel : Model
-                            initialModel =
+                            initialBarcodeScannerData : BarcodeScannerData
+                            initialBarcodeScannerData =
                                 createBarcodeScannerDataForRemovingDuplicateScans 2
-
-                            actualModel : Model
-                            actualModel =
-                                fixProblem (RemoveDuplicateScans 27 "A9999") initialModel
                         in
-                        Expect.equal initialModel actualModel
+                        runTestForFixingProblem (RemoveDuplicateScans 27 "A9999") initialBarcodeScannerData initialBarcodeScannerData
                 , test "Attempting to remove duplicate scan when other athletes in same position does nothing" <|
                     \() ->
                         let
@@ -484,39 +382,27 @@ suite =
                             barcodeScannerData =
                                 createBarcodeScannerData (Dict.singleton 27 [ "A1234", "A5678", "A3456", "A9012" ]) [] []
 
-                            barcodeScannerDataWithFiles : BarcodeScannerData
-                            barcodeScannerDataWithFiles =
+                            initialBarcodeScannerData : BarcodeScannerData
+                            initialBarcodeScannerData =
                                 { barcodeScannerData | files = [ file ], lastScanDate = defaultTime }
-
-                            initialModel : Model
-                            initialModel =
-                                { initModel | barcodeScannerData = barcodeScannerDataWithFiles }
-
-                            actualModel : Model
-                            actualModel =
-                                fixProblem (RemoveDuplicateScans 27 "A1234") initialModel
                         in
-                        Expect.equal initialModel actualModel
+                        runTestForFixingProblem (RemoveDuplicateScans 27 "A1234") initialBarcodeScannerData initialBarcodeScannerData
                 ]
             , describe "Removing scans before event start time"
                 [ test "Removing scans before 9am clears nothing" <|
                     \() ->
                         let
-                            initialModel : Model
-                            initialModel =
-                                { initModel | barcodeScannerData = barcodeScannerDataForEventStartTimeFiltering }
-
-                            actualModel : Model
-                            actualModel =
-                                fixProblem (RemoveScansBeforeEventStart baseEventStartTime) initialModel
+                            initialBarcodeScannerData : BarcodeScannerData
+                            initialBarcodeScannerData =
+                                barcodeScannerDataForEventStartTimeFiltering
                         in
-                        Expect.equal initialModel actualModel
+                        runTestForFixingProblem (RemoveScansBeforeEventStart baseEventStartTime) initialBarcodeScannerData initialBarcodeScannerData
                 , test "Removing scans before 9:30am clears genuine scan" <|
                     \() ->
                         let
-                            initialModel : Model
-                            initialModel =
-                                { initModel | barcodeScannerData = barcodeScannerDataForEventStartTimeFiltering }
+                            initialBarcodeScannerData : BarcodeScannerData
+                            initialBarcodeScannerData =
+                                barcodeScannerDataForEventStartTimeFiltering
 
                             expectedBarcodeScannerData : BarcodeScannerData
                             expectedBarcodeScannerData =
@@ -525,22 +411,17 @@ suite =
                                     , files = deleteLinesWithinFile (ifLineNumberIn [ 1 ]) barcodeScannerDataForEventStartTimeFiltering.files
                                 }
 
-                            actualModel : Model
-                            actualModel =
-                                fixProblem (RemoveScansBeforeEventStart (baseEventStartTime + 30 * 60 * 1000)) initialModel
+                            problemFix : ProblemFix
+                            problemFix =
+                                RemoveScansBeforeEventStart (baseEventStartTime + 30 * 60 * 1000)
                         in
-                        Expect.equal
-                            { initialModel
-                                | barcodeScannerData = expectedBarcodeScannerData
-                                , problems = actualModel.problems
-                            }
-                            actualModel
+                        runTestForFixingProblem problemFix initialBarcodeScannerData expectedBarcodeScannerData
                 , test "Removing scans before 10:00am clears genuine scan and athlete-barcode only" <|
                     \() ->
                         let
-                            initialModel : Model
-                            initialModel =
-                                { initModel | barcodeScannerData = barcodeScannerDataForEventStartTimeFiltering }
+                            initialBarcodeScannerData : BarcodeScannerData
+                            initialBarcodeScannerData =
+                                barcodeScannerDataForEventStartTimeFiltering
 
                             expectedBarcodeScannerData : BarcodeScannerData
                             expectedBarcodeScannerData =
@@ -550,22 +431,17 @@ suite =
                                     , files = deleteLinesWithinFile (ifLineNumberIn [ 1, 2 ]) barcodeScannerDataForEventStartTimeFiltering.files
                                 }
 
-                            actualModel : Model
-                            actualModel =
-                                fixProblem (RemoveScansBeforeEventStart (baseEventStartTime + 60 * 60 * 1000)) initialModel
+                            problemFix : ProblemFix
+                            problemFix =
+                                RemoveScansBeforeEventStart (baseEventStartTime + 60 * 60 * 1000)
                         in
-                        Expect.equal
-                            { initialModel
-                                | barcodeScannerData = expectedBarcodeScannerData
-                                , problems = actualModel.problems
-                            }
-                            actualModel
+                        runTestForFixingProblem problemFix initialBarcodeScannerData expectedBarcodeScannerData
                 , test "Removing scans before 10:30am clears everything" <|
                     \() ->
                         let
-                            initialModel : Model
-                            initialModel =
-                                { initModel | barcodeScannerData = barcodeScannerDataForEventStartTimeFiltering }
+                            initialBarcodeScannerData : BarcodeScannerData
+                            initialBarcodeScannerData =
+                                barcodeScannerDataForEventStartTimeFiltering
 
                             expectedBarcodeScannerData : BarcodeScannerData
                             expectedBarcodeScannerData =
@@ -576,16 +452,11 @@ suite =
                                     , files = deleteLinesWithinFile (ifLineNumberIn [ 1, 2, 3 ]) barcodeScannerDataForEventStartTimeFiltering.files
                                 }
 
-                            actualModel : Model
-                            actualModel =
-                                fixProblem (RemoveScansBeforeEventStart (baseEventStartTime + 90 * 60 * 1000)) initialModel
+                            problemFix : ProblemFix
+                            problemFix =
+                                RemoveScansBeforeEventStart (baseEventStartTime + 90 * 60 * 1000)
                         in
-                        Expect.equal
-                            { initialModel
-                                | barcodeScannerData = expectedBarcodeScannerData
-                                , problems = actualModel.problems
-                            }
-                            actualModel
+                        runTestForFixingProblem problemFix initialBarcodeScannerData expectedBarcodeScannerData
                 , test "A scan with an invalid time never gets removed" <|
                     \() ->
                         let
@@ -594,7 +465,7 @@ suite =
                                 case file.lines of
                                     first :: second :: rest ->
                                         { file
-                                            | lines = first :: BarcodeScannerFileLine 2 (Ordinary "A345678" Nothing) "This is not a valid time" NotDeleted NotWrongWayAround :: rest
+                                            | lines = first :: BarcodeScannerFileLine 2 (Ordinary "A345678" Nothing) "This is not a valid time" NotDeleted :: rest
                                         }
 
                                     _ ->
@@ -607,10 +478,6 @@ suite =
                                     , files = List.map fileChanger barcodeScannerDataForEventStartTimeFiltering.files
                                 }
 
-                            initialModel : Model
-                            initialModel =
-                                { initModel | barcodeScannerData = initialBarcodeScannerData }
-
                             expectedBarcodeScannerData : BarcodeScannerData
                             expectedBarcodeScannerData =
                                 { initialBarcodeScannerData
@@ -619,16 +486,107 @@ suite =
                                     , files = deleteLinesWithinFile (ifLineNumberIn [ 1, 3 ]) initialBarcodeScannerData.files
                                 }
 
-                            actualModel : Model
-                            actualModel =
-                                fixProblem (RemoveScansBeforeEventStart (baseEventStartTime + 2 * 60 * 60 * 1000)) initialModel
+                            problemFix : ProblemFix
+                            problemFix =
+                                RemoveScansBeforeEventStart (baseEventStartTime + 2 * 60 * 60 * 1000)
                         in
-                        Expect.equal
-                            { initialModel
-                                | barcodeScannerData = expectedBarcodeScannerData
-                                , problems = actualModel.problems
-                            }
-                            actualModel
+                        runTestForFixingProblem problemFix initialBarcodeScannerData expectedBarcodeScannerData
+                ]
+            , describe "swapBarcodes tests"
+                [ test "swapBarcodes does nothing for empty data" <|
+                    \() ->
+                        fixProblem (SwapBarcodes "barcodes1.txt" 1 2) initModel
+                            |> Expect.equal initModel
+                , test "swapBarcodes swaps data for single barcode pair the wrong way around" <|
+                    \() ->
+                        let
+                            initialBarcodeScannerData : BarcodeScannerData
+                            initialBarcodeScannerData =
+                                createBarcodeScannerDataForSwappingBarcodes
+                                    [ BarcodeScannerFile "barcodes1.txt"
+                                        [ ordinaryFileLine 1 "" (Just 47) "14/03/2018 09:47:03"
+                                        , ordinaryFileLine 2 "A123456" Nothing "14/03/2018 09:48:41"
+                                        ]
+                                        (toPosix "2018-03-14T09:48:41.000Z")
+                                    ]
+
+                            expectedBarcodeScannerData : BarcodeScannerData
+                            expectedBarcodeScannerData =
+                                createBarcodeScannerDataForSwappingBarcodes
+                                    [ BarcodeScannerFile "barcodes1.txt"
+                                        [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03"
+                                        , BarcodeScannerFileLine 2 (Ordinary "A123456" Nothing) "14/03/2018 09:48:41" (Deleted EndOfWrongWayAroundSection)
+                                        ]
+                                        (toPosix "2018-03-14T09:48:41.000Z")
+                                    ]
+                        in
+                        runTestForFixingProblem (SwapBarcodes "barcodes1.txt" 1 2) initialBarcodeScannerData expectedBarcodeScannerData
+                , test "swapBarcodes swaps data for double barcode pair the wrong way around" <|
+                    \() ->
+                        let
+                            initialBarcodeScannerData : BarcodeScannerData
+                            initialBarcodeScannerData =
+                                createBarcodeScannerDataForSwappingBarcodes
+                                    [ BarcodeScannerFile "barcodes1.txt"
+                                        [ ordinaryFileLine 1 "" (Just 47) "14/03/2018 09:47:03"
+                                        , ordinaryFileLine 2 "A123456" (Just 40) "14/03/2018 09:48:41"
+                                        , ordinaryFileLine 3 "A565656" Nothing "14/03/2018 09:49:06"
+                                        ]
+                                        (toPosix "2018-03-14T09:49:06.000Z")
+                                    ]
+
+                            expectedBarcodeScannerData : BarcodeScannerData
+                            expectedBarcodeScannerData =
+                                createBarcodeScannerDataForSwappingBarcodes
+                                    [ BarcodeScannerFile "barcodes1.txt"
+                                        [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03"
+                                        , ordinaryFileLine 2 "A565656" (Just 40) "14/03/2018 09:48:41"
+                                        , BarcodeScannerFileLine 3 (Ordinary "A565656" Nothing) "14/03/2018 09:49:06" (Deleted EndOfWrongWayAroundSection)
+                                        ]
+                                        (toPosix "2018-03-14T09:49:06.000Z")
+                                    ]
+                        in
+                        runTestForFixingProblem (SwapBarcodes "barcodes1.txt" 1 3) initialBarcodeScannerData expectedBarcodeScannerData
+                , test "swapBarcodes swaps data for single barcode pair the wrong way around with ordinary record afterwards" <|
+                    \() ->
+                        let
+                            initialBarcodeScannerData : BarcodeScannerData
+                            initialBarcodeScannerData =
+                                createBarcodeScannerDataForSwappingBarcodes
+                                    [ BarcodeScannerFile "barcodes1.txt"
+                                        [ ordinaryFileLine 1 "" (Just 47) "14/03/2018 09:47:03"
+                                        , ordinaryFileLine 2 "A123456" Nothing "14/03/2018 09:48:41"
+                                        , ordinaryFileLine 3 "A565656" (Just 40) "14/03/2018 09:49:06"
+                                        ]
+                                        (toPosix "2018-03-14T09:49:06.000Z")
+                                    ]
+
+                            expectedBarcodeScannerData : BarcodeScannerData
+                            expectedBarcodeScannerData =
+                                createBarcodeScannerDataForSwappingBarcodes
+                                    [ BarcodeScannerFile "barcodes1.txt"
+                                        [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03"
+                                        , BarcodeScannerFileLine 2 (Ordinary "A123456" Nothing) "14/03/2018 09:48:41" (Deleted EndOfWrongWayAroundSection)
+                                        , ordinaryFileLine 3 "A565656" (Just 40) "14/03/2018 09:49:06"
+                                        ]
+                                        (toPosix "2018-03-14T09:49:06.000Z")
+                                    ]
+                        in
+                        runTestForFixingProblem (SwapBarcodes "barcodes1.txt" 1 2) initialBarcodeScannerData expectedBarcodeScannerData
+                , test "swapBarcodes does nothing for mismatched filename" <|
+                    \() ->
+                        let
+                            initialBarcodeScannerData : BarcodeScannerData
+                            initialBarcodeScannerData =
+                                createBarcodeScannerDataForSwappingBarcodes
+                                    [ BarcodeScannerFile "barcodes1.txt"
+                                        [ ordinaryFileLine 1 "" (Just 47) "14/03/2018 09:47:03"
+                                        , ordinaryFileLine 2 "A123456" Nothing "14/03/2018 09:48:41"
+                                        ]
+                                        (toPosix "2018-03-14T09:48:41.000Z")
+                                    ]
+                        in
+                        runTestForFixingProblem (SwapBarcodes "wrong_filename.txt" 1 2) initialBarcodeScannerData initialBarcodeScannerData
                 ]
             , describe "AdjustStopwatch tests"
                 [ test "Can adjust stopwatch 1 adding some time to it" <|

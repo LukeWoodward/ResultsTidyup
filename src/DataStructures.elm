@@ -33,3 +33,4 @@ type ProblemFix
     | RemoveDuplicateScans Int String
     | RemoveScansBeforeEventStart Int
     | AdjustStopwatch WhichStopwatch Int
+    | SwapBarcodes String Int Int

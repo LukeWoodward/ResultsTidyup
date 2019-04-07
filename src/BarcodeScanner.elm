@@ -9,7 +9,6 @@ module BarcodeScanner exposing
     , MisScannedItem
     , PositionAndTimePair
     , UnrecognisedLine
-    , WrongWayAroundStatus(..)
     , empty
     , generateDownloadText
     , isEmpty
@@ -81,18 +80,11 @@ type LineContents
     | MisScan String
 
 
-type WrongWayAroundStatus
-    = NotWrongWayAround
-    | FirstWrongWayAround Int Int
-    | SubsequentWrongWayAround
-
-
 type alias BarcodeScannerFileLine =
     { lineNumber : Int
     , contents : LineContents
     , scanTime : String
     , deletionStatus : DeletionStatus
-    , wrongWayAroundStatus : WrongWayAroundStatus
     }
 
 
@@ -152,7 +144,7 @@ positionParser =
 
 okDefaultFileLine : Int -> LineContents -> String -> Result e BarcodeScannerFileLine
 okDefaultFileLine lineNumber contents scanTime =
-    Ok (BarcodeScannerFileLine lineNumber contents scanTime NotDeleted NotWrongWayAround)
+    Ok (BarcodeScannerFileLine lineNumber contents scanTime NotDeleted)
 
 
 readLine : Int -> String -> Result UnrecognisedLine BarcodeScannerFileLine

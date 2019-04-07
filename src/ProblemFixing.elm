@@ -173,6 +173,71 @@ deleteDuplicateScansWithinFiles athlete position files =
         |> Tuple.first
 
 
+swapBarcodesAroundInLines : Int -> Int -> List BarcodeScannerFileLine -> List BarcodeScannerFileLine
+swapBarcodesAroundInLines first last lines =
+    case lines of
+        [] ->
+            []
+
+        singleLine :: [] ->
+            if singleLine.lineNumber == last then
+                [ { singleLine | deletionStatus = Deleted EndOfWrongWayAroundSection } ]
+
+            else
+                [ singleLine ]
+
+        firstLine :: secondLine :: remainingLines ->
+            if firstLine.lineNumber == last then
+                { firstLine | deletionStatus = Deleted EndOfWrongWayAroundSection } :: secondLine :: remainingLines
+
+            else if first <= firstLine.lineNumber && firstLine.lineNumber < last then
+                case ( firstLine.contents, secondLine.contents ) of
+                    ( Ordinary _ thisPosition, Ordinary nextAthlete _ ) ->
+                        { firstLine | contents = Ordinary nextAthlete thisPosition }
+                            :: swapBarcodesAroundInLines first last (secondLine :: remainingLines)
+
+                    _ ->
+                        -- Mis-scans?  Unexpected.
+                        firstLine :: swapBarcodesAroundInLines first last (secondLine :: remainingLines)
+
+            else
+                firstLine :: swapBarcodesAroundInLines first last (secondLine :: remainingLines)
+
+
+swapBarcodesAroundInFile : Int -> Int -> BarcodeScannerFile -> BarcodeScannerFile
+swapBarcodesAroundInFile first last file =
+    { file | lines = swapBarcodesAroundInLines first last file.lines }
+
+
+swapBarcodesAround : String -> Int -> Int -> List BarcodeScannerFile -> List BarcodeScannerFile
+swapBarcodesAround fileName first last files =
+    let
+        matchingFileMaybe : Maybe BarcodeScannerFile
+        matchingFileMaybe =
+            List.filter (\f -> f.name == fileName) files
+                |> List.head
+    in
+    case matchingFileMaybe of
+        Just matchingFile ->
+            let
+                swappedFile : BarcodeScannerFile
+                swappedFile =
+                    swapBarcodesAroundInFile first last matchingFile
+
+                swapFileBackIn : BarcodeScannerFile -> BarcodeScannerFile
+                swapFileBackIn file =
+                    if file.name == fileName then
+                        swappedFile
+
+                    else
+                        file
+            in
+            List.map swapFileBackIn files
+
+        Nothing ->
+            files
+
+
 fixProblem : ProblemFix -> Model -> Model
 fixProblem problemFix model =
     let
@@ -205,6 +270,12 @@ fixProblem problemFix model =
                     regenerate
                         { oldBarcodeScannerData
                             | files = deleteWithinFiles (deleteBeforeEventStart eventStartTimeMillis) oldBarcodeScannerData.files
+                        }
+
+                SwapBarcodes fileName first last ->
+                    regenerate
+                        { oldBarcodeScannerData
+                            | files = swapBarcodesAround fileName first last oldBarcodeScannerData.files
                         }
 
                 AdjustStopwatch whichStopwatch offset ->

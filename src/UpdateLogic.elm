@@ -1,4 +1,4 @@
-module UpdateLogic exposing (createStopwatchFileForDownload, regenerateWithWrongWayArounds, update)
+module UpdateLogic exposing (createStopwatchFileForDownload, update)
 
 import BarcodeScanner
     exposing
@@ -9,7 +9,6 @@ import BarcodeScanner
         , DeletionReason(..)
         , DeletionStatus(..)
         , LineContents(..)
-        , WrongWayAroundStatus(..)
         , generateDownloadText
         , mergeScannerData
         , readBarcodeScannerData
@@ -57,7 +56,6 @@ import Result.Extra
 import Stopwatch exposing (Stopwatch(..), readStopwatchData)
 import Task exposing (Task)
 import Time exposing (Posix, Zone)
-import WrongWayAround exposing (identifyBarcodesScannedTheWrongWayAround)
 
 
 focus : String -> Cmd Msg
@@ -262,7 +260,7 @@ handleBarcodeScannerFileDrop fileName fileText model =
         case result of
             Ok scannerData ->
                 { model
-                    | barcodeScannerData = identifyBarcodesScannedTheWrongWayAround (mergeScannerData model.barcodeScannerData scannerData)
+                    | barcodeScannerData = mergeScannerData model.barcodeScannerData scannerData
                 }
                     |> setEventDateAndTimeIn
                     |> identifyProblemsIn
@@ -446,17 +444,6 @@ reunderlineStopwatchTable model =
             model
 
 
-regenerateWithWrongWayArounds : BarcodeScannerData -> BarcodeScannerData
-regenerateWithWrongWayArounds barcodeScannerData =
-    identifyBarcodesScannedTheWrongWayAround barcodeScannerData
-        |> regenerate
-
-
-regenerateWithWrongWayAroundsIn : Model -> Model
-regenerateWithWrongWayAroundsIn model =
-    { model | barcodeScannerData = regenerateWithWrongWayArounds model.barcodeScannerData }
-
-
 downloadSingleBarcodeScannerData : Int -> List BarcodeScannerFile -> Zone -> Posix -> Cmd Msg
 downloadSingleBarcodeScannerData index files zone time =
     case ( index, files ) of
@@ -502,87 +489,8 @@ deleteBarcodeScannerFileAtIndex index model =
     in
     identifyProblemsIn
         { model
-            | barcodeScannerData = regenerateWithWrongWayArounds { barcodeScannerData | files = deleteAtIndex index model.barcodeScannerData.files }
+            | barcodeScannerData = regenerate { barcodeScannerData | files = deleteAtIndex index model.barcodeScannerData.files }
         }
-
-
-swapBarcodesAroundInLines : Int -> Int -> List BarcodeScannerFileLine -> List BarcodeScannerFileLine
-swapBarcodesAroundInLines first last lines =
-    case lines of
-        [] ->
-            []
-
-        singleLine :: [] ->
-            if singleLine.lineNumber == last then
-                [ { singleLine | deletionStatus = Deleted EndOfWrongWayAroundSection, wrongWayAroundStatus = NotWrongWayAround } ]
-
-            else
-                [ singleLine ]
-
-        firstLine :: secondLine :: remainingLines ->
-            if firstLine.lineNumber == last then
-                { firstLine | deletionStatus = Deleted EndOfWrongWayAroundSection, wrongWayAroundStatus = NotWrongWayAround } :: secondLine :: remainingLines
-
-            else if first <= firstLine.lineNumber && firstLine.lineNumber < last then
-                case ( firstLine.contents, secondLine.contents ) of
-                    ( Ordinary _ thisPosition, Ordinary nextAthlete _ ) ->
-                        { firstLine
-                            | contents = Ordinary nextAthlete thisPosition
-                            , wrongWayAroundStatus = NotWrongWayAround
-                        }
-                            :: swapBarcodesAroundInLines first last (secondLine :: remainingLines)
-
-                    _ ->
-                        -- Mis-scans?  Unexpected.
-                        firstLine :: swapBarcodesAroundInLines first last (secondLine :: remainingLines)
-
-            else
-                firstLine :: swapBarcodesAroundInLines first last (secondLine :: remainingLines)
-
-
-swapBarcodesAroundInFile : Int -> Int -> BarcodeScannerFile -> BarcodeScannerFile
-swapBarcodesAroundInFile first last file =
-    { file | lines = swapBarcodesAroundInLines first last file.lines }
-
-
-swapBarcodesAround : String -> Int -> Int -> Model -> Model
-swapBarcodesAround fileName first last model =
-    let
-        matchingFileMaybe : Maybe BarcodeScannerFile
-        matchingFileMaybe =
-            List.filter (\f -> f.name == fileName) model.barcodeScannerData.files
-                |> List.head
-    in
-    case matchingFileMaybe of
-        Just matchingFile ->
-            let
-                swappedFile : BarcodeScannerFile
-                swappedFile =
-                    swapBarcodesAroundInFile first last matchingFile
-
-                swapFileBackIn : BarcodeScannerFile -> BarcodeScannerFile
-                swapFileBackIn file =
-                    if file.name == fileName then
-                        swappedFile
-
-                    else
-                        file
-
-                originalBarcodeScannerData : BarcodeScannerData
-                originalBarcodeScannerData =
-                    model.barcodeScannerData
-            in
-            identifyProblemsIn
-                { model
-                    | barcodeScannerData =
-                        regenerateWithWrongWayArounds
-                            { originalBarcodeScannerData
-                                | files = List.map swapFileBackIn originalBarcodeScannerData.files
-                            }
-                }
-
-        Nothing ->
-            model
 
 
 ignoreProblem : Int -> Model -> Model
@@ -705,7 +613,6 @@ update msg model =
 
         FixProblem problemFix ->
             ( fixProblem problemFix model
-                |> regenerateWithWrongWayAroundsIn
                 |> identifyProblemsIn
                 |> reunderlineStopwatchTable
             , Cmd.none
@@ -725,9 +632,6 @@ update msg model =
 
         DeleteBarcodeScannerFile index ->
             ( deleteBarcodeScannerFileAtIndex index model, Cmd.none )
-
-        SwapBarcodes fileName first last ->
-            ( swapBarcodesAround fileName first last model, Cmd.none )
 
         IgnoreProblem problemIndex ->
             ( ignoreProblem problemIndex model, Cmd.none )

@@ -183,6 +183,40 @@ fixableProblemView index fixableProblem =
                 , smallButton (Msg.IgnoreProblem index) [] "Ignore"
                 ]
 
+        BarcodesScannedTheWrongWayAround fileName startLineNumber endLineNumber ->
+            let
+                pairsIntro : String
+                pairsIntro =
+                    if endLineNumber == startLineNumber + 1 then
+                        "One pair"
+
+                    else
+                        String.fromInt (endLineNumber - startLineNumber) ++ " pairs"
+
+                haveOrHas : String
+                haveOrHas =
+                    if endLineNumber == startLineNumber + 1 then
+                        "has"
+
+                    else
+                        "have"
+            in
+            li []
+                [ text pairsIntro
+                , text " of barcodes in file "
+                , text fileName
+                , text " "
+                , text haveOrHas
+                , text " been scanned the wrong way around between lines "
+                , text (String.fromInt startLineNumber)
+                , text " and "
+                , text (String.fromInt endLineNumber)
+                , text " "
+                , smallButton (Msg.FixProblem (SwapBarcodes fileName startLineNumber endLineNumber)) [] "Swap over"
+                , text " "
+                , smallButton (Msg.IgnoreProblem index) [] "Ignore"
+                ]
+
 
 fixableProblemsView : List (Html Msg) -> Html Msg
 fixableProblemsView fixableProblems =

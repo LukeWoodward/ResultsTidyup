@@ -39,7 +39,6 @@ type Msg
     | ClearErrors
     | DownloadBarcodeScannerFile Int Zone Posix
     | DeleteBarcodeScannerFile Int
-    | SwapBarcodes String Int Int
     | IgnoreProblem Int
     | ShowBarcodeScannerEditModal BarcodeScannerRowEditLocation LineContents
     | BarcodeScannerEdit BarcodeScannerEditDetails

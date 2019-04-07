@@ -36,7 +36,6 @@ import BarcodeScanner
         , DeletionStatus(..)
         , LineContents(..)
         , PositionAndTimePair
-        , WrongWayAroundStatus(..)
         )
 import DataStructures exposing (EventDateAndTime, WhichStopwatch(..))
 import Dict
@@ -57,7 +56,7 @@ defaultTime =
 
 ordinaryFileLine : Int -> String -> Maybe Int -> String -> BarcodeScannerFileLine
 ordinaryFileLine lineNumber athlete finishToken scanTime =
-    BarcodeScannerFileLine lineNumber (Ordinary athlete finishToken) scanTime NotDeleted NotWrongWayAround
+    BarcodeScannerFileLine lineNumber (Ordinary athlete finishToken) scanTime NotDeleted
 
 
 toPosix : String -> Maybe Posix
