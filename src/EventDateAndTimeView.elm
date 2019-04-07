@@ -13,7 +13,7 @@ import ViewCommon exposing (smallButton)
 
 defaultEventTimes : List String
 defaultEventTimes =
-    [ "09:00", "09:30", "10:00", "10:30", "11:00" ]
+    [ "07:00", "08:00", "09:00", "09:30", "10:00", "10:30", "11:00" ]
 
 
 eventTimeButton : String -> Html Msg
