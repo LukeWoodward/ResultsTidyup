@@ -118,8 +118,11 @@ setEventDateAndTimeIn model =
             model
 
 
-mergeProblems : List ProblemEntry -> List Problem -> List ProblemEntry
-mergeProblems currentProblemEntries newProblems =
+{-| Creates a list of ProblemEntry items from the given list of problems,
+transferring ignored problems from the given list of current problem entries.
+-}
+transferIgnoredProblems : List ProblemEntry -> List Problem -> List ProblemEntry
+transferIgnoredProblems currentProblemEntries newProblems =
     let
         currentlyIgnoredProblems : List Problem
         currentlyIgnoredProblems =
@@ -139,7 +142,7 @@ identifyProblemsIn model =
             identifyProblems model.stopwatches model.barcodeScannerData model.eventDateAndTime
     in
     { model
-        | problems = mergeProblems model.problems newProblems
+        | problems = transferIgnoredProblems model.problems newProblems
     }
 
 
