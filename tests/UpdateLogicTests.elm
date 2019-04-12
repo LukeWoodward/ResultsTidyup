@@ -11,13 +11,12 @@ import BarcodeScanner
         , empty
         , regenerate
         )
-import BarcodeScannerTests exposing (createBarcodeScannerData, expectSingleUnrecognisedLine)
+import BarcodeScannerTests exposing (createBarcodeScannerData)
 import DataStructures exposing (EventDateAndTime, InteropFile, ProblemFix(..), SecondTab(..), WhichStopwatch(..))
 import Dict exposing (Dict)
 import Error exposing (FileError)
 import Expect exposing (Expectation)
-import FileHandling exposing (crlf)
-import MergedTable exposing (MergedTableRow, Stopwatches(..))
+import MergedTable exposing (Stopwatches(..))
 import Model
     exposing
         ( Model
@@ -30,9 +29,7 @@ import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import NumericEntry exposing (NumericEntry, emptyNumericEntry)
 import Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..))
-import Set
 import Stopwatch exposing (Stopwatch(..))
-import StopwatchTests
 import Test exposing (Test, describe, test)
 import TestData exposing (..)
 import Time
@@ -170,7 +167,7 @@ defaultAssertionsExcept exceptions =
                 Nothing
 
               else
-                Just (expectBarcodeScannerData BarcodeScanner.empty)
+                Just (expectBarcodeScannerData empty)
             , if List.member Problems exceptions then
                 Nothing
 
@@ -198,7 +195,7 @@ defaultAssertions =
 
 singleStopwatch : Stopwatches
 singleStopwatch =
-    case StopwatchTests.expectedParsedSampleData of
+    case expectedParsedSampleStopwatchData of
         StopwatchData times ->
             Single "stopwatch1.txt" times
 
@@ -280,75 +277,10 @@ suite =
                         |> Expect.all defaultAssertions
             ]
         , describe "File drop tests"
-            [ describe "Invalid file tests"
-                [ test "Empty file should not match against any type" <|
-                    \() ->
-                        update (FilesDropped [ InteropFile "empty.txt" "" ]) initModel
-                            |> Expect.all (expectLastError "UNRECOGNISED_FILE" :: defaultAssertionsExcept [ LastError ])
-                , test "Binary file should not match against any type" <|
-                    \() ->
-                        update (FilesDropped [ InteropFile "binary.txt" "\u{0000}\u{0001}" ]) initModel
-                            |> Expect.all (expectLastError "UNRECOGNISED_FILE" :: defaultAssertionsExcept [ LastError ])
-                , test "Unrecognised file should not match against any type" <|
-                    \() ->
-                        update (FilesDropped [ InteropFile "Unrecognised.txt" "This file contents should not be recognised" ]) initModel
-                            |> Expect.all (expectLastError "UNRECOGNISED_FILE" :: defaultAssertionsExcept [ LastError ])
-                ]
-            , describe "Stopwatch file tests"
-                [ test "Can upload a single stopwatch data file" <|
-                    \() ->
-                        update (FilesDropped [ InteropFile "stopwatch1.txt" StopwatchTests.sampleData ]) initModel
-                            |> Expect.all (expectStopwatches singleStopwatch :: defaultAssertionsExcept [ Stopwatches ])
-                , test "Cannot upload a single invalid stopwatch data file" <|
-                    \() ->
-                        update (FilesDropped [ InteropFile "stopwatch1.txt" (String.replace "00" "XX" StopwatchTests.sampleData) ]) initModel
-                            |> Expect.all (expectLastError "UNRECOGNISED_TIME" :: defaultAssertionsExcept [ LastError ])
-                , test "Cannot upload the same single stopwatch data file twice" <|
-                    \() ->
-                        initModel
-                            |> update (FilesDropped [ InteropFile "stopwatch1.txt" StopwatchTests.sampleData ])
-                            |> Tuple.first
-                            |> update (FilesDropped [ InteropFile "stopwatch1.txt" StopwatchTests.sampleData ])
-                            |> Expect.all
-                                (expectLastError "STOPWATCH_FILE_ALREADY_LOADED"
-                                    :: expectStopwatches singleStopwatch
-                                    :: defaultAssertionsExcept [ LastError, Stopwatches ]
-                                )
-                , test "Can upload two different stopwatch data files" <|
-                    \() ->
-                        initModel
-                            |> update (FilesDropped [ InteropFile "stopwatch1.txt" StopwatchTests.sampleData ])
-                            |> Tuple.first
-                            |> update (FilesDropped [ InteropFile "stopwatch2.txt" sampleStopwatchData2 ])
-                            |> Expect.all
-                                (expectStopwatches doubleStopwatches
-                                    :: defaultAssertionsExcept [ Stopwatches ]
-                                )
-                , test "Uploading a third stopwatch data file has no effect" <|
-                    \() ->
-                        initModel
-                            |> update (FilesDropped [ InteropFile "stopwatch1.txt" StopwatchTests.sampleData ])
-                            |> Tuple.first
-                            |> update (FilesDropped [ InteropFile "stopwatch2.txt" sampleStopwatchData2 ])
-                            |> Tuple.first
-                            |> update (FilesDropped [ InteropFile "stopwatch3.txt" StopwatchTests.sampleData ])
-                            |> Expect.all
-                                (expectStopwatches doubleStopwatches
-                                    :: defaultAssertionsExcept [ Stopwatches ]
-                                )
-                ]
-            , describe "Barcode scanner file tests"
+            [ describe "Barcode scanner file tests"
                 [ test "Can upload a single barcode scanner file" <|
                     \() ->
                         update (FilesDropped [ InteropFile "barcodes1.txt" validBarcodeScannerData1 ]) initModel
-                            |> Expect.all
-                                (expectBarcodeScannerData parsedBarcodeScannerData1
-                                    :: expectEventDateAndTime parsedEventDateOnly
-                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, EventDateAndTimeAssertion ]
-                                )
-                , test "Can upload a single barcode scanner file with position token without leading zeroes" <|
-                    \() ->
-                        update (FilesDropped [ InteropFile "barcodes1.txt" (String.replace "P0047" "P47" validBarcodeScannerData1) ]) initModel
                             |> Expect.all
                                 (expectBarcodeScannerData parsedBarcodeScannerData1
                                     :: expectEventDateAndTime parsedEventDateOnly
@@ -362,55 +294,6 @@ suite =
                                     :: expectEventDateAndTime parsedEventDateOnly
                                     :: expectProblems [ NonFixable (PositionMissingAthlete 33) ]
                                     :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, EventDateAndTimeAssertion, Problems ]
-                                )
-                , test "Can upload a single invalid barcode scanner file" <|
-                    \() ->
-                        update (FilesDropped [ InteropFile "barcodes1.txt" invalidBarcodeScannerData ]) initModel
-                            |> Expect.all
-                                ((\( model, _ ) ->
-                                    expectSingleUnrecognisedLine (String.replace crlf "" invalidBarcodeScannerData) "INVALID_POSITION_ZERO" (Ok model.barcodeScannerData)
-                                 )
-                                    :: expectProblems [ NonFixable (UnrecognisedBarcodeScannerLine "A4580442,P0000,14/03/2018 09:47:03") ]
-                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, EventDateAndTimeAssertion, Problems ]
-                                )
-                , test "Cannot upload the same barcode scanner file twice" <|
-                    \() ->
-                        initModel
-                            |> update (FilesDropped [ InteropFile "barcodes1.txt" validBarcodeScannerData1 ])
-                            |> Tuple.first
-                            |> update (FilesDropped [ InteropFile "barcodes1.txt" validBarcodeScannerData1 ])
-                            |> Expect.all
-                                (expectBarcodeScannerData parsedBarcodeScannerData1
-                                    :: expectEventDateAndTime parsedEventDateOnly
-                                    :: expectLastError "BARCODE_DATA_ALREADY_LOADED"
-                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, EventDateAndTimeAssertion, LastError ]
-                                )
-                , test "Can upload two different barcode scanner files" <|
-                    \() ->
-                        initModel
-                            |> update (FilesDropped [ InteropFile "barcodes1.txt" validBarcodeScannerData1 ])
-                            |> Tuple.first
-                            |> update (FilesDropped [ InteropFile "barcodes2.txt" validBarcodeScannerData2 ])
-                            |> Expect.all
-                                (expectBarcodeScannerData parsedBarcodeScannerData1And2
-                                    :: expectEventDateAndTime parsedEventDateOnly
-                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, EventDateAndTimeAssertion ]
-                                )
-                ]
-            , describe "Number checker file tests"
-                [ test "Can upload a single number checker file" <|
-                    \() ->
-                        update (FilesDropped [ InteropFile "numberChecker1.txt" validNumberCheckerData ]) initModel
-                            |> Expect.all
-                                (expectNumberCheckerEntries parsedNumberCheckerData
-                                    :: defaultAssertionsExcept [ NumberCheckerEntries ]
-                                )
-                , test "Cannot upload an invalid number checker file" <|
-                    \() ->
-                        update (FilesDropped [ InteropFile "numberChecker1.txt" invalidNumberCheckerData ]) initModel
-                            |> Expect.all
-                                (expectLastError "WRONG_PART_COUNT"
-                                    :: defaultAssertionsExcept [ LastError ]
                                 )
                 ]
             ]
@@ -520,7 +403,7 @@ suite =
             , test "Does not download merged data for one stopwatch" <|
                 \() ->
                     initModel
-                        |> update (FilesDropped [ InteropFile "stopwatch1.txt" StopwatchTests.sampleData ])
+                        |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
                         |> Tuple.first
                         |> update (DownloadMergedStopwatchData Time.utc recentTime)
                         |> Expect.all
@@ -530,7 +413,7 @@ suite =
             , test "Can download merged data for two stopwatches" <|
                 \() ->
                     initModel
-                        |> update (FilesDropped [ InteropFile "stopwatch1.txt" StopwatchTests.sampleData ])
+                        |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
                         |> Tuple.first
                         |> update (FilesDropped [ InteropFile "stopwatch2.txt" sampleStopwatchData2 ])
                         |> Tuple.first
@@ -548,7 +431,7 @@ suite =
                         model : Model
                         model =
                             initModel
-                                |> update (FilesDropped [ InteropFile "stopwatch1.txt" StopwatchTests.sampleData ])
+                                |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
                                 |> Tuple.first
                                 |> update (FilesDropped [ InteropFile "stopwatch2.txt" sampleStopwatchData2 ])
                                 |> Tuple.first

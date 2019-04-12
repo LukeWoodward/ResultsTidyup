@@ -1,25 +1,11 @@
-module StopwatchTests exposing (expectedParsedSampleData, sampleData, suite)
+module StopwatchTests exposing (suite)
 
 import Errors exposing (expectError)
 import Expect
 import FileHandling exposing (crlf)
 import Stopwatch exposing (..)
 import Test exposing (Test, describe, test)
-
-
-sampleData : String
-sampleData =
-    "STARTOFEVENT,01/01/2001 00:00:00,abcdefghij\n"
-        ++ "0,01/01/2001 00:00:00\n"
-        ++ "1,01/01/2001 00:03:11,00:03:11\n"
-        ++ "2,01/01/2001 00:07:44,00:07:44\n"
-        ++ "3,01/01/2001 00:10:03,00:10:03\n"
-        ++ "ENDOFEVENT,01/01/2001 00:15:55\n"
-
-
-expectedParsedSampleData : Stopwatch
-expectedParsedSampleData =
-    StopwatchData [ 3 * 60 + 11, 7 * 60 + 44, 10 * 60 + 3 ]
+import TestData exposing (expectedParsedSampleStopwatchData, sampleStopwatchData)
 
 
 suite : Test
@@ -32,20 +18,20 @@ suite =
                         |> Expect.equal (Ok (StopwatchData [ 4 * 60 + 17 ]))
             , test "readStopwatchData of a valid multi-line string is a valid list of results" <|
                 \() ->
-                    readStopwatchData sampleData
-                        |> Expect.equal (Ok expectedParsedSampleData)
+                    readStopwatchData sampleStopwatchData
+                        |> Expect.equal (Ok expectedParsedSampleStopwatchData)
             , test "readStopwatchData of a valid multi-line string with CRLF line-endings is a valid list of results" <|
                 \() ->
-                    readStopwatchData (String.replace "\n" crlf sampleData)
-                        |> Expect.equal (Ok expectedParsedSampleData)
+                    readStopwatchData (String.replace "\n" crlf sampleStopwatchData)
+                        |> Expect.equal (Ok expectedParsedSampleStopwatchData)
             , test "readStopwatchData of a valid multi-line string with CR line-endings is a valid list of results" <|
                 \() ->
-                    readStopwatchData (String.replace "\n" "\u{000D}" sampleData)
-                        |> Expect.equal (Ok expectedParsedSampleData)
+                    readStopwatchData (String.replace "\n" "\u{000D}" sampleStopwatchData)
+                        |> Expect.equal (Ok expectedParsedSampleStopwatchData)
             , test "readStopwatchData of a valid multi-line string with blank lines is a valid list of results" <|
                 \() ->
-                    readStopwatchData (String.replace "\n" "\n\n" sampleData)
-                        |> Expect.equal (Ok expectedParsedSampleData)
+                    readStopwatchData (String.replace "\n" "\n\n" sampleStopwatchData)
+                        |> Expect.equal (Ok expectedParsedSampleStopwatchData)
             , test "readStopwatchData of an empty string is not a valid list of results" <|
                 \() ->
                     readStopwatchData ""
@@ -68,7 +54,7 @@ suite =
                         |> expectError "UNRECOGNISED_TIME"
             , test "readStopwatchData of a multi-line string with an invalid value on one line is not a valid list of results" <|
                 \() ->
-                    readStopwatchData (String.replace "00:07:44" "nonsense" sampleData)
+                    readStopwatchData (String.replace "00:07:44" "nonsense" sampleStopwatchData)
                         |> expectError "UNRECOGNISED_TIME"
             ]
         ]

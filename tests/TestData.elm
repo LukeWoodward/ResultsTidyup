@@ -3,6 +3,7 @@ module TestData exposing
     , defaultTime
     , doubleStopwatches
     , expectedMergedStopwatchFileContents
+    , expectedParsedSampleStopwatchData
     , flippedDoubleStopwatches
     , invalidBarcodeScannerData
     , invalidNumberCheckerData
@@ -11,6 +12,7 @@ module TestData exposing
     , parsedBarcodeScannerData1And2
     , parsedBarcodeScannerDataWithIncompleteRecordFirst
     , parsedEventDateOnly
+    , parsedInvalidBarcodeScannerData
     , parsedNumberCheckerData
     , parsedStopwatchTimes2
     , recentTime
@@ -18,7 +20,9 @@ module TestData exposing
     , sampleNumberCheckerDataDecremented
     , sampleNumberCheckerDataIncremented
     , sampleNumberCheckerDataWithSecondItemRemoved
+    , sampleStopwatchData
     , sampleStopwatchData2
+    , singleStopwatch
     , stopwatchesForAdjusting
     , toPosix
     , validBarcodeScannerData1
@@ -46,12 +50,35 @@ import Merger exposing (MergeEntry(..))
 import Model exposing (NumberCheckerManualEntryRow)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import NumericEntry exposing (numericEntryFromInt)
+import Stopwatch exposing (Stopwatch(..))
 import Time exposing (Posix)
 
 
 defaultTime : Maybe Time.Posix
 defaultTime =
     toPosix "2018-03-14T09:47:03.000Z"
+
+
+sampleStopwatchData : String
+sampleStopwatchData =
+    "STARTOFEVENT,01/01/2001 00:00:00,abcdefghij\n"
+        ++ "0,01/01/2001 00:00:00\n"
+        ++ "1,01/01/2001 00:03:11,00:03:11\n"
+        ++ "2,01/01/2001 00:07:44,00:07:44\n"
+        ++ "3,01/01/2001 00:10:03,00:10:03\n"
+        ++ "ENDOFEVENT,01/01/2001 00:15:55\n"
+
+
+expectedParsedSampleStopwatchData : Stopwatch
+expectedParsedSampleStopwatchData =
+    StopwatchData [ 3 * 60 + 11, 7 * 60 + 44, 10 * 60 + 3 ]
+
+
+singleStopwatch : Stopwatches
+singleStopwatch =
+    case expectedParsedSampleStopwatchData of
+        StopwatchData times ->
+            Single "stopwatch1.txt" times
 
 
 ordinaryFileLine : Int -> String -> Maybe Int -> String -> BarcodeScannerFileLine
@@ -221,6 +248,22 @@ parsedBarcodeScannerDataWithIncompleteRecordFirst =
         []
         []
         defaultTime
+
+
+parsedInvalidBarcodeScannerData : BarcodeScannerData
+parsedInvalidBarcodeScannerData =
+    BarcodeScannerData
+        [ BarcodeScannerFile "invalid.txt" [] Nothing ]
+        Dict.empty
+        []
+        []
+        []
+        [ { errorCode = "INVALID_POSITION_ZERO"
+          , errorMessage = "Invalid position record 'P0000' found in barcode scanner file"
+          , line = "A4580442,P0000,14/03/2018 09:47:03"
+          }
+        ]
+        Nothing
 
 
 parsedEventDateOnly : EventDateAndTime
