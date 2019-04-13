@@ -269,8 +269,8 @@ deleteAtIndex index items =
             first :: deleteAtIndex (index - 1) rest
 
 
-deleteBarcodeScannerFileAtIndex : Int -> Model -> Model
-deleteBarcodeScannerFileAtIndex index model =
+deleteBarcodeScannerFileWithName : String -> Model -> Model
+deleteBarcodeScannerFileWithName fileName model =
     let
         barcodeScannerData : BarcodeScannerData
         barcodeScannerData =
@@ -278,7 +278,7 @@ deleteBarcodeScannerFileAtIndex index model =
     in
     identifyProblemsIn
         { model
-            | barcodeScannerData = regenerate { barcodeScannerData | files = deleteAtIndex index model.barcodeScannerData.files }
+            | barcodeScannerData = regenerate { barcodeScannerData | files = List.filter (\file -> file.name /= fileName) model.barcodeScannerData.files }
         }
 
 
@@ -423,8 +423,8 @@ update msg model =
         DownloadBarcodeScannerFile index zone time ->
             ( model, downloadSingleBarcodeScannerData index model.barcodeScannerData.files zone time )
 
-        DeleteBarcodeScannerFile index ->
-            ( deleteBarcodeScannerFileAtIndex index model, Cmd.none )
+        DeleteBarcodeScannerFile fileName ->
+            ( deleteBarcodeScannerFileWithName fileName model, Cmd.none )
 
         IgnoreProblem problemIndex ->
             ( ignoreProblem problemIndex model, Cmd.none )
