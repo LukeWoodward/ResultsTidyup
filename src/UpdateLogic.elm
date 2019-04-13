@@ -259,19 +259,6 @@ downloadSingleBarcodeScannerData fileName files zone time =
             Cmd.none
 
 
-deleteAtIndex : Int -> List a -> List a
-deleteAtIndex index items =
-    case ( index, items ) of
-        ( _, [] ) ->
-            []
-
-        ( 0, _ :: rest ) ->
-            rest
-
-        ( _, first :: rest ) ->
-            first :: deleteAtIndex (index - 1) rest
-
-
 deleteBarcodeScannerFileWithName : String -> Model -> Model
 deleteBarcodeScannerFileWithName fileName model =
     let
