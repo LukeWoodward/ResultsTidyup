@@ -103,12 +103,12 @@ barcodeScannerViewRow fileName line =
         )
 
 
-barcodeScannerView : Int -> BarcodeScannerFile -> Html Msg
-barcodeScannerView index file =
+barcodeScannerView : BarcodeScannerFile -> Html Msg
+barcodeScannerView file =
     div []
         [ div
             [ class "barcode-scanner-buttons" ]
-            [ smallButton (GetCurrentDateForDownloadFile (DownloadBarcodeScannerFile index)) [] "Download"
+            [ smallButton (GetCurrentDateForDownloadFile (DownloadBarcodeScannerFile file.name)) [] "Download"
             , smallButton (DeleteBarcodeScannerFile file.name) [] "Delete"
             ]
         , Table.table
@@ -164,7 +164,7 @@ barcodeScannerTabView index file =
     Tab.item
         { id = "barcodeScannerTab" ++ String.fromInt index
         , link = Tab.link [ class (getBarcodeScannerTabClass file) ] [ small [] [ text file.name ] ]
-        , pane = Tab.pane [] [ barcodeScannerView index file ]
+        , pane = Tab.pane [] [ barcodeScannerView file ]
         }
 
 

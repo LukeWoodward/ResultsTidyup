@@ -676,12 +676,12 @@ suite =
         , describe "DownloadBarcodeScannerFile tests"
             [ test "DownloadBarcodeScannerFile does nothing for empty data" <|
                 \() ->
-                    update (DownloadBarcodeScannerFile 0 Time.utc recentTime) initModel
+                    update (DownloadBarcodeScannerFile "0.txt" Time.utc recentTime) initModel
                         |> Expect.all defaultAssertions
             , test "DownloadBarcodeScannerFile downloads file at first index of three" <|
                 \() ->
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
-                        |> update (DownloadBarcodeScannerFile 0 Time.utc recentTime)
+                        |> update (DownloadBarcodeScannerFile "1.txt" Time.utc recentTime)
                         |> Expect.all
                             (expectACommand
                                 :: expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2, 3 ])
@@ -690,7 +690,7 @@ suite =
             , test "DownloadBarcodeScannerFile deletes file at middle index of three" <|
                 \() ->
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
-                        |> update (DownloadBarcodeScannerFile 1 Time.utc recentTime)
+                        |> update (DownloadBarcodeScannerFile "2.txt" Time.utc recentTime)
                         |> Expect.all
                             (expectACommand
                                 :: expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2, 3 ])
@@ -699,24 +699,16 @@ suite =
             , test "DownloadBarcodeScannerFile deletes file at last index of three" <|
                 \() ->
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
-                        |> update (DownloadBarcodeScannerFile 2 Time.utc recentTime)
+                        |> update (DownloadBarcodeScannerFile "3.txt" Time.utc recentTime)
                         |> Expect.all
                             (expectACommand
                                 :: expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2, 3 ])
                                 :: defaultAssertionsExcept [ Command, BarcodeScannerDataAssertion ]
                             )
-            , test "DownloadBarcodeScannerFile does nothing with index off the end of the list" <|
+            , test "DownloadBarcodeScannerFile does nothing with nonexistent filename" <|
                 \() ->
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
-                        |> update (DownloadBarcodeScannerFile 3 Time.utc recentTime)
-                        |> Expect.all
-                            (expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2, 3 ])
-                                :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
-                            )
-            , test "DownloadBarcodeScannerFile does nothing with index off the beginning of the list" <|
-                \() ->
-                    { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
-                        |> update (DownloadBarcodeScannerFile -1 Time.utc recentTime)
+                        |> update (DownloadBarcodeScannerFile "nonexistent.txt" Time.utc recentTime)
                         |> Expect.all
                             (expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2, 3 ])
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]

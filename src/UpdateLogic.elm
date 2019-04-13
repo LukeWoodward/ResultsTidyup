@@ -233,27 +233,30 @@ reunderlineStopwatchTable model =
             model
 
 
-downloadSingleBarcodeScannerData : Int -> List BarcodeScannerFile -> Zone -> Posix -> Cmd Msg
-downloadSingleBarcodeScannerData index files zone time =
-    case ( index, files ) of
-        ( _, [] ) ->
-            Cmd.none
-
-        ( 0, first :: _ ) ->
+downloadSingleBarcodeScannerData : String -> List BarcodeScannerFile -> Zone -> Posix -> Cmd Msg
+downloadSingleBarcodeScannerData fileName files zone time =
+    let
+        fileToDownload : Maybe BarcodeScannerFile
+        fileToDownload =
+            List.filter (\file -> file.name == fileName) files
+                |> List.head
+    in
+    case fileToDownload of
+        Just someFile ->
             let
-                fileContents : String
-                fileContents =
-                    generateDownloadText first
+                downloadFileContents : String
+                downloadFileContents =
+                    generateDownloadText someFile
 
-                fileName : String
-                fileName =
+                downloadFileName : String
+                downloadFileName =
                     "results_tidyup_barcode_" ++ generateDownloadFilenameDatePart zone time ++ ".txt"
             in
-            InteropFile fileName fileContents
-                |> downloadFile
+            downloadFile (InteropFile downloadFileName downloadFileContents)
 
-        ( _, _ :: rest ) ->
-            downloadSingleBarcodeScannerData (index - 1) rest zone time
+        Nothing ->
+            -- No file with that name was found.
+            Cmd.none
 
 
 deleteAtIndex : Int -> List a -> List a

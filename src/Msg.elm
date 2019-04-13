@@ -37,7 +37,7 @@ type Msg
     | ChangeSecondTab Tab.State
     | ChangeBarcodeScannerTab Tab.State
     | ClearErrors
-    | DownloadBarcodeScannerFile Int Zone Posix
+    | DownloadBarcodeScannerFile String Zone Posix
     | DeleteBarcodeScannerFile String
     | IgnoreProblem Int
     | ShowBarcodeScannerEditModal BarcodeScannerRowEditLocation LineContents
