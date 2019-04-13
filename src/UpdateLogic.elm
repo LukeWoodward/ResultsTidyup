@@ -323,7 +323,7 @@ update msg model =
             )
 
         ToggleTableRow index ->
-            ( toggleTableRow index model, Cmd.none )
+            ( toggleTableRow index model |> identifyProblemsIn, Cmd.none )
 
         DeleteStopwatch which ->
             ( deleteStopwatch which model, Cmd.none )
