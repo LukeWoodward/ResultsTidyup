@@ -22,7 +22,7 @@ import NumericEntry
 
 
 type alias BarcodeScannerRowEditLocation =
-    { fileNumber : Int
+    { fileName : String
     , lineNumber : Int
     }
 

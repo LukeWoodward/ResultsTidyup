@@ -11,6 +11,7 @@ import BarcodeScanner
         , empty
         , regenerate
         )
+import BarcodeScannerEditing exposing (BarcodeScannerRowEditLocation)
 import BarcodeScannerTests exposing (createBarcodeScannerData)
 import DataStructures exposing (EventDateAndTime, InteropFile, ProblemFix(..), SecondTab(..), WhichStopwatch(..))
 import Dict exposing (Dict)
@@ -818,6 +819,52 @@ suite =
                         |> Expect.all
                             (expectProblemEntries problemEntries
                                 :: defaultAssertionsExcept [ Problems ]
+                            )
+            ]
+        , describe "DeleteRowFromBarcodeScannerEditModel tests"
+            [ test "Can delete a row from a barcode scanner file" <|
+                \() ->
+                    let
+                        initialBarcodeScannerData : BarcodeScannerData
+                        initialBarcodeScannerData =
+                            BarcodeScannerData
+                                [ BarcodeScannerFile
+                                    "barcodes6.txt"
+                                    [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+                                Dict.empty
+                                []
+                                []
+                                []
+                                []
+                                Nothing
+                                |> regenerate
+
+                        expectedBarcodeScannerData : BarcodeScannerData
+                        expectedBarcodeScannerData =
+                            BarcodeScannerData
+                                [ BarcodeScannerFile
+                                    "barcodes6.txt"
+                                    [ ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+                                Dict.empty
+                                []
+                                []
+                                []
+                                []
+                                Nothing
+                                |> regenerate
+                    in
+                    { initModel | barcodeScannerData = initialBarcodeScannerData }
+                        |> update (DeleteRowFromBarcodeScannerEditModel (BarcodeScannerRowEditLocation "barcodes6.txt" 1))
+                        |> Expect.all
+                            (expectBarcodeScannerData expectedBarcodeScannerData
+                                :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
                             )
             ]
         ]

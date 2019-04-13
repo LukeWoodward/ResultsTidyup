@@ -19,7 +19,7 @@ import Test exposing (Test, describe, test)
 initialDetails : BarcodeScannerRowEditDetails
 initialDetails =
     BarcodeScannerRowEditDetails
-        (BarcodeScannerRowEditLocation 1 3)
+        (BarcodeScannerRowEditLocation "file.txt" 3)
         (Ordinary "A229804" (Just 22))
         (NumericEntry "A229804" (Just 229804))
         (NumericEntry "22" (Just 22))
@@ -49,10 +49,10 @@ suite =
         [ describe "startEditing tests"
             [ test "Can start editing with a complete row" <|
                 \() ->
-                    startEditing (BarcodeScannerRowEditLocation 2 34) (Ordinary "A182095" (Just 47))
+                    startEditing (BarcodeScannerRowEditLocation "file.txt" 34) (Ordinary "A182095" (Just 47))
                         |> Expect.equal
                             (BarcodeScannerRowEditDetails
-                                (BarcodeScannerRowEditLocation 2 34)
+                                (BarcodeScannerRowEditLocation "file.txt" 34)
                                 (Ordinary "A182095" (Just 47))
                                 (NumericEntry "A182095" (Just 182095))
                                 (NumericEntry "47" (Just 47))
@@ -61,10 +61,10 @@ suite =
                             )
             , test "Can start editing with a mis-scanned item" <|
                 \() ->
-                    startEditing (BarcodeScannerRowEditLocation 1 51) (MisScan "d&084")
+                    startEditing (BarcodeScannerRowEditLocation "file.txt" 51) (MisScan "d&084")
                         |> Expect.equal
                             (BarcodeScannerRowEditDetails
-                                (BarcodeScannerRowEditLocation 1 51)
+                                (BarcodeScannerRowEditLocation "file.txt" 51)
                                 (MisScan "d&084")
                                 (NumericEntry "" Nothing)
                                 (NumericEntry "" Nothing)

@@ -9,6 +9,7 @@ module BarcodeScanner exposing
     , MisScannedItem
     , PositionAndTimePair
     , UnrecognisedLine
+    , deleteBarcodeScannerLine
     , empty
     , generateDownloadText
     , isEmpty
@@ -478,3 +479,18 @@ generateDownloadText file =
         |> List.filter notDeleted
         |> List.map lineToString
         |> String.join ""
+
+
+deleteBarcodeScannerLine : String -> Int -> BarcodeScannerData -> BarcodeScannerData
+deleteBarcodeScannerLine fileName lineNumber barcodeScannerData =
+    let
+        deleteLineInFile : BarcodeScannerFile -> BarcodeScannerFile
+        deleteLineInFile file =
+            if file.name == fileName then
+                { file | lines = List.filter (\line -> line.lineNumber /= lineNumber) file.lines }
+
+            else
+                file
+    in
+    { barcodeScannerData | files = List.map deleteLineInFile barcodeScannerData.files }
+        |> regenerate

@@ -63,8 +63,8 @@ barcodeScannerContents contents =
             [ Table.td [ Table.cellAttr (colspan 2), Table.cellAttr (class "misscanned"), Table.cellAttr (title "This item was not scanned properly.") ] [ text misScannedText ] ]
 
 
-barcodeScannerViewRow : Int -> String -> BarcodeScannerFileLine -> Table.Row Msg
-barcodeScannerViewRow fileIndex fileName line =
+barcodeScannerViewRow : String -> BarcodeScannerFileLine -> Table.Row Msg
+barcodeScannerViewRow fileName line =
     let
         rowAttributes : List (Attribute Msg)
         rowAttributes =
@@ -87,7 +87,7 @@ barcodeScannerViewRow fileIndex fileName line =
                                     "barcode-scanner-row-ok"
                     in
                     [ class className
-                    , onDoubleClick (ShowBarcodeScannerEditModal (BarcodeScannerRowEditLocation fileIndex line.lineNumber) line.contents)
+                    , onDoubleClick (ShowBarcodeScannerEditModal (BarcodeScannerRowEditLocation fileName line.lineNumber) line.contents)
                     ]
 
                 Deleted deletionReason ->
@@ -114,7 +114,7 @@ barcodeScannerView index file =
         , Table.table
             { options = [ Table.bordered, Table.small, Table.hover, Table.attr (class "barcode-scanner-table") ]
             , thead = tableHeaders [ "Line #", "Athlete", "Position", "Date/Time" ]
-            , tbody = Table.tbody [] (List.map (barcodeScannerViewRow index file.name) file.lines)
+            , tbody = Table.tbody [] (List.map (barcodeScannerViewRow file.name) file.lines)
             }
         ]
 

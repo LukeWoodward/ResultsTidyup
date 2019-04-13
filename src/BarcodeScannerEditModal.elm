@@ -193,18 +193,31 @@ dialogBody rowEditDetailsMaybe =
 
 barcodeScannerEditModal : Model -> Html Msg
 barcodeScannerEditModal model =
+    let
+        deleteButtonAttrs : List (Html.Attribute Msg)
+        deleteButtonAttrs =
+            case model.barcodeScannerRowEditDetails of
+                Just someDetails ->
+                    [ onClick (DeleteRowFromBarcodeScannerEditModel someDetails.location) ]
+
+                Nothing ->
+                    []
+    in
     Modal.config CloseBarcodeScannerEditModal
         |> Modal.h5 [] [ text (dialogTitle model.barcodeScannerRowEditDetails) ]
         |> Modal.body [] [ dialogBody model.barcodeScannerRowEditDetails ]
         |> Modal.footer []
             [ Button.button
-                [ Button.outlinePrimary, Button.danger ]
-                [ text "Delete" ]
+                [ Button.outlinePrimary
+                , Button.danger
+                , Button.attrs deleteButtonAttrs
+                ]
+                [ text "Delete row" ]
             , Button.button
                 [ Button.outlinePrimary
                 , Button.disabled (Maybe.andThen .validationError model.barcodeScannerRowEditDetails /= Nothing)
                 ]
-                [ text "Update" ]
+                [ text "Update row" ]
             , Button.button
                 [ Button.outlinePrimary
                 , Button.attrs [ onClick CloseBarcodeScannerEditModal ]
