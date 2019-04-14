@@ -850,7 +850,7 @@ suite =
                                 |> regenerate
                     in
                     { initModel | barcodeScannerData = initialBarcodeScannerData }
-                        |> update (DeleteRowFromBarcodeScannerEditModel (BarcodeScannerRowEditLocation "barcodes6.txt" 1))
+                        |> update (DeleteRowFromBarcodeScannerEditModal (BarcodeScannerRowEditLocation "barcodes6.txt" 1))
                         |> Expect.all
                             (expectBarcodeScannerData expectedBarcodeScannerData
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]

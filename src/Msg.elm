@@ -42,5 +42,5 @@ type Msg
     | IgnoreProblem Int
     | ShowBarcodeScannerEditModal BarcodeScannerRowEditLocation LineContents
     | BarcodeScannerEdit BarcodeScannerEditDetails
-    | DeleteRowFromBarcodeScannerEditModel BarcodeScannerRowEditLocation
+    | DeleteRowFromBarcodeScannerEditModal BarcodeScannerRowEditLocation
     | CloseBarcodeScannerEditModal

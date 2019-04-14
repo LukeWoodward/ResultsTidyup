@@ -435,7 +435,7 @@ update msg model =
             in
             ( { model | barcodeScannerRowEditDetails = newEditDetails }, Cmd.none )
 
-        DeleteRowFromBarcodeScannerEditModel location ->
+        DeleteRowFromBarcodeScannerEditModal location ->
             ( { model
                 | barcodeScannerRowEditDetails = Nothing
                 , barcodeScannerData = deleteBarcodeScannerLine location.fileName location.lineNumber model.barcodeScannerData
