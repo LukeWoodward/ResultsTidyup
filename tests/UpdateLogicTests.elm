@@ -809,12 +809,16 @@ suite =
             [ test "Can delete a row from a barcode scanner file" <|
                 \() ->
                     let
+                        lineToDelete : BarcodeScannerFileLine
+                        lineToDelete =
+                            ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
+
                         initialBarcodeScannerData : BarcodeScannerData
                         initialBarcodeScannerData =
                             BarcodeScannerData
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
-                                    [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
+                                    [ lineToDelete
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
                                     (toPosix "2018-03-14T09:48:44.000Z")
@@ -832,7 +836,8 @@ suite =
                             BarcodeScannerData
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
-                                    [ ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
+                                    [ { lineToDelete | deletionStatus = Deleted DeletedByUser }
+                                    , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
                                     (toPosix "2018-03-14T09:48:44.000Z")
                                 ]

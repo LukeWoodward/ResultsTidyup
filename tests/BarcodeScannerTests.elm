@@ -88,6 +88,11 @@ expectSingleUnrecognisedLineFor line expectedCode =
         |> expectSingleUnrecognisedLine line expectedCode
 
 
+deleteByUser : BarcodeScannerFileLine -> BarcodeScannerFileLine
+deleteByUser line =
+    { line | deletionStatus = Deleted DeletedByUser }
+
+
 suite : Test
 suite =
     describe "BarcodeScanner tests"
@@ -343,7 +348,8 @@ suite =
                             BarcodeScannerData
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
-                                    [ ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
+                                    [ deleteByUser (ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03")
+                                    , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
                                     (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
@@ -384,7 +390,7 @@ suite =
                             BarcodeScannerData
                                 [ BarcodeScannerFile
                                     "barcodes1.txt"
-                                    []
+                                    [ deleteByUser (ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03") ]
                                     (toPosix "2018-03-14T09:47:03.000Z")
                                 , BarcodeScannerFile
                                     "barcodes2.txt"

@@ -50,6 +50,9 @@ deletionReasonToString reason =
         EndOfWrongWayAroundSection ->
             "This line was at the end of a section of barcodes scanned the wrong way around"
 
+        DeletedByUser ->
+            "You deleted this line"
+
 
 barcodeScannerContents : LineContents -> List (Table.Cell Msg)
 barcodeScannerContents contents =

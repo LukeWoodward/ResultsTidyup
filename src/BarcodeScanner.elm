@@ -69,6 +69,7 @@ type DeletionReason
     | AthleteScannedWithFinishTokenElsewhere String
     | FinishTokenScannedWithAthleteElsewhere Int
     | EndOfWrongWayAroundSection
+    | DeletedByUser
 
 
 type DeletionStatus
@@ -484,10 +485,18 @@ generateDownloadText file =
 deleteBarcodeScannerLine : String -> Int -> BarcodeScannerData -> BarcodeScannerData
 deleteBarcodeScannerLine fileName lineNumber barcodeScannerData =
     let
+        deleteLine : BarcodeScannerFileLine -> BarcodeScannerFileLine
+        deleteLine line =
+            if line.lineNumber == lineNumber then
+                { line | deletionStatus = Deleted DeletedByUser }
+
+            else
+                line
+
         deleteLineInFile : BarcodeScannerFile -> BarcodeScannerFile
         deleteLineInFile file =
             if file.name == fileName then
-                { file | lines = List.filter (\line -> line.lineNumber /= lineNumber) file.lines }
+                { file | lines = List.map deleteLine file.lines }
 
             else
                 file
