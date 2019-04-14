@@ -805,7 +805,44 @@ suite =
                                 :: defaultAssertionsExcept [ Problems ]
                             )
             ]
-        , describe "DeleteRowFromBarcodeScannerEditModel tests"
+        , describe "UpdateRowFromBarcodeScannerEditModal tests"
+            [ test "Can update a row in a barcode scanner file" <|
+                \() ->
+                    let
+                        lineToDelete : BarcodeScannerFileLine
+                        lineToDelete =
+                            ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
+
+                        initialBarcodeScannerData : BarcodeScannerData
+                        initialBarcodeScannerData =
+                            createBarcodeScannerDataFromFiles
+                                [ BarcodeScannerFile
+                                    "barcodes6.txt"
+                                    [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+
+                        expectedBarcodeScannerData : BarcodeScannerData
+                        expectedBarcodeScannerData =
+                            createBarcodeScannerDataFromFiles
+                                [ BarcodeScannerFile
+                                    "barcodes6.txt"
+                                    [ ordinaryFileLine 1 "A2022807" (Just 31) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+                    in
+                    { initModel | barcodeScannerData = initialBarcodeScannerData }
+                        |> update (UpdateRowFromBarcodeScannerEditModal (BarcodeScannerRowEditLocation "barcodes6.txt" 1) "A2022807" (Just 31))
+                        |> Expect.all
+                            (expectBarcodeScannerData expectedBarcodeScannerData
+                                :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
+                            )
+            ]
+        , describe "DeleteRowFromBarcodeScannerEditModal tests"
             [ test "Can delete a row from a barcode scanner file" <|
                 \() ->
                     let
@@ -815,7 +852,7 @@ suite =
 
                         initialBarcodeScannerData : BarcodeScannerData
                         initialBarcodeScannerData =
-                            BarcodeScannerData
+                            createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
                                     [ lineToDelete
@@ -823,17 +860,10 @@ suite =
                                     ]
                                     (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
-                                Dict.empty
-                                []
-                                []
-                                []
-                                []
-                                Nothing
-                                |> regenerate
 
                         expectedBarcodeScannerData : BarcodeScannerData
                         expectedBarcodeScannerData =
-                            BarcodeScannerData
+                            createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
                                     [ { lineToDelete | deletionStatus = Deleted DeletedByUser }
@@ -841,13 +871,6 @@ suite =
                                     ]
                                     (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
-                                Dict.empty
-                                []
-                                []
-                                []
-                                []
-                                Nothing
-                                |> regenerate
                     in
                     { initModel | barcodeScannerData = initialBarcodeScannerData }
                         |> update (DeleteRowFromBarcodeScannerEditModal (BarcodeScannerRowEditLocation "barcodes6.txt" 1))

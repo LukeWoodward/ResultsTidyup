@@ -194,6 +194,29 @@ dialogBody rowEditDetailsMaybe =
 barcodeScannerEditModal : Model -> Html Msg
 barcodeScannerEditModal model =
     let
+        updateButtonAttrs : List (Html.Attribute Msg)
+        updateButtonAttrs =
+            case model.barcodeScannerRowEditDetails of
+                Just someDetails ->
+                    if someDetails.validationError == Nothing then
+                        let
+                            athleteStringValue : String
+                            athleteStringValue =
+                                case someDetails.athleteEntered.parsedValue of
+                                    Just athleteNumber ->
+                                        "A" ++ String.fromInt athleteNumber
+
+                                    Nothing ->
+                                        ""
+                        in
+                        [ onClick (UpdateRowFromBarcodeScannerEditModal someDetails.location athleteStringValue someDetails.finishPositionEntered.parsedValue) ]
+
+                    else
+                        []
+
+                Nothing ->
+                    []
+
         deleteButtonAttrs : List (Html.Attribute Msg)
         deleteButtonAttrs =
             case model.barcodeScannerRowEditDetails of
@@ -216,6 +239,7 @@ barcodeScannerEditModal model =
             , Button.button
                 [ Button.outlinePrimary
                 , Button.disabled (Maybe.andThen .validationError model.barcodeScannerRowEditDetails /= Nothing)
+                , Button.attrs updateButtonAttrs
                 ]
                 [ text "Update row" ]
             , Button.button

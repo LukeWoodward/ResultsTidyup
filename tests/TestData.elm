@@ -1,5 +1,6 @@
 module TestData exposing
-    ( createNumberCheckerManualEntryRow
+    ( createBarcodeScannerDataFromFiles
+    , createNumberCheckerManualEntryRow
     , defaultTime
     , doubleStopwatches
     , expectedMergedStopwatchFileContents
@@ -40,6 +41,7 @@ import BarcodeScanner
         , DeletionStatus(..)
         , LineContents(..)
         , PositionAndTimePair
+        , regenerate
         )
 import DataStructures exposing (EventDateAndTime, WhichStopwatch(..))
 import Dict
@@ -439,3 +441,9 @@ sampleNumberCheckerDataWithSecondItemRemoved =
 createNumberCheckerManualEntryRow : Int -> Int -> Int -> NumberCheckerManualEntryRow
 createNumberCheckerManualEntryRow stopwatch1 stopwatch2 finishTokens =
     NumberCheckerManualEntryRow (numericEntryFromInt stopwatch1) (numericEntryFromInt stopwatch2) (numericEntryFromInt finishTokens)
+
+
+createBarcodeScannerDataFromFiles : List BarcodeScannerFile -> BarcodeScannerData
+createBarcodeScannerDataFromFiles files =
+    BarcodeScannerData files Dict.empty [] [] [] [] Nothing
+        |> regenerate

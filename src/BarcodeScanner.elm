@@ -17,6 +17,7 @@ module BarcodeScanner exposing
     , mergeScannerData
     , readBarcodeScannerData
     , regenerate
+    , updateBarcodeScannerLine
     )
 
 import DateHandling exposing (dateStringToPosix)
@@ -480,6 +481,29 @@ generateDownloadText file =
         |> List.filter notDeleted
         |> List.map lineToString
         |> String.join ""
+
+
+updateBarcodeScannerLine : String -> Int -> String -> Maybe Int -> BarcodeScannerData -> BarcodeScannerData
+updateBarcodeScannerLine fileName lineNumber athlete finishPosition barcodeScannerData =
+    let
+        updateLine : BarcodeScannerFileLine -> BarcodeScannerFileLine
+        updateLine line =
+            if line.lineNumber == lineNumber then
+                { line | contents = Ordinary athlete finishPosition }
+
+            else
+                line
+
+        updateLineInFile : BarcodeScannerFile -> BarcodeScannerFile
+        updateLineInFile file =
+            if file.name == fileName then
+                { file | lines = List.map updateLine file.lines }
+
+            else
+                file
+    in
+    { barcodeScannerData | files = List.map updateLineInFile barcodeScannerData.files }
+        |> regenerate
 
 
 deleteBarcodeScannerLine : String -> Int -> BarcodeScannerData -> BarcodeScannerData

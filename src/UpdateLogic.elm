@@ -1,6 +1,6 @@
 module UpdateLogic exposing (createStopwatchFileForDownload, update)
 
-import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, deleteBarcodeScannerLine, generateDownloadText, regenerate)
+import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, deleteBarcodeScannerLine, generateDownloadText, regenerate, updateBarcodeScannerLine)
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, updateEditDetails)
 import Browser.Dom
 import DataStructures exposing (EventDateAndTime, InteropFile, WhichStopwatch(..))
@@ -434,6 +434,15 @@ update msg model =
                     Maybe.map (updateEditDetails editChange) model.barcodeScannerRowEditDetails
             in
             ( { model | barcodeScannerRowEditDetails = newEditDetails }, Cmd.none )
+
+        UpdateRowFromBarcodeScannerEditModal location athlete finishPosition ->
+            ( { model
+                | barcodeScannerRowEditDetails = Nothing
+                , barcodeScannerData = updateBarcodeScannerLine location.fileName location.lineNumber athlete finishPosition model.barcodeScannerData
+              }
+                |> identifyProblemsIn
+            , Cmd.none
+            )
 
         DeleteRowFromBarcodeScannerEditModal location ->
             ( { model

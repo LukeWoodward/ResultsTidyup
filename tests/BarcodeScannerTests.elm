@@ -19,6 +19,7 @@ import BarcodeScanner
         , maxFinishToken
         , readBarcodeScannerData
         , regenerate
+        , updateBarcodeScannerLine
         )
 import Dict exposing (Dict)
 import Error exposing (Error)
@@ -26,7 +27,7 @@ import Errors exposing (expectError)
 import Expect exposing (Expectation)
 import FileHandling exposing (crlf)
 import Test exposing (Test, describe, test)
-import TestData exposing (ordinaryFileLine, toPosix)
+import TestData exposing (createBarcodeScannerDataFromFiles, ordinaryFileLine, toPosix)
 import Time exposing (Posix)
 
 
@@ -321,13 +322,13 @@ suite =
                                 ++ crlf
                             )
             ]
-        , describe "deleteBarcodeScannerLine tests"
-            [ test "Deleting a line from barcode scanner data deletes that line" <|
+        , describe "updateBarcodeScannerLine tests"
+            [ test "Updating a line in barcode scanner data updates the line" <|
                 \() ->
                     let
                         initialBarcodeScannerData : BarcodeScannerData
                         initialBarcodeScannerData =
-                            BarcodeScannerData
+                            createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
@@ -335,39 +336,25 @@ suite =
                                     ]
                                     (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
-                                Dict.empty
-                                []
-                                []
-                                []
-                                []
-                                Nothing
-                                |> regenerate
 
                         expectedBarcodeScannerData : BarcodeScannerData
                         expectedBarcodeScannerData =
-                            BarcodeScannerData
+                            createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
-                                    [ deleteByUser (ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03")
+                                    [ ordinaryFileLine 1 "A2022807" (Just 37) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
                                     (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
-                                Dict.empty
-                                []
-                                []
-                                []
-                                []
-                                Nothing
-                                |> regenerate
                     in
-                    Expect.equal expectedBarcodeScannerData (deleteBarcodeScannerLine "barcodes6.txt" 1 initialBarcodeScannerData)
-            , test "Deleting a line from barcode scanner data with two files deletes that line" <|
+                    Expect.equal expectedBarcodeScannerData (updateBarcodeScannerLine "barcodes6.txt" 1 "A2022807" (Just 37) initialBarcodeScannerData)
+            , test "Updating a line in barcode scanner data with two files updates the line from the correct file" <|
                 \() ->
                     let
                         initialBarcodeScannerData : BarcodeScannerData
                         initialBarcodeScannerData =
-                            BarcodeScannerData
+                            createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes1.txt"
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
@@ -377,17 +364,98 @@ suite =
                                     [ ordinaryFileLine 1 "A1866207" (Just 58) "14/03/2018 09:48:44" ]
                                     (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
-                                Dict.empty
-                                []
-                                []
-                                []
-                                []
-                                Nothing
-                                |> regenerate
 
                         expectedBarcodeScannerData : BarcodeScannerData
                         expectedBarcodeScannerData =
-                            BarcodeScannerData
+                            createBarcodeScannerDataFromFiles
+                                [ BarcodeScannerFile
+                                    "barcodes1.txt"
+                                    [ ordinaryFileLine 1 "A2022807" (Just 31) "14/03/2018 09:47:03" ]
+                                    (toPosix "2018-03-14T09:47:03.000Z")
+                                , BarcodeScannerFile
+                                    "barcodes2.txt"
+                                    [ ordinaryFileLine 1 "A1866207" (Just 58) "14/03/2018 09:48:44" ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+                    in
+                    Expect.equal expectedBarcodeScannerData (updateBarcodeScannerLine "barcodes1.txt" 1 "A2022807" (Just 31) initialBarcodeScannerData)
+            , test "Updating a line in barcode scanner data with no matching line does nothing" <|
+                \() ->
+                    let
+                        initialBarcodeScannerData : BarcodeScannerData
+                        initialBarcodeScannerData =
+                            createBarcodeScannerDataFromFiles
+                                [ BarcodeScannerFile
+                                    "barcodes6.txt"
+                                    [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+                    in
+                    Expect.equal initialBarcodeScannerData (updateBarcodeScannerLine "barcodes6.txt" 99 "A2022807" (Just 31) initialBarcodeScannerData)
+            , test "Updating a line in barcode scanner data with no matching filename does nothing" <|
+                \() ->
+                    let
+                        initialBarcodeScannerData : BarcodeScannerData
+                        initialBarcodeScannerData =
+                            createBarcodeScannerDataFromFiles
+                                [ BarcodeScannerFile
+                                    "barcodes6.txt"
+                                    [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "A1866207" (Just 47) "14/03/2018 09:48:44"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+                    in
+                    Expect.equal initialBarcodeScannerData (updateBarcodeScannerLine "wrong-filename.txt" 1 "A2022807" (Just 31) initialBarcodeScannerData)
+            ]
+        , describe "deleteBarcodeScannerLine tests"
+            [ test "Deleting a line from barcode scanner data deletes that line" <|
+                \() ->
+                    let
+                        initialBarcodeScannerData : BarcodeScannerData
+                        initialBarcodeScannerData =
+                            createBarcodeScannerDataFromFiles
+                                [ BarcodeScannerFile
+                                    "barcodes6.txt"
+                                    [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+
+                        expectedBarcodeScannerData : BarcodeScannerData
+                        expectedBarcodeScannerData =
+                            createBarcodeScannerDataFromFiles
+                                [ BarcodeScannerFile
+                                    "barcodes6.txt"
+                                    [ deleteByUser (ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03")
+                                    , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+                    in
+                    Expect.equal expectedBarcodeScannerData (deleteBarcodeScannerLine "barcodes6.txt" 1 initialBarcodeScannerData)
+            , test "Deleting a line from barcode scanner data with two files deletes the line from the correct file" <|
+                \() ->
+                    let
+                        initialBarcodeScannerData : BarcodeScannerData
+                        initialBarcodeScannerData =
+                            createBarcodeScannerDataFromFiles
+                                [ BarcodeScannerFile
+                                    "barcodes1.txt"
+                                    [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
+                                    (toPosix "2018-03-14T09:47:03.000Z")
+                                , BarcodeScannerFile
+                                    "barcodes2.txt"
+                                    [ ordinaryFileLine 1 "A1866207" (Just 58) "14/03/2018 09:48:44" ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+
+                        expectedBarcodeScannerData : BarcodeScannerData
+                        expectedBarcodeScannerData =
+                            createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes1.txt"
                                     [ deleteByUser (ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03") ]
@@ -397,13 +465,6 @@ suite =
                                     [ ordinaryFileLine 1 "A1866207" (Just 58) "14/03/2018 09:48:44" ]
                                     (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
-                                Dict.empty
-                                []
-                                []
-                                []
-                                []
-                                Nothing
-                                |> regenerate
                     in
                     Expect.equal expectedBarcodeScannerData (deleteBarcodeScannerLine "barcodes1.txt" 1 initialBarcodeScannerData)
             , test "Deleting a line from barcode scanner data with no matching line does nothing" <|
@@ -411,7 +472,7 @@ suite =
                     let
                         initialBarcodeScannerData : BarcodeScannerData
                         initialBarcodeScannerData =
-                            BarcodeScannerData
+                            createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
@@ -419,13 +480,6 @@ suite =
                                     ]
                                     (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
-                                Dict.empty
-                                []
-                                []
-                                []
-                                []
-                                Nothing
-                                |> regenerate
                     in
                     Expect.equal initialBarcodeScannerData (deleteBarcodeScannerLine "barcodes6.txt" 99 initialBarcodeScannerData)
             , test "Deleting a line from barcode scanner data with no matching filename does nothing" <|
@@ -433,7 +487,7 @@ suite =
                     let
                         initialBarcodeScannerData : BarcodeScannerData
                         initialBarcodeScannerData =
-                            BarcodeScannerData
+                            createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
@@ -441,13 +495,6 @@ suite =
                                     ]
                                     (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
-                                Dict.empty
-                                []
-                                []
-                                []
-                                []
-                                Nothing
-                                |> regenerate
                     in
                     Expect.equal initialBarcodeScannerData (deleteBarcodeScannerLine "wrong-filename.txt" 1 initialBarcodeScannerData)
             ]
