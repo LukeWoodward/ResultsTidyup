@@ -221,7 +221,9 @@ barcodeScannerEditModal model =
         deleteButtonAttrs =
             case model.barcodeScannerRowEditDetails of
                 Just someDetails ->
-                    [ onClick (DeleteRowFromBarcodeScannerEditModal someDetails.location) ]
+                    [ onClick (DeleteRowFromBarcodeScannerEditModal someDetails.location)
+                    , class "mr-5"
+                    ]
 
                 Nothing ->
                     []
