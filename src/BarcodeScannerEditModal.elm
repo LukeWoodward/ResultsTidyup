@@ -20,7 +20,7 @@ import Bootstrap.Modal as Modal
 import Html exposing (Html, b, div, text)
 import Html.Attributes exposing (class, type_)
 import Html.Events exposing (onClick)
-import Model exposing (Model)
+import Model exposing (DialogEditDetails(..), Model)
 import Msg exposing (Msg(..))
 import NumericEntry exposing (isValidEntry)
 
@@ -158,36 +158,38 @@ editBarcodeScannerRowModalBody rowEditDetails =
         |> Grid.containerFluid []
 
 
-dialogVisibility : Maybe BarcodeScannerRowEditDetails -> Modal.Visibility
-dialogVisibility dialogType =
-    case dialogType of
-        Just _ ->
+dialogVisibility : DialogEditDetails -> Modal.Visibility
+dialogVisibility dialogEditDetails =
+    case dialogEditDetails of
+        BarcodeScannerRow _ ->
             Modal.shown
 
-        Nothing ->
+        _ ->
             Modal.hidden
 
 
-dialogTitle : Maybe BarcodeScannerRowEditDetails -> String
-dialogTitle rowEditDetails =
-    case Maybe.map .currentContents rowEditDetails of
-        Just (MisScan _) ->
-            "Edit mis-scanned barcode scanner row"
+dialogTitle : DialogEditDetails -> String
+dialogTitle dialogEditDetails =
+    case dialogEditDetails of
+        BarcodeScannerRow rowEditDetails ->
+            case rowEditDetails.currentContents of
+                MisScan _ ->
+                    "Edit mis-scanned barcode scanner row"
 
-        Just (Ordinary _ _) ->
-            "Edit barcode scanner row"
+                Ordinary _ _ ->
+                    "Edit barcode scanner row"
 
-        Nothing ->
+        NoDialog ->
             ""
 
 
-dialogBody : Maybe BarcodeScannerRowEditDetails -> Html Msg
-dialogBody rowEditDetailsMaybe =
-    case rowEditDetailsMaybe of
-        Just rowEditDetails ->
+dialogBody : DialogEditDetails -> Html Msg
+dialogBody dialogEditDetails =
+    case dialogEditDetails of
+        BarcodeScannerRow rowEditDetails ->
             editBarcodeScannerRowModalBody rowEditDetails
 
-        Nothing ->
+        NoDialog ->
             div [] []
 
 
@@ -196,8 +198,11 @@ barcodeScannerEditModal model =
     let
         updateButtonAttrs : List (Html.Attribute Msg)
         updateButtonAttrs =
-            case model.barcodeScannerRowEditDetails of
-                Just someDetails ->
+            case model.dialogEditDetails of
+                NoDialog ->
+                    []
+
+                BarcodeScannerRow someDetails ->
                     if someDetails.validationError == Nothing then
                         let
                             athleteStringValue : String
@@ -214,23 +219,29 @@ barcodeScannerEditModal model =
                     else
                         []
 
-                Nothing ->
-                    []
-
         deleteButtonAttrs : List (Html.Attribute Msg)
         deleteButtonAttrs =
-            case model.barcodeScannerRowEditDetails of
-                Just someDetails ->
-                    [ onClick (DeleteRowFromBarcodeScannerEditModal someDetails.location)
+            case model.dialogEditDetails of
+                NoDialog ->
+                    []
+
+                BarcodeScannerRow barcodeScannerRowEditDetails ->
+                    [ onClick (DeleteRowFromBarcodeScannerEditModal barcodeScannerRowEditDetails.location)
                     , class "mr-5"
                     ]
 
-                Nothing ->
-                    []
+        updateButtonDisabled : Bool
+        updateButtonDisabled =
+            case model.dialogEditDetails of
+                NoDialog ->
+                    True
+
+                BarcodeScannerRow barcodeScannerRowEditDetails ->
+                    barcodeScannerRowEditDetails.validationError /= Nothing
     in
     Modal.config CloseBarcodeScannerEditModal
-        |> Modal.h5 [] [ text (dialogTitle model.barcodeScannerRowEditDetails) ]
-        |> Modal.body [] [ dialogBody model.barcodeScannerRowEditDetails ]
+        |> Modal.h5 [] [ text (dialogTitle model.dialogEditDetails) ]
+        |> Modal.body [] [ dialogBody model.dialogEditDetails ]
         |> Modal.footer []
             [ Button.button
                 [ Button.outlinePrimary
@@ -240,7 +251,7 @@ barcodeScannerEditModal model =
                 [ text "Delete row" ]
             , Button.button
                 [ Button.outlinePrimary
-                , Button.disabled (Maybe.andThen .validationError model.barcodeScannerRowEditDetails /= Nothing)
+                , Button.disabled updateButtonDisabled
                 , Button.attrs updateButtonAttrs
                 ]
                 [ text "Update row" ]
@@ -250,4 +261,4 @@ barcodeScannerEditModal model =
                 ]
                 [ text "Close" ]
             ]
-        |> Modal.view (dialogVisibility model.barcodeScannerRowEditDetails)
+        |> Modal.view (dialogVisibility model.dialogEditDetails)

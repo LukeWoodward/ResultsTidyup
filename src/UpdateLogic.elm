@@ -19,7 +19,7 @@ import MergedTable
         , toggleRowInTable
         , underlineTable
         )
-import Model exposing (Model, NumberCheckerManualEntryRow, ProblemEntry, initModel)
+import Model exposing (DialogEditDetails(..), Model, NumberCheckerManualEntryRow, ProblemEntry, initModel)
 import Msg exposing (Msg(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import NumberCheckerEditing
@@ -421,23 +421,29 @@ update msg model =
 
         ShowBarcodeScannerEditModal location contents ->
             ( { model
-                | barcodeScannerRowEditDetails =
-                    Just (BarcodeScannerEditing.startEditing location contents)
+                | dialogEditDetails =
+                    BarcodeScannerRow (BarcodeScannerEditing.startEditing location contents)
               }
             , Cmd.none
             )
 
         BarcodeScannerEdit editChange ->
             let
-                newEditDetails : Maybe BarcodeScannerRowEditDetails
+                newEditDetails : DialogEditDetails
                 newEditDetails =
-                    Maybe.map (updateEditDetails editChange) model.barcodeScannerRowEditDetails
+                    case model.dialogEditDetails of
+                        NoDialog ->
+                            NoDialog
+
+                        BarcodeScannerRow barcodeScannerRowEditDetails ->
+                            updateEditDetails editChange barcodeScannerRowEditDetails
+                                |> BarcodeScannerRow
             in
-            ( { model | barcodeScannerRowEditDetails = newEditDetails }, Cmd.none )
+            ( { model | dialogEditDetails = newEditDetails }, Cmd.none )
 
         UpdateRowFromBarcodeScannerEditModal location athlete finishPosition ->
             ( { model
-                | barcodeScannerRowEditDetails = Nothing
+                | dialogEditDetails = NoDialog
                 , barcodeScannerData = updateBarcodeScannerLine location.fileName location.lineNumber athlete finishPosition model.barcodeScannerData
               }
                 |> identifyProblemsIn
@@ -446,7 +452,7 @@ update msg model =
 
         DeleteRowFromBarcodeScannerEditModal location ->
             ( { model
-                | barcodeScannerRowEditDetails = Nothing
+                | dialogEditDetails = NoDialog
                 , barcodeScannerData = deleteBarcodeScannerLine location.fileName location.lineNumber model.barcodeScannerData
               }
                 |> identifyProblemsIn
@@ -454,4 +460,4 @@ update msg model =
             )
 
         CloseBarcodeScannerEditModal ->
-            ( { model | barcodeScannerRowEditDetails = Nothing }, Cmd.none )
+            ( { model | dialogEditDetails = NoDialog }, Cmd.none )

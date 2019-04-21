@@ -1,5 +1,6 @@
 module Model exposing
-    ( Model
+    ( DialogEditDetails(..)
+    , Model
     , NumberCheckerManualEntryRow
     , ProblemEntry
     , emptyNumberCheckerManualEntryRow
@@ -43,6 +44,11 @@ type alias ProblemEntry =
     }
 
 
+type DialogEditDetails
+    = NoDialog
+    | BarcodeScannerRow BarcodeScannerRowEditDetails
+
+
 type alias Model =
     { isBeta : Bool
     , stopwatches : Stopwatches
@@ -56,7 +62,7 @@ type alias Model =
     , numberCheckerManualEntryRow : NumberCheckerManualEntryRow
     , secondTab : Tab.State
     , barcodeScannerTab : Tab.State
-    , barcodeScannerRowEditDetails : Maybe BarcodeScannerRowEditDetails
+    , dialogEditDetails : DialogEditDetails
     }
 
 
@@ -74,5 +80,5 @@ initModel =
     , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
     , secondTab = Tab.initialState
     , barcodeScannerTab = Tab.initialState
-    , barcodeScannerRowEditDetails = Nothing
+    , dialogEditDetails = NoDialog
     }
