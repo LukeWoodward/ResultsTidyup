@@ -44,7 +44,8 @@ type alias ProblemEntry =
 
 
 type alias Model =
-    { stopwatches : Stopwatches
+    { isBeta : Bool
+    , stopwatches : Stopwatches
     , lastErrors : List FileError
     , numberCheckerEntries : List AnnotatedNumberCheckerEntry
     , lastHeight : Maybe Int
@@ -61,7 +62,8 @@ type alias Model =
 
 initModel : Model
 initModel =
-    { stopwatches = None
+    { isBeta = False
+    , stopwatches = None
     , lastErrors = []
     , numberCheckerEntries = []
     , lastHeight = Nothing

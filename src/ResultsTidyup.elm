@@ -3,6 +3,7 @@ module ResultsTidyup exposing (main)
 import BarcodeScanner exposing (BarcodeScannerData)
 import BarcodeScannerView exposing (barcodeScannersView)
 import Bootstrap.Alert as Alert
+import Bootstrap.Badge as Badge
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
@@ -26,7 +27,13 @@ import TimeHandling exposing (formatHoursAndMinutes)
 import UpdateLogic exposing (update)
 
 
-main : Program (Maybe Int) Model Msg
+type alias FlagsRecord =
+    { startTime : Maybe Int
+    , isBeta : Bool
+    }
+
+
+main : Program FlagsRecord Model Msg
 main =
     Browser.element
         { init = init
@@ -36,8 +43,8 @@ main =
         }
 
 
-init : Maybe Int -> ( Model, Cmd Msg )
-init startTime =
+init : FlagsRecord -> ( Model, Cmd Msg )
+init { startTime, isBeta } =
     let
         startTimeAsString : String
         startTimeAsString =
@@ -48,7 +55,12 @@ init startTime =
         initialEventDateAndTime =
             EventDateAndTime "" Nothing startTimeAsString startTime
     in
-    ( { initModel | eventDateAndTime = initialEventDateAndTime }, getInitialHeight () )
+    ( { initModel
+        | isBeta = isBeta
+        , eventDateAndTime = initialEventDateAndTime
+      }
+    , getInitialHeight ()
+    )
 
 
 subscriptions : Model -> Sub Msg
@@ -98,9 +110,22 @@ classAttributes wantedTab actualTab =
 
 view : Model -> Html Msg
 view model =
+    let
+        badge : Html Msg
+        badge =
+            if model.isBeta then
+                Badge.badgePrimary [] [ text "BETA" ]
+
+            else
+                text ""
+    in
     div
         []
-        [ h1 [ id "header" ] [ text "Results tidy-up" ]
+        [ div
+            [ class "clearfix" ]
+            [ h1 [ id "header" ] [ text "Results tidy-up" ]
+            , badge
+            ]
         , errorsView model.lastErrors
         , Grid.row []
             [ Grid.col [ Col.xs6 ]

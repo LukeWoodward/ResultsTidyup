@@ -189,3 +189,5 @@ td.swap-barcodes-around-button-cell {
 div.validation-error {
     color: #dc3545;
 }
+
+#header { float: left; }
