@@ -20,7 +20,7 @@ import Bootstrap.Modal as Modal
 import Html exposing (Html, b, div, text)
 import Html.Attributes exposing (class, type_)
 import Html.Events exposing (onClick)
-import Model exposing (DialogEditDetails(..), Model)
+import Model exposing (DialogDetails(..), Model)
 import Msg exposing (Msg(..))
 import NumericEntry exposing (isValidEntry)
 
@@ -158,20 +158,19 @@ editBarcodeScannerRowModalBody rowEditDetails =
         |> Grid.containerFluid []
 
 
-dialogVisibility : DialogEditDetails -> Modal.Visibility
-dialogVisibility dialogEditDetails =
-    case dialogEditDetails of
-        BarcodeScannerRow _ ->
-            Modal.shown
+dialogVisibility : DialogDetails -> Modal.Visibility
+dialogVisibility dialogDetails =
+    if dialogDetails == NoDialog then
+        Modal.hidden
 
-        _ ->
-            Modal.hidden
+    else
+        Modal.shown
 
 
-dialogTitle : DialogEditDetails -> String
-dialogTitle dialogEditDetails =
-    case dialogEditDetails of
-        BarcodeScannerRow rowEditDetails ->
+dialogTitle : DialogDetails -> String
+dialogTitle dialogDetails =
+    case dialogDetails of
+        BarcodeScannerRowEditDialog rowEditDetails ->
             case rowEditDetails.currentContents of
                 MisScan _ ->
                     "Edit mis-scanned barcode scanner row"
@@ -179,86 +178,115 @@ dialogTitle dialogEditDetails =
                 Ordinary _ _ ->
                     "Edit barcode scanner row"
 
+        ReinstateDeletedBarcodeScannerRowDialog _ ->
+            "Reinstate deleted barcode scanner row"
+
         NoDialog ->
             ""
 
 
-dialogBody : DialogEditDetails -> Html Msg
-dialogBody dialogEditDetails =
-    case dialogEditDetails of
-        BarcodeScannerRow rowEditDetails ->
-            editBarcodeScannerRowModalBody rowEditDetails
-
+dialogBody : DialogDetails -> Html Msg
+dialogBody dialogDetails =
+    case dialogDetails of
         NoDialog ->
             div [] []
+
+        BarcodeScannerRowEditDialog rowEditDetails ->
+            editBarcodeScannerRowModalBody rowEditDetails
+
+        ReinstateDeletedBarcodeScannerRowDialog location ->
+            div [] [ text "Reinstate deleted barcode scanner row?" ]
+
+
+barcodeScannerEditButtons : BarcodeScannerRowEditDetails -> List (Html Msg)
+barcodeScannerEditButtons barcodeScannerRowEditDetails =
+    let
+        updateButtonAttrs : List (Html.Attribute Msg)
+        updateButtonAttrs =
+            if barcodeScannerRowEditDetails.validationError == Nothing then
+                let
+                    athleteStringValue : String
+                    athleteStringValue =
+                        case barcodeScannerRowEditDetails.athleteEntered.parsedValue of
+                            Just athleteNumber ->
+                                "A" ++ String.fromInt athleteNumber
+
+                            Nothing ->
+                                ""
+                in
+                [ onClick
+                    (UpdateRowFromBarcodeScannerEditModal
+                        barcodeScannerRowEditDetails.location
+                        athleteStringValue
+                        barcodeScannerRowEditDetails.finishPositionEntered.parsedValue
+                    )
+                ]
+
+            else
+                []
+
+        deleteButtonAttrs : List (Html.Attribute Msg)
+        deleteButtonAttrs =
+            [ onClick (DeleteRowFromBarcodeScannerEditModal barcodeScannerRowEditDetails.location)
+            , class "mr-5"
+            ]
+
+        updateButtonDisabled : Bool
+        updateButtonDisabled =
+            barcodeScannerRowEditDetails.validationError /= Nothing
+    in
+    [ Button.button
+        [ Button.outlinePrimary
+        , Button.danger
+        , Button.attrs deleteButtonAttrs
+        ]
+        [ text "Delete row" ]
+    , Button.button
+        [ Button.outlinePrimary
+        , Button.disabled updateButtonDisabled
+        , Button.attrs updateButtonAttrs
+        ]
+        [ text "Update row" ]
+    , Button.button
+        [ Button.outlinePrimary
+        , Button.attrs [ onClick CloseModal ]
+        ]
+        [ text "Close" ]
+    ]
+
+
+reinstateDeletedBarcodeScannerRowButtons : BarcodeScannerRowEditLocation -> List (Html Msg)
+reinstateDeletedBarcodeScannerRowButtons location =
+    [ Button.button
+        [ Button.outlinePrimary
+        , Button.attrs [ onClick (ReinstateBarcodeScannerRow location) ]
+        ]
+        [ text "Reinstate row" ]
+    , Button.button
+        [ Button.outlinePrimary
+        , Button.attrs [ onClick CloseModal ]
+        ]
+        [ text "Close" ]
+    ]
 
 
 barcodeScannerEditModal : Model -> Html Msg
 barcodeScannerEditModal model =
     let
-        updateButtonAttrs : List (Html.Attribute Msg)
-        updateButtonAttrs =
-            case model.dialogEditDetails of
+        buttons : List (Html Msg)
+        buttons =
+            case model.dialogDetails of
                 NoDialog ->
                     []
 
-                BarcodeScannerRow someDetails ->
-                    if someDetails.validationError == Nothing then
-                        let
-                            athleteStringValue : String
-                            athleteStringValue =
-                                case someDetails.athleteEntered.parsedValue of
-                                    Just athleteNumber ->
-                                        "A" ++ String.fromInt athleteNumber
+                BarcodeScannerRowEditDialog barcodeScannerRowEditDetails ->
+                    barcodeScannerEditButtons barcodeScannerRowEditDetails
 
-                                    Nothing ->
-                                        ""
-                        in
-                        [ onClick (UpdateRowFromBarcodeScannerEditModal someDetails.location athleteStringValue someDetails.finishPositionEntered.parsedValue) ]
-
-                    else
-                        []
-
-        deleteButtonAttrs : List (Html.Attribute Msg)
-        deleteButtonAttrs =
-            case model.dialogEditDetails of
-                NoDialog ->
-                    []
-
-                BarcodeScannerRow barcodeScannerRowEditDetails ->
-                    [ onClick (DeleteRowFromBarcodeScannerEditModal barcodeScannerRowEditDetails.location)
-                    , class "mr-5"
-                    ]
-
-        updateButtonDisabled : Bool
-        updateButtonDisabled =
-            case model.dialogEditDetails of
-                NoDialog ->
-                    True
-
-                BarcodeScannerRow barcodeScannerRowEditDetails ->
-                    barcodeScannerRowEditDetails.validationError /= Nothing
+                ReinstateDeletedBarcodeScannerRowDialog location ->
+                    reinstateDeletedBarcodeScannerRowButtons location
     in
-    Modal.config CloseBarcodeScannerEditModal
-        |> Modal.h5 [] [ text (dialogTitle model.dialogEditDetails) ]
-        |> Modal.body [] [ dialogBody model.dialogEditDetails ]
-        |> Modal.footer []
-            [ Button.button
-                [ Button.outlinePrimary
-                , Button.danger
-                , Button.attrs deleteButtonAttrs
-                ]
-                [ text "Delete row" ]
-            , Button.button
-                [ Button.outlinePrimary
-                , Button.disabled updateButtonDisabled
-                , Button.attrs updateButtonAttrs
-                ]
-                [ text "Update row" ]
-            , Button.button
-                [ Button.outlinePrimary
-                , Button.attrs [ onClick CloseBarcodeScannerEditModal ]
-                ]
-                [ text "Close" ]
-            ]
-        |> Modal.view (dialogVisibility model.dialogEditDetails)
+    Modal.config CloseModal
+        |> Modal.h5 [] [ text (dialogTitle model.dialogDetails) ]
+        |> Modal.body [] [ dialogBody model.dialogDetails ]
+        |> Modal.footer [] buttons
+        |> Modal.view (dialogVisibility model.dialogDetails)

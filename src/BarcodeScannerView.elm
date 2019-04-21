@@ -96,6 +96,7 @@ barcodeScannerViewRow fileName line =
                 Deleted deletionReason ->
                     [ class "deleted-barcode-scanner-row"
                     , title (deletionReasonToString deletionReason)
+                    , onDoubleClick (ShowBarcodeScannerReinstateModal (BarcodeScannerRowEditLocation fileName line.lineNumber))
                     ]
     in
     Table.tr

@@ -1,6 +1,15 @@
 module UpdateLogic exposing (createStopwatchFileForDownload, update)
 
-import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, deleteBarcodeScannerLine, generateDownloadText, regenerate, updateBarcodeScannerLine)
+import BarcodeScanner
+    exposing
+        ( BarcodeScannerData
+        , BarcodeScannerFile
+        , deleteBarcodeScannerLine
+        , generateDownloadText
+        , regenerate
+        , reinstateBarcodeScannerLine
+        , updateBarcodeScannerLine
+        )
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, updateEditDetails)
 import Browser.Dom
 import DataStructures exposing (EventDateAndTime, InteropFile, WhichStopwatch(..))
@@ -19,7 +28,7 @@ import MergedTable
         , toggleRowInTable
         , underlineTable
         )
-import Model exposing (DialogEditDetails(..), Model, NumberCheckerManualEntryRow, ProblemEntry, initModel)
+import Model exposing (DialogDetails(..), Model, NumberCheckerManualEntryRow, ProblemEntry, initModel)
 import Msg exposing (Msg(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import NumberCheckerEditing
@@ -421,29 +430,29 @@ update msg model =
 
         ShowBarcodeScannerEditModal location contents ->
             ( { model
-                | dialogEditDetails =
-                    BarcodeScannerRow (BarcodeScannerEditing.startEditing location contents)
+                | dialogDetails =
+                    BarcodeScannerRowEditDialog (BarcodeScannerEditing.startEditing location contents)
               }
             , Cmd.none
             )
 
         BarcodeScannerEdit editChange ->
             let
-                newEditDetails : DialogEditDetails
+                newEditDetails : DialogDetails
                 newEditDetails =
-                    case model.dialogEditDetails of
-                        NoDialog ->
-                            NoDialog
-
-                        BarcodeScannerRow barcodeScannerRowEditDetails ->
+                    case model.dialogDetails of
+                        BarcodeScannerRowEditDialog barcodeScannerRowEditDetails ->
                             updateEditDetails editChange barcodeScannerRowEditDetails
-                                |> BarcodeScannerRow
+                                |> BarcodeScannerRowEditDialog
+
+                        _ ->
+                            model.dialogDetails
             in
-            ( { model | dialogEditDetails = newEditDetails }, Cmd.none )
+            ( { model | dialogDetails = newEditDetails }, Cmd.none )
 
         UpdateRowFromBarcodeScannerEditModal location athlete finishPosition ->
             ( { model
-                | dialogEditDetails = NoDialog
+                | dialogDetails = NoDialog
                 , barcodeScannerData = updateBarcodeScannerLine location.fileName location.lineNumber athlete finishPosition model.barcodeScannerData
               }
                 |> identifyProblemsIn
@@ -452,12 +461,27 @@ update msg model =
 
         DeleteRowFromBarcodeScannerEditModal location ->
             ( { model
-                | dialogEditDetails = NoDialog
+                | dialogDetails = NoDialog
                 , barcodeScannerData = deleteBarcodeScannerLine location.fileName location.lineNumber model.barcodeScannerData
               }
                 |> identifyProblemsIn
             , Cmd.none
             )
 
-        CloseBarcodeScannerEditModal ->
-            ( { model | dialogEditDetails = NoDialog }, Cmd.none )
+        ShowBarcodeScannerReinstateModal location ->
+            ( { model
+                | dialogDetails = ReinstateDeletedBarcodeScannerRowDialog location
+              }
+            , Cmd.none
+            )
+
+        ReinstateBarcodeScannerRow location ->
+            ( { model
+                | dialogDetails = NoDialog
+                , barcodeScannerData = reinstateBarcodeScannerLine location.fileName location.lineNumber model.barcodeScannerData
+              }
+            , Cmd.none
+            )
+
+        CloseModal ->
+            ( { model | dialogDetails = NoDialog }, Cmd.none )

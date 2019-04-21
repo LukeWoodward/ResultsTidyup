@@ -17,6 +17,7 @@ module BarcodeScanner exposing
     , mergeScannerData
     , readBarcodeScannerData
     , regenerate
+    , reinstateBarcodeScannerLine
     , updateBarcodeScannerLine
     )
 
@@ -483,27 +484,37 @@ generateDownloadText file =
         |> String.join ""
 
 
+applyBarcodeScannerDataModification : (BarcodeScannerFileLine -> BarcodeScannerFileLine) -> String -> Int -> BarcodeScannerData -> BarcodeScannerData
+applyBarcodeScannerDataModification modifier fileName lineNumber barcodeScannerData =
+    let
+        applyLineModification : BarcodeScannerFileLine -> BarcodeScannerFileLine
+        applyLineModification line =
+            if line.lineNumber == lineNumber then
+                modifier line
+
+            else
+                line
+
+        applyFileModification : BarcodeScannerFile -> BarcodeScannerFile
+        applyFileModification file =
+            if file.name == fileName then
+                { file | lines = List.map applyLineModification file.lines }
+
+            else
+                file
+    in
+    { barcodeScannerData | files = List.map applyFileModification barcodeScannerData.files }
+        |> regenerate
+
+
 updateBarcodeScannerLine : String -> Int -> String -> Maybe Int -> BarcodeScannerData -> BarcodeScannerData
 updateBarcodeScannerLine fileName lineNumber athlete finishPosition barcodeScannerData =
     let
         updateLine : BarcodeScannerFileLine -> BarcodeScannerFileLine
         updateLine line =
-            if line.lineNumber == lineNumber then
-                { line | contents = Ordinary athlete finishPosition }
-
-            else
-                line
-
-        updateLineInFile : BarcodeScannerFile -> BarcodeScannerFile
-        updateLineInFile file =
-            if file.name == fileName then
-                { file | lines = List.map updateLine file.lines }
-
-            else
-                file
+            { line | contents = Ordinary athlete finishPosition }
     in
-    { barcodeScannerData | files = List.map updateLineInFile barcodeScannerData.files }
-        |> regenerate
+    applyBarcodeScannerDataModification updateLine fileName lineNumber barcodeScannerData
 
 
 deleteBarcodeScannerLine : String -> Int -> BarcodeScannerData -> BarcodeScannerData
@@ -511,19 +522,16 @@ deleteBarcodeScannerLine fileName lineNumber barcodeScannerData =
     let
         deleteLine : BarcodeScannerFileLine -> BarcodeScannerFileLine
         deleteLine line =
-            if line.lineNumber == lineNumber then
-                { line | deletionStatus = Deleted DeletedByUser }
-
-            else
-                line
-
-        deleteLineInFile : BarcodeScannerFile -> BarcodeScannerFile
-        deleteLineInFile file =
-            if file.name == fileName then
-                { file | lines = List.map deleteLine file.lines }
-
-            else
-                file
+            { line | deletionStatus = Deleted DeletedByUser }
     in
-    { barcodeScannerData | files = List.map deleteLineInFile barcodeScannerData.files }
-        |> regenerate
+    applyBarcodeScannerDataModification deleteLine fileName lineNumber barcodeScannerData
+
+
+reinstateBarcodeScannerLine : String -> Int -> BarcodeScannerData -> BarcodeScannerData
+reinstateBarcodeScannerLine fileName lineNumber barcodeScannerData =
+    let
+        reinstateLine : BarcodeScannerFileLine -> BarcodeScannerFileLine
+        reinstateLine line =
+            { line | deletionStatus = NotDeleted }
+    in
+    applyBarcodeScannerDataModification reinstateLine fileName lineNumber barcodeScannerData

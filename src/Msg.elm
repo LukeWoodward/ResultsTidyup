@@ -44,4 +44,6 @@ type Msg
     | BarcodeScannerEdit BarcodeScannerEditDetails
     | UpdateRowFromBarcodeScannerEditModal BarcodeScannerRowEditLocation String (Maybe Int)
     | DeleteRowFromBarcodeScannerEditModal BarcodeScannerRowEditLocation
-    | CloseBarcodeScannerEditModal
+    | ShowBarcodeScannerReinstateModal BarcodeScannerRowEditLocation
+    | ReinstateBarcodeScannerRow BarcodeScannerRowEditLocation
+    | CloseModal

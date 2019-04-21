@@ -1,5 +1,5 @@
 module Model exposing
-    ( DialogEditDetails(..)
+    ( DialogDetails(..)
     , Model
     , NumberCheckerManualEntryRow
     , ProblemEntry
@@ -9,7 +9,7 @@ module Model exposing
     )
 
 import BarcodeScanner exposing (BarcodeScannerData, LineContents)
-import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails)
+import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, BarcodeScannerRowEditLocation)
 import Bootstrap.Tab as Tab
 import DataStructures exposing (EventDateAndTime, SecondTab(..))
 import Error exposing (FileError)
@@ -44,9 +44,10 @@ type alias ProblemEntry =
     }
 
 
-type DialogEditDetails
+type DialogDetails
     = NoDialog
-    | BarcodeScannerRow BarcodeScannerRowEditDetails
+    | BarcodeScannerRowEditDialog BarcodeScannerRowEditDetails
+    | ReinstateDeletedBarcodeScannerRowDialog BarcodeScannerRowEditLocation
 
 
 type alias Model =
@@ -62,7 +63,7 @@ type alias Model =
     , numberCheckerManualEntryRow : NumberCheckerManualEntryRow
     , secondTab : Tab.State
     , barcodeScannerTab : Tab.State
-    , dialogEditDetails : DialogEditDetails
+    , dialogDetails : DialogDetails
     }
 
 
@@ -80,5 +81,5 @@ initModel =
     , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
     , secondTab = Tab.initialState
     , barcodeScannerTab = Tab.initialState
-    , dialogEditDetails = NoDialog
+    , dialogDetails = NoDialog
     }
