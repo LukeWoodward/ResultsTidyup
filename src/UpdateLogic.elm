@@ -7,7 +7,6 @@ import BarcodeScanner
         , deleteBarcodeScannerLine
         , generateDownloadText
         , regenerate
-        , reinstateBarcodeScannerLine
         , updateBarcodeScannerLine
         )
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, updateEditDetails)
@@ -428,10 +427,10 @@ update msg model =
         IgnoreProblem problemIndex ->
             ( ignoreProblem problemIndex model, Cmd.none )
 
-        ShowBarcodeScannerEditModal location contents ->
+        ShowBarcodeScannerEditModal location contents isDeleted ->
             ( { model
                 | dialogDetails =
-                    BarcodeScannerRowEditDialog (BarcodeScannerEditing.startEditing location contents)
+                    BarcodeScannerRowEditDialog (BarcodeScannerEditing.startEditing location contents isDeleted)
               }
             , Cmd.none
             )
@@ -465,21 +464,6 @@ update msg model =
                 , barcodeScannerData = deleteBarcodeScannerLine location.fileName location.lineNumber model.barcodeScannerData
               }
                 |> identifyProblemsIn
-            , Cmd.none
-            )
-
-        ShowBarcodeScannerReinstateModal location ->
-            ( { model
-                | dialogDetails = ReinstateDeletedBarcodeScannerRowDialog location
-              }
-            , Cmd.none
-            )
-
-        ReinstateBarcodeScannerRow location ->
-            ( { model
-                | dialogDetails = NoDialog
-                , barcodeScannerData = reinstateBarcodeScannerLine location.fileName location.lineNumber model.barcodeScannerData
-              }
             , Cmd.none
             )
 

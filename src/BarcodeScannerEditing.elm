@@ -48,6 +48,7 @@ type alias BarcodeScannerRowEditDetails =
     , finishPositionEntered : NumericEntry
     , fieldBeingEdited : BarcodeScannerFieldBeingEdited
     , validationError : Maybe BarcodeScannerValidationError
+    , isDeleted : Bool
     }
 
 
@@ -57,14 +58,14 @@ type BarcodeScannerEditDetails
     | FinishPositionChanged String
 
 
-startEditing : BarcodeScannerRowEditLocation -> LineContents -> BarcodeScannerRowEditDetails
-startEditing location contents =
+startEditing : BarcodeScannerRowEditLocation -> LineContents -> Bool -> BarcodeScannerRowEditDetails
+startEditing location contents isDeleted =
     case contents of
         Ordinary athlete finishPosition ->
-            validate (BarcodeScannerRowEditDetails location contents (numericEntryFromAthleteNumber athlete) (numericEntryFromMaybeInt finishPosition) Both Nothing)
+            validate (BarcodeScannerRowEditDetails location contents (numericEntryFromAthleteNumber athlete) (numericEntryFromMaybeInt finishPosition) Both Nothing isDeleted)
 
         MisScan misScannedText ->
-            validate (BarcodeScannerRowEditDetails location contents emptyNumericEntry emptyNumericEntry Neither Nothing)
+            validate (BarcodeScannerRowEditDetails location contents emptyNumericEntry emptyNumericEntry Neither Nothing isDeleted)
 
 
 updateEditDetails : BarcodeScannerEditDetails -> BarcodeScannerRowEditDetails -> BarcodeScannerRowEditDetails

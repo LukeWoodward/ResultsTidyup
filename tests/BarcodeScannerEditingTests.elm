@@ -25,6 +25,7 @@ initialDetails =
         (NumericEntry "22" (Just 22))
         Both
         Nothing
+        False
 
 
 validNumericEntry : NumericEntry
@@ -49,7 +50,7 @@ suite =
         [ describe "startEditing tests"
             [ test "Can start editing with a complete row" <|
                 \() ->
-                    startEditing (BarcodeScannerRowEditLocation "file.txt" 34) (Ordinary "A182095" (Just 47))
+                    startEditing (BarcodeScannerRowEditLocation "file.txt" 34) (Ordinary "A182095" (Just 47)) False
                         |> Expect.equal
                             (BarcodeScannerRowEditDetails
                                 (BarcodeScannerRowEditLocation "file.txt" 34)
@@ -58,10 +59,11 @@ suite =
                                 (NumericEntry "47" (Just 47))
                                 Both
                                 Nothing
+                                False
                             )
             , test "Can start editing with a mis-scanned item" <|
                 \() ->
-                    startEditing (BarcodeScannerRowEditLocation "file.txt" 51) (MisScan "d&084")
+                    startEditing (BarcodeScannerRowEditLocation "file.txt" 51) (MisScan "d&084") False
                         |> Expect.equal
                             (BarcodeScannerRowEditDetails
                                 (BarcodeScannerRowEditLocation "file.txt" 51)
@@ -70,6 +72,7 @@ suite =
                                 (NumericEntry "" Nothing)
                                 Neither
                                 (Just NeitherSelected)
+                                False
                             )
             ]
         , describe "updateEditDetails tests"

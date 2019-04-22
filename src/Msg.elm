@@ -40,10 +40,8 @@ type Msg
     | DownloadBarcodeScannerFile String Zone Posix
     | DeleteBarcodeScannerFile String
     | IgnoreProblem Int
-    | ShowBarcodeScannerEditModal BarcodeScannerRowEditLocation LineContents
+    | ShowBarcodeScannerEditModal BarcodeScannerRowEditLocation LineContents Bool
     | BarcodeScannerEdit BarcodeScannerEditDetails
     | UpdateRowFromBarcodeScannerEditModal BarcodeScannerRowEditLocation String (Maybe Int)
     | DeleteRowFromBarcodeScannerEditModal BarcodeScannerRowEditLocation
-    | ShowBarcodeScannerReinstateModal BarcodeScannerRowEditLocation
-    | ReinstateBarcodeScannerRow BarcodeScannerRowEditLocation
     | CloseModal

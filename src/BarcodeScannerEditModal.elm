@@ -178,9 +178,6 @@ dialogTitle dialogDetails =
                 Ordinary _ _ ->
                     "Edit barcode scanner row"
 
-        ReinstateDeletedBarcodeScannerRowDialog _ ->
-            "Reinstate deleted barcode scanner row"
-
         NoDialog ->
             ""
 
@@ -193,9 +190,6 @@ dialogBody dialogDetails =
 
         BarcodeScannerRowEditDialog rowEditDetails ->
             editBarcodeScannerRowModalBody rowEditDetails
-
-        ReinstateDeletedBarcodeScannerRowDialog location ->
-            div [] [ text "Reinstate deleted barcode scanner row?" ]
 
 
 barcodeScannerEditButtons : BarcodeScannerRowEditDetails -> List (Html Msg)
@@ -231,37 +225,30 @@ barcodeScannerEditButtons barcodeScannerRowEditDetails =
             , class "mr-5"
             ]
 
+        deleteButton : Html Msg
+        deleteButton =
+            if barcodeScannerRowEditDetails.isDeleted then
+                text ""
+
+            else
+                Button.button
+                    [ Button.outlinePrimary
+                    , Button.danger
+                    , Button.attrs deleteButtonAttrs
+                    ]
+                    [ text "Delete row" ]
+
         updateButtonDisabled : Bool
         updateButtonDisabled =
             barcodeScannerRowEditDetails.validationError /= Nothing
     in
-    [ Button.button
-        [ Button.outlinePrimary
-        , Button.danger
-        , Button.attrs deleteButtonAttrs
-        ]
-        [ text "Delete row" ]
+    [ deleteButton
     , Button.button
         [ Button.outlinePrimary
         , Button.disabled updateButtonDisabled
         , Button.attrs updateButtonAttrs
         ]
         [ text "Update row" ]
-    , Button.button
-        [ Button.outlinePrimary
-        , Button.attrs [ onClick CloseModal ]
-        ]
-        [ text "Close" ]
-    ]
-
-
-reinstateDeletedBarcodeScannerRowButtons : BarcodeScannerRowEditLocation -> List (Html Msg)
-reinstateDeletedBarcodeScannerRowButtons location =
-    [ Button.button
-        [ Button.outlinePrimary
-        , Button.attrs [ onClick (ReinstateBarcodeScannerRow location) ]
-        ]
-        [ text "Reinstate row" ]
     , Button.button
         [ Button.outlinePrimary
         , Button.attrs [ onClick CloseModal ]
@@ -281,9 +268,6 @@ barcodeScannerEditModal model =
 
                 BarcodeScannerRowEditDialog barcodeScannerRowEditDetails ->
                     barcodeScannerEditButtons barcodeScannerRowEditDetails
-
-                ReinstateDeletedBarcodeScannerRowDialog location ->
-                    reinstateDeletedBarcodeScannerRowButtons location
     in
     Modal.config CloseModal
         |> Modal.h5 [] [ text (dialogTitle model.dialogDetails) ]

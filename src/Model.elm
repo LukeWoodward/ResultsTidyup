@@ -47,7 +47,6 @@ type alias ProblemEntry =
 type DialogDetails
     = NoDialog
     | BarcodeScannerRowEditDialog BarcodeScannerRowEditDetails
-    | ReinstateDeletedBarcodeScannerRowDialog BarcodeScannerRowEditLocation
 
 
 type alias Model =

@@ -17,7 +17,6 @@ module BarcodeScanner exposing
     , mergeScannerData
     , readBarcodeScannerData
     , regenerate
-    , reinstateBarcodeScannerLine
     , updateBarcodeScannerLine
     )
 
@@ -512,7 +511,7 @@ updateBarcodeScannerLine fileName lineNumber athlete finishPosition barcodeScann
     let
         updateLine : BarcodeScannerFileLine -> BarcodeScannerFileLine
         updateLine line =
-            { line | contents = Ordinary athlete finishPosition }
+            { line | contents = Ordinary athlete finishPosition, deletionStatus = NotDeleted }
     in
     applyBarcodeScannerDataModification updateLine fileName lineNumber barcodeScannerData
 
@@ -525,13 +524,3 @@ deleteBarcodeScannerLine fileName lineNumber barcodeScannerData =
             { line | deletionStatus = Deleted DeletedByUser }
     in
     applyBarcodeScannerDataModification deleteLine fileName lineNumber barcodeScannerData
-
-
-reinstateBarcodeScannerLine : String -> Int -> BarcodeScannerData -> BarcodeScannerData
-reinstateBarcodeScannerLine fileName lineNumber barcodeScannerData =
-    let
-        reinstateLine : BarcodeScannerFileLine -> BarcodeScannerFileLine
-        reinstateLine line =
-            { line | deletionStatus = NotDeleted }
-    in
-    applyBarcodeScannerDataModification reinstateLine fileName lineNumber barcodeScannerData

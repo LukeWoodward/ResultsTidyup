@@ -349,6 +349,36 @@ suite =
                                 ]
                     in
                     Expect.equal expectedBarcodeScannerData (updateBarcodeScannerLine "barcodes6.txt" 1 "A2022807" (Just 37) initialBarcodeScannerData)
+            , test "Updating a deleted line in barcode scanner data updates the line and undeletes it" <|
+                \() ->
+                    let
+                        markAsDeleted : BarcodeScannerFileLine -> BarcodeScannerFileLine
+                        markAsDeleted line =
+                            { line | deletionStatus = Deleted DeletedByUser }
+
+                        initialBarcodeScannerData : BarcodeScannerData
+                        initialBarcodeScannerData =
+                            createBarcodeScannerDataFromFiles
+                                [ BarcodeScannerFile
+                                    "barcodes6.txt"
+                                    [ markAsDeleted (ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03")
+                                    , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+
+                        expectedBarcodeScannerData : BarcodeScannerData
+                        expectedBarcodeScannerData =
+                            createBarcodeScannerDataFromFiles
+                                [ BarcodeScannerFile
+                                    "barcodes6.txt"
+                                    [ ordinaryFileLine 1 "A2022807" (Just 37) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+                    in
+                    Expect.equal expectedBarcodeScannerData (updateBarcodeScannerLine "barcodes6.txt" 1 "A2022807" (Just 37) initialBarcodeScannerData)
             , test "Updating a line in barcode scanner data with two files updates the line from the correct file" <|
                 \() ->
                     let

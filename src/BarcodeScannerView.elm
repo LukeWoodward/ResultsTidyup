@@ -90,13 +90,13 @@ barcodeScannerViewRow fileName line =
                                     "barcode-scanner-row-ok"
                     in
                     [ class className
-                    , onDoubleClick (ShowBarcodeScannerEditModal (BarcodeScannerRowEditLocation fileName line.lineNumber) line.contents)
+                    , onDoubleClick (ShowBarcodeScannerEditModal (BarcodeScannerRowEditLocation fileName line.lineNumber) line.contents False)
                     ]
 
                 Deleted deletionReason ->
                     [ class "deleted-barcode-scanner-row"
                     , title (deletionReasonToString deletionReason)
-                    , onDoubleClick (ShowBarcodeScannerReinstateModal (BarcodeScannerRowEditLocation fileName line.lineNumber))
+                    , onDoubleClick (ShowBarcodeScannerEditModal (BarcodeScannerRowEditLocation fileName line.lineNumber) line.contents True)
                     ]
     in
     Table.tr
