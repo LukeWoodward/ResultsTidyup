@@ -1,6 +1,16 @@
 module ProblemsTests exposing (suite)
 
-import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, MisScannedItem, UnrecognisedLine)
+import BarcodeScanner
+    exposing
+        ( BarcodeScannerData
+        , BarcodeScannerFile
+        , BarcodeScannerFileLine
+        , DeletionReason(..)
+        , DeletionStatus(..)
+        , LineContents(..)
+        , MisScannedItem
+        , UnrecognisedLine
+        )
 import BarcodeScannerTests exposing (createBarcodeScannerData)
 import DataStructures exposing (EventDateAndTime)
 import Dict exposing (Dict)
@@ -9,7 +19,7 @@ import Expect
 import MergedTable exposing (Stopwatches(..))
 import Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..), identifyProblems)
 import Test exposing (Test, describe, test)
-import TestData exposing (toPosix)
+import TestData exposing (createBarcodeScannerDataFromFiles, ordinaryFileLine, toPosix)
 
 
 emptyEventDateAndTime : EventDateAndTime
@@ -206,7 +216,7 @@ suite =
                         None
                         (BarcodeScannerData [] Dict.empty [] [] [ MisScannedItem "&d084" "14/03/2018 09:47:03" ] [] Nothing)
                         emptyEventDateAndTime
-                        |> Expect.equal [ NonFixable (MisScan "&d084") ]
+                        |> Expect.equal [ NonFixable (Problems.MisScan "&d084") ]
             , test "identifyProblems returns a problem for an unrecognised barcode-scanner line" <|
                 \() ->
                     identifyProblems
@@ -280,78 +290,42 @@ suite =
                         )
                         emptyEventDateAndTime
                         |> Expect.equal [ Fixable (PositionWithAndWithoutAthlete 19 "A987654"), Fixable (PositionWithAndWithoutAthlete 12 "A123456") ]
-            , test "identifyProblems returns no problems for scanned barcodes with their scan time after the event start" <|
+            , test "identifyProblems returns no problems for a scanned barcode with its scan time after the event start" <|
                 \() ->
                     identifyProblems
                         None
-                        (createBarcodeScannerData
-                            (Dict.singleton 12 [ "A123456" ])
-                            []
-                            []
+                        (createBarcodeScannerDataFromFiles
+                            [ BarcodeScannerFile "barcodes1.txt"
+                                [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
+                                (toPosix "2018-03-14T09:47:03.000Z")
+                            ]
                         )
                         exampleEventDateAndTime
                         |> Expect.equal []
-            , test "identifyProblems returns a fixable problem for scanned barcodes with their scan time before the event start" <|
+            , test "identifyProblems returns a fixable problem for a scanned barcode with its scan time before the event start" <|
                 \() ->
                     identifyProblems
                         None
-                        (createBarcodeScannerData
-                            (Dict.singleton 12 [ "A123456" ])
-                            []
-                            []
+                        (createBarcodeScannerDataFromFiles
+                            [ BarcodeScannerFile "barcodes1.txt"
+                                [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
+                                (toPosix "2018-03-14T09:47:03.000Z")
+                            ]
                         )
                         lateEventDateAndTime
                         |> Expect.equal [ Fixable (BarcodesScannedBeforeEventStart 1 (baseEventStartTime + 60 * 60 * 1000) "14/03/2018 10:00") ]
-            , test "identifyProblems returns no problems for athletes with no finish tokens but with their scan time after the event start" <|
+            , test "identifyProblems returns no problems for a deleted scanned barcode with its scan time before the event start" <|
                 \() ->
                     identifyProblems
                         None
-                        (createBarcodeScannerData
-                            Dict.empty
-                            [ "A123456" ]
-                            []
-                        )
-                        exampleEventDateAndTime
-                        |> Expect.equal [ NonFixable (AthleteMissingPosition "A123456") ]
-            , test "identifyProblems returns a fixable problem for athletes with no finish tokens but with their scan time before the event start" <|
-                \() ->
-                    identifyProblems
-                        None
-                        (createBarcodeScannerData
-                            Dict.empty
-                            [ "A123456" ]
-                            []
+                        (createBarcodeScannerDataFromFiles
+                            [ BarcodeScannerFile "barcodes1.txt"
+                                [ BarcodeScannerFileLine 1 (Ordinary "A4580442" (Just 47)) "14/03/2018 09:47:03" (Deleted BeforeEventStart) ]
+                                (toPosix "2018-03-14T09:47:03.000Z")
+                            ]
                         )
                         lateEventDateAndTime
-                        |> Expect.equal
-                            [ Fixable (BarcodesScannedBeforeEventStart 1 (baseEventStartTime + 60 * 60 * 1000) "14/03/2018 10:00")
-                            , NonFixable (AthleteMissingPosition "A123456")
-                            ]
-            , test "identifyProblems returns no problems for finish tokens with no associated athletes but with their scan time after the event start" <|
-                \() ->
-                    identifyProblems
-                        None
-                        (createBarcodeScannerData
-                            Dict.empty
-                            []
-                            [ 19 ]
-                        )
-                        exampleEventDateAndTime
-                        |> Expect.equal [ NonFixable (PositionMissingAthlete 19) ]
-            , test "identifyProblems returns a fixable problem for finish tokens with no associated athletes but with their scan time before the event start" <|
-                \() ->
-                    identifyProblems
-                        None
-                        (createBarcodeScannerData
-                            Dict.empty
-                            []
-                            [ 19 ]
-                        )
-                        lateEventDateAndTime
-                        |> Expect.equal
-                            [ Fixable (BarcodesScannedBeforeEventStart 1 (baseEventStartTime + 60 * 60 * 1000) "14/03/2018 10:00")
-                            , NonFixable (PositionMissingAthlete 19)
-                            ]
+                        |> Expect.equal []
             , test "identifyProblems returns no problems for stopwatches in sync" <|
                 \() ->
                     identifyProblems

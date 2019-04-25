@@ -1,6 +1,6 @@
 module Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..), identifyProblems)
 
-import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, BarcodeScannerFileLine, LineContents(..), MisScannedItem, UnrecognisedLine)
+import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, BarcodeScannerFileLine, DeletionStatus(..), LineContents(..), MisScannedItem, UnrecognisedLine)
 import DataStructures exposing (EventDateAndTime)
 import DateHandling exposing (dateStringToPosix, dateToString)
 import Dict exposing (Dict)
@@ -287,29 +287,19 @@ identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsSt
                 |> List.filter (\t -> t < eventStartTimeMillis)
                 |> List.length
 
-        scannedBarcodesBeforeEventStart : Int
-        scannedBarcodesBeforeEventStart =
-            barcodeScannerData.scannedBarcodes
-                |> Dict.values
-                |> List.concat
+        linesBeforeEventStart : BarcodeScannerFile -> ( Int, Int )
+        linesBeforeEventStart file =
+            ( List.filter (\line -> line.deletionStatus == NotDeleted) file.lines
                 |> List.map .scanTime
                 |> countDatesBeforeEventStart
-
-        athleteBarcodesOnlyBeforeEventStart : Int
-        athleteBarcodesOnlyBeforeEventStart =
-            barcodeScannerData.athleteBarcodesOnly
-                |> List.map .scanTime
-                |> countDatesBeforeEventStart
-
-        finishTokensOnlyBeforeEventStart : Int
-        finishTokensOnlyBeforeEventStart =
-            barcodeScannerData.finishTokensOnly
-                |> List.map .scanTime
-                |> countDatesBeforeEventStart
+            , List.length file.lines
+            )
 
         totalNumberOfScansBeforeEventStart : Int
         totalNumberOfScansBeforeEventStart =
-            scannedBarcodesBeforeEventStart + athleteBarcodesOnlyBeforeEventStart + finishTokensOnlyBeforeEventStart
+            List.map linesBeforeEventStart barcodeScannerData.files
+                |> List.map Tuple.first
+                |> List.sum
     in
     if totalNumberOfScansBeforeEventStart == 0 then
         []
