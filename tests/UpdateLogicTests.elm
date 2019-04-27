@@ -426,7 +426,11 @@ suite =
                             )
             ]
         , describe "Create stopwatch file for download tests"
-            [ test "Can create a stopwatch file for download" <|
+            [ test "Can create a stopwatch file for download from some text" <|
+                \() ->
+                    createStopwatchFileForDownload Time.utc recentTime "Here is some text"
+                        |> Expect.equal (InteropFile "results_tidyup_timer_14072017024000.txt" "Here is some text")
+            , test "Can create a stopwatch file for download" <|
                 \() ->
                     let
                         model : Model
@@ -439,7 +443,7 @@ suite =
                     in
                     case model.stopwatches of
                         Double doubleStopwatchData ->
-                            createStopwatchFileForDownload Time.utc recentTime doubleStopwatchData.mergedTableRows
+                            createStopwatchFileForDownload Time.utc recentTime (MergedTable.outputMergedTable doubleStopwatchData.mergedTableRows)
                                 |> Expect.equal (InteropFile "results_tidyup_timer_14072017024000.txt" expectedMergedStopwatchFileContents)
 
                         _ ->

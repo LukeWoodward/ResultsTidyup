@@ -24,6 +24,7 @@ import MergedTable
         , Stopwatches(..)
         , flipTable
         , outputMergedTable
+        , outputSingleStopwatchData
         , toggleRowInTable
         , underlineTable
         )
@@ -120,6 +121,36 @@ toggleTableRow index model =
             }
 
 
+downloadSingleStopwatchData : WhichStopwatch -> Stopwatches -> Zone -> Posix -> Cmd Msg
+downloadSingleStopwatchData whichStopwatch stopwatches zone time =
+    let
+        downloadText : Maybe String
+        downloadText =
+            case ( stopwatches, whichStopwatch ) of
+                ( None, _ ) ->
+                    Nothing
+
+                ( Single _ times, StopwatchOne ) ->
+                    Just (outputSingleStopwatchData times)
+
+                ( Single _ _, StopwatchTwo ) ->
+                    Nothing
+
+                ( Double doubleStopwatchData, StopwatchOne ) ->
+                    Just (outputSingleStopwatchData doubleStopwatchData.times1)
+
+                ( Double doubleStopwatchData, StopwatchTwo ) ->
+                    Just (outputSingleStopwatchData doubleStopwatchData.times2)
+    in
+    case downloadText of
+        Just someText ->
+            createStopwatchFileForDownload zone time someText
+                |> downloadFile
+
+        Nothing ->
+            Cmd.none
+
+
 deleteStopwatch : WhichStopwatch -> Model -> Model
 deleteStopwatch which model =
     case ( model.stopwatches, which ) of
@@ -188,13 +219,9 @@ clearAllData model =
     }
 
 
-createStopwatchFileForDownload : Zone -> Posix -> List MergedTableRow -> InteropFile
-createStopwatchFileForDownload zone time mergedTableRows =
+createStopwatchFileForDownload : Zone -> Posix -> String -> InteropFile
+createStopwatchFileForDownload zone time fileContents =
     let
-        fileContents : String
-        fileContents =
-            outputMergedTable mergedTableRows
-
         fileName : String
         fileName =
             "results_tidyup_timer_" ++ generateDownloadFilenameDatePart zone time ++ ".txt"
@@ -217,7 +244,7 @@ downloadMergedStopwatchDataCommand zone time model =
             Cmd.none
 
         Double doubleStopwatchData ->
-            createStopwatchFileForDownload zone time doubleStopwatchData.mergedTableRows
+            createStopwatchFileForDownload zone time (outputMergedTable doubleStopwatchData.mergedTableRows)
                 |> downloadFile
 
 
@@ -322,6 +349,9 @@ update msg model =
 
         ToggleTableRow index ->
             ( toggleTableRow index model |> identifyProblemsIn, Cmd.none )
+
+        DownloadStopwatch which zone time ->
+            ( model, downloadSingleStopwatchData which model.stopwatches zone time )
 
         DeleteStopwatch which ->
             ( deleteStopwatch which model, Cmd.none )

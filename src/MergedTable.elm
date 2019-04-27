@@ -8,6 +8,7 @@ module MergedTable exposing
     , generateInitialTable
     , noUnderlines
     , outputMergedTable
+    , outputSingleStopwatchData
     , toggleRowInTable
     , underlineTable
     )
@@ -311,6 +312,19 @@ formatRow rowNumber time =
         ++ ","
         ++ formattedTime
         |> Just
+
+
+outputSingleStopwatchData : List Int -> String
+outputSingleStopwatchData times =
+    let
+        formatTime : Int -> Int -> Maybe String
+        formatTime index time =
+            formatRow (index + 1) time
+    in
+    header
+        ++ List.filterMap identity (List.indexedMap formatTime times)
+        ++ [ footer ]
+        |> String.join crlf
 
 
 outputMergedRow : MergedTableRow -> Maybe String

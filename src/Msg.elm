@@ -17,6 +17,7 @@ type Msg
     = NoOp
     | FilesDropped (List InteropFile)
     | ToggleTableRow Int
+    | DownloadStopwatch WhichStopwatch Zone Posix
     | DeleteStopwatch WhichStopwatch
     | FlipStopwatches
     | ClearAllData

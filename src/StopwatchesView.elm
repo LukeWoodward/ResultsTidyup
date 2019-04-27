@@ -45,9 +45,9 @@ type alias TableHeaderButton =
     }
 
 
-type alias TableHeaderWithButton =
+type alias TableHeaderWithButtons =
     { headerText : String
-    , buttonData : Maybe TableHeaderButton
+    , buttonData : List TableHeaderButton
     }
 
 
@@ -132,37 +132,40 @@ checkboxCell time index included numberCheckerId highlightedNumberCheckerId =
         ]
 
 
-tableHeaderWithButtons : TableHeaderWithButton -> Table.Cell Msg
+tableHeaderWithButtons : TableHeaderWithButtons -> Table.Cell Msg
 tableHeaderWithButtons { headerText, buttonData } =
     let
         textElement : Html Msg
         textElement =
             text headerText
+
+        elements : List (Html Msg)
+        elements =
+            (List.map (\{ change, buttonText } -> smallButton change [] buttonText) buttonData ++ [ textElement ])
+                |> List.intersperse (br [] [])
     in
-    case buttonData of
-        Just { change, buttonText } ->
-            Table.th
-                [ Table.cellAttr (class "stopwatch-header") ]
-                [ smallButton change [] buttonText
-                , br [] []
-                , textElement
-                ]
-
-        Nothing ->
-            Table.th [] [ textElement ]
+    Table.th
+        [ Table.cellAttr (class "stopwatch-header") ]
+        elements
 
 
-tableHeadersWithButtons : List TableHeaderWithButton -> Table.THead Msg
+tableHeadersWithButtons : List TableHeaderWithButtons -> Table.THead Msg
 tableHeadersWithButtons headerTexts =
     Table.simpleThead (List.map tableHeaderWithButtons headerTexts)
 
 
-deleteStopwatchButton : WhichStopwatch -> Maybe TableHeaderButton
+downloadStopwatchButton : WhichStopwatch -> TableHeaderButton
+downloadStopwatchButton which =
+    { change = GetCurrentDateForDownloadFile (DownloadStopwatch which)
+    , buttonText = "Download "
+    }
+
+
+deleteStopwatchButton : WhichStopwatch -> TableHeaderButton
 deleteStopwatchButton which =
-    Just
-        { change = DeleteStopwatch which
-        , buttonText = "Delete "
-        }
+    { change = DeleteStopwatch which
+    , buttonText = "Delete "
+    }
 
 
 stopwatchInfoMessage : Stopwatches -> Html a
@@ -301,8 +304,8 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                     { options = tableOptions
                     , thead =
                         tableHeadersWithButtons
-                            [ TableHeaderWithButton "Position" Nothing
-                            , TableHeaderWithButton "Athletes" Nothing
+                            [ TableHeaderWithButtons "Position" []
+                            , TableHeaderWithButtons "Athletes" []
                             ]
                     , tbody = noStopwatchTableBody barcodeScannerData
                     }
@@ -312,9 +315,9 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                 { options = tableOptions
                 , thead =
                     tableHeadersWithButtons
-                        [ TableHeaderWithButton "Position" Nothing
-                        , TableHeaderWithButton "Stopwatch 1" (deleteStopwatchButton StopwatchOne)
-                        , TableHeaderWithButton "Athletes" Nothing
+                        [ TableHeaderWithButtons "Position" []
+                        , TableHeaderWithButtons "Stopwatch 1" [ downloadStopwatchButton StopwatchOne, deleteStopwatchButton StopwatchOne ]
+                        , TableHeaderWithButtons "Athletes" []
                         ]
                 , tbody = singleStopwatchTableBody stopwatchTimes barcodeScannerData
                 }
@@ -324,10 +327,10 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                 { options = tableOptions
                 , thead =
                     tableHeadersWithButtons
-                        [ TableHeaderWithButton "Position" Nothing
-                        , TableHeaderWithButton "Stopwatch 1" (deleteStopwatchButton StopwatchOne)
-                        , TableHeaderWithButton "Stopwatch 2" (deleteStopwatchButton StopwatchTwo)
-                        , TableHeaderWithButton "Athletes" Nothing
+                        [ TableHeaderWithButtons "Position" []
+                        , TableHeaderWithButtons "Stopwatch 1" [ downloadStopwatchButton StopwatchOne, deleteStopwatchButton StopwatchOne ]
+                        , TableHeaderWithButtons "Stopwatch 2" [ downloadStopwatchButton StopwatchTwo, deleteStopwatchButton StopwatchTwo ]
+                        , TableHeaderWithButtons "Athletes" []
                         ]
                 , tbody = mergedTableBody highlightedNumberCheckerId barcodeScannerData doubleStopwatchData.mergedTableRows
                 }
