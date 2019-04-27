@@ -16,8 +16,8 @@ import DataStructures exposing (EventDateAndTime)
 import Dict exposing (Dict)
 import Errors exposing (expectError)
 import Expect
-import MergedTable exposing (Stopwatches(..))
 import Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..), identifyProblems)
+import Stopwatch exposing (Stopwatches(..))
 import Test exposing (Test, describe, test)
 import TestData exposing (createBarcodeScannerDataFromFiles, ordinaryFileLine, toPosix)
 

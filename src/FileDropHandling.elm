@@ -5,13 +5,12 @@ import DataStructures exposing (InteropFile)
 import DateHandling exposing (dateToString)
 import Error exposing (Error, FileError, mapError)
 import EventDateAndTimeEditing exposing (handleEventDateChange)
-import MergedTable exposing (Stopwatches(..), createMergedTable)
 import Model exposing (Model)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, annotate, parseNumberCheckerFile)
 import Parser exposing ((|.), Parser, chompIf, chompWhile, end, int, run, symbol)
 import Regex exposing (Regex)
 import Result.Extra
-import Stopwatch exposing (Stopwatch(..), readStopwatchData)
+import Stopwatch exposing (Stopwatch(..), Stopwatches(..), createMergedTable, readStopwatchData)
 
 
 hasFileAlreadyBeenUploaded : String -> Stopwatches -> Bool

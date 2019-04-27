@@ -1,13 +1,14 @@
 module ProblemsView exposing (problemsView)
 
 import Bootstrap.Alert as Alert
-import DataStructures exposing (ProblemFix(..), WhichStopwatch(..))
+import DataStructures exposing (ProblemFix(..))
 import Html exposing (Html, button, div, h4, li, text, ul)
 import Html.Attributes exposing (class, type_)
 import Html.Events exposing (onClick)
 import Model exposing (ProblemEntry)
 import Msg exposing (Msg)
 import Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..))
+import Stopwatch exposing (WhichStopwatch(..))
 import ViewCommon exposing (smallButton)
 
 

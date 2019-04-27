@@ -11,23 +11,12 @@ import BarcodeScanner
         )
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, updateEditDetails)
 import Browser.Dom
-import DataStructures exposing (EventDateAndTime, InteropFile, WhichStopwatch(..))
+import DataStructures exposing (EventDateAndTime, InteropFile)
 import DateHandling exposing (generateDownloadFilenameDatePart)
 import Dict
 import EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeChange)
 import File.Download as Download
 import FileDropHandling exposing (handleFilesDropped)
-import MergedTable
-    exposing
-        ( DoubleStopwatchData
-        , MergedTableRow
-        , Stopwatches(..)
-        , flipTable
-        , outputMergedTable
-        , outputSingleStopwatchData
-        , toggleRowInTable
-        , underlineTable
-        )
 import Model exposing (DialogDetails(..), Model, NumberCheckerManualEntryRow, ProblemEntry, initModel)
 import Msg exposing (Msg(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
@@ -42,6 +31,18 @@ import NumberCheckerEditing
 import Ports exposing (recordEventStartTime)
 import ProblemFixing exposing (fixProblem)
 import Problems exposing (Problem, identifyProblems)
+import Stopwatch
+    exposing
+        ( DoubleStopwatchData
+        , MergedTableRow
+        , Stopwatches(..)
+        , WhichStopwatch(..)
+        , flipTable
+        , outputMergedTable
+        , outputSingleStopwatchData
+        , toggleRowInTable
+        , underlineTable
+        )
 import Task exposing (Task)
 import Time exposing (Posix, Zone)
 

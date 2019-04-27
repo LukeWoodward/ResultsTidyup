@@ -14,13 +14,13 @@ import BarcodeScanner
         , regenerate
         )
 import BarcodeScannerTests exposing (createBarcodeScannerData)
-import DataStructures exposing (ProblemFix(..), WhichStopwatch(..))
+import DataStructures exposing (ProblemFix(..))
 import Dict
 import Expect exposing (Expectation)
-import MergedTable exposing (Stopwatches)
 import Model exposing (Model, NumberCheckerManualEntryRow, ProblemEntry, emptyNumberCheckerManualEntryRow, initModel)
 import ProblemFixing exposing (fixProblem)
 import Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..))
+import Stopwatch exposing (Stopwatches, WhichStopwatch(..))
 import Test exposing (Test, describe, test)
 import TestData exposing (defaultTime, doubleStopwatches, ordinaryFileLine, stopwatchesForAdjusting, toPosix)
 

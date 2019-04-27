@@ -5,14 +5,12 @@ import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button
 import Bootstrap.Tab as Tab
 import Bootstrap.Table as Table
-import DataStructures exposing (WhichStopwatch(..))
 import Dict exposing (Dict)
 import Html exposing (Html, a, br, button, div, h3, input, label, small, text)
 import Html.Attributes exposing (checked, class, for, href, id, rel, target, type_)
 import Html.Events exposing (onClick)
-import MergedTable exposing (MergedTableRow, Stopwatches(..))
-import Merger exposing (MergeEntry(..))
 import Msg exposing (Msg(..))
+import Stopwatch exposing (MergeEntry(..), MergedTableRow, Stopwatches(..), WhichStopwatch(..))
 import TimeHandling exposing (formatTime)
 import ViewCommon exposing (intCell, plainCell, smallButton)
 

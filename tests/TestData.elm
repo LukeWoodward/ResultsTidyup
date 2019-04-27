@@ -43,16 +43,14 @@ import BarcodeScanner
         , PositionAndTimePair
         , regenerate
         )
-import DataStructures exposing (EventDateAndTime, WhichStopwatch(..))
+import DataStructures exposing (EventDateAndTime)
 import Dict
 import FileHandling exposing (crlf)
 import Iso8601
-import MergedTable exposing (MergedTableRow, Stopwatches(..), noUnderlines)
-import Merger exposing (MergeEntry(..))
 import Model exposing (NumberCheckerManualEntryRow)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import NumericEntry exposing (numericEntryFromInt)
-import Stopwatch exposing (Stopwatch(..))
+import Stopwatch exposing (MergeEntry(..), MergedTableRow, Stopwatch(..), Stopwatches(..), WhichStopwatch(..), noUnderlines)
 import Time exposing (Posix)
 
 

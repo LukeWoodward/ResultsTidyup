@@ -1,11 +1,7 @@
-module DataStructures exposing (EventDateAndTime, InteropFile, ProblemFix(..), SecondTab(..), WhichStopwatch(..))
+module DataStructures exposing (EventDateAndTime, InteropFile, ProblemFix(..), SecondTab(..))
 
+import Stopwatch exposing (WhichStopwatch)
 import Time exposing (Posix)
-
-
-type WhichStopwatch
-    = StopwatchOne
-    | StopwatchTwo
 
 
 type alias InteropFile =

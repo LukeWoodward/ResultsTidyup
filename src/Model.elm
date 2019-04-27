@@ -13,10 +13,10 @@ import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, BarcodeScan
 import Bootstrap.Tab as Tab
 import DataStructures exposing (EventDateAndTime, SecondTab(..))
 import Error exposing (FileError)
-import MergedTable exposing (Stopwatches(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import NumericEntry exposing (NumericEntry)
 import Problems exposing (Problem)
+import Stopwatch exposing (Stopwatches(..))
 import Time exposing (Posix)
 
 

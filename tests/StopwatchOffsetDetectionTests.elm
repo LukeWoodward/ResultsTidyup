@@ -2,8 +2,7 @@ module StopwatchOffsetDetectionTests exposing (suite)
 
 import Errors exposing (expectError)
 import Expect
-import MergedTable exposing (DoubleStopwatchData, MergedTableRow, Stopwatches(..), noUnderlines)
-import Merger exposing (MergeEntry(..))
+import Stopwatch exposing (DoubleStopwatchData, MergeEntry(..), MergedTableRow, Stopwatches(..), noUnderlines)
 import StopwatchOffsetDetection exposing (findMostCommonNumber, getStopwatchTimeOffset)
 import Test exposing (Test, describe, test)
 

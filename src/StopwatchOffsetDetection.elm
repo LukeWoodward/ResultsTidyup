@@ -2,7 +2,7 @@ module StopwatchOffsetDetection exposing (findMostCommonNumber, getStopwatchTime
 
 import Array exposing (Array)
 import Dict exposing (Dict)
-import MergedTable exposing (DoubleStopwatchData, Stopwatches(..))
+import Stopwatch exposing (DoubleStopwatchData, Stopwatches(..))
 
 
 stopwatchTimeOffsetRange : Int

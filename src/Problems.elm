@@ -4,8 +4,8 @@ import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, BarcodeS
 import DataStructures exposing (EventDateAndTime)
 import DateHandling exposing (dateStringToPosix, dateToString)
 import Dict exposing (Dict)
-import MergedTable exposing (Stopwatches(..))
 import Set exposing (Set)
+import Stopwatch exposing (Stopwatches(..))
 import StopwatchOffsetDetection exposing (getStopwatchTimeOffset)
 import Time exposing (posixToMillis)
 

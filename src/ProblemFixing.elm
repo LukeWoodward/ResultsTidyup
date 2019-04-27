@@ -12,11 +12,11 @@ import BarcodeScanner
         , PositionAndTimePair
         , regenerate
         )
-import DataStructures exposing (ProblemFix(..), WhichStopwatch(..))
+import DataStructures exposing (ProblemFix(..))
 import DateHandling exposing (dateStringToPosix)
-import MergedTable exposing (DoubleStopwatchData, Stopwatches(..), createMergedTable)
 import Model exposing (Model)
 import Problems exposing (FixableProblem(..), NonFixableProblem(..))
+import Stopwatch exposing (DoubleStopwatchData, Stopwatches(..), WhichStopwatch(..), createMergedTable)
 import Time exposing (Posix)
 
 

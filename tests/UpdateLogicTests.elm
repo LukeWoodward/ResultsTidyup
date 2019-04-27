@@ -13,11 +13,10 @@ import BarcodeScanner
         )
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditLocation)
 import BarcodeScannerTests exposing (createBarcodeScannerData)
-import DataStructures exposing (EventDateAndTime, InteropFile, ProblemFix(..), SecondTab(..), WhichStopwatch(..))
+import DataStructures exposing (EventDateAndTime, InteropFile, ProblemFix(..), SecondTab(..))
 import Dict exposing (Dict)
 import Error exposing (FileError)
 import Expect exposing (Expectation)
-import MergedTable exposing (Stopwatches(..))
 import Model
     exposing
         ( Model
@@ -30,7 +29,7 @@ import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import NumericEntry exposing (NumericEntry, emptyNumericEntry)
 import Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..))
-import Stopwatch exposing (Stopwatch(..))
+import Stopwatch exposing (Stopwatch(..), Stopwatches(..), WhichStopwatch(..))
 import Test exposing (Test, describe, test)
 import TestData exposing (..)
 import Time
@@ -443,7 +442,7 @@ suite =
                     in
                     case model.stopwatches of
                         Double doubleStopwatchData ->
-                            createStopwatchFileForDownload Time.utc recentTime (MergedTable.outputMergedTable doubleStopwatchData.mergedTableRows)
+                            createStopwatchFileForDownload Time.utc recentTime (Stopwatch.outputMergedTable doubleStopwatchData.mergedTableRows)
                                 |> Expect.equal (InteropFile "results_tidyup_timer_14072017024000.txt" expectedMergedStopwatchFileContents)
 
                         _ ->
