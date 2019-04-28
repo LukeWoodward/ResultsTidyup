@@ -33,7 +33,7 @@ import Stopwatch exposing (Stopwatch(..), Stopwatches(..), WhichStopwatch(..))
 import Test exposing (Test, describe, test)
 import TestData exposing (..)
 import Time
-import UpdateLogic exposing (createStopwatchFileForDownload, update)
+import UpdateLogic exposing (createMergedStopwatchDataFile, createSingleStopwatchDataFile, update)
 
 
 expectNoCommand : ( Model, Cmd Msg ) -> Expectation
@@ -424,29 +424,72 @@ suite =
                                 :: defaultAssertionsExcept [ Stopwatches, Command ]
                             )
             ]
-        , describe "Create stopwatch file for download tests"
-            [ test "Can create a stopwatch file for download from some text" <|
+        , describe "Create single stopwatch file for download tests"
+            [ test "Cannot create a stopwatch file for stopwatch 1 when no stopwatches" <|
                 \() ->
-                    createStopwatchFileForDownload Time.utc recentTime "Here is some text"
-                        |> Expect.equal (InteropFile "results_tidyup_timer_14072017024000.txt" "Here is some text")
-            , test "Can create a stopwatch file for download" <|
+                    initModel
+                        |> createSingleStopwatchDataFile StopwatchOne Time.utc recentTime
+                        |> Expect.equal Nothing
+            , test "Cannot create a stopwatch file for stopwatch 2 when no stopwatches" <|
                 \() ->
-                    let
-                        model : Model
-                        model =
-                            initModel
-                                |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
-                                |> Tuple.first
-                                |> update (FilesDropped [ InteropFile "stopwatch2.txt" sampleStopwatchData2 ])
-                                |> Tuple.first
-                    in
-                    case model.stopwatches of
-                        Double doubleStopwatchData ->
-                            createStopwatchFileForDownload Time.utc recentTime (Stopwatch.outputMergedTable doubleStopwatchData.mergedTableRows)
-                                |> Expect.equal (InteropFile "results_tidyup_timer_14072017024000.txt" expectedMergedStopwatchFileContents)
-
-                        _ ->
-                            Expect.fail ("Expected merged data from two stopwatches, got '" ++ Debug.toString model.stopwatches ++ "' instead.")
+                    initModel
+                        |> createSingleStopwatchDataFile StopwatchTwo Time.utc recentTime
+                        |> Expect.equal Nothing
+            , test "Can create a stopwatch file for stopwatch 1 when single stopwatch" <|
+                \() ->
+                    initModel
+                        |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
+                        |> Tuple.first
+                        |> createSingleStopwatchDataFile StopwatchOne Time.utc recentTime
+                        |> Expect.equal (Just (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedStopwatchData1))
+            , test "Cannot create a stopwatch file for stopwatch 2 when only one stopwatch" <|
+                \() ->
+                    initModel
+                        |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
+                        |> Tuple.first
+                        |> createSingleStopwatchDataFile StopwatchTwo Time.utc recentTime
+                        |> Expect.equal Nothing
+            , test "Can create a stopwatch file for stopwatch 1 when two stopwatches uploaded" <|
+                \() ->
+                    initModel
+                        |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
+                        |> Tuple.first
+                        |> update (FilesDropped [ InteropFile "stopwatch2.txt" sampleStopwatchData2 ])
+                        |> Tuple.first
+                        |> createSingleStopwatchDataFile StopwatchOne Time.utc recentTime
+                        |> Expect.equal (Just (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedStopwatchData1))
+            , test "Cannot create a stopwatch file for stopwatch 2 when two stopwatches uploaded" <|
+                \() ->
+                    initModel
+                        |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
+                        |> Tuple.first
+                        |> update (FilesDropped [ InteropFile "stopwatch2.txt" sampleStopwatchData2 ])
+                        |> Tuple.first
+                        |> createSingleStopwatchDataFile StopwatchTwo Time.utc recentTime
+                        |> Expect.equal (Just (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedStopwatchData2))
+            ]
+        , describe "Create merged stopwatch file for download tests"
+            [ test "Cannot create a merged stopwatch file for download with no stopwatches" <|
+                \() ->
+                    initModel
+                        |> createMergedStopwatchDataFile Time.utc recentTime
+                        |> Expect.equal Nothing
+            , test "Cannot create a merged stopwatch file for download from a single stopwatch" <|
+                \() ->
+                    initModel
+                        |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
+                        |> Tuple.first
+                        |> createMergedStopwatchDataFile Time.utc recentTime
+                        |> Expect.equal Nothing
+            , test "Can create a merged stopwatch file for download from two stopwatches" <|
+                \() ->
+                    initModel
+                        |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
+                        |> Tuple.first
+                        |> update (FilesDropped [ InteropFile "stopwatch2.txt" sampleStopwatchData2 ])
+                        |> Tuple.first
+                        |> createMergedStopwatchDataFile Time.utc recentTime
+                        |> Expect.equal (Just (InteropFile "results_tidyup_timer_14072017024000.txt" expectedMergedStopwatchFileContents))
             ]
         , describe "Container height changed tests"
             [ test "Can update the container height" <|

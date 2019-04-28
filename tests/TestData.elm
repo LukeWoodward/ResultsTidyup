@@ -3,6 +3,8 @@ module TestData exposing
     , createNumberCheckerManualEntryRow
     , defaultTime
     , doubleStopwatches
+    , expectedDownloadedStopwatchData1
+    , expectedDownloadedStopwatchData2
     , expectedMergedStopwatchFileContents
     , expectedParsedSampleStopwatchData
     , flippedDoubleStopwatches
@@ -313,6 +315,36 @@ expectedMergedStopwatchFileContents =
         ++ "3,01/01/2001 00:10:03,00:10:03"
         ++ crlf
         ++ "4,01/01/2001 00:10:11,00:10:11"
+        ++ crlf
+        ++ "ENDOFEVENT,01/01/2001 01:59:59"
+
+
+expectedDownloadedStopwatchData1 : String
+expectedDownloadedStopwatchData1 =
+    "STARTOFEVENT,01/01/2001 00:00:00,results_tidyup"
+        ++ crlf
+        ++ "0,01/01/2001 00:00:00"
+        ++ crlf
+        ++ "1,01/01/2001 00:03:11,00:03:11"
+        ++ crlf
+        ++ "2,01/01/2001 00:07:44,00:07:44"
+        ++ crlf
+        ++ "3,01/01/2001 00:10:03,00:10:03"
+        ++ crlf
+        ++ "ENDOFEVENT,01/01/2001 01:59:59"
+
+
+expectedDownloadedStopwatchData2 : String
+expectedDownloadedStopwatchData2 =
+    "STARTOFEVENT,01/01/2001 00:00:00,results_tidyup"
+        ++ crlf
+        ++ "0,01/01/2001 00:00:00"
+        ++ crlf
+        ++ "1,01/01/2001 00:03:11,00:03:11"
+        ++ crlf
+        ++ "2,01/01/2001 00:07:43,00:07:43"
+        ++ crlf
+        ++ "3,01/01/2001 00:10:11,00:10:11"
         ++ crlf
         ++ "ENDOFEVENT,01/01/2001 01:59:59"
 

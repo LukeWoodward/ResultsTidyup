@@ -1,4 +1,4 @@
-module UpdateLogic exposing (createStopwatchFileForDownload, update)
+module UpdateLogic exposing (createMergedStopwatchDataFile, createSingleStopwatchDataFile, update)
 
 import BarcodeScanner
     exposing
@@ -122,12 +122,12 @@ toggleTableRow index model =
             }
 
 
-downloadSingleStopwatchData : WhichStopwatch -> Stopwatches -> Zone -> Posix -> Cmd Msg
-downloadSingleStopwatchData whichStopwatch stopwatches zone time =
+createSingleStopwatchDataFile : WhichStopwatch -> Zone -> Posix -> Model -> Maybe InteropFile
+createSingleStopwatchDataFile whichStopwatch zone time model =
     let
         downloadText : Maybe String
         downloadText =
-            case ( stopwatches, whichStopwatch ) of
+            case ( model.stopwatches, whichStopwatch ) of
                 ( None, _ ) ->
                     Nothing
 
@@ -143,13 +143,7 @@ downloadSingleStopwatchData whichStopwatch stopwatches zone time =
                 ( Double doubleStopwatchData, StopwatchTwo ) ->
                     Just (outputSingleStopwatchData doubleStopwatchData.times2)
     in
-    case downloadText of
-        Just someText ->
-            createStopwatchFileForDownload zone time someText
-                |> downloadFile
-
-        Nothing ->
-            Cmd.none
+    Maybe.map (createStopwatchFileForDownload zone time) downloadText
 
 
 deleteStopwatch : WhichStopwatch -> Model -> Model
@@ -230,23 +224,28 @@ createStopwatchFileForDownload zone time fileContents =
     InteropFile fileName fileContents
 
 
-downloadFile : InteropFile -> Cmd Msg
-downloadFile interopFile =
-    Download.string interopFile.fileName "text/csv" interopFile.fileText
+downloadFileMaybe : Maybe InteropFile -> Cmd Msg
+downloadFileMaybe interopFileMaybe =
+    case interopFileMaybe of
+        Just interopFile ->
+            Download.string interopFile.fileName "text/csv" interopFile.fileText
+
+        Nothing ->
+            Cmd.none
 
 
-downloadMergedStopwatchDataCommand : Zone -> Posix -> Model -> Cmd Msg
-downloadMergedStopwatchDataCommand zone time model =
+createMergedStopwatchDataFile : Zone -> Posix -> Model -> Maybe InteropFile
+createMergedStopwatchDataFile zone time model =
     case model.stopwatches of
         None ->
-            Cmd.none
+            Nothing
 
         Single _ _ ->
-            Cmd.none
+            Nothing
 
         Double doubleStopwatchData ->
             createStopwatchFileForDownload zone time (outputMergedTable doubleStopwatchData.mergedTableRows)
-                |> downloadFile
+                |> Just
 
 
 reunderlineStopwatchTable : Model -> Model
@@ -269,8 +268,8 @@ reunderlineStopwatchTable model =
             model
 
 
-downloadSingleBarcodeScannerData : String -> List BarcodeScannerFile -> Zone -> Posix -> Cmd Msg
-downloadSingleBarcodeScannerData fileName files zone time =
+createSingleBarcodeScannerData : String -> List BarcodeScannerFile -> Zone -> Posix -> Maybe InteropFile
+createSingleBarcodeScannerData fileName files zone time =
     let
         fileToDownload : Maybe BarcodeScannerFile
         fileToDownload =
@@ -288,11 +287,11 @@ downloadSingleBarcodeScannerData fileName files zone time =
                 downloadFileName =
                     "results_tidyup_barcode_" ++ generateDownloadFilenameDatePart zone time ++ ".txt"
             in
-            downloadFile (InteropFile downloadFileName downloadFileContents)
+            Just (InteropFile downloadFileName downloadFileContents)
 
         Nothing ->
             -- No file with that name was found.
-            Cmd.none
+            Nothing
 
 
 deleteBarcodeScannerFileWithName : String -> Model -> Model
@@ -352,7 +351,7 @@ update msg model =
             ( toggleTableRow index model |> identifyProblemsIn, Cmd.none )
 
         DownloadStopwatch which zone time ->
-            ( model, downloadSingleStopwatchData which model.stopwatches zone time )
+            ( model, downloadFileMaybe (createSingleStopwatchDataFile which zone time model) )
 
         DeleteStopwatch which ->
             ( deleteStopwatch which model, Cmd.none )
@@ -369,7 +368,7 @@ update msg model =
             )
 
         DownloadMergedStopwatchData zone time ->
-            ( model, downloadMergedStopwatchDataCommand zone time model )
+            ( model, downloadFileMaybe (createMergedStopwatchDataFile zone time model) )
 
         ContainerHeightChanged newHeight ->
             ( { model | lastHeight = Just newHeight }, Cmd.none )
@@ -450,7 +449,7 @@ update msg model =
             ( { model | lastErrors = [] }, Cmd.none )
 
         DownloadBarcodeScannerFile index zone time ->
-            ( model, downloadSingleBarcodeScannerData index model.barcodeScannerData.files zone time )
+            ( model, downloadFileMaybe (createSingleBarcodeScannerData index model.barcodeScannerData.files zone time) )
 
         DeleteBarcodeScannerFile fileName ->
             ( deleteBarcodeScannerFileWithName fileName model, Cmd.none )
