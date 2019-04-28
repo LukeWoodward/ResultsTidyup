@@ -39,6 +39,10 @@ nonFixableProblemToString problem =
         UnrecognisedBarcodeScannerLine line ->
             "The line '" ++ line ++ "' in a barcode scanner file was not recognised"
 
+        IdenticalStopwatchTimes ->
+            "Both stopwatch files have identical times.  It is very unlikely in practice for two stopwatches to contain the same times.  "
+                ++ "Please check you haven't downloaded times from the same stopwatch twice"
+
         StopwatchesInconsistentWithNumberChecker ->
             "TODO"
 

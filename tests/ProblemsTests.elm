@@ -17,7 +17,7 @@ import Errors exposing (expectError)
 import EventDateAndTime exposing (EventDateAndTime)
 import Expect
 import Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..), identifyProblems)
-import Stopwatch exposing (Stopwatches(..))
+import Stopwatch exposing (MergeEntry(..), MergedTableRow, Stopwatches(..), WhichStopwatch(..), noUnderlines)
 import Test exposing (Test, describe, test)
 import TestData exposing (createBarcodeScannerDataFromFiles, ordinaryFileLine, toPosix)
 
@@ -42,6 +42,16 @@ lateEventDateAndTime =
 baseEventStartTime : Int
 baseEventStartTime =
     1521018000000
+
+
+wrapMergeEntriesInTable : List MergeEntry -> List MergedTableRow
+wrapMergeEntriesInTable entries =
+    let
+        wrapRow : Int -> MergeEntry -> MergedTableRow
+        wrapRow index entry =
+            MergedTableRow index (Just (index + 1)) entry True noUnderlines
+    in
+    List.indexedMap wrapRow entries
 
 
 suite : Test
@@ -326,7 +336,7 @@ suite =
                         )
                         lateEventDateAndTime
                         |> Expect.equal []
-            , test "identifyProblems returns no problems for stopwatches in sync" <|
+            , test "identifyProblems returns a problem for stopwatches exactly in sync" <|
                 \() ->
                     identifyProblems
                         (Double
@@ -334,7 +344,21 @@ suite =
                             , times2 = [ 1000, 1100, 1200 ]
                             , filename1 = "stopwatches1.txt"
                             , filename2 = "stopwatches2.txt"
-                            , mergedTableRows = []
+                            , mergedTableRows = wrapMergeEntriesInTable [ ExactMatch 1000, ExactMatch 1100, ExactMatch 1200 ]
+                            }
+                        )
+                        BarcodeScanner.empty
+                        emptyEventDateAndTime
+                        |> Expect.equal [ NonFixable IdenticalStopwatchTimes ]
+            , test "identifyProblems returns no problems for stopwatches almost in sync" <|
+                \() ->
+                    identifyProblems
+                        (Double
+                            { times1 = [ 1000, 1100, 1201 ]
+                            , times2 = [ 1000, 1100, 1200 ]
+                            , filename1 = "stopwatches1.txt"
+                            , filename2 = "stopwatches2.txt"
+                            , mergedTableRows = wrapMergeEntriesInTable [ ExactMatch 1000, ExactMatch 1100, NearMatch 1201 1200 ]
                             }
                         )
                         BarcodeScanner.empty
@@ -348,7 +372,15 @@ suite =
                             , times2 = [ 1005, 1105, 1205 ]
                             , filename1 = "stopwatches1.txt"
                             , filename2 = "stopwatches2.txt"
-                            , mergedTableRows = []
+                            , mergedTableRows =
+                                wrapMergeEntriesInTable
+                                    [ OneWatchOnly StopwatchOne 1000
+                                    , OneWatchOnly StopwatchTwo 1005
+                                    , OneWatchOnly StopwatchOne 1100
+                                    , OneWatchOnly StopwatchTwo 1105
+                                    , OneWatchOnly StopwatchOne 1200
+                                    , OneWatchOnly StopwatchTwo 1205
+                                    ]
                             }
                         )
                         BarcodeScanner.empty

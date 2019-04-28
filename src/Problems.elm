@@ -5,7 +5,7 @@ import DateHandling exposing (dateStringToPosix, dateToString)
 import Dict exposing (Dict)
 import EventDateAndTime exposing (EventDateAndTime)
 import Set exposing (Set)
-import Stopwatch exposing (Stopwatches(..))
+import Stopwatch exposing (MergeEntry(..), MergedTableRow, Stopwatches(..))
 import StopwatchOffsetDetection exposing (getStopwatchTimeOffset)
 import Time exposing (posixToMillis)
 
@@ -28,6 +28,7 @@ type NonFixableProblem
     | PositionMissingAthlete Int
     | MisScan String
     | UnrecognisedBarcodeScannerLine String
+    | IdenticalStopwatchTimes
     | StopwatchesInconsistentWithNumberChecker
     | StopwatchesAndFinishTokensInconsistentWithNumberChecker
 
@@ -82,6 +83,33 @@ hasDifferentValues list =
 
         _ ->
             Nothing
+
+
+isExactMatch : MergedTableRow -> Bool
+isExactMatch row =
+    case row.entry of
+        ExactMatch _ ->
+            True
+
+        _ ->
+            False
+
+
+identifyIdenticalStopwatches : Stopwatches -> List Problem
+identifyIdenticalStopwatches stopwatches =
+    case stopwatches of
+        None ->
+            []
+
+        Single _ _ ->
+            []
+
+        Double doubleStopwatchData ->
+            if List.all isExactMatch doubleStopwatchData.mergedTableRows then
+                [ NonFixable IdenticalStopwatchTimes ]
+
+            else
+                []
 
 
 identifyInconsistentBarcodeScannerDates : BarcodeScannerData -> List Problem
@@ -445,6 +473,7 @@ identifyProblems stopwatches barcodeScannerData eventDateAndTime =
         [ Maybe.map (identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString) eventStartTimeMillis
             |> Maybe.withDefault []
         , identifyStopwatchTimeOffset stopwatches
+        , identifyIdenticalStopwatches stopwatches
         , identifyDuplicateScans positionToAthletesDict
         , identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly
         , identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly
