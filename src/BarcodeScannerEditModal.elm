@@ -171,12 +171,25 @@ dialogTitle : DialogDetails -> String
 dialogTitle dialogDetails =
     case dialogDetails of
         BarcodeScannerRowEditDialog rowEditDetails ->
-            case rowEditDetails.currentContents of
-                MisScan _ ->
-                    "Edit mis-scanned barcode scanner row"
+            let
+                prefix : String
+                prefix =
+                    if rowEditDetails.isDeleted then
+                        "Reinstate "
 
-                Ordinary _ _ ->
-                    "Edit barcode scanner row"
+                    else
+                        "Edit "
+
+                suffix : String
+                suffix =
+                    case rowEditDetails.currentContents of
+                        MisScan _ ->
+                            "mis-scanned barcode scanner row"
+
+                        Ordinary _ _ ->
+                            "barcode scanner row"
+            in
+            prefix ++ suffix
 
         NoDialog ->
             ""
@@ -238,6 +251,14 @@ barcodeScannerEditButtons barcodeScannerRowEditDetails =
                     ]
                     [ text "Delete row" ]
 
+        updateButtonText : String
+        updateButtonText =
+            if barcodeScannerRowEditDetails.isDeleted then
+                "Reinstate row"
+
+            else
+                "Update row"
+
         updateButtonDisabled : Bool
         updateButtonDisabled =
             barcodeScannerRowEditDetails.validationError /= Nothing
@@ -248,7 +269,7 @@ barcodeScannerEditButtons barcodeScannerRowEditDetails =
         , Button.disabled updateButtonDisabled
         , Button.attrs updateButtonAttrs
         ]
-        [ text "Update row" ]
+        [ text updateButtonText ]
     , Button.button
         [ Button.outlinePrimary
         , Button.attrs [ onClick CloseModal ]
