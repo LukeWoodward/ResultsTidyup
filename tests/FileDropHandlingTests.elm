@@ -1,8 +1,8 @@
 module FileDropHandlingTests exposing (suite)
 
-import DataStructures exposing (InteropFile)
 import Expect exposing (Expectation)
 import FileDropHandling exposing (handleFilesDropped)
+import FileHandling exposing (InteropFile)
 import Model exposing (Model, initModel)
 import Stopwatch exposing (Stopwatch(..))
 import Test exposing (Test, describe, test)

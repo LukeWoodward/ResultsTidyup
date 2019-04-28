@@ -1,13 +1,7 @@
-module DataStructures exposing (EventDateAndTime, InteropFile, ProblemFix(..), SecondTab(..))
+module DataStructures exposing (EventDateAndTime, ProblemFix(..), SecondTab(..))
 
 import Stopwatch exposing (WhichStopwatch)
 import Time exposing (Posix)
-
-
-type alias InteropFile =
-    { fileName : String
-    , fileText : String
-    }
 
 
 type alias EventDateAndTime =

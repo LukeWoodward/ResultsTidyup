@@ -1,10 +1,10 @@
 module FileDropHandling exposing (handleFilesDropped)
 
 import BarcodeScanner exposing (BarcodeScannerData, mergeScannerData, readBarcodeScannerData)
-import DataStructures exposing (InteropFile)
 import DateHandling exposing (dateToString)
 import Error exposing (Error, FileError, mapError)
 import EventDateAndTimeEditing exposing (handleEventDateChange)
+import FileHandling exposing (InteropFile)
 import Model exposing (Model)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, annotate, parseNumberCheckerFile)
 import Parser exposing ((|.), Parser, chompIf, chompWhile, end, int, run, symbol)

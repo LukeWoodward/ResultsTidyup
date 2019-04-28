@@ -11,12 +11,13 @@ import BarcodeScanner
         )
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, updateEditDetails)
 import Browser.Dom
-import DataStructures exposing (EventDateAndTime, InteropFile)
+import DataStructures exposing (EventDateAndTime)
 import DateHandling exposing (generateDownloadFilenameDatePart)
 import Dict
 import EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeChange)
 import File.Download as Download
 import FileDropHandling exposing (handleFilesDropped)
+import FileHandling exposing (InteropFile)
 import Model exposing (DialogDetails(..), Model, NumberCheckerManualEntryRow, ProblemEntry, initModel)
 import Msg exposing (Msg(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)

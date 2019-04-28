@@ -1,6 +1,6 @@
 port module Ports exposing (filesDropped, getInitialHeight, heightUpdated, recordEventStartTime)
 
-import DataStructures exposing (InteropFile)
+import FileHandling exposing (InteropFile)
 
 
 port getInitialHeight : () -> Cmd msg

@@ -1,6 +1,12 @@
-module FileHandling exposing (crlf, isPossibleBinary, splitLines)
+module FileHandling exposing (InteropFile, crlf, isPossibleBinary, splitLines)
 
 import Regex exposing (Regex)
+
+
+type alias InteropFile =
+    { fileName : String
+    , fileText : String
+    }
 
 
 crlf : String
