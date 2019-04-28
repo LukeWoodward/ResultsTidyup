@@ -3,7 +3,7 @@ module EventDateAndTimeView exposing (eventDateAndTimeView)
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
-import DataStructures exposing (EventDateAndTime)
+import EventDateAndTime exposing (EventDateAndTime)
 import Html exposing (Html, button, div, h3, input, label, text)
 import Html.Attributes exposing (class, for, id, type_, value)
 import Html.Events exposing (onClick, onInput)

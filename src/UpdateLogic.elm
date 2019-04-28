@@ -11,9 +11,9 @@ import BarcodeScanner
         )
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, updateEditDetails)
 import Browser.Dom
-import DataStructures exposing (EventDateAndTime)
 import DateHandling exposing (generateDownloadFilenameDatePart)
 import Dict
+import EventDateAndTime exposing (EventDateAndTime)
 import EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeChange)
 import File.Download as Download
 import FileDropHandling exposing (handleFilesDropped)

@@ -1,9 +1,9 @@
 module Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..), identifyProblems)
 
 import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, BarcodeScannerFileLine, DeletionStatus(..), LineContents(..), MisScannedItem, UnrecognisedLine)
-import DataStructures exposing (EventDateAndTime)
 import DateHandling exposing (dateStringToPosix, dateToString)
 import Dict exposing (Dict)
+import EventDateAndTime exposing (EventDateAndTime)
 import Set exposing (Set)
 import Stopwatch exposing (Stopwatches(..))
 import StopwatchOffsetDetection exposing (getStopwatchTimeOffset)

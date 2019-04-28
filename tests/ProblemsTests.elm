@@ -12,9 +12,9 @@ import BarcodeScanner
         , UnrecognisedLine
         )
 import BarcodeScannerTests exposing (createBarcodeScannerData)
-import DataStructures exposing (EventDateAndTime)
 import Dict exposing (Dict)
 import Errors exposing (expectError)
+import EventDateAndTime exposing (EventDateAndTime)
 import Expect
 import Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..), identifyProblems)
 import Stopwatch exposing (Stopwatches(..))

@@ -13,9 +13,9 @@ import BarcodeScanner
         )
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditLocation)
 import BarcodeScannerTests exposing (createBarcodeScannerData)
-import DataStructures exposing (EventDateAndTime)
 import Dict exposing (Dict)
 import Error exposing (FileError)
+import EventDateAndTime exposing (EventDateAndTime)
 import Expect exposing (Expectation)
 import FileHandling exposing (InteropFile)
 import Model

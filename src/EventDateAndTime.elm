@@ -1,4 +1,4 @@
-module DataStructures exposing (EventDateAndTime)
+module EventDateAndTime exposing (EventDateAndTime)
 
 import Time exposing (Posix)
 

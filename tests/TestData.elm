@@ -45,8 +45,8 @@ import BarcodeScanner
         , PositionAndTimePair
         , regenerate
         )
-import DataStructures exposing (EventDateAndTime)
 import Dict
+import EventDateAndTime exposing (EventDateAndTime)
 import FileHandling exposing (crlf)
 import Iso8601
 import Model exposing (NumberCheckerManualEntryRow)

@@ -1,6 +1,6 @@
 module EventDateAndTimeEditingTests exposing (suite)
 
-import DataStructures exposing (EventDateAndTime)
+import EventDateAndTime exposing (EventDateAndTime)
 import EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeChange)
 import Expect
 import Model exposing (initModel)
