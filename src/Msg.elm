@@ -3,8 +3,9 @@ module Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import BarcodeScanner exposing (LineContents)
 import BarcodeScannerEditing exposing (BarcodeScannerEditDetails, BarcodeScannerRowEditLocation)
 import Bootstrap.Tab as Tab
-import DataStructures exposing (ProblemFix, SecondTab)
+import DataStructures exposing (SecondTab)
 import FileHandling exposing (InteropFile)
+import ProblemFixing exposing (ProblemFix)
 import Stopwatch exposing (WhichStopwatch(..))
 import Time exposing (Posix, Zone)
 

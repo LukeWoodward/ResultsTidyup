@@ -1,4 +1,4 @@
-module ProblemFixing exposing (fixProblem)
+module ProblemFixing exposing (ProblemFix(..), fixProblem)
 
 import BarcodeScanner
     exposing
@@ -12,12 +12,20 @@ import BarcodeScanner
         , PositionAndTimePair
         , regenerate
         )
-import DataStructures exposing (ProblemFix(..))
 import DateHandling exposing (dateStringToPosix)
 import Model exposing (Model)
 import Problems exposing (FixableProblem(..), NonFixableProblem(..))
 import Stopwatch exposing (DoubleStopwatchData, Stopwatches(..), WhichStopwatch(..), createMergedTable)
 import Time exposing (Posix)
+
+
+type ProblemFix
+    = RemoveUnassociatedFinishToken Int
+    | RemoveUnassociatedAthlete String
+    | RemoveDuplicateScans Int String
+    | RemoveScansBeforeEventStart Int
+    | AdjustStopwatch WhichStopwatch Int
+    | SwapBarcodes String Int Int
 
 
 removeMultipleOccurrencesOf : String -> List AthleteAndTimePair -> List AthleteAndTimePair
