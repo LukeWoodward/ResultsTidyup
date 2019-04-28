@@ -108,10 +108,9 @@ function drop(e) {
   handleLoad(e.dataTransfer.files);
 }
 
-var dropzone = document.getElementById("results-tidyup-container");
-dropzone.addEventListener("dragenter", stopDefaultBehaviour, false);
-dropzone.addEventListener("dragover", stopDefaultBehaviour, false);
-dropzone.addEventListener("drop", drop, false);
+document.body.addEventListener("dragenter", stopDefaultBehaviour, false);
+document.body.addEventListener("dragover", stopDefaultBehaviour, false);
+document.body.addEventListener("drop", drop, false);
 
 </script>
 
