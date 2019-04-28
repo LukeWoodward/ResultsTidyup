@@ -10,6 +10,7 @@ import BarcodeScanner
         , updateBarcodeScannerLine
         )
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, updateEditDetails)
+import Bootstrap.Tab as Tab
 import Browser.Dom
 import DateHandling exposing (generateDownloadFilenameDatePart)
 import Dict
@@ -18,7 +19,7 @@ import EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeC
 import File.Download as Download
 import FileDropHandling exposing (handleFilesDropped)
 import FileHandling exposing (InteropFile)
-import Model exposing (DialogDetails(..), Model, NumberCheckerManualEntryRow, ProblemEntry, initModel)
+import Model exposing (DialogDetails(..), Model, NumberCheckerManualEntryRow, ProblemEntry, emptyNumberCheckerManualEntryRow, initModel)
 import Msg exposing (Msg(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import NumberCheckerEditing
@@ -209,9 +210,18 @@ flipStopwatches model =
 
 clearAllData : Model -> Model
 clearAllData model =
-    { initModel
-        | secondTab = model.secondTab
+    { model
+        | stopwatches = None
+        , lastErrors = []
+        , numberCheckerEntries = []
+        , lastHeight = Nothing
+        , highlightedNumberCheckerId = Nothing
+        , barcodeScannerData = BarcodeScanner.empty
+        , problems = []
         , eventDateAndTime = EventDateAndTime "" Nothing model.eventDateAndTime.enteredTime model.eventDateAndTime.validatedTime
+        , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
+        , barcodeScannerTab = Tab.initialState
+        , dialogDetails = NoDialog
     }
 
 
