@@ -41,6 +41,7 @@ type WhichStopwatch
 type MergeEntry
     = ExactMatch Int
     | NearMatch Int Int
+    | NotNearMatch Int Int
     | OneWatchOnly WhichStopwatch Int
 
 
@@ -153,13 +154,16 @@ generateInitialTable entries =
     List.indexedMap createInitialTableRow entries
 
 
-isSingleTimeRow : MergedTableRow -> Bool
-isSingleTimeRow row =
-    case row.entry of
+isSingleTimeEntry : MergeEntry -> Bool
+isSingleTimeEntry entry =
+    case entry of
         ExactMatch _ ->
             False
 
         NearMatch _ _ ->
+            False
+
+        NotNearMatch _ _ ->
             False
 
         OneWatchOnly _ _ ->
@@ -176,7 +180,7 @@ toggleRowInTableInternal toggledIndex currentRowNumber rows =
             let
                 newRow : MergedTableRow
                 newRow =
-                    if firstRow.index == toggledIndex && isSingleTimeRow firstRow then
+                    if firstRow.index == toggledIndex && isSingleTimeEntry firstRow.entry then
                         { firstRow | included = not firstRow.included }
 
                     else
@@ -229,6 +233,9 @@ flipRow row =
         NearMatch time1 time2 ->
             { row | entry = NearMatch time2 time1 }
 
+        NotNearMatch time1 time2 ->
+            { row | entry = NotNearMatch time2 time1 }
+
         OneWatchOnly watch time ->
             { row | entry = OneWatchOnly (flipStopwatch watch) time }
 
@@ -277,6 +284,9 @@ underlineTableInternal numberDicts sw1Posn sw2Posn ftoksPosn actualPosn mergedRo
                         NearMatch _ _ ->
                             sw1Posn + 1
 
+                        NotNearMatch _ _ ->
+                            sw1Posn + 1
+
                         OneWatchOnly StopwatchOne _ ->
                             sw1Posn + 1
 
@@ -290,6 +300,9 @@ underlineTableInternal numberDicts sw1Posn sw2Posn ftoksPosn actualPosn mergedRo
                             sw2Posn + 1
 
                         NearMatch _ _ ->
+                            sw2Posn + 1
+
+                        NotNearMatch _ _ ->
                             sw2Posn + 1
 
                         OneWatchOnly StopwatchOne _ ->
@@ -418,6 +431,9 @@ outputMergedRow row =
                 NearMatch time1 time2 ->
                     formatRow rowNum (min time1 time2)
 
+                NotNearMatch time1 time2 ->
+                    formatRow rowNum (min time1 time2)
+
                 OneWatchOnly _ time ->
                     if row.included then
                         formatRow rowNum time
@@ -465,6 +481,72 @@ isHeadInRange list rangeMin rangeMax =
 
         Nothing ->
             False
+
+
+addNotNearMatches : List MergeEntry -> List MergeEntry
+addNotNearMatches entries =
+    let
+        entriesWithHeadMerged : List MergeEntry
+        entriesWithHeadMerged =
+            case entries of
+                (OneWatchOnly StopwatchOne time1) :: (OneWatchOnly StopwatchTwo time2) :: entry3 :: rest ->
+                    if not (isSingleTimeEntry entry3) then
+                        NotNearMatch time1 time2 :: entry3 :: rest
+
+                    else
+                        entries
+
+                (OneWatchOnly StopwatchTwo time2) :: (OneWatchOnly StopwatchOne time1) :: entry3 :: rest ->
+                    if not (isSingleTimeEntry entry3) then
+                        NotNearMatch time1 time2 :: entry3 :: rest
+
+                    else
+                        entries
+
+                _ ->
+                    entries
+
+        createNotNearMatchesInRest : List MergeEntry -> List MergeEntry
+        createNotNearMatchesInRest mergeEntries =
+            case mergeEntries of
+                [] ->
+                    []
+
+                entry1 :: rest ->
+                    if isSingleTimeEntry entry1 then
+                        entry1 :: createNotNearMatchesInRest rest
+
+                    else
+                        let
+                            tail : List MergeEntry
+                            tail =
+                                case rest of
+                                    (OneWatchOnly StopwatchOne time1) :: (OneWatchOnly StopwatchTwo time2) :: [] ->
+                                        NotNearMatch time1 time2 :: []
+
+                                    (OneWatchOnly StopwatchOne time1) :: (OneWatchOnly StopwatchTwo time2) :: entry4 :: restAfterMismatch ->
+                                        if isSingleTimeEntry entry4 then
+                                            createNotNearMatchesInRest rest
+
+                                        else
+                                            NotNearMatch time1 time2 :: createNotNearMatchesInRest (entry4 :: restAfterMismatch)
+
+                                    (OneWatchOnly StopwatchTwo time2) :: (OneWatchOnly StopwatchOne time1) :: [] ->
+                                        NotNearMatch time1 time2 :: []
+
+                                    (OneWatchOnly StopwatchTwo time2) :: (OneWatchOnly StopwatchOne time1) :: entry4 :: restAfterMismatch ->
+                                        if isSingleTimeEntry entry4 then
+                                            createNotNearMatchesInRest rest
+
+                                        else
+                                            NotNearMatch time1 time2 :: createNotNearMatchesInRest (entry4 :: restAfterMismatch)
+
+                                    _ ->
+                                        createNotNearMatchesInRest rest
+                        in
+                        entry1 :: tail
+    in
+    createNotNearMatchesInRest entriesWithHeadMerged
 
 
 merge : Int -> List Int -> List Int -> List MergeEntry
@@ -518,3 +600,4 @@ merge maxNearMatchDistance times1 times2 =
                         OneWatchOnly StopwatchTwo first2 :: createTimes sortedTimes1 rest2
     in
     createTimes (List.sort times1) (List.sort times2)
+        |> addNotNearMatches

@@ -403,6 +403,15 @@ mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData row =
                 , thisBarcodeScannerCell
                 ]
 
+        NotNearMatch time1 time2 ->
+            Table.tr
+                []
+                [ indexCell
+                , timeCell "not-near-match" time1 row.underlines.stopwatch1 highlightedNumberCheckerId
+                , timeCell "not-near-match" time2 row.underlines.stopwatch2 highlightedNumberCheckerId
+                , thisBarcodeScannerCell
+                ]
+
         OneWatchOnly StopwatchOne time1 ->
             Table.tr
                 []

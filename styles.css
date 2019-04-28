@@ -18,7 +18,7 @@ button.btn.nav-link.barcode-scanner-file-error {
     background-color: #ffe6e6;
 }
 
-td.mismatch, tr.barcode-scanner-row-error, button.btn.nav-link.active.barcode-scanner-file-error {
+td.not-near-match, td.mismatch, tr.barcode-scanner-row-error, button.btn.nav-link.active.barcode-scanner-file-error {
     background-color: #ffcccc;
 }
 

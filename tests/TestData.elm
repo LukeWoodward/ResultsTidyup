@@ -68,12 +68,18 @@ sampleStopwatchData =
         ++ "1,01/01/2001 00:03:11,00:03:11\n"
         ++ "2,01/01/2001 00:07:44,00:07:44\n"
         ++ "3,01/01/2001 00:10:03,00:10:03\n"
+        ++ "4,01/01/2001 00:12:26,00:12:26\n"
         ++ "ENDOFEVENT,01/01/2001 00:15:55\n"
+
+
+parsedStopwatchTimes1 : List Int
+parsedStopwatchTimes1 =
+    [ 3 * 60 + 11, 7 * 60 + 44, 10 * 60 + 3, 12 * 60 + 26 ]
 
 
 expectedParsedSampleStopwatchData : Stopwatch
 expectedParsedSampleStopwatchData =
-    StopwatchData [ 3 * 60 + 11, 7 * 60 + 44, 10 * 60 + 3 ]
+    StopwatchData parsedStopwatchTimes1
 
 
 singleStopwatch : Stopwatches
@@ -114,13 +120,14 @@ sampleStopwatchData2 =
         ++ "0,01/01/2001 00:00:00\n"
         ++ "1,01/01/2001 00:03:11,00:03:11\n"
         ++ "2,01/01/2001 00:07:43,00:07:43\n"
-        ++ "3,01/01/2001 00:10:11,00:10:11\n"
+        ++ "3,01/01/2001 00:12:26,00:12:26\n"
+        ++ "4,01/01/2001 00:13:11,00:13:11\n"
         ++ "ENDOFEVENT,01/01/2001 00:15:51\n"
 
 
 parsedStopwatchTimes2 : List Int
 parsedStopwatchTimes2 =
-    [ 191, 463, 611 ]
+    [ 191, 463, 746, 791 ]
 
 
 doubleStopwatches : Stopwatches
@@ -131,12 +138,13 @@ doubleStopwatches =
             [ { index = 0, rowNumber = Just 1, entry = ExactMatch 191, included = True, underlines = noUnderlines }
             , { index = 1, rowNumber = Just 2, entry = NearMatch 464 463, included = True, underlines = noUnderlines }
             , { index = 2, rowNumber = Just 3, entry = OneWatchOnly StopwatchOne 603, included = True, underlines = noUnderlines }
-            , { index = 3, rowNumber = Just 4, entry = OneWatchOnly StopwatchTwo 611, included = True, underlines = noUnderlines }
+            , { index = 3, rowNumber = Just 4, entry = ExactMatch 746, included = True, underlines = noUnderlines }
+            , { index = 4, rowNumber = Just 5, entry = OneWatchOnly StopwatchTwo 791, included = True, underlines = noUnderlines }
             ]
     in
     Double
-        { times1 = [ 191, 464, 603 ]
-        , times2 = [ 191, 463, 611 ]
+        { times1 = parsedStopwatchTimes1
+        , times2 = parsedStopwatchTimes2
         , filename1 = "stopwatch1.txt"
         , filename2 = "stopwatch2.txt"
         , mergedTableRows = expectedEntries
@@ -151,12 +159,13 @@ flippedDoubleStopwatches =
             [ { index = 0, rowNumber = Just 1, entry = ExactMatch 191, included = True, underlines = noUnderlines }
             , { index = 1, rowNumber = Just 2, entry = NearMatch 463 464, included = True, underlines = noUnderlines }
             , { index = 2, rowNumber = Just 3, entry = OneWatchOnly StopwatchTwo 603, included = True, underlines = noUnderlines }
-            , { index = 3, rowNumber = Just 4, entry = OneWatchOnly StopwatchOne 611, included = True, underlines = noUnderlines }
+            , { index = 3, rowNumber = Just 4, entry = ExactMatch 746, included = True, underlines = noUnderlines }
+            , { index = 4, rowNumber = Just 5, entry = OneWatchOnly StopwatchOne 791, included = True, underlines = noUnderlines }
             ]
     in
     Double
-        { times1 = [ 191, 463, 611 ]
-        , times2 = [ 191, 464, 603 ]
+        { times1 = parsedStopwatchTimes2
+        , times2 = parsedStopwatchTimes1
         , filename1 = "stopwatch2.txt"
         , filename2 = "stopwatch1.txt"
         , mergedTableRows = expectedEntries
@@ -166,8 +175,8 @@ flippedDoubleStopwatches =
 stopwatchesForAdjusting : Int -> Int -> Stopwatches
 stopwatchesForAdjusting stopwatch1Offset stopwatch2Offset =
     Double
-        { times1 = [ 191 + stopwatch1Offset, 464 + stopwatch1Offset, 603 + stopwatch1Offset ]
-        , times2 = [ 191 + stopwatch2Offset, 463 + stopwatch2Offset, 611 + stopwatch2Offset ]
+        { times1 = [ 191 + stopwatch1Offset, 464 + stopwatch1Offset, 603 + stopwatch1Offset, 746 + stopwatch1Offset ]
+        , times2 = [ 191 + stopwatch2Offset, 463 + stopwatch2Offset, 746 + stopwatch2Offset, 791 + stopwatch2Offset ]
         , filename1 = "stopwatch1.txt"
         , filename2 = "stopwatch2.txt"
         , mergedTableRows = []
@@ -314,7 +323,9 @@ expectedMergedStopwatchFileContents =
         ++ crlf
         ++ "3,01/01/2001 00:10:03,00:10:03"
         ++ crlf
-        ++ "4,01/01/2001 00:10:11,00:10:11"
+        ++ "4,01/01/2001 00:12:26,00:12:26"
+        ++ crlf
+        ++ "5,01/01/2001 00:13:11,00:13:11"
         ++ crlf
         ++ "ENDOFEVENT,01/01/2001 01:59:59"
 
@@ -331,6 +342,8 @@ expectedDownloadedStopwatchData1 =
         ++ crlf
         ++ "3,01/01/2001 00:10:03,00:10:03"
         ++ crlf
+        ++ "4,01/01/2001 00:12:26,00:12:26"
+        ++ crlf
         ++ "ENDOFEVENT,01/01/2001 01:59:59"
 
 
@@ -344,7 +357,9 @@ expectedDownloadedStopwatchData2 =
         ++ crlf
         ++ "2,01/01/2001 00:07:43,00:07:43"
         ++ crlf
-        ++ "3,01/01/2001 00:10:11,00:10:11"
+        ++ "3,01/01/2001 00:12:26,00:12:26"
+        ++ crlf
+        ++ "4,01/01/2001 00:13:11,00:13:11"
         ++ crlf
         ++ "ENDOFEVENT,01/01/2001 01:59:59"
 

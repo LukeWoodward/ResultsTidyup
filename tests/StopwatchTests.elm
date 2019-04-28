@@ -28,12 +28,18 @@ entry4 =
     OneWatchOnly StopwatchOne 355
 
 
+entry5 : MergeEntry
+entry5 =
+    NotNearMatch 406 419
+
+
 sampleMergedTable : List MergedTableRow
 sampleMergedTable =
     [ MergedTableRow 0 (Just 1) entry1 True noUnderlines
     , MergedTableRow 1 (Just 2) entry2 True noUnderlines
     , MergedTableRow 2 (Just 3) entry3 True noUnderlines
     , MergedTableRow 3 (Just 4) entry4 True noUnderlines
+    , MergedTableRow 4 (Just 5) entry5 True noUnderlines
     ]
 
 
@@ -102,7 +108,7 @@ suite =
                         |> Expect.equal [ MergedTableRow 0 (Just 1) entry1 True noUnderlines ]
             , test "generates table with three rows from list of three merge entries" <|
                 \() ->
-                    generateInitialTable [ entry1, entry2, entry3, entry4 ]
+                    generateInitialTable [ entry1, entry2, entry3, entry4, entry5 ]
                         |> Expect.equal sampleMergedTable
             ]
         , describe "toggleRowInTable tests"
@@ -122,6 +128,7 @@ suite =
                             , MergedTableRow 1 (Just 2) entry2 True noUnderlines
                             , MergedTableRow 2 (Just 3) entry3 True noUnderlines
                             , MergedTableRow 3 Nothing entry4 False noUnderlines
+                            , MergedTableRow 4 (Just 4) entry5 True noUnderlines
                             ]
             , test "toggles out watch-2-only row and renumbers remaining rows" <|
                 \() ->
@@ -131,6 +138,7 @@ suite =
                             , MergedTableRow 1 (Just 2) entry2 True noUnderlines
                             , MergedTableRow 2 Nothing entry3 False noUnderlines
                             , MergedTableRow 3 (Just 3) entry4 True noUnderlines
+                            , MergedTableRow 4 (Just 4) entry5 True noUnderlines
                             ]
             , test "toggles back in watch-1-only row" <|
                 \() ->
@@ -140,6 +148,7 @@ suite =
                             , MergedTableRow 1 (Just 2) entry2 True noUnderlines
                             , MergedTableRow 2 (Just 3) entry3 True noUnderlines
                             , MergedTableRow 3 Nothing entry4 False noUnderlines
+                            , MergedTableRow 4 (Just 4) entry5 True noUnderlines
                             ]
                     in
                     toggleRowInTable 3 previousData
@@ -152,6 +161,7 @@ suite =
                             , MergedTableRow 1 (Just 2) entry2 True noUnderlines
                             , MergedTableRow 2 Nothing entry3 False noUnderlines
                             , MergedTableRow 3 (Just 3) entry4 True noUnderlines
+                            , MergedTableRow 4 (Just 4) entry5 True noUnderlines
                             ]
                     in
                     toggleRowInTable 2 previousData
@@ -226,6 +236,26 @@ suite =
                 \() ->
                     merge 2 [ 10, 31, 50 ] [ 10, 32, 33, 50 ]
                         |> Expect.equal [ ExactMatch 10, NearMatch 31 32, OneWatchOnly StopwatchTwo 33, ExactMatch 50 ]
+            , test "merging two lists with a not-near-match at the start returns expected result" <|
+                \() ->
+                    merge 2 [ 8, 30, 50 ] [ 14, 30, 50 ]
+                        |> Expect.equal [ NotNearMatch 8 14, ExactMatch 30, ExactMatch 50 ]
+            , test "merging two lists with a not-near-match in the middle returns expected result" <|
+                \() ->
+                    merge 2 [ 10, 28, 50 ] [ 10, 34, 50 ]
+                        |> Expect.equal [ ExactMatch 10, NotNearMatch 28 34, ExactMatch 50 ]
+            , test "merging two lists with a not-near-match at the end returns expected result" <|
+                \() ->
+                    merge 2 [ 10, 30, 48 ] [ 10, 30, 54 ]
+                        |> Expect.equal [ ExactMatch 10, ExactMatch 30, NotNearMatch 48 54 ]
+            , test "merging two lists with times on alternating stopwatches returns expected result 1" <|
+                \() ->
+                    merge 2 [ 10, 30, 48, 61 ] [ 10, 30, 54 ]
+                        |> Expect.equal [ ExactMatch 10, ExactMatch 30, OneWatchOnly StopwatchOne 48, OneWatchOnly StopwatchTwo 54, OneWatchOnly StopwatchOne 61 ]
+            , test "merging two lists with times on alternating stopwatches returns expected result 2" <|
+                \() ->
+                    merge 2 [ 10, 30, 54 ] [ 10, 30, 48, 61 ]
+                        |> Expect.equal [ ExactMatch 10, ExactMatch 30, OneWatchOnly StopwatchTwo 48, OneWatchOnly StopwatchOne 54, OneWatchOnly StopwatchTwo 61 ]
             , test "merging two lists with a near-match and followed by an exact match returns expected result" <|
                 \() ->
                     merge 2 [ 118, 127, 127 ] [ 118, 126, 127 ]
