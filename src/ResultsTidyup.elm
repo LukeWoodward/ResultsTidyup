@@ -9,13 +9,13 @@ import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
 import Bootstrap.Tab as Tab
 import Browser
-import DataStructures exposing (EventDateAndTime, SecondTab(..))
+import DataStructures exposing (EventDateAndTime)
 import Error exposing (FileError)
 import EventDateAndTimeView exposing (eventDateAndTimeView)
 import Html exposing (Html, a, div, h1, h3, li, span, text, ul)
 import Html.Attributes exposing (attribute, class, href, id, style)
 import Html.Events exposing (onClick)
-import Model exposing (Model, initModel)
+import Model exposing (Model, SecondTab(..), initModel)
 import Msg exposing (Msg(..))
 import NumberCheckerView exposing (numberCheckerView)
 import Ports exposing (filesDropped, getInitialHeight, heightUpdated)

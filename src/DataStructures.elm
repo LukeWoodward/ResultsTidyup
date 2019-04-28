@@ -1,6 +1,5 @@
-module DataStructures exposing (EventDateAndTime, SecondTab(..))
+module DataStructures exposing (EventDateAndTime)
 
-import Stopwatch exposing (WhichStopwatch)
 import Time exposing (Posix)
 
 
@@ -10,8 +9,3 @@ type alias EventDateAndTime =
     , enteredTime : String
     , validatedTime : Maybe Int
     }
-
-
-type SecondTab
-    = BarcodeScannersTab
-    | NumberCheckerTab

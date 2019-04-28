@@ -3,6 +3,7 @@ module Model exposing
     , Model
     , NumberCheckerManualEntryRow
     , ProblemEntry
+    , SecondTab
     , emptyNumberCheckerManualEntryRow
     , emptyNumericEntry
     , initModel
@@ -11,7 +12,7 @@ module Model exposing
 import BarcodeScanner exposing (BarcodeScannerData, LineContents)
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, BarcodeScannerRowEditLocation)
 import Bootstrap.Tab as Tab
-import DataStructures exposing (EventDateAndTime, SecondTab(..))
+import DataStructures exposing (EventDateAndTime)
 import Error exposing (FileError)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import NumericEntry exposing (NumericEntry)
@@ -47,6 +48,11 @@ type alias ProblemEntry =
 type DialogDetails
     = NoDialog
     | BarcodeScannerRowEditDialog BarcodeScannerRowEditDetails
+
+
+type SecondTab
+    = BarcodeScannersTab
+    | NumberCheckerTab
 
 
 type alias Model =
