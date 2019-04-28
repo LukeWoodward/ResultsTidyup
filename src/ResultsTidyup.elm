@@ -123,7 +123,7 @@ view model =
         []
         [ div
             [ class "clearfix" ]
-            [ h1 [ id "header" ] [ text "Results tidy-up" ]
+            [ h1 [ id "header" ] [ text "Results Tidyup" ]
             , badge
             ]
         , errorsView model.lastErrors
