@@ -73,13 +73,25 @@ suite =
                                 handleFilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ] initModel
                         in
                         runTestWithSingleError intermediateModel "stopwatch1.txt" sampleStopwatchData "STOPWATCH_FILE_ALREADY_LOADED"
-                , test "Can upload two different stopwatch data files" <|
+                , test "Can upload two different stopwatch data files in alphabetical order dropped together" <|
                     \() ->
-                        handleFilesDropped
-                            [ InteropFile "stopwatch1.txt" sampleStopwatchData
-                            , InteropFile "stopwatch2.txt" sampleStopwatchData2
-                            ]
-                            initModel
+                        initModel
+                            |> handleFilesDropped
+                                [ InteropFile "stopwatch1.txt" sampleStopwatchData
+                                , InteropFile "stopwatch2.txt" sampleStopwatchData2
+                                ]
+                            |> Expect.equal { initModel | stopwatches = doubleStopwatches }
+                , test "Can upload two different stopwatch data files in alphabetical order dropped one after the other" <|
+                    \() ->
+                        initModel
+                            |> handleFilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ]
+                            |> handleFilesDropped [ InteropFile "stopwatch2.txt" sampleStopwatchData2 ]
+                            |> Expect.equal { initModel | stopwatches = doubleStopwatches }
+                , test "Can upload two different stopwatch data files in reverse alphabetical order dropped one after the other" <|
+                    \() ->
+                        initModel
+                            |> handleFilesDropped [ InteropFile "stopwatch2.txt" sampleStopwatchData2 ]
+                            |> handleFilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ]
                             |> Expect.equal { initModel | stopwatches = doubleStopwatches }
                 , test "Uploading a third stopwatch data file has no effect" <|
                     \() ->

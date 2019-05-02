@@ -49,7 +49,11 @@ handleStopwatchFileDrop fileName fileText model =
                                 Single fileName newStopwatch
 
                             Single existingFilename firstStopwatch ->
-                                createMergedTable firstStopwatch newStopwatch existingFilename fileName
+                                if fileName < existingFilename then
+                                    createMergedTable newStopwatch firstStopwatch fileName existingFilename
+
+                                else
+                                    createMergedTable firstStopwatch newStopwatch existingFilename fileName
 
                             Double _ ->
                                 model.stopwatches
