@@ -4,6 +4,7 @@ module BarcodeScannerEditing exposing
     , BarcodeScannerRowEditDetails
     , BarcodeScannerRowEditLocation
     , BarcodeScannerValidationError(..)
+    , elementToFocusWhenOpening
     , startEditing
     , updateEditDetails
     , validate
@@ -66,6 +67,16 @@ startEditing location contents isDeleted =
 
         MisScan misScannedText ->
             validate (BarcodeScannerRowEditDetails location contents emptyNumericEntry emptyNumericEntry Neither Nothing isDeleted)
+
+
+elementToFocusWhenOpening : LineContents -> String
+elementToFocusWhenOpening contents =
+    case contents of
+        Ordinary _ _ ->
+            "barcodeScannerEditAthlete"
+
+        MisScan _ ->
+            "athleteRadio"
 
 
 updateEditDetails : BarcodeScannerEditDetails -> BarcodeScannerRowEditDetails -> BarcodeScannerRowEditDetails

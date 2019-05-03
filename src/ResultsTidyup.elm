@@ -14,7 +14,8 @@ import EventDateAndTime exposing (EventDateAndTime)
 import EventDateAndTimeView exposing (eventDateAndTimeView)
 import Html exposing (Html, a, div, h1, h3, li, span, text, ul)
 import Html.Attributes exposing (attribute, class, href, id, style)
-import Html.Events exposing (onClick)
+import Html.Events exposing (on, onClick)
+import Json.Decode exposing (Decoder, andThen, fail, field, int, succeed)
 import Model exposing (Model, SecondTab(..), initModel)
 import Msg exposing (Msg(..))
 import NumberCheckerView exposing (numberCheckerView)
@@ -108,6 +109,21 @@ classAttributes wantedTab actualTab =
         [ class "nav-link" ]
 
 
+handleEscape : Int -> Decoder Msg
+handleEscape keyCode =
+    if keyCode == 27 then
+        succeed CloseModal
+
+    else
+        fail "not Escape key"
+
+
+escapeKeyDecoder : Decoder Msg
+escapeKeyDecoder =
+    field "keyCode" int
+        |> andThen handleEscape
+
+
 view : Model -> Html Msg
 view model =
     let
@@ -120,7 +136,7 @@ view model =
                 text ""
     in
     div
-        []
+        [ on "keyup" escapeKeyDecoder ]
         [ div
             [ class "clearfix" ]
             [ h1 [ id "header" ] [ text "Results Tidyup" ]

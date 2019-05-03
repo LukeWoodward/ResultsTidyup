@@ -66,8 +66,7 @@ editBarcodeScannerRowModalBody rowEditDetails =
 
                 _ ->
                     Radio.radio
-                        [ Radio.id "finishPositionRadio"
-                        , Radio.checked (rowEditDetails.fieldBeingEdited == FinishPositionOnly)
+                        [ Radio.checked (rowEditDetails.fieldBeingEdited == FinishPositionOnly)
                         , Radio.onClick (BarcodeScannerEdit (ChangeWhatsBeingEdited FinishPositionOnly))
                         ]
                         "Finish position"
@@ -121,7 +120,8 @@ editBarcodeScannerRowModalBody rowEditDetails =
                 [ Grid.col [ Col.xs4 ] [ athleteRadio ]
                 , Grid.col [ Col.xs8 ]
                     [ Input.text
-                        ([ Input.onInput (BarcodeScannerEdit << AthleteChanged)
+                        ([ Input.id "barcodeScannerEditAthlete"
+                         , Input.onInput (BarcodeScannerEdit << AthleteChanged)
                          , Input.value rowEditDetails.athleteEntered.enteredValue
                          , Input.disabled (not isAthleteEditable)
                          ]
