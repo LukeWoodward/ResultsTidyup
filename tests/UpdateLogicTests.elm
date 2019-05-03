@@ -13,6 +13,7 @@ import BarcodeScanner
         )
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditLocation)
 import BarcodeScannerTests exposing (createBarcodeScannerData)
+import Commands exposing (Command(..), ElementToFocus(..))
 import Dict exposing (Dict)
 import Error exposing (FileError)
 import EventDateAndTime exposing (EventDateAndTime)
@@ -36,25 +37,35 @@ import Stopwatch exposing (Stopwatch(..), Stopwatches(..), WhichStopwatch(..))
 import Test exposing (Test, describe, test)
 import TestData exposing (..)
 import Time
-import UpdateLogic exposing (createMergedStopwatchDataFile, createSingleStopwatchDataFile, update)
+import UpdateLogic exposing (barcodeScannerFileMimeType, stopwatchFileMimeType, update)
 
 
-expectNoCommand : ( Model, Cmd Msg ) -> Expectation
+expectNoCommand : ( Model, Command Msg ) -> Expectation
 expectNoCommand ( _, cmd ) =
-    Expect.equal Cmd.none cmd
+    Expect.equal NoCommand cmd
 
 
-expectACommand : ( Model, Cmd Msg ) -> Expectation
-expectACommand ( _, cmd ) =
-    Expect.notEqual Cmd.none cmd
+expectGetCurrentDateCommand : ( Model, Command Msg ) -> Expectation
+expectGetCurrentDateCommand ( _, cmd ) =
+    case cmd of
+        GetCurrentDateAndTime _ ->
+            Expect.pass
+
+        _ ->
+            Expect.fail ("Expected the command to be GetCurrentDateAndTime but was " ++ Debug.toString cmd ++ " instead")
 
 
-expectStopwatches : Stopwatches -> ( Model, Cmd Msg ) -> Expectation
+expectCommand : Command Msg -> ( Model, Command Msg ) -> Expectation
+expectCommand command ( _, cmd ) =
+    Expect.equal command cmd
+
+
+expectStopwatches : Stopwatches -> ( Model, Command Msg ) -> Expectation
 expectStopwatches expectedStopwatches ( model, _ ) =
     Expect.equal expectedStopwatches model.stopwatches
 
 
-expectLastError : String -> ( Model, Cmd Msg ) -> Expectation
+expectLastError : String -> ( Model, Command Msg ) -> Expectation
 expectLastError expectedCode ( model, _ ) =
     case model.lastErrors of
         [ singleError ] ->
@@ -73,27 +84,27 @@ expectLastError expectedCode ( model, _ ) =
             Expect.fail ("Expected to fail with error " ++ expectedCode ++ ", but multiple errors were present: " ++ codes)
 
 
-expectNumberCheckerEntries : List AnnotatedNumberCheckerEntry -> ( Model, Cmd Msg ) -> Expectation
+expectNumberCheckerEntries : List AnnotatedNumberCheckerEntry -> ( Model, Command Msg ) -> Expectation
 expectNumberCheckerEntries expectedNumberCheckerEntries ( model, _ ) =
     Expect.equal expectedNumberCheckerEntries model.numberCheckerEntries
 
 
-expectLastHeight : Maybe Int -> ( Model, Cmd Msg ) -> Expectation
+expectLastHeight : Maybe Int -> ( Model, Command Msg ) -> Expectation
 expectLastHeight expectedLastHeight ( model, _ ) =
     Expect.equal expectedLastHeight model.lastHeight
 
 
-expectHighlightedNumberCheckerId : Maybe Int -> ( Model, Cmd Msg ) -> Expectation
+expectHighlightedNumberCheckerId : Maybe Int -> ( Model, Command Msg ) -> Expectation
 expectHighlightedNumberCheckerId expectedHighlightedNumberCheckerId ( model, _ ) =
     Expect.equal expectedHighlightedNumberCheckerId model.highlightedNumberCheckerId
 
 
-expectBarcodeScannerData : BarcodeScannerData -> ( Model, Cmd Msg ) -> Expectation
+expectBarcodeScannerData : BarcodeScannerData -> ( Model, Command Msg ) -> Expectation
 expectBarcodeScannerData expectedBarcodeScannerData ( model, _ ) =
     Expect.equal expectedBarcodeScannerData model.barcodeScannerData
 
 
-expectProblems : List Problem -> ( Model, Cmd Msg ) -> Expectation
+expectProblems : List Problem -> ( Model, Command Msg ) -> Expectation
 expectProblems expectedProblems ( model, _ ) =
     let
         expectedProblemEntries : List ProblemEntry
@@ -103,17 +114,17 @@ expectProblems expectedProblems ( model, _ ) =
     Expect.equal expectedProblemEntries model.problems
 
 
-expectProblemEntries : List ProblemEntry -> ( Model, Cmd Msg ) -> Expectation
+expectProblemEntries : List ProblemEntry -> ( Model, Command Msg ) -> Expectation
 expectProblemEntries expectedProblemEntries ( model, _ ) =
     Expect.equal expectedProblemEntries model.problems
 
 
-expectEventDateAndTime : EventDateAndTime -> ( Model, Cmd Msg ) -> Expectation
+expectEventDateAndTime : EventDateAndTime -> ( Model, Command Msg ) -> Expectation
 expectEventDateAndTime expectedEventDateAndTime ( model, _ ) =
     Expect.equal expectedEventDateAndTime model.eventDateAndTime
 
 
-expectNumberCheckerManualEntryRow : NumberCheckerManualEntryRow -> ( Model, Cmd Msg ) -> Expectation
+expectNumberCheckerManualEntryRow : NumberCheckerManualEntryRow -> ( Model, Command Msg ) -> Expectation
 expectNumberCheckerManualEntryRow expectedManualEntryRow ( model, _ ) =
     Expect.equal expectedManualEntryRow model.numberCheckerManualEntryRow
 
@@ -131,10 +142,10 @@ type Assertion
     | NumberCheckerManualEntryRowAssertion
 
 
-defaultAssertionsExcept : List Assertion -> List (( Model, Cmd Msg ) -> Expectation)
+defaultAssertionsExcept : List Assertion -> List (( Model, Command Msg ) -> Expectation)
 defaultAssertionsExcept exceptions =
     let
-        allMaybeAssertions : List (Maybe (( Model, Cmd Msg ) -> Expectation))
+        allMaybeAssertions : List (Maybe (( Model, Command Msg ) -> Expectation))
         allMaybeAssertions =
             [ if List.member Command exceptions then
                 Nothing
@@ -191,7 +202,7 @@ defaultAssertionsExcept exceptions =
     List.filterMap identity allMaybeAssertions
 
 
-defaultAssertions : List (( Model, Cmd Msg ) -> Expectation)
+defaultAssertions : List (( Model, Command Msg ) -> Expectation)
 defaultAssertions =
     defaultAssertionsExcept []
 
@@ -393,7 +404,7 @@ suite =
                 \() ->
                     update (GetCurrentDateForDownloadFile DownloadMergedStopwatchData) initModel
                         |> Expect.all
-                            (expectACommand
+                            (expectGetCurrentDateCommand
                                 :: defaultAssertionsExcept [ Command ]
                             )
             ]
@@ -422,7 +433,7 @@ suite =
                         |> Tuple.first
                         |> update (DownloadMergedStopwatchData Time.utc recentTime)
                         |> Expect.all
-                            (expectACommand
+                            (expectCommand (DownloadFile stopwatchFileMimeType (InteropFile "results_tidyup_timer_14072017024000.txt" expectedMergedStopwatchFileContents))
                                 :: expectStopwatches doubleStopwatches
                                 :: defaultAssertionsExcept [ Stopwatches, Command ]
                             )
@@ -431,27 +442,31 @@ suite =
             [ test "Cannot create a stopwatch file for stopwatch 1 when no stopwatches" <|
                 \() ->
                     initModel
-                        |> createSingleStopwatchDataFile StopwatchOne Time.utc recentTime
-                        |> Expect.equal Nothing
+                        |> update (DownloadStopwatch StopwatchOne Time.utc recentTime)
+                        |> Expect.all defaultAssertions
             , test "Cannot create a stopwatch file for stopwatch 2 when no stopwatches" <|
                 \() ->
                     initModel
-                        |> createSingleStopwatchDataFile StopwatchTwo Time.utc recentTime
-                        |> Expect.equal Nothing
+                        |> update (DownloadStopwatch StopwatchTwo Time.utc recentTime)
+                        |> Expect.all defaultAssertions
             , test "Can create a stopwatch file for stopwatch 1 when single stopwatch" <|
                 \() ->
                     initModel
                         |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
                         |> Tuple.first
-                        |> createSingleStopwatchDataFile StopwatchOne Time.utc recentTime
-                        |> Expect.equal (Just (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedStopwatchData1))
+                        |> update (DownloadStopwatch StopwatchOne Time.utc recentTime)
+                        |> Expect.all
+                            (expectCommand (DownloadFile stopwatchFileMimeType (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedStopwatchData1))
+                                :: expectStopwatches singleStopwatch
+                                :: defaultAssertionsExcept [ Stopwatches, Command ]
+                            )
             , test "Cannot create a stopwatch file for stopwatch 2 when only one stopwatch" <|
                 \() ->
                     initModel
                         |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
                         |> Tuple.first
-                        |> createSingleStopwatchDataFile StopwatchTwo Time.utc recentTime
-                        |> Expect.equal Nothing
+                        |> update (DownloadStopwatch StopwatchTwo Time.utc recentTime)
+                        |> Expect.all (defaultAssertionsExcept [ Stopwatches ])
             , test "Can create a stopwatch file for stopwatch 1 when two stopwatches uploaded" <|
                 \() ->
                     initModel
@@ -459,40 +474,25 @@ suite =
                         |> Tuple.first
                         |> update (FilesDropped [ InteropFile "stopwatch2.txt" sampleStopwatchData2 ])
                         |> Tuple.first
-                        |> createSingleStopwatchDataFile StopwatchOne Time.utc recentTime
-                        |> Expect.equal (Just (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedStopwatchData1))
-            , test "Cannot create a stopwatch file for stopwatch 2 when two stopwatches uploaded" <|
+                        |> update (DownloadStopwatch StopwatchOne Time.utc recentTime)
+                        |> Expect.all
+                            (expectCommand (DownloadFile stopwatchFileMimeType (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedStopwatchData1))
+                                :: expectStopwatches doubleStopwatches
+                                :: defaultAssertionsExcept [ Stopwatches, Command ]
+                            )
+            , test "Can create a stopwatch file for stopwatch 2 when two stopwatches uploaded" <|
                 \() ->
                     initModel
                         |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
                         |> Tuple.first
                         |> update (FilesDropped [ InteropFile "stopwatch2.txt" sampleStopwatchData2 ])
                         |> Tuple.first
-                        |> createSingleStopwatchDataFile StopwatchTwo Time.utc recentTime
-                        |> Expect.equal (Just (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedStopwatchData2))
-            ]
-        , describe "Create merged stopwatch file for download tests"
-            [ test "Cannot create a merged stopwatch file for download with no stopwatches" <|
-                \() ->
-                    initModel
-                        |> createMergedStopwatchDataFile Time.utc recentTime
-                        |> Expect.equal Nothing
-            , test "Cannot create a merged stopwatch file for download from a single stopwatch" <|
-                \() ->
-                    initModel
-                        |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
-                        |> Tuple.first
-                        |> createMergedStopwatchDataFile Time.utc recentTime
-                        |> Expect.equal Nothing
-            , test "Can create a merged stopwatch file for download from two stopwatches" <|
-                \() ->
-                    initModel
-                        |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
-                        |> Tuple.first
-                        |> update (FilesDropped [ InteropFile "stopwatch2.txt" sampleStopwatchData2 ])
-                        |> Tuple.first
-                        |> createMergedStopwatchDataFile Time.utc recentTime
-                        |> Expect.equal (Just (InteropFile "results_tidyup_timer_14072017024000.txt" expectedMergedStopwatchFileContents))
+                        |> update (DownloadStopwatch StopwatchTwo Time.utc recentTime)
+                        |> Expect.all
+                            (expectCommand (DownloadFile stopwatchFileMimeType (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedStopwatchData2))
+                                :: expectStopwatches doubleStopwatches
+                                :: defaultAssertionsExcept [ Stopwatches, Command ]
+                            )
             ]
         , describe "Container height changed tests"
             [ test "Can update the container height" <|
@@ -550,7 +550,7 @@ suite =
                     update (EventTimeChanged "09:30") initModel
                         |> Expect.all
                             (expectEventDateAndTime (EventDateAndTime "" Nothing "09:30" (Just (9 * 60 + 30)))
-                                :: expectACommand
+                                :: expectCommand (SaveEventStartTime (9 * 60 + 30))
                                 :: defaultAssertionsExcept [ EventDateAndTimeAssertion, Command ]
                             )
             , test "Setting an invalid time clears the validated time" <|
@@ -649,7 +649,7 @@ suite =
                                   , actual = 12
                                   }
                                 ]
-                                :: expectACommand
+                                :: expectCommand (FocusElement NumberCheckerManualEntryRowFirstCell)
                                 :: defaultAssertionsExcept [ Command, NumberCheckerEntries ]
                             )
             ]
@@ -732,25 +732,25 @@ suite =
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
                         |> update (DownloadBarcodeScannerFile "1.txt" Time.utc recentTime)
                         |> Expect.all
-                            (expectACommand
+                            (expectCommand (DownloadFile barcodeScannerFileMimeType (InteropFile "results_tidyup_barcode_14072017024000.txt" ""))
                                 :: expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2, 3 ])
                                 :: defaultAssertionsExcept [ Command, BarcodeScannerDataAssertion ]
                             )
-            , test "DownloadBarcodeScannerFile deletes file at middle index of three" <|
+            , test "DownloadBarcodeScannerFile downloads file at middle index of three" <|
                 \() ->
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
                         |> update (DownloadBarcodeScannerFile "2.txt" Time.utc recentTime)
                         |> Expect.all
-                            (expectACommand
+                            (expectCommand (DownloadFile barcodeScannerFileMimeType (InteropFile "results_tidyup_barcode_14072017024000.txt" ""))
                                 :: expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2, 3 ])
                                 :: defaultAssertionsExcept [ Command, BarcodeScannerDataAssertion ]
                             )
-            , test "DownloadBarcodeScannerFile deletes file at last index of three" <|
+            , test "DownloadBarcodeScannerFile downloads file at last index of three" <|
                 \() ->
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
                         |> update (DownloadBarcodeScannerFile "3.txt" Time.utc recentTime)
                         |> Expect.all
-                            (expectACommand
+                            (expectCommand (DownloadFile barcodeScannerFileMimeType (InteropFile "results_tidyup_barcode_14072017024000.txt" ""))
                                 :: expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2, 3 ])
                                 :: defaultAssertionsExcept [ Command, BarcodeScannerDataAssertion ]
                             )

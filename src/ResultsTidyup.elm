@@ -1,6 +1,7 @@
 module ResultsTidyup exposing (main)
 
 import BarcodeScanner exposing (BarcodeScannerData)
+import BarcodeScannerEditModal
 import BarcodeScannerView exposing (barcodeScannersView)
 import Bootstrap.Alert as Alert
 import Bootstrap.Badge as Badge
@@ -9,9 +10,12 @@ import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
 import Bootstrap.Tab as Tab
 import Browser
+import Browser.Dom
+import Commands exposing (Command(..), ElementToFocus(..))
 import Error exposing (FileError)
 import EventDateAndTime exposing (EventDateAndTime)
 import EventDateAndTimeView exposing (eventDateAndTimeView)
+import File.Download as Download
 import Html exposing (Html, a, div, h1, h3, li, span, text, ul)
 import Html.Attributes exposing (attribute, class, href, id, style)
 import Html.Events exposing (on, onClick)
@@ -19,11 +23,13 @@ import Json.Decode exposing (Decoder, andThen, fail, field, int, succeed)
 import Model exposing (Model, SecondTab(..), initModel)
 import Msg exposing (Msg(..))
 import NumberCheckerView exposing (numberCheckerView)
-import Ports exposing (filesDropped, getInitialHeight, heightUpdated)
+import Ports exposing (filesDropped, getInitialHeight, heightUpdated, recordEventStartTime)
 import Problems
 import ProblemsView exposing (problemsView)
 import Stopwatch exposing (Stopwatches(..))
 import StopwatchesView exposing (stopwatchesView)
+import Task exposing (Task)
+import Time
 import TimeHandling exposing (formatHoursAndMinutes)
 import UpdateLogic exposing (update)
 
@@ -38,7 +44,7 @@ main : Program FlagsRecord Model Msg
 main =
     Browser.element
         { init = init
-        , update = update
+        , update = updateAndMapCommand
         , view = view
         , subscriptions = subscriptions
         }
@@ -109,6 +115,43 @@ classAttributes wantedTab actualTab =
         [ class "nav-link" ]
 
 
+focus : ElementToFocus -> Cmd Msg
+focus elementToFocus =
+    let
+        elementId : String
+        elementId =
+            case elementToFocus of
+                NumberCheckerManualEntryRowFirstCell ->
+                    NumberCheckerView.firstManualEntryCellId
+
+                BarcodeScannerEditingAthleteInput ->
+                    BarcodeScannerEditModal.athleteInputId
+
+                BarcodeScannerEditingAthleteRadioButton ->
+                    BarcodeScannerEditModal.athleteRadioButtonId
+    in
+    Task.attempt (\_ -> NoOp) (Browser.Dom.focus elementId)
+
+
+mapCommand : Command Msg -> Cmd Msg
+mapCommand command =
+    case command of
+        NoCommand ->
+            Cmd.none
+
+        GetCurrentDateAndTime operation ->
+            Task.perform identity (Task.map2 operation Time.here Time.now)
+
+        DownloadFile mimeType interopFile ->
+            Download.string interopFile.fileName mimeType interopFile.fileText
+
+        FocusElement elementToFocus ->
+            focus elementToFocus
+
+        SaveEventStartTime startTime ->
+            recordEventStartTime startTime
+
+
 handleEscape : Int -> Decoder Msg
 handleEscape keyCode =
     if keyCode == 27 then
@@ -122,6 +165,12 @@ escapeKeyDecoder : Decoder Msg
 escapeKeyDecoder =
     field "keyCode" int
         |> andThen handleEscape
+
+
+updateAndMapCommand : Msg -> Model -> ( Model, Cmd Msg )
+updateAndMapCommand msg model =
+    update msg model
+        |> Tuple.mapSecond mapCommand
 
 
 view : Model -> Html Msg

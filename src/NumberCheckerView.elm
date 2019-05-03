@@ -1,4 +1,4 @@
-module NumberCheckerView exposing (numberCheckerView)
+module NumberCheckerView exposing (firstManualEntryCellId, numberCheckerView)
 
 import Bootstrap.Button as Button
 import Bootstrap.Table as Table
@@ -11,6 +11,11 @@ import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import NumericEntry exposing (NumericEntry)
 import ViewCommon exposing (intCell, smallButton, tableHeaders)
+
+
+firstManualEntryCellId : String
+firstManualEntryCellId =
+    "number-checker-stopwatch-1"
 
 
 minus : String
@@ -142,7 +147,7 @@ enterNewRow manualEntryRow =
         [ Table.td [ Table.cellAttr (colspan 2) ]
             [ input
                 [ type_ "text"
-                , id "number-checker-stopwatch-1"
+                , id firstManualEntryCellId
                 , class (manualEntryFieldClass manualEntryRow.stopwatch1)
                 , value manualEntryRow.stopwatch1.enteredValue
                 , onInput (NumberCheckerFieldChanged Stopwatch1)

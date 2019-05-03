@@ -11,6 +11,7 @@ module BarcodeScannerEditing exposing
     )
 
 import BarcodeScanner exposing (LineContents(..))
+import Commands exposing (ElementToFocus(..))
 import NumericEntry
     exposing
         ( NumericEntry
@@ -69,14 +70,14 @@ startEditing location contents isDeleted =
             validate (BarcodeScannerRowEditDetails location contents emptyNumericEntry emptyNumericEntry Neither Nothing isDeleted)
 
 
-elementToFocusWhenOpening : LineContents -> String
+elementToFocusWhenOpening : LineContents -> ElementToFocus
 elementToFocusWhenOpening contents =
     case contents of
         Ordinary _ _ ->
-            "barcodeScannerEditAthlete"
+            BarcodeScannerEditingAthleteInput
 
         MisScan _ ->
-            "athleteRadio"
+            BarcodeScannerEditingAthleteRadioButton
 
 
 updateEditDetails : BarcodeScannerEditDetails -> BarcodeScannerRowEditDetails -> BarcodeScannerRowEditDetails

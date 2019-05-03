@@ -1,4 +1,4 @@
-module UpdateLogic exposing (createMergedStopwatchDataFile, createSingleStopwatchDataFile, update)
+module UpdateLogic exposing (barcodeScannerFileMimeType, stopwatchFileMimeType, update)
 
 import BarcodeScanner
     exposing
@@ -11,12 +11,11 @@ import BarcodeScanner
         )
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, updateEditDetails)
 import Bootstrap.Tab as Tab
-import Browser.Dom
+import Commands exposing (Command(..), ElementToFocus(..))
 import DateHandling exposing (generateDownloadFilenameDatePart)
 import Dict
 import EventDateAndTime exposing (EventDateAndTime)
 import EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeChange)
-import File.Download as Download
 import FileDropHandling exposing (handleFilesDropped)
 import FileHandling exposing (InteropFile)
 import Model exposing (DialogDetails(..), Model, NumberCheckerManualEntryRow, ProblemEntry, emptyNumberCheckerManualEntryRow, initModel)
@@ -30,7 +29,6 @@ import NumberCheckerEditing
         , handleNumberCheckerFieldChange
         , modifyNumberCheckerRows
         )
-import Ports exposing (recordEventStartTime)
 import ProblemFixing exposing (fixProblem)
 import Problems exposing (Problem, identifyProblems)
 import Stopwatch
@@ -45,13 +43,17 @@ import Stopwatch
         , toggleRowInTable
         , underlineTable
         )
-import Task exposing (Task)
 import Time exposing (Posix, Zone)
 
 
-focus : String -> Cmd Msg
-focus elementId =
-    Task.attempt (\_ -> NoOp) (Browser.Dom.focus elementId)
+stopwatchFileMimeType : String
+stopwatchFileMimeType =
+    "text/csv"
+
+
+barcodeScannerFileMimeType : String
+barcodeScannerFileMimeType =
+    "text/csv"
 
 
 underlineStopwatches : Stopwatches -> List AnnotatedNumberCheckerEntry -> Stopwatches
@@ -124,11 +126,11 @@ toggleTableRow index model =
             }
 
 
-createSingleStopwatchDataFile : WhichStopwatch -> Zone -> Posix -> Model -> Maybe InteropFile
+createSingleStopwatchDataFile : WhichStopwatch -> Zone -> Posix -> Model -> Command Msg
 createSingleStopwatchDataFile whichStopwatch zone time model =
     let
-        downloadText : Maybe String
-        downloadText =
+        downloadTextMaybe : Maybe String
+        downloadTextMaybe =
             case ( model.stopwatches, whichStopwatch ) of
                 ( None, _ ) ->
                     Nothing
@@ -145,7 +147,13 @@ createSingleStopwatchDataFile whichStopwatch zone time model =
                 ( Double doubleStopwatchData, StopwatchTwo ) ->
                     Just (outputSingleStopwatchData doubleStopwatchData.times2)
     in
-    Maybe.map (createStopwatchFileForDownload zone time) downloadText
+    case downloadTextMaybe of
+        Just downloadText ->
+            createStopwatchFileForDownload zone time downloadText
+                |> DownloadFile stopwatchFileMimeType
+
+        Nothing ->
+            NoCommand
 
 
 deleteStopwatch : WhichStopwatch -> Model -> Model
@@ -235,28 +243,18 @@ createStopwatchFileForDownload zone time fileContents =
     InteropFile fileName fileContents
 
 
-downloadFileMaybe : Maybe InteropFile -> Cmd Msg
-downloadFileMaybe interopFileMaybe =
-    case interopFileMaybe of
-        Just interopFile ->
-            Download.string interopFile.fileName "text/csv" interopFile.fileText
-
-        Nothing ->
-            Cmd.none
-
-
-createMergedStopwatchDataFile : Zone -> Posix -> Model -> Maybe InteropFile
+createMergedStopwatchDataFile : Zone -> Posix -> Model -> Command Msg
 createMergedStopwatchDataFile zone time model =
     case model.stopwatches of
         None ->
-            Nothing
+            NoCommand
 
         Single _ _ ->
-            Nothing
+            NoCommand
 
         Double doubleStopwatchData ->
             createStopwatchFileForDownload zone time (outputMergedTable doubleStopwatchData.mergedTableRows)
-                |> Just
+                |> DownloadFile stopwatchFileMimeType
 
 
 reunderlineStopwatchTable : Model -> Model
@@ -279,7 +277,7 @@ reunderlineStopwatchTable model =
             model
 
 
-createSingleBarcodeScannerData : String -> List BarcodeScannerFile -> Zone -> Posix -> Maybe InteropFile
+createSingleBarcodeScannerData : String -> List BarcodeScannerFile -> Zone -> Posix -> Command Msg
 createSingleBarcodeScannerData fileName files zone time =
     let
         fileToDownload : Maybe BarcodeScannerFile
@@ -298,11 +296,11 @@ createSingleBarcodeScannerData fileName files zone time =
                 downloadFileName =
                     "results_tidyup_barcode_" ++ generateDownloadFilenameDatePart zone time ++ ".txt"
             in
-            Just (InteropFile downloadFileName downloadFileContents)
+            DownloadFile barcodeScannerFileMimeType (InteropFile downloadFileName downloadFileContents)
 
         Nothing ->
             -- No file with that name was found.
-            Nothing
+            NoCommand
 
 
 deleteBarcodeScannerFileWithName : String -> Model -> Model
@@ -345,47 +343,45 @@ select condition trueValue falseValue =
         falseValue
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> Model -> ( Model, Command Msg )
 update msg model =
     case msg of
         NoOp ->
-            ( model, Cmd.none )
+            ( model, NoCommand )
 
         FilesDropped files ->
             ( handleFilesDropped files model
                 |> identifyProblemsIn
                 |> reunderlineStopwatchTable
-            , Cmd.none
+            , NoCommand
             )
 
         ToggleTableRow index ->
-            ( toggleTableRow index model |> identifyProblemsIn, Cmd.none )
+            ( toggleTableRow index model |> identifyProblemsIn, NoCommand )
 
         DownloadStopwatch which zone time ->
-            ( model, downloadFileMaybe (createSingleStopwatchDataFile which zone time model) )
+            ( model, createSingleStopwatchDataFile which zone time model )
 
         DeleteStopwatch which ->
-            ( deleteStopwatch which model, Cmd.none )
+            ( deleteStopwatch which model, NoCommand )
 
         FlipStopwatches ->
-            ( flipStopwatches model, Cmd.none )
+            ( flipStopwatches model, NoCommand )
 
         ClearAllData ->
-            ( clearAllData model, Cmd.none )
+            ( clearAllData model, NoCommand )
 
         GetCurrentDateForDownloadFile operation ->
-            ( model
-            , Task.perform identity (Task.map2 operation Time.here Time.now)
-            )
+            ( model, GetCurrentDateAndTime operation )
 
         DownloadMergedStopwatchData zone time ->
-            ( model, downloadFileMaybe (createMergedStopwatchDataFile zone time model) )
+            ( model, createMergedStopwatchDataFile zone time model )
 
         ContainerHeightChanged newHeight ->
-            ( { model | lastHeight = Just newHeight }, Cmd.none )
+            ( { model | lastHeight = Just newHeight }, NoCommand )
 
         MouseEnterNumberCheckerRow highlightRow ->
-            ( { model | highlightedNumberCheckerId = Just highlightRow }, Cmd.none )
+            ( { model | highlightedNumberCheckerId = Just highlightRow }, NoCommand )
 
         MouseLeaveNumberCheckerRow unhighlightRow ->
             let
@@ -399,16 +395,16 @@ update msg model =
                         -- unhighlight isn't the highlighted one.
                         model
             in
-            ( newModel, Cmd.none )
+            ( newModel, NoCommand )
 
         EditNumberCheckerRow entryNumber ->
-            ( reunderlineStopwatchTable (editNumberCheckerRow entryNumber model), Cmd.none )
+            ( reunderlineStopwatchTable (editNumberCheckerRow entryNumber model), NoCommand )
 
         DeleteNumberCheckerRow entryNumber ->
-            ( reunderlineStopwatchTable (deleteNumberCheckerEntry entryNumber model), Cmd.none )
+            ( reunderlineStopwatchTable (deleteNumberCheckerEntry entryNumber model), NoCommand )
 
         EventDateChanged newEventDate ->
-            ( identifyProblemsIn (handleEventDateChange newEventDate model), Cmd.none )
+            ( identifyProblemsIn (handleEventDateChange newEventDate model), NoCommand )
 
         EventTimeChanged newEventTime ->
             let
@@ -416,64 +412,64 @@ update msg model =
                 modelWithNewTime =
                     handleEventTimeChange newEventTime model
 
-                command : Cmd Msg
+                command : Command Msg
                 command =
-                    Maybe.map recordEventStartTime modelWithNewTime.eventDateAndTime.validatedTime
-                        |> Maybe.withDefault Cmd.none
+                    Maybe.map SaveEventStartTime modelWithNewTime.eventDateAndTime.validatedTime
+                        |> Maybe.withDefault NoCommand
             in
             ( identifyProblemsIn modelWithNewTime, command )
 
         NumberCheckerFieldChanged fieldChange newValue ->
-            ( handleNumberCheckerFieldChange fieldChange newValue model, Cmd.none )
+            ( handleNumberCheckerFieldChange fieldChange newValue model, NoCommand )
 
         AddNumberCheckerRow ->
             let
                 ( addedToModel, issueFocusCommand ) =
                     addNumberCheckerRow model
 
-                command : Cmd Msg
+                command : Command Msg
                 command =
-                    select issueFocusCommand (focus "number-checker-stopwatch-1") Cmd.none
+                    select issueFocusCommand (FocusElement NumberCheckerManualEntryRowFirstCell) NoCommand
             in
             ( reunderlineStopwatchTable addedToModel, command )
 
         IncrementNumberCheckerRowActualCount entryNumber ->
-            ( reunderlineStopwatchTable (modifyNumberCheckerRows 1 entryNumber model), Cmd.none )
+            ( reunderlineStopwatchTable (modifyNumberCheckerRows 1 entryNumber model), NoCommand )
 
         DecrementNumberCheckerRowActualCount entryNumber ->
-            ( reunderlineStopwatchTable (modifyNumberCheckerRows -1 entryNumber model), Cmd.none )
+            ( reunderlineStopwatchTable (modifyNumberCheckerRows -1 entryNumber model), NoCommand )
 
         FixProblem problemFix ->
             ( fixProblem problemFix model
                 |> identifyProblemsIn
                 |> reunderlineStopwatchTable
-            , Cmd.none
+            , NoCommand
             )
 
         ChangeSecondTab newSecondTab ->
-            ( { model | secondTab = newSecondTab }, Cmd.none )
+            ( { model | secondTab = newSecondTab }, NoCommand )
 
         ChangeBarcodeScannerTab newBarcodeScannerTab ->
-            ( { model | barcodeScannerTab = newBarcodeScannerTab }, Cmd.none )
+            ( { model | barcodeScannerTab = newBarcodeScannerTab }, NoCommand )
 
         ClearErrors ->
-            ( { model | lastErrors = [] }, Cmd.none )
+            ( { model | lastErrors = [] }, NoCommand )
 
         DownloadBarcodeScannerFile index zone time ->
-            ( model, downloadFileMaybe (createSingleBarcodeScannerData index model.barcodeScannerData.files zone time) )
+            ( model, createSingleBarcodeScannerData index model.barcodeScannerData.files zone time )
 
         DeleteBarcodeScannerFile fileName ->
-            ( deleteBarcodeScannerFileWithName fileName model, Cmd.none )
+            ( deleteBarcodeScannerFileWithName fileName model, NoCommand )
 
         IgnoreProblem problemIndex ->
-            ( ignoreProblem problemIndex model, Cmd.none )
+            ( ignoreProblem problemIndex model, NoCommand )
 
         ShowBarcodeScannerEditModal location contents isDeleted ->
             ( { model
                 | dialogDetails =
                     BarcodeScannerRowEditDialog (BarcodeScannerEditing.startEditing location contents isDeleted)
               }
-            , focus (BarcodeScannerEditing.elementToFocusWhenOpening contents)
+            , FocusElement (BarcodeScannerEditing.elementToFocusWhenOpening contents)
             )
 
         BarcodeScannerEdit editChange ->
@@ -488,7 +484,7 @@ update msg model =
                         _ ->
                             model.dialogDetails
             in
-            ( { model | dialogDetails = newEditDetails }, Cmd.none )
+            ( { model | dialogDetails = newEditDetails }, NoCommand )
 
         UpdateRowFromBarcodeScannerEditModal location athlete finishPosition ->
             ( { model
@@ -496,7 +492,7 @@ update msg model =
                 , barcodeScannerData = updateBarcodeScannerLine location.fileName location.lineNumber athlete finishPosition model.barcodeScannerData
               }
                 |> identifyProblemsIn
-            , Cmd.none
+            , NoCommand
             )
 
         DeleteRowFromBarcodeScannerEditModal location ->
@@ -505,8 +501,8 @@ update msg model =
                 , barcodeScannerData = deleteBarcodeScannerLine location.fileName location.lineNumber model.barcodeScannerData
               }
                 |> identifyProblemsIn
-            , Cmd.none
+            , NoCommand
             )
 
         CloseModal ->
-            ( { model | dialogDetails = NoDialog }, Cmd.none )
+            ( { model | dialogDetails = NoDialog }, NoCommand )

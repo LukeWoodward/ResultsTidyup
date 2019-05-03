@@ -1,4 +1,4 @@
-module BarcodeScannerEditModal exposing (barcodeScannerEditModal)
+module BarcodeScannerEditModal exposing (athleteInputId, athleteRadioButtonId, barcodeScannerEditModal)
 
 import BarcodeScanner exposing (LineContents(..))
 import BarcodeScannerEditing
@@ -23,6 +23,16 @@ import Html.Events exposing (onClick)
 import Model exposing (DialogDetails(..), Model)
 import Msg exposing (Msg(..))
 import NumericEntry exposing (isValidEntry)
+
+
+athleteInputId : String
+athleteInputId =
+    "barcodeScannerEditAthlete"
+
+
+athleteRadioButtonId : String
+athleteRadioButtonId =
+    "athleteRadio"
 
 
 validationErrorToString : BarcodeScannerValidationError -> String
@@ -52,7 +62,7 @@ editBarcodeScannerRowModalBody rowEditDetails =
 
                 _ ->
                     Radio.radio
-                        [ Radio.id "athleteRadio"
+                        [ Radio.id athleteRadioButtonId
                         , Radio.checked (rowEditDetails.fieldBeingEdited == AthleteOnly)
                         , Radio.onClick (BarcodeScannerEdit (ChangeWhatsBeingEdited AthleteOnly))
                         ]
@@ -120,7 +130,7 @@ editBarcodeScannerRowModalBody rowEditDetails =
                 [ Grid.col [ Col.xs4 ] [ athleteRadio ]
                 , Grid.col [ Col.xs8 ]
                     [ Input.text
-                        ([ Input.id "barcodeScannerEditAthlete"
+                        ([ Input.id athleteInputId
                          , Input.onInput (BarcodeScannerEdit << AthleteChanged)
                          , Input.value rowEditDetails.athleteEntered.enteredValue
                          , Input.disabled (not isAthleteEditable)
