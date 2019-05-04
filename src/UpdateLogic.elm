@@ -126,7 +126,7 @@ toggleTableRow index model =
             }
 
 
-createSingleStopwatchDataFile : WhichStopwatch -> Zone -> Posix -> Model -> Command Msg
+createSingleStopwatchDataFile : WhichStopwatch -> Zone -> Posix -> Model -> Command
 createSingleStopwatchDataFile whichStopwatch zone time model =
     let
         downloadTextMaybe : Maybe String
@@ -243,7 +243,7 @@ createStopwatchFileForDownload zone time fileContents =
     InteropFile fileName fileContents
 
 
-createMergedStopwatchDataFile : Zone -> Posix -> Model -> Command Msg
+createMergedStopwatchDataFile : Zone -> Posix -> Model -> Command
 createMergedStopwatchDataFile zone time model =
     case model.stopwatches of
         None ->
@@ -277,7 +277,7 @@ reunderlineStopwatchTable model =
             model
 
 
-createSingleBarcodeScannerData : String -> List BarcodeScannerFile -> Zone -> Posix -> Command Msg
+createSingleBarcodeScannerData : String -> List BarcodeScannerFile -> Zone -> Posix -> Command
 createSingleBarcodeScannerData fileName files zone time =
     let
         fileToDownload : Maybe BarcodeScannerFile
@@ -343,7 +343,7 @@ select condition trueValue falseValue =
         falseValue
 
 
-update : Msg -> Model -> ( Model, Command Msg )
+update : Msg -> Model -> ( Model, Command )
 update msg model =
     case msg of
         NoOp ->
@@ -412,7 +412,7 @@ update msg model =
                 modelWithNewTime =
                     handleEventTimeChange newEventTime model
 
-                command : Command Msg
+                command : Command
                 command =
                     Maybe.map SaveEventStartTime modelWithNewTime.eventDateAndTime.validatedTime
                         |> Maybe.withDefault NoCommand
@@ -427,7 +427,7 @@ update msg model =
                 ( addedToModel, issueFocusCommand ) =
                     addNumberCheckerRow model
 
-                command : Command Msg
+                command : Command
                 command =
                     select issueFocusCommand (FocusElement NumberCheckerManualEntryRowFirstCell) NoCommand
             in

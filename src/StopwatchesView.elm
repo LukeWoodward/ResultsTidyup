@@ -5,6 +5,7 @@ import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button
 import Bootstrap.Tab as Tab
 import Bootstrap.Table as Table
+import Commands
 import Dict exposing (Dict)
 import Html exposing (Html, a, br, button, div, h3, input, label, small, text)
 import Html.Attributes exposing (checked, class, for, href, id, rel, target, type_)
@@ -154,7 +155,7 @@ tableHeadersWithButtons headerTexts =
 
 downloadStopwatchButton : WhichStopwatch -> TableHeaderButton
 downloadStopwatchButton which =
-    { change = GetCurrentDateForDownloadFile (DownloadStopwatch which)
+    { change = GetCurrentDateForDownloadFile (Commands.DownloadSingleStopwatch which)
     , buttonText = "Download "
     }
 
@@ -347,7 +348,7 @@ stopwatchButtonsContent stopwatches =
             [ twoLineButton FlipStopwatches "Flip" "stopwatches"
             , br [] []
             , br [] []
-            , twoLineButton (GetCurrentDateForDownloadFile DownloadMergedStopwatchData) "Download" "merged times"
+            , twoLineButton (GetCurrentDateForDownloadFile Commands.DownloadMergedStopwatches) "Download" "merged times"
             , br [] []
             , br [] []
             , twoLineButton ClearAllData "Clear" "all data"

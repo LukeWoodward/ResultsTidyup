@@ -133,14 +133,27 @@ focus elementToFocus =
     Task.attempt (\_ -> NoOp) (Browser.Dom.focus elementId)
 
 
-mapCommand : Command Msg -> Cmd Msg
+getDownloadOperation : Commands.DownloadOperation -> (Time.Zone -> Time.Posix -> Msg)
+getDownloadOperation downloadOperation =
+    case downloadOperation of
+        Commands.DownloadSingleStopwatch which ->
+            DownloadStopwatch which
+
+        Commands.DownloadMergedStopwatches ->
+            DownloadMergedStopwatchData
+
+        Commands.DownloadBarcodeScannerFile filename ->
+            DownloadBarcodeScannerFile filename
+
+
+mapCommand : Command -> Cmd Msg
 mapCommand command =
     case command of
         NoCommand ->
             Cmd.none
 
         GetCurrentDateAndTime operation ->
-            Task.perform identity (Task.map2 operation Time.here Time.now)
+            Task.perform identity (Task.map2 (getDownloadOperation operation) Time.here Time.now)
 
         DownloadFile mimeType interopFile ->
             Download.string interopFile.fileName mimeType interopFile.fileText

@@ -13,7 +13,7 @@ import BarcodeScanner
         )
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditLocation)
 import BarcodeScannerTests exposing (createBarcodeScannerData)
-import Commands exposing (Command(..), ElementToFocus(..))
+import Commands exposing (Command(..), DownloadOperation, ElementToFocus(..))
 import Dict exposing (Dict)
 import Error exposing (FileError)
 import EventDateAndTime exposing (EventDateAndTime)
@@ -40,32 +40,22 @@ import Time
 import UpdateLogic exposing (barcodeScannerFileMimeType, stopwatchFileMimeType, update)
 
 
-expectNoCommand : ( Model, Command Msg ) -> Expectation
+expectNoCommand : ( Model, Command ) -> Expectation
 expectNoCommand ( _, cmd ) =
     Expect.equal NoCommand cmd
 
 
-expectGetCurrentDateCommand : ( Model, Command Msg ) -> Expectation
-expectGetCurrentDateCommand ( _, cmd ) =
-    case cmd of
-        GetCurrentDateAndTime _ ->
-            Expect.pass
-
-        _ ->
-            Expect.fail ("Expected the command to be GetCurrentDateAndTime but was " ++ Debug.toString cmd ++ " instead")
-
-
-expectCommand : Command Msg -> ( Model, Command Msg ) -> Expectation
+expectCommand : Command -> ( Model, Command ) -> Expectation
 expectCommand command ( _, cmd ) =
     Expect.equal command cmd
 
 
-expectStopwatches : Stopwatches -> ( Model, Command Msg ) -> Expectation
+expectStopwatches : Stopwatches -> ( Model, Command ) -> Expectation
 expectStopwatches expectedStopwatches ( model, _ ) =
     Expect.equal expectedStopwatches model.stopwatches
 
 
-expectLastError : String -> ( Model, Command Msg ) -> Expectation
+expectLastError : String -> ( Model, Command ) -> Expectation
 expectLastError expectedCode ( model, _ ) =
     case model.lastErrors of
         [ singleError ] ->
@@ -84,27 +74,27 @@ expectLastError expectedCode ( model, _ ) =
             Expect.fail ("Expected to fail with error " ++ expectedCode ++ ", but multiple errors were present: " ++ codes)
 
 
-expectNumberCheckerEntries : List AnnotatedNumberCheckerEntry -> ( Model, Command Msg ) -> Expectation
+expectNumberCheckerEntries : List AnnotatedNumberCheckerEntry -> ( Model, Command ) -> Expectation
 expectNumberCheckerEntries expectedNumberCheckerEntries ( model, _ ) =
     Expect.equal expectedNumberCheckerEntries model.numberCheckerEntries
 
 
-expectLastHeight : Maybe Int -> ( Model, Command Msg ) -> Expectation
+expectLastHeight : Maybe Int -> ( Model, Command ) -> Expectation
 expectLastHeight expectedLastHeight ( model, _ ) =
     Expect.equal expectedLastHeight model.lastHeight
 
 
-expectHighlightedNumberCheckerId : Maybe Int -> ( Model, Command Msg ) -> Expectation
+expectHighlightedNumberCheckerId : Maybe Int -> ( Model, Command ) -> Expectation
 expectHighlightedNumberCheckerId expectedHighlightedNumberCheckerId ( model, _ ) =
     Expect.equal expectedHighlightedNumberCheckerId model.highlightedNumberCheckerId
 
 
-expectBarcodeScannerData : BarcodeScannerData -> ( Model, Command Msg ) -> Expectation
+expectBarcodeScannerData : BarcodeScannerData -> ( Model, Command ) -> Expectation
 expectBarcodeScannerData expectedBarcodeScannerData ( model, _ ) =
     Expect.equal expectedBarcodeScannerData model.barcodeScannerData
 
 
-expectProblems : List Problem -> ( Model, Command Msg ) -> Expectation
+expectProblems : List Problem -> ( Model, Command ) -> Expectation
 expectProblems expectedProblems ( model, _ ) =
     let
         expectedProblemEntries : List ProblemEntry
@@ -114,17 +104,17 @@ expectProblems expectedProblems ( model, _ ) =
     Expect.equal expectedProblemEntries model.problems
 
 
-expectProblemEntries : List ProblemEntry -> ( Model, Command Msg ) -> Expectation
+expectProblemEntries : List ProblemEntry -> ( Model, Command ) -> Expectation
 expectProblemEntries expectedProblemEntries ( model, _ ) =
     Expect.equal expectedProblemEntries model.problems
 
 
-expectEventDateAndTime : EventDateAndTime -> ( Model, Command Msg ) -> Expectation
+expectEventDateAndTime : EventDateAndTime -> ( Model, Command ) -> Expectation
 expectEventDateAndTime expectedEventDateAndTime ( model, _ ) =
     Expect.equal expectedEventDateAndTime model.eventDateAndTime
 
 
-expectNumberCheckerManualEntryRow : NumberCheckerManualEntryRow -> ( Model, Command Msg ) -> Expectation
+expectNumberCheckerManualEntryRow : NumberCheckerManualEntryRow -> ( Model, Command ) -> Expectation
 expectNumberCheckerManualEntryRow expectedManualEntryRow ( model, _ ) =
     Expect.equal expectedManualEntryRow model.numberCheckerManualEntryRow
 
@@ -142,10 +132,10 @@ type Assertion
     | NumberCheckerManualEntryRowAssertion
 
 
-defaultAssertionsExcept : List Assertion -> List (( Model, Command Msg ) -> Expectation)
+defaultAssertionsExcept : List Assertion -> List (( Model, Command ) -> Expectation)
 defaultAssertionsExcept exceptions =
     let
-        allMaybeAssertions : List (Maybe (( Model, Command Msg ) -> Expectation))
+        allMaybeAssertions : List (Maybe (( Model, Command ) -> Expectation))
         allMaybeAssertions =
             [ if List.member Command exceptions then
                 Nothing
@@ -202,7 +192,7 @@ defaultAssertionsExcept exceptions =
     List.filterMap identity allMaybeAssertions
 
 
-defaultAssertions : List (( Model, Command Msg ) -> Expectation)
+defaultAssertions : List (( Model, Command ) -> Expectation)
 defaultAssertions =
     defaultAssertionsExcept []
 
@@ -400,11 +390,11 @@ suite =
                             )
             ]
         , describe "Get current date for download file tests"
-            [ test "Getting current date issues a task and returns the same model" <|
+            [ test "Getting current date issues a command and returns the same model" <|
                 \() ->
-                    update (GetCurrentDateForDownloadFile DownloadMergedStopwatchData) initModel
+                    update (GetCurrentDateForDownloadFile Commands.DownloadMergedStopwatches) initModel
                         |> Expect.all
-                            (expectGetCurrentDateCommand
+                            (expectCommand (GetCurrentDateAndTime Commands.DownloadMergedStopwatches)
                                 :: defaultAssertionsExcept [ Command ]
                             )
             ]

@@ -14,6 +14,7 @@ import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button
 import Bootstrap.Tab as Tab
 import Bootstrap.Table as Table
+import Commands
 import Html exposing (Attribute, Html, button, div, h4, small, text)
 import Html.Attributes exposing (class, colspan, rowspan, title)
 import Html.Events exposing (onClick, onDoubleClick)
@@ -112,7 +113,7 @@ barcodeScannerView file =
     div []
         [ div
             [ class "barcode-scanner-buttons" ]
-            [ smallButton (GetCurrentDateForDownloadFile (DownloadBarcodeScannerFile file.name)) [] "Download"
+            [ smallButton (GetCurrentDateForDownloadFile (Commands.DownloadBarcodeScannerFile file.name)) [] "Download"
             , smallButton (DeleteBarcodeScannerFile file.name) [] "Delete"
             ]
         , Table.table

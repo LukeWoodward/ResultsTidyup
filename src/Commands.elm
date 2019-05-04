@@ -1,18 +1,25 @@
-module Commands exposing (Command(..), ElementToFocus(..))
+module Commands exposing (Command(..), DownloadOperation(..), ElementToFocus(..))
 
 import FileHandling exposing (InteropFile)
+import Stopwatch exposing (WhichStopwatch)
 import Time exposing (Posix, Zone)
-
-
-type Command a
-    = NoCommand
-    | GetCurrentDateAndTime (Zone -> Posix -> a)
-    | DownloadFile String InteropFile
-    | FocusElement ElementToFocus
-    | SaveEventStartTime Int
 
 
 type ElementToFocus
     = NumberCheckerManualEntryRowFirstCell
     | BarcodeScannerEditingAthleteInput
     | BarcodeScannerEditingAthleteRadioButton
+
+
+type DownloadOperation
+    = DownloadSingleStopwatch WhichStopwatch
+    | DownloadMergedStopwatches
+    | DownloadBarcodeScannerFile String
+
+
+type Command
+    = NoCommand
+    | GetCurrentDateAndTime DownloadOperation
+    | DownloadFile String InteropFile
+    | FocusElement ElementToFocus
+    | SaveEventStartTime Int
