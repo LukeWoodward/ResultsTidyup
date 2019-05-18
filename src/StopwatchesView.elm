@@ -349,9 +349,6 @@ stopwatchButtonsContent stopwatches =
             , br [] []
             , br [] []
             , twoLineButton (GetCurrentDateForDownloadFile Commands.DownloadMergedStopwatches) "Download" "merged times"
-            , br [] []
-            , br [] []
-            , twoLineButton ClearAllData "Clear" "all data"
             ]
 
 
