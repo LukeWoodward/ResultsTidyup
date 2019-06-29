@@ -58,10 +58,7 @@ handleStopwatchFileDrop fileName fileText model =
                             Double _ ->
                                 model.stopwatches
                 in
-                { model
-                    | stopwatches = newStopwatches
-                    , lastErrors = []
-                }
+                { model | stopwatches = newStopwatches }
 
         Err error ->
             { model | lastErrors = model.lastErrors ++ [ mapError fileName error ] }
@@ -193,9 +190,5 @@ handleFilesDropped files model =
         sortedFiles =
             List.sortBy .fileName files
                 |> List.reverse
-
-        modelWithNoErrors : Model
-        modelWithNoErrors =
-            { model | lastErrors = [] }
     in
-    List.foldr handleFileDropped modelWithNoErrors sortedFiles
+    List.foldr handleFileDropped model sortedFiles

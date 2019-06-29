@@ -107,6 +107,36 @@ suite =
                         Expect.equal
                             intermediateModel
                             (handleFilesDropped [ InteropFile "stopwatch3.txt" sampleStopwatchData ] intermediateModel)
+                , test "Uploading a valid stopwatch file doesn't delete errors from an invalid stopwatch earlier in the same upload" <|
+                    \() ->
+                        let
+                            actualModel : Model
+                            actualModel =
+                                initModel
+                                    |> handleFilesDropped
+                                        [ InteropFile "stopwatch2.txt" (String.replace "00" "XX" sampleStopwatchData2)
+                                        , InteropFile "stopwatch1.txt" sampleStopwatchData
+                                        ]
+                        in
+                        Expect.all
+                            [ Expect.equal { initModel | stopwatches = singleStopwatch, lastErrors = actualModel.lastErrors }
+                            , expectLastError "UNRECOGNISED_TIME"
+                            ]
+                            actualModel
+                , test "Uploading a valid stopwatch file doesn't delete errors from an invalid stopwatch in a previous upload" <|
+                    \() ->
+                        let
+                            actualModel : Model
+                            actualModel =
+                                initModel
+                                    |> handleFilesDropped [ InteropFile "stopwatch2.txt" (String.replace "00" "XX" sampleStopwatchData2) ]
+                                    |> handleFilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ]
+                        in
+                        Expect.all
+                            [ Expect.equal { initModel | stopwatches = singleStopwatch, lastErrors = actualModel.lastErrors }
+                            , expectLastError "UNRECOGNISED_TIME"
+                            ]
+                            actualModel
                 ]
             , describe "Barcode scanner file tests"
                 [ test "Can upload a single barcode scanner file" <|
