@@ -46,7 +46,7 @@ as a number of seconds.
 -}
 parseTime : String -> Result Error Int
 parseTime timeString =
-    case run timeParser timeString of
+    case run timeParser (String.trim timeString) of
         Ok ( hours, minutes, Just seconds ) ->
             checkTime hours minutes seconds
 
@@ -82,7 +82,7 @@ as a number of minutes.
 -}
 parseHoursAndMinutes : String -> Result Error Int
 parseHoursAndMinutes timeString =
-    case run hoursAndMinutesParser timeString of
+    case run hoursAndMinutesParser (String.trim timeString) of
         Ok ( hours, minutes ) ->
             if hours >= 24 then
                 Error "HOURS_TOO_LARGE" ("Hours value " ++ String.fromInt hours ++ " is too large")

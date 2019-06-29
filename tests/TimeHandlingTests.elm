@@ -27,6 +27,14 @@ suite =
                 \() ->
                     parseTime "04:9"
                         |> Expect.equal (Ok (4 * 60 + 9))
+            , test "parseTime of a string with leading spaces is valid" <|
+                \() ->
+                    parseTime "    \t  00:04:17"
+                        |> Expect.equal (Ok (4 * 60 + 17))
+            , test "parseTime of a string with trailing spaces is valid" <|
+                \() ->
+                    parseTime "00:04:17   \t    "
+                        |> Expect.equal (Ok (4 * 60 + 17))
             , test "parseTime of an invalid time is an error" <|
                 \() ->
                     parseTime "nonsense"
@@ -53,6 +61,14 @@ suite =
                 \() ->
                     parseHoursAndMinutes "04:9"
                         |> Expect.equal (Ok (4 * 60 + 9))
+            , test "parseHoursAndMinutes of a time with leading whitespace is valid" <|
+                \() ->
+                    parseHoursAndMinutes "     \t  04:17"
+                        |> Expect.equal (Ok (4 * 60 + 17))
+            , test "parseHoursAndMinutes of a time with trailing whitespace is valid" <|
+                \() ->
+                    parseHoursAndMinutes "04:17     \t  "
+                        |> Expect.equal (Ok (4 * 60 + 17))
             , test "parseHoursAndMinutes of an invalid time is an error" <|
                 \() ->
                     parseHoursAndMinutes "nonsense"
