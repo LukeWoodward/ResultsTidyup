@@ -156,6 +156,7 @@ readLine lineNumber line =
         parts : List String
         parts =
             String.split "," line
+                |> List.map String.trim
 
         unrecognisedLine : String -> String -> Result UnrecognisedLine BarcodeScannerFileLine
         unrecognisedLine code message =

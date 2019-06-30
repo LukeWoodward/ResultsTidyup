@@ -119,22 +119,11 @@ suite =
             [ test "readBarcodeScannerData of a valid single-line string with athlete and finish token is valid" <|
                 \() ->
                     readBarcodeScannerData "barcodes1.txt" "A4580442,P0047,14/03/2018 09:47:03"
-                        |> Expect.equal
-                            (Ok
-                                (BarcodeScannerData
-                                    [ BarcodeScannerFile
-                                        "barcodes1.txt"
-                                        [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
-                                        (toPosix "2018-03-14T09:47:03.000Z")
-                                    ]
-                                    (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
-                                    []
-                                    []
-                                    []
-                                    []
-                                    (toPosix "2018-03-14T09:47:03.000Z")
-                                )
-                            )
+                        |> Expect.equal (Ok TestData.parsedBarcodeScannerData1)
+            , test "readBarcodeScannerData of a valid single-line string with athlete and finish token and with whitespace is valid" <|
+                \() ->
+                    readBarcodeScannerData "barcodes1.txt" "   \t  A4580442  \t,    P0047   ,   \t 14/03/2018 09:47:03     "
+                        |> Expect.equal (Ok TestData.parsedBarcodeScannerData1)
             , test "readBarcodeScannerData of a valid single-line string with athlete only is valid" <|
                 \() ->
                     readBarcodeScannerData "barcodes2.txt" "A4580442,,14/03/2018 09:47:03"
