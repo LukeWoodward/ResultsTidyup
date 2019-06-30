@@ -183,23 +183,8 @@ suite =
                             )
             , test "readBarcodeScannerData of a valid single-line string with athlete and finish token and blank lines is valid" <|
                 \() ->
-                    readBarcodeScannerData "barcodes5.txt" "\n\n\n\n\nA4580442,P0047,14/03/2018 09:47:03\n\n\n\n"
-                        |> Expect.equal
-                            (Ok
-                                (BarcodeScannerData
-                                    [ BarcodeScannerFile
-                                        "barcodes5.txt"
-                                        [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
-                                        (toPosix "2018-03-14T09:47:03.000Z")
-                                    ]
-                                    (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
-                                    []
-                                    []
-                                    []
-                                    []
-                                    (toPosix "2018-03-14T09:47:03.000Z")
-                                )
-                            )
+                    readBarcodeScannerData "barcodes1.txt" "\n\n\n\n\nA4580442,P0047,14/03/2018 09:47:03\n\n\n\n"
+                        |> Expect.equal (Ok TestData.parsedBarcodeScannerData1)
             , test "readBarcodeScannerData of a valid multiline string with two different finish tokens is valid" <|
                 \() ->
                     readBarcodeScannerData "barcodes6.txt" "A4580442,P0047,14/03/2018 09:47:03\nA1866207,P0047,14/03/2018 09:48:44"
