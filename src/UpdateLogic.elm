@@ -38,6 +38,7 @@ import Stopwatch
         , MergedTableRow
         , Stopwatches(..)
         , WhichStopwatch(..)
+        , flipMatchSummary
         , flipTable
         , outputMergedTable
         , outputSingleStopwatchData
@@ -220,6 +221,7 @@ flipStopwatches model =
                     , filename1 = oldDoubleStopwatchData.filename2
                     , filename2 = oldDoubleStopwatchData.filename1
                     , mergedTableRows = newMergedTableRows
+                    , matchSummary = flipMatchSummary oldDoubleStopwatchData.matchSummary
                     }
             in
             { model | stopwatches = Double newDoubleStopwatchData }

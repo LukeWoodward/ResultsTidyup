@@ -17,7 +17,7 @@ import Errors exposing (expectError)
 import EventDateAndTime exposing (EventDateAndTime)
 import Expect
 import Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..), identifyProblems)
-import Stopwatch exposing (MergeEntry(..), MergedTableRow, Stopwatches(..), WhichStopwatch(..), noUnderlines)
+import Stopwatch exposing (MergeEntry(..), MergedTableRow, StopwatchMatchSummary, Stopwatches(..), WhichStopwatch(..), noUnderlines)
 import Test exposing (Test, describe, test)
 import TestData exposing (createBarcodeScannerDataFromFiles, ordinaryFileLine, toPosix)
 
@@ -345,6 +345,7 @@ suite =
                             , filename1 = "stopwatches1.txt"
                             , filename2 = "stopwatches2.txt"
                             , mergedTableRows = wrapMergeEntriesInTable [ ExactMatch 1000, ExactMatch 1100, ExactMatch 1200 ]
+                            , matchSummary = StopwatchMatchSummary 3 0 0 0 0
                             }
                         )
                         BarcodeScanner.empty
@@ -359,6 +360,7 @@ suite =
                             , filename1 = "stopwatches1.txt"
                             , filename2 = "stopwatches2.txt"
                             , mergedTableRows = wrapMergeEntriesInTable [ ExactMatch 1000, ExactMatch 1100, NearMatch 1201 1200 ]
+                            , matchSummary = StopwatchMatchSummary 2 1 0 0 0
                             }
                         )
                         BarcodeScanner.empty
@@ -381,6 +383,7 @@ suite =
                                     , OneWatchOnly StopwatchOne 1200
                                     , OneWatchOnly StopwatchTwo 1205
                                     ]
+                            , matchSummary = StopwatchMatchSummary 0 0 0 3 3
                             }
                         )
                         BarcodeScanner.empty

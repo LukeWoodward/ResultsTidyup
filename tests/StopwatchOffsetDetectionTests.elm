@@ -5,6 +5,7 @@ import Expect
 import Stopwatch exposing (DoubleStopwatchData, MergeEntry(..), MergedTableRow, Stopwatches(..), noUnderlines)
 import StopwatchOffsetDetection exposing (findMostCommonNumber, getStopwatchTimeOffset)
 import Test exposing (Test, describe, test)
+import TestData exposing (defaultMatchSummary)
 
 
 suite : Test
@@ -55,7 +56,16 @@ suite =
                         times =
                             [ 1000, 1033, 1047, 1066, 1097, 1104, 1119, 1177, 1206 ]
                     in
-                    getStopwatchTimeOffset (Double { times1 = times, times2 = times, filename1 = "stopwatch1.txt", filename2 = "stopwatch2.txt", mergedTableRows = [] })
+                    getStopwatchTimeOffset
+                        (Double
+                            { times1 = times
+                            , times2 = times
+                            , filename1 = "stopwatch1.txt"
+                            , filename2 = "stopwatch2.txt"
+                            , mergedTableRows = []
+                            , matchSummary = defaultMatchSummary
+                            }
+                        )
                         |> Expect.equal 0
             , test "getStopwatchTimeOffset returns a positive number for a double stopwatch with identical times with a fixed difference" <|
                 \() ->
@@ -68,7 +78,16 @@ suite =
                         times2 =
                             List.map (\time -> time + 19) times1
                     in
-                    getStopwatchTimeOffset (Double { times1 = times1, times2 = times2, filename1 = "stopwatch1.txt", filename2 = "stopwatch2.txt", mergedTableRows = [] })
+                    getStopwatchTimeOffset
+                        (Double
+                            { times1 = times1
+                            , times2 = times2
+                            , filename1 = "stopwatch1.txt"
+                            , filename2 = "stopwatch2.txt"
+                            , mergedTableRows = []
+                            , matchSummary = defaultMatchSummary
+                            }
+                        )
                         |> Expect.equal -19
             ]
         ]

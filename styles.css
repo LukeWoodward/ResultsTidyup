@@ -194,4 +194,9 @@ div#actionsDropdownContainer {
     margin-bottom: 20px;
 }
 
+div#stopwatchMatchSummaryView {
+    padding: 0 15px 0 15px;
+    float: left;
+}
+
 #header { float: left; }

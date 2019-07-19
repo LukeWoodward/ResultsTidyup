@@ -3,9 +3,11 @@ module Stopwatch exposing
     , MergeEntry(..)
     , MergedTableRow
     , Stopwatch(..)
+    , StopwatchMatchSummary
     , Stopwatches(..)
     , WhichStopwatch(..)
     , createMergedTable
+    , flipMatchSummary
     , flipTable
     , generateInitialTable
     , merge
@@ -45,12 +47,22 @@ type MergeEntry
     | OneWatchOnly WhichStopwatch Int
 
 
+type alias StopwatchMatchSummary =
+    { exactMatches : Int
+    , nearMatches : Int
+    , notNearMatches : Int
+    , stopwatch1Only : Int
+    , stopwatch2Only : Int
+    }
+
+
 type alias DoubleStopwatchData =
     { times1 : List Int
     , times2 : List Int
     , filename1 : String
     , filename2 : String
     , mergedTableRows : List MergedTableRow
+    , matchSummary : StopwatchMatchSummary
     }
 
 
@@ -154,6 +166,30 @@ generateInitialTable entries =
     List.indexedMap createInitialTableRow entries
 
 
+addItemToSummary : MergedTableRow -> StopwatchMatchSummary -> StopwatchMatchSummary
+addItemToSummary tableRow summary =
+    case tableRow.entry of
+        ExactMatch _ ->
+            { summary | exactMatches = summary.exactMatches + 1 }
+
+        NearMatch _ _ ->
+            { summary | nearMatches = summary.nearMatches + 1 }
+
+        NotNearMatch _ _ ->
+            { summary | notNearMatches = summary.notNearMatches + 1 }
+
+        OneWatchOnly StopwatchOne _ ->
+            { summary | stopwatch1Only = summary.stopwatch1Only + 1 }
+
+        OneWatchOnly StopwatchTwo _ ->
+            { summary | stopwatch2Only = summary.stopwatch2Only + 1 }
+
+
+generateMatchSummary : List MergedTableRow -> StopwatchMatchSummary
+generateMatchSummary mergedTableRows =
+    List.foldr addItemToSummary (StopwatchMatchSummary 0 0 0 0 0) mergedTableRows
+
+
 isSingleTimeEntry : MergeEntry -> Bool
 isSingleTimeEntry entry =
     case entry of
@@ -243,6 +279,14 @@ flipRow row =
 flipTable : List MergedTableRow -> List MergedTableRow
 flipTable =
     List.map flipRow
+
+
+flipMatchSummary : StopwatchMatchSummary -> StopwatchMatchSummary
+flipMatchSummary matchSummary =
+    { matchSummary
+        | stopwatch1Only = matchSummary.stopwatch2Only
+        , stopwatch2Only = matchSummary.stopwatch1Only
+    }
 
 
 
@@ -463,6 +507,10 @@ createMergedTable times1 times2 filename1 filename2 =
         mergedTable : List MergedTableRow
         mergedTable =
             generateInitialTable mergedDetails
+
+        matchSummary : StopwatchMatchSummary
+        matchSummary =
+            generateMatchSummary mergedTable
     in
     Double
         { times1 = times1
@@ -470,6 +518,7 @@ createMergedTable times1 times2 filename1 filename2 =
         , filename1 = filename1
         , filename2 = filename2
         , mergedTableRows = mergedTable
+        , matchSummary = matchSummary
         }
 
 

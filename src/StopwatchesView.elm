@@ -11,7 +11,7 @@ import Html exposing (Html, a, br, button, div, h3, input, label, small, text)
 import Html.Attributes exposing (checked, class, for, href, id, rel, target, type_)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg(..))
-import Stopwatch exposing (MergeEntry(..), MergedTableRow, Stopwatches(..), WhichStopwatch(..))
+import Stopwatch exposing (MergeEntry(..), MergedTableRow, StopwatchMatchSummary, Stopwatches(..), WhichStopwatch(..))
 import TimeHandling exposing (formatTime)
 import ViewCommon exposing (intCell, plainCell, smallButton)
 
@@ -352,6 +352,54 @@ stopwatchButtonsContent stopwatches =
             ]
 
 
+matchSummaryViewRow : Int -> String -> Maybe (Html Msg)
+matchSummaryViewRow count label =
+    if count == 0 then
+        Nothing
+
+    else if count == 1 then
+        let
+            singularisedLabel : String
+            singularisedLabel =
+                label
+                    |> String.replace "times match" "time matches"
+                    |> String.replace "times" "time"
+        in
+        Just (div [] [ text ("1 " ++ singularisedLabel) ])
+
+    else
+        Just (div [] [ text (String.fromInt count ++ " " ++ label) ])
+
+
+stopwatchMatchSummaryView : Stopwatches -> Html Msg
+stopwatchMatchSummaryView stopwatches =
+    case stopwatches of
+        None ->
+            div [] []
+
+        Single _ _ ->
+            div [] []
+
+        Double doubleStopwatches ->
+            let
+                summary : StopwatchMatchSummary
+                summary =
+                    doubleStopwatches.matchSummary
+
+                rows : List (Maybe (Html Msg))
+                rows =
+                    [ matchSummaryViewRow summary.exactMatches "times match exactly"
+                    , matchSummaryViewRow summary.nearMatches "times match within one second"
+                    , matchSummaryViewRow summary.notNearMatches "times match not within one second"
+                    , matchSummaryViewRow summary.stopwatch1Only "times on stopwatch 1 only"
+                    , matchSummaryViewRow summary.stopwatch2Only "times on stopwatch 2 only"
+                    ]
+            in
+            div
+                [ id "stopwatchMatchSummaryView" ]
+                (List.filterMap identity rows)
+
+
 stopwatchRow : BarcodeScannerData -> Int -> Int -> Table.Row a
 stopwatchRow barcodeScannerData index time =
     Table.tr []
@@ -436,5 +484,9 @@ stopwatchesView stopwatches barcodeScannerData lastHeight highlightedNumberCheck
         [ h3 [] [ text "Stopwatches" ]
         , stopwatchInfoMessage stopwatches
         , stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId
-        , div [ class "stopwatch-buttons" ] (stopwatchButtonsContent stopwatches)
+        , div
+            []
+            [ div [ class "stopwatch-buttons" ] (stopwatchButtonsContent stopwatches)
+            , stopwatchMatchSummaryView stopwatches
+            ]
         ]

@@ -184,6 +184,12 @@ suite =
                                 ]
                             )
             ]
+        , describe "flipMatchSummary tests"
+            [ test "Flips a MatchSummary entry" <|
+                \() ->
+                    flipMatchSummary (StopwatchMatchSummary 1 2 3 4 5)
+                        |> Expect.equal (StopwatchMatchSummary 1 2 3 5 4)
+            ]
         , describe "merge tests"
             [ test "merging two empty lists returns empty list" <|
                 \() ->
