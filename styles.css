@@ -190,4 +190,8 @@ div.validation-error {
     color: #dc3545;
 }
 
+div#actionsDropdownContainer {
+    margin-bottom: 20px;
+}
+
 #header { float: left; }

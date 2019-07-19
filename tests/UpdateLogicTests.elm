@@ -917,6 +917,15 @@ suite =
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
                             )
             ]
+        , describe "OpenUploadFileDialog tests"
+            [ test "Can open the file upload dialog" <|
+                \() ->
+                    update OpenUploadFileDialog initModel
+                        |> Expect.all
+                            (expectCommand SelectFileForUpload
+                                :: defaultAssertionsExcept [ Command ]
+                            )
+            ]
         ]
 
 

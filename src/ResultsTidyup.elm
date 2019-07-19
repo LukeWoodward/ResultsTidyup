@@ -5,6 +5,8 @@ import BarcodeScannerEditModal
 import BarcodeScannerView exposing (barcodeScannersView)
 import Bootstrap.Alert as Alert
 import Bootstrap.Badge as Badge
+import Bootstrap.Button as Button
+import Bootstrap.Dropdown as Dropdown
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
@@ -15,7 +17,10 @@ import Commands exposing (Command(..), ElementToFocus(..))
 import Error exposing (FileError)
 import EventDateAndTime exposing (EventDateAndTime)
 import EventDateAndTimeView exposing (eventDateAndTimeView)
+import File exposing (File)
 import File.Download as Download
+import File.Select
+import FileHandling exposing (InteropFile)
 import Html exposing (Html, a, div, h1, h3, li, span, text, ul)
 import Html.Attributes exposing (attribute, class, href, id, style)
 import Html.Events exposing (on, onClick)
@@ -75,6 +80,7 @@ subscriptions model =
     Sub.batch
         [ filesDropped FilesDropped
         , heightUpdated ContainerHeightChanged
+        , Dropdown.subscriptions model.actionsDropdownState ToggleDropdown
         ]
 
 
@@ -155,6 +161,21 @@ mapCommand command =
         SaveEventStartTime startTime ->
             recordEventStartTime startTime
 
+        SelectFileForUpload ->
+            File.Select.files [ ".txt", ".csv" ] FilesUploaded
+
+        ReadFiles files ->
+            let
+                -- Convert each File into a Task that returns the corresponding
+                -- InteropFile when performed.
+                mapTask : File -> Task Never InteropFile
+                mapTask file =
+                    Task.map (InteropFile (File.name file)) (File.toString file)
+            in
+            List.map mapTask files
+                |> Task.sequence
+                |> Task.perform FilesDropped
+
 
 handleEscape : Int -> Decoder Msg
 handleEscape keyCode =
@@ -175,6 +196,23 @@ updateAndMapCommand : Msg -> Model -> ( Model, Cmd Msg )
 updateAndMapCommand msg model =
     update msg model
         |> Tuple.mapSecond mapCommand
+
+
+actionsDropdownView : Model -> Html Msg
+actionsDropdownView model =
+    div
+        [ id "actionsDropdownContainer" ]
+        [ Dropdown.dropdown
+            model.actionsDropdownState
+            { toggleMsg = ToggleDropdown
+            , toggleButton = Dropdown.toggle [ Button.primary ] [ text "Actions" ]
+            , options = [ Dropdown.alignMenuRight ]
+            , items =
+                [ Dropdown.buttonItem [ onClick OpenUploadFileDialog ] [ text "Upload files..." ]
+                , Dropdown.buttonItem [ onClick ClearAllData ] [ text "Clear all data" ]
+                ]
+            }
+        ]
 
 
 view : Model -> Html Msg
@@ -202,7 +240,8 @@ view model =
                 , stopwatchesView model.stopwatches model.barcodeScannerData model.lastHeight model.highlightedNumberCheckerId
                 ]
             , Grid.col [ Col.xs6 ]
-                [ problemsView model.problems
+                [ actionsDropdownView model
+                , problemsView model.problems
                 , Tab.config ChangeSecondTab
                     |> Tab.items
                         [ Tab.item

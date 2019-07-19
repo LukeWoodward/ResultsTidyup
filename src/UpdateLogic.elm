@@ -16,6 +16,7 @@ import DateHandling exposing (generateDownloadFilenameDatePart)
 import Dict
 import EventDateAndTime exposing (EventDateAndTime)
 import EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeChange)
+import File exposing (File)
 import FileDropHandling exposing (handleFilesDropped)
 import FileHandling exposing (InteropFile)
 import Model exposing (DialogDetails(..), Model, NumberCheckerManualEntryRow, ProblemEntry, emptyNumberCheckerManualEntryRow, initModel)
@@ -43,6 +44,7 @@ import Stopwatch
         , toggleRowInTable
         , underlineTable
         )
+import Task exposing (Task)
 import Time exposing (Posix, Zone)
 
 
@@ -54,6 +56,13 @@ stopwatchFileMimeType =
 barcodeScannerFileMimeType : String
 barcodeScannerFileMimeType =
     "text/csv"
+
+
+{-| Maximum size of a file that we allow to be uploaded.
+-}
+maxFileSize : Int
+maxFileSize =
+    1048576
 
 
 underlineStopwatches : Stopwatches -> List AnnotatedNumberCheckerEntry -> Stopwatches
@@ -506,3 +515,17 @@ update msg model =
 
         CloseModal ->
             ( { model | dialogDetails = NoDialog }, NoCommand )
+
+        ToggleDropdown newDropdownState ->
+            ( { model | actionsDropdownState = newDropdownState }, NoCommand )
+
+        OpenUploadFileDialog ->
+            ( model, SelectFileForUpload )
+
+        FilesUploaded firstFile otherFiles ->
+            let
+                allFiles : List File
+                allFiles =
+                    List.filter (\f -> File.size f <= maxFileSize) (firstFile :: otherFiles)
+            in
+            ( model, ReadFiles allFiles )

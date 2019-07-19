@@ -1,5 +1,6 @@
 module Commands exposing (Command(..), DownloadOperation(..), ElementToFocus(..))
 
+import File exposing (File)
 import FileHandling exposing (InteropFile)
 import Stopwatch exposing (WhichStopwatch)
 import Time exposing (Posix, Zone)
@@ -23,3 +24,5 @@ type Command
     | DownloadFile String InteropFile
     | FocusElement ElementToFocus
     | SaveEventStartTime Int
+    | SelectFileForUpload
+    | ReadFiles (List File)
