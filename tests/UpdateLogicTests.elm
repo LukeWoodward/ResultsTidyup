@@ -24,7 +24,6 @@ import Model
         ( Model
         , NumberCheckerManualEntryRow
         , ProblemEntry
-        , SecondTab(..)
         , emptyNumberCheckerManualEntryRow
         , initModel
         )

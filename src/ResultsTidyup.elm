@@ -20,7 +20,7 @@ import Html exposing (Html, a, div, h1, h3, li, span, text, ul)
 import Html.Attributes exposing (attribute, class, href, id, style)
 import Html.Events exposing (on, onClick)
 import Json.Decode exposing (Decoder, andThen, fail, field, int, succeed)
-import Model exposing (Model, SecondTab(..), initModel)
+import Model exposing (Model, initModel)
 import Msg exposing (Msg(..))
 import NumberCheckerView exposing (numberCheckerView)
 import Ports exposing (filesDropped, getInitialHeight, heightUpdated, recordEventStartTime)
@@ -104,15 +104,6 @@ getHeightAttribute lastHeight =
 
         Nothing ->
             []
-
-
-classAttributes : SecondTab -> SecondTab -> List (Html.Attribute Msg)
-classAttributes wantedTab actualTab =
-    if wantedTab == actualTab then
-        [ class "nav-link active" ]
-
-    else
-        [ class "nav-link" ]
 
 
 focus : ElementToFocus -> Cmd Msg

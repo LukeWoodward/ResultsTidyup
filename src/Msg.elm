@@ -5,7 +5,6 @@ import BarcodeScannerEditing exposing (BarcodeScannerEditDetails, BarcodeScanner
 import Bootstrap.Tab as Tab
 import Commands exposing (DownloadOperation)
 import FileHandling exposing (InteropFile)
-import Model exposing (SecondTab)
 import ProblemFixing exposing (ProblemFix)
 import Stopwatch exposing (WhichStopwatch(..))
 import Time exposing (Posix, Zone)

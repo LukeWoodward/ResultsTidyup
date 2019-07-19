@@ -3,7 +3,6 @@ module Model exposing
     , Model
     , NumberCheckerManualEntryRow
     , ProblemEntry
-    , SecondTab
     , emptyNumberCheckerManualEntryRow
     , emptyNumericEntry
     , initModel
@@ -48,11 +47,6 @@ type alias ProblemEntry =
 type DialogDetails
     = NoDialog
     | BarcodeScannerRowEditDialog BarcodeScannerRowEditDetails
-
-
-type SecondTab
-    = BarcodeScannersTab
-    | NumberCheckerTab
 
 
 type alias Model =
