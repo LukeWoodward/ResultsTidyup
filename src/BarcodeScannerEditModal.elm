@@ -35,6 +35,11 @@ athleteRadioButtonId =
     "athleteRadio"
 
 
+finishPositionRadioButtonId : String
+finishPositionRadioButtonId =
+    "finishPositionRadio"
+
+
 validationErrorToString : BarcodeScannerValidationError -> String
 validationErrorToString validationError =
     case validationError of
@@ -76,7 +81,8 @@ editBarcodeScannerRowModalBody rowEditDetails =
 
                 _ ->
                     Radio.radio
-                        [ Radio.checked (rowEditDetails.fieldBeingEdited == FinishPositionOnly)
+                        [ Radio.id finishPositionRadioButtonId
+                        , Radio.checked (rowEditDetails.fieldBeingEdited == FinishPositionOnly)
                         , Radio.onClick (BarcodeScannerEdit (ChangeWhatsBeingEdited FinishPositionOnly))
                         ]
                         "Finish position"
