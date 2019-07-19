@@ -177,19 +177,22 @@ mapCommand command =
                 |> Task.perform FilesDropped
 
 
-handleEscape : Int -> Decoder Msg
-handleEscape keyCode =
+handleKey : Int -> Decoder Msg
+handleKey keyCode =
     if keyCode == 27 then
         succeed CloseModal
 
+    else if keyCode == 13 then
+        succeed ReturnKeyPressed
+
     else
-        fail "not Escape key"
+        fail "unrecognised key"
 
 
-escapeKeyDecoder : Decoder Msg
-escapeKeyDecoder =
+keyDecoder : Decoder Msg
+keyDecoder =
     field "keyCode" int
-        |> andThen handleEscape
+        |> andThen handleKey
 
 
 updateAndMapCommand : Msg -> Model -> ( Model, Cmd Msg )
@@ -227,7 +230,7 @@ view model =
                 text ""
     in
     div
-        [ on "keyup" escapeKeyDecoder ]
+        [ on "keyup" keyDecoder ]
         [ div
             [ class "clearfix" ]
             [ h1 [ id "header" ] [ text "Results Tidyup" ]

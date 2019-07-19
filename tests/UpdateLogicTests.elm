@@ -11,7 +11,7 @@ import BarcodeScanner
         , empty
         , regenerate
         )
-import BarcodeScannerEditing exposing (BarcodeScannerRowEditLocation)
+import BarcodeScannerEditing exposing (BarcodeScannerFieldBeingEdited(..), BarcodeScannerRowEditDetails, BarcodeScannerRowEditLocation)
 import BarcodeScannerTests exposing (createBarcodeScannerData)
 import Commands exposing (Command(..), DownloadOperation, ElementToFocus(..))
 import Dict exposing (Dict)
@@ -21,7 +21,8 @@ import Expect exposing (Expectation)
 import FileHandling exposing (InteropFile)
 import Model
     exposing
-        ( Model
+        ( DialogDetails(..)
+        , Model
         , NumberCheckerManualEntryRow
         , ProblemEntry
         , emptyNumberCheckerManualEntryRow
@@ -268,6 +269,18 @@ getBarcodeScannerDataWithFiles numbers =
                 defaultTime
     in
     { empty | files = files, lastScanDate = lastScanDate }
+
+
+makeBarcodeScannerRowEditDetails : BarcodeScannerRowEditLocation -> Maybe Int -> Maybe Int -> BarcodeScannerRowEditDetails
+makeBarcodeScannerRowEditDetails location athlete finishPosition =
+    BarcodeScannerRowEditDetails
+        location
+        (Ordinary "" Nothing)
+        (NumericEntry "" athlete)
+        (NumericEntry "" finishPosition)
+        Both
+        Nothing
+        False
 
 
 suite : Test
@@ -874,7 +887,7 @@ suite =
                                 ]
                     in
                     { initModel | barcodeScannerData = initialBarcodeScannerData }
-                        |> update (UpdateRowFromBarcodeScannerEditModal (BarcodeScannerRowEditLocation "barcodes6.txt" 1) "A2022807" (Just 31))
+                        |> update (UpdateRowFromBarcodeScannerEditModal (makeBarcodeScannerRowEditDetails (BarcodeScannerRowEditLocation "barcodes6.txt" 1) (Just 2022807) (Just 31)))
                         |> Expect.all
                             (expectBarcodeScannerData expectedBarcodeScannerData
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
@@ -924,6 +937,50 @@ suite =
                         |> Expect.all
                             (expectCommand SelectFileForUpload
                                 :: defaultAssertionsExcept [ Command ]
+                            )
+            ]
+        , describe "ReturnKeyPressed tests"
+            [ test "Pressing Return when no dialog opened does nothing." <|
+                \() ->
+                    update ReturnKeyPressed initModel
+                        |> Expect.all defaultAssertions
+            , test "Can update a row in a barcode scanner file by pressing Return when dialog opened" <|
+                \() ->
+                    let
+                        lineToDelete : BarcodeScannerFileLine
+                        lineToDelete =
+                            ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
+
+                        initialBarcodeScannerData : BarcodeScannerData
+                        initialBarcodeScannerData =
+                            createBarcodeScannerDataFromFiles
+                                [ BarcodeScannerFile
+                                    "barcodes6.txt"
+                                    [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+
+                        expectedBarcodeScannerData : BarcodeScannerData
+                        expectedBarcodeScannerData =
+                            createBarcodeScannerDataFromFiles
+                                [ BarcodeScannerFile
+                                    "barcodes6.txt"
+                                    [ ordinaryFileLine 1 "A2022807" (Just 31) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+                    in
+                    { initModel
+                        | barcodeScannerData = initialBarcodeScannerData
+                        , dialogDetails = BarcodeScannerRowEditDialog (makeBarcodeScannerRowEditDetails (BarcodeScannerRowEditLocation "barcodes6.txt" 1) (Just 2022807) (Just 31))
+                    }
+                        |> update ReturnKeyPressed
+                        |> Expect.all
+                            (expectBarcodeScannerData expectedBarcodeScannerData
+                                :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
                             )
             ]
         ]

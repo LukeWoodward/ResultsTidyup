@@ -352,6 +352,31 @@ select condition trueValue falseValue =
         falseValue
 
 
+updateRowFromBarcodeScannerEditModal : BarcodeScannerRowEditDetails -> Model -> Model
+updateRowFromBarcodeScannerEditModal rowEditDetails model =
+    let
+        athlete : String
+        athlete =
+            case rowEditDetails.athleteEntered.parsedValue of
+                Just athleteNum ->
+                    "A" ++ String.fromInt athleteNum
+
+                Nothing ->
+                    ""
+    in
+    { model
+        | dialogDetails = NoDialog
+        , barcodeScannerData =
+            updateBarcodeScannerLine
+                rowEditDetails.location.fileName
+                rowEditDetails.location.lineNumber
+                athlete
+                rowEditDetails.finishPositionEntered.parsedValue
+                model.barcodeScannerData
+    }
+        |> identifyProblemsIn
+
+
 update : Msg -> Model -> ( Model, Command )
 update msg model =
     case msg of
@@ -495,14 +520,8 @@ update msg model =
             in
             ( { model | dialogDetails = newEditDetails }, NoCommand )
 
-        UpdateRowFromBarcodeScannerEditModal location athlete finishPosition ->
-            ( { model
-                | dialogDetails = NoDialog
-                , barcodeScannerData = updateBarcodeScannerLine location.fileName location.lineNumber athlete finishPosition model.barcodeScannerData
-              }
-                |> identifyProblemsIn
-            , NoCommand
-            )
+        UpdateRowFromBarcodeScannerEditModal rowEditDetails ->
+            ( updateRowFromBarcodeScannerEditModal rowEditDetails model, NoCommand )
 
         DeleteRowFromBarcodeScannerEditModal location ->
             ( { model
@@ -529,3 +548,15 @@ update msg model =
                     List.filter (\f -> File.size f <= maxFileSize) (firstFile :: otherFiles)
             in
             ( model, ReadFiles allFiles )
+
+        ReturnKeyPressed ->
+            case model.dialogDetails of
+                NoDialog ->
+                    ( model, NoCommand )
+
+                BarcodeScannerRowEditDialog rowEditDetails ->
+                    if rowEditDetails.validationError == Nothing then
+                        ( updateRowFromBarcodeScannerEditModal rowEditDetails model, NoCommand )
+
+                    else
+                        ( model, NoCommand )

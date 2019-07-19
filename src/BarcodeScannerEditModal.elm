@@ -227,23 +227,7 @@ barcodeScannerEditButtons barcodeScannerRowEditDetails =
         updateButtonAttrs : List (Html.Attribute Msg)
         updateButtonAttrs =
             if barcodeScannerRowEditDetails.validationError == Nothing then
-                let
-                    athleteStringValue : String
-                    athleteStringValue =
-                        case barcodeScannerRowEditDetails.athleteEntered.parsedValue of
-                            Just athleteNumber ->
-                                "A" ++ String.fromInt athleteNumber
-
-                            Nothing ->
-                                ""
-                in
-                [ onClick
-                    (UpdateRowFromBarcodeScannerEditModal
-                        barcodeScannerRowEditDetails.location
-                        athleteStringValue
-                        barcodeScannerRowEditDetails.finishPositionEntered.parsedValue
-                    )
-                ]
+                [ onClick (UpdateRowFromBarcodeScannerEditModal barcodeScannerRowEditDetails) ]
 
             else
                 []
