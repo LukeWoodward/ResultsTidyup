@@ -150,6 +150,15 @@ okDefaultFileLine lineNumber contents scanTime =
     Ok (BarcodeScannerFileLine lineNumber contents scanTime NotDeleted)
 
 
+removeNull : String -> String
+removeNull value =
+    if value == "null" then
+        ""
+
+    else
+        value
+
+
 readLine : Int -> String -> Result UnrecognisedLine BarcodeScannerFileLine
 readLine lineNumber line =
     let
@@ -157,6 +166,7 @@ readLine lineNumber line =
         parts =
             String.split "," line
                 |> List.map String.trim
+                |> List.map removeNull
 
         unrecognisedLine : String -> String -> Result UnrecognisedLine BarcodeScannerFileLine
         unrecognisedLine code message =

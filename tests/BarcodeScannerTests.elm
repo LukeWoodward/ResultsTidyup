@@ -143,9 +143,47 @@ suite =
                                     (toPosix "2018-03-14T09:47:03.000Z")
                                 )
                             )
+            , test "readBarcodeScannerData of a valid single-line string with athlete and null position is valid" <|
+                \() ->
+                    readBarcodeScannerData "barcodes2.txt" "A4580442,null,14/03/2018 09:47:03"
+                        |> Expect.equal
+                            (Ok
+                                (BarcodeScannerData
+                                    [ BarcodeScannerFile
+                                        "barcodes2.txt"
+                                        [ ordinaryFileLine 1 "A4580442" Nothing "14/03/2018 09:47:03" ]
+                                        (toPosix "2018-03-14T09:47:03.000Z")
+                                    ]
+                                    Dict.empty
+                                    [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]
+                                    []
+                                    []
+                                    []
+                                    (toPosix "2018-03-14T09:47:03.000Z")
+                                )
+                            )
             , test "readBarcodeScannerData of a valid single-line string with finish token only is valid" <|
                 \() ->
                     readBarcodeScannerData "barcodes3.txt" ",P0047,14/03/2018 09:47:03"
+                        |> Expect.equal
+                            (Ok
+                                (BarcodeScannerData
+                                    [ BarcodeScannerFile
+                                        "barcodes3.txt"
+                                        [ ordinaryFileLine 1 "" (Just 47) "14/03/2018 09:47:03" ]
+                                        (toPosix "2018-03-14T09:47:03.000Z")
+                                    ]
+                                    Dict.empty
+                                    []
+                                    [ PositionAndTimePair 47 "14/03/2018 09:47:03" ]
+                                    []
+                                    []
+                                    (toPosix "2018-03-14T09:47:03.000Z")
+                                )
+                            )
+            , test "readBarcodeScannerData of a valid single-line string with null athlete and finish token only is valid" <|
+                \() ->
+                    readBarcodeScannerData "barcodes3.txt" "null,P0047,14/03/2018 09:47:03"
                         |> Expect.equal
                             (Ok
                                 (BarcodeScannerData
