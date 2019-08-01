@@ -57,8 +57,8 @@ createBarcodeScannerData athleteToPositionsDict athleteBarcodesOnly finishTokens
         Nothing
 
 
-expectSingleUnrecognisedLine : String -> String -> Result Error BarcodeScannerData -> Expectation
-expectSingleUnrecognisedLine expectedLine expectedCode barcodeScannerDataResult =
+expectSingleUnrecognisedLine : Int -> String -> String -> Result Error BarcodeScannerData -> Expectation
+expectSingleUnrecognisedLine expectedValidLineCount expectedLine expectedCode barcodeScannerDataResult =
     case barcodeScannerDataResult of
         Ok barcodeScannerData ->
             case barcodeScannerData.unrecognisedLines of
@@ -66,7 +66,7 @@ expectSingleUnrecognisedLine expectedLine expectedCode barcodeScannerDataResult 
                     Expect.fail "No unrecognised lines"
 
                 [ unrecognisedLine ] ->
-                    if Dict.isEmpty barcodeScannerData.scannedBarcodes then
+                    if expectedValidLineCount == Dict.size barcodeScannerData.scannedBarcodes then
                         Expect.all
                             [ \ul -> Expect.equal expectedLine ul.line
                             , \ul -> Expect.equal expectedCode ul.errorCode
@@ -74,7 +74,7 @@ expectSingleUnrecognisedLine expectedLine expectedCode barcodeScannerDataResult 
                             unrecognisedLine
 
                     else
-                        Expect.fail "Unexpected valid lines found"
+                        Expect.equal expectedValidLineCount (Dict.size barcodeScannerData.scannedBarcodes)
 
                 first :: second :: rest ->
                     Expect.fail "More than one unrecognised line was found"
@@ -86,7 +86,13 @@ expectSingleUnrecognisedLine expectedLine expectedCode barcodeScannerDataResult 
 expectSingleUnrecognisedLineFor : String -> String -> Expectation
 expectSingleUnrecognisedLineFor line expectedCode =
     readBarcodeScannerData "barcodes.txt" line
-        |> expectSingleUnrecognisedLine line expectedCode
+        |> expectSingleUnrecognisedLine 0 line expectedCode
+
+
+expectSingleValidLineAndSingleUnrecognisedLineFor : String -> String -> String -> Expectation
+expectSingleValidLineAndSingleUnrecognisedLineFor validLine unrecognisedLine expectedCode =
+    readBarcodeScannerData "barcodes.txt" (validLine ++ "\n" ++ unrecognisedLine)
+        |> expectSingleUnrecognisedLine 1 unrecognisedLine expectedCode
 
 
 deleteByUser : BarcodeScannerFileLine -> BarcodeScannerFileLine
@@ -267,9 +273,16 @@ suite =
             , test "readBarcodeScannerData of a string with too many parts is not valid" <|
                 \() ->
                     expectSingleUnrecognisedLineFor "A4580442,P0047,14/03/2018 09:47:03,someOtherRubbish" "NOT_TWO_OR_THREE_PARTS"
+            , test "readBarcodeScannerData of a string with a valid line and a nonsense line has unrecognised line" <|
+                \() ->
+                    expectSingleValidLineAndSingleUnrecognisedLineFor "A4580442,P0047,14/03/2018 09:47:03" "A12345,nonsense,14/03/2018 09:49:55" "INVALID_POSITION_RECORD"
             , test "readBarcodeScannerData of a string with position zero is not valid" <|
                 \() ->
                     expectSingleUnrecognisedLineFor "A4580442,P0000,14/03/2018 09:47:03" "INVALID_POSITION_ZERO"
+            , test "readBarcodeScannerData of a string containing binary data is not valid" <|
+                \() ->
+                    readBarcodeScannerData "binary.txt" "\u{0000}\u{0000}\u{0000}Z\u{0001}j\u{0007}\u{0000}\u{0003}\u{0000}$\u{0000}"
+                        |> expectError "BINARY_FILE"
             ]
         , describe "maxFinishToken tests"
             [ test "maxFinishToken of an empty set of barcodes returns Nothing" <|

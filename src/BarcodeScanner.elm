@@ -34,11 +34,6 @@ type alias Timed a =
     { a | scanTime : String }
 
 
-maxUnrecognisedLines : Int
-maxUnrecognisedLines =
-    10
-
-
 type alias AthleteAndTimePair =
     { athlete : String
     , scanTime : String
@@ -216,16 +211,11 @@ readLine lineNumber line =
             else if isPositionMissing then
                 okDefaultFileLine lineNumber (Ordinary athlete Nothing) time
 
+            else if positionNumber == Just 0 then
+                unrecognisedLine "INVALID_POSITION_ZERO" ("Invalid position record '" ++ position ++ "' found in barcode scanner file")
+
             else
-                case positionNumber of
-                    Just 0 ->
-                        unrecognisedLine "INVALID_POSITION_ZERO" ("Invalid position record '" ++ position ++ "' found in barcode scanner file")
-
-                    Just pos ->
-                        okDefaultFileLine lineNumber (Ordinary athlete positionNumber) time
-
-                    Nothing ->
-                        unrecognisedLine "NON_NUMERIC_POSITION" ("Invalid position record '" ++ position ++ "' found in barcode scanner file")
+                okDefaultFileLine lineNumber (Ordinary athlete positionNumber) time
 
         [ misScannedText, time ] ->
             okDefaultFileLine lineNumber (MisScan misScannedText) time

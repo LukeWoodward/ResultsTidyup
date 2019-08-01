@@ -171,6 +171,13 @@ suite =
                             ]
                             initModel
                             |> Expect.equal { initModel | eventDateAndTime = parsedEventDateOnly, barcodeScannerData = parsedBarcodeScannerData1And2 }
+                , test "Cannot upload an invalid barcode scanner file" <|
+                    \() ->
+                        runTestWithSingleError
+                            initModel
+                            "barcodes1plusbinary.txt"
+                            (validBarcodeScannerData1 ++ "\u{0000}\u{0000}\u{0000}Z\u{0001}j\u{0007}\u{0000}\u{0003}\u{0000}$\u{0000}")
+                            "BINARY_FILE"
                 ]
             , describe "Number checker file tests"
                 [ test "Can upload a single number checker file" <|

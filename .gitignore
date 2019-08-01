@@ -4,3 +4,4 @@
 /tests/elm-stuff
 /release
 /results-tidyup.min.js
+/.coverage
