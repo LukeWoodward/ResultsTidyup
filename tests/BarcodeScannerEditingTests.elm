@@ -8,9 +8,11 @@ import BarcodeScannerEditing
         , BarcodeScannerRowEditDetails
         , BarcodeScannerRowEditLocation
         , BarcodeScannerValidationError(..)
+        , elementToFocusWhenOpening
         , startEditing
         , updateEditDetails
         )
+import Commands exposing (ElementToFocus(..))
 import Expect exposing (Expectation)
 import NumericEntry exposing (NumericEntry)
 import Test exposing (Test, describe, test)
@@ -74,6 +76,16 @@ suite =
                                 (Just NeitherSelected)
                                 False
                             )
+            ]
+        , describe "elementToFocusWhenOpening tests"
+            [ test "Focuses athlete input when opening to edit an ordinary item" <|
+                \() ->
+                    elementToFocusWhenOpening (Ordinary "A4580442" (Just 47))
+                        |> Expect.equal BarcodeScannerEditingAthleteInput
+            , test "Focuses radio button when opening to edit a mis-scanned item" <|
+                \() ->
+                    elementToFocusWhenOpening (MisScan "&d084")
+                        |> Expect.equal BarcodeScannerEditingAthleteRadioButton
             ]
         , describe "updateEditDetails tests"
             [ describe "ChangeWhatsBeingEdited tests"

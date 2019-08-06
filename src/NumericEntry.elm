@@ -62,4 +62,4 @@ isPositive entry =
 
 isValidEntry : NumericEntry -> Bool
 isValidEntry entry =
-    entry.enteredValue == "" || (entry.parsedValue /= Nothing && isPositive entry)
+    entry.enteredValue == "" || isPositive entry

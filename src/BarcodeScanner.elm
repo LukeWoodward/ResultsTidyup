@@ -377,31 +377,6 @@ maxFinishToken barcodeScannerData =
         |> List.maximum
 
 
-{-| Placeholder time (in milliseconds) used if a time fails to parse.
--}
-placeholderMaxEventTime : Int
-placeholderMaxEventTime =
-    9999999999999
-
-
-toScanTimeMillis : Timed a -> Int
-toScanTimeMillis { scanTime } =
-    dateStringToPosix scanTime
-        |> Maybe.map Time.posixToMillis
-        |> Maybe.withDefault placeholderMaxEventTime
-
-
-sortByTime : List (Timed a) -> List (Timed a)
-sortByTime times =
-    List.sortBy toScanTimeMillis times
-
-
-type alias TimedItem =
-    { line : String
-    , time : Int
-    }
-
-
 formatPosition : Int -> String
 formatPosition position =
     let
@@ -410,17 +385,6 @@ formatPosition position =
             String.fromInt position
     in
     "P" ++ String.repeat (4 - String.length stringifiedPosition) "0" ++ stringifiedPosition
-
-
-formatAthleteEntries : ( Int, List AthleteAndTimePair ) -> List TimedItem
-formatAthleteEntries ( position, athleteAndTimePairs ) =
-    List.map
-        (\athleteAndTimePair ->
-            TimedItem
-                (athleteAndTimePair.athlete ++ "," ++ formatPosition position ++ "," ++ athleteAndTimePair.scanTime)
-                (toScanTimeMillis athleteAndTimePair)
-        )
-        athleteAndTimePairs
 
 
 notDeleted : BarcodeScannerFileLine -> Bool

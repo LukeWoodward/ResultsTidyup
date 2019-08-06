@@ -174,13 +174,14 @@ suite =
         , describe "flipTable tests"
             [ test "Flips a table of entries" <|
                 \() ->
-                    flipTable (List.map wrapEntry [ entry1, entry2, entry3, entry4 ])
+                    flipTable (List.map wrapEntry [ entry1, entry2, entry3, entry4, entry5 ])
                         |> Expect.equal
                             (List.map wrapEntry
                                 [ entry1
                                 , NearMatch 285 284
                                 , OneWatchOnly StopwatchOne 303
                                 , OneWatchOnly StopwatchTwo 355
+                                , NotNearMatch 419 406
                                 ]
                             )
             ]

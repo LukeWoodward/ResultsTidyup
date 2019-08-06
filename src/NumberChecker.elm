@@ -109,11 +109,6 @@ parseNumberCheckerFile fileText =
         |> Result.map sortNumberCheckerEntries
 
 
-unannotateEntry : AnnotatedNumberCheckerEntry -> NumberCheckerEntry
-unannotateEntry entry =
-    NumberCheckerEntry entry.stopwatch1 entry.stopwatch2 entry.finishTokens
-
-
 removeDeltas : AnnotatedNumberCheckerEntry -> NumberCheckerEntryWithActual
 removeDeltas entry =
     NumberCheckerEntryWithActual entry.stopwatch1 entry.stopwatch2 entry.finishTokens entry.actual

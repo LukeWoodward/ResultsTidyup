@@ -28,20 +28,6 @@ type ProblemFix
     | SwapBarcodes String Int Int
 
 
-removeMultipleOccurrencesOf : String -> List AthleteAndTimePair -> List AthleteAndTimePair
-removeMultipleOccurrencesOf athlete list =
-    case list of
-        [] ->
-            []
-
-        first :: rest ->
-            if first.athlete == athlete then
-                first :: List.filter (\athleteAndTimePair -> athleteAndTimePair.athlete /= athlete) rest
-
-            else
-                first :: removeMultipleOccurrencesOf athlete rest
-
-
 deleteWithinFiles : (BarcodeScannerFileLine -> BarcodeScannerFileLine) -> List BarcodeScannerFile -> List BarcodeScannerFile
 deleteWithinFiles deleter files =
     let

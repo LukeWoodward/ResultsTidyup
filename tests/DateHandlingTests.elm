@@ -80,9 +80,53 @@ suite =
                         |> Expect.equal Nothing
             ]
         , describe "dateToString tests"
-            [ test "Can convert a date into a string" <|
+            [ test "Can convert a date in January into a string" <|
+                \() ->
+                    dateToString (Time.millisToPosix 1485000000000)
+                        |> Expect.equal "21/01/2017"
+            , test "Can convert a date in February into a string" <|
+                \() ->
+                    dateToString (Time.millisToPosix 1487500000000)
+                        |> Expect.equal "19/02/2017"
+            , test "Can convert a date in March into a string" <|
+                \() ->
+                    dateToString (Time.millisToPosix 1490000000000)
+                        |> Expect.equal "20/03/2017"
+            , test "Can convert a date in April into a string" <|
+                \() ->
+                    dateToString (Time.millisToPosix 1492500000000)
+                        |> Expect.equal "18/04/2017"
+            , test "Can convert a date in May into a string" <|
+                \() ->
+                    dateToString (Time.millisToPosix 1495000000000)
+                        |> Expect.equal "17/05/2017"
+            , test "Can convert a date in June into a string" <|
+                \() ->
+                    dateToString (Time.millisToPosix 1497500000000)
+                        |> Expect.equal "15/06/2017"
+            , test "Can convert a date in July into a string" <|
                 \() ->
                     dateToString (Time.millisToPosix 1500000000000)
                         |> Expect.equal "14/07/2017"
+            , test "Can convert a date in August into a string" <|
+                \() ->
+                    dateToString (Time.millisToPosix 1502500000000)
+                        |> Expect.equal "12/08/2017"
+            , test "Can convert a date in September into a string" <|
+                \() ->
+                    dateToString (Time.millisToPosix 1505000000000)
+                        |> Expect.equal "09/09/2017"
+            , test "Can convert a date in October into a string" <|
+                \() ->
+                    dateToString (Time.millisToPosix 1507500000000)
+                        |> Expect.equal "08/10/2017"
+            , test "Can convert a date in November into a string" <|
+                \() ->
+                    dateToString (Time.millisToPosix 1510000000000)
+                        |> Expect.equal "06/11/2017"
+            , test "Can convert a date in December into a string" <|
+                \() ->
+                    dateToString (Time.millisToPosix 1512500000000)
+                        |> Expect.equal "05/12/2017"
             ]
         ]
