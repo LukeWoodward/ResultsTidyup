@@ -9,7 +9,9 @@ module Stopwatch exposing
     , createMergedTable
     , flipMatchSummary
     , flipTable
+    , footer
     , generateInitialTable
+    , header
     , merge
     , noUnderlines
     , outputMergedTable

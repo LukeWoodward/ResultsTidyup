@@ -223,6 +223,17 @@ suite =
                             , OneWatchOnly StopwatchOne 50
                             , OneWatchOnly StopwatchTwo 60
                             ]
+            , test "merging two lists with no common numbers returns correct result 2" <|
+                \() ->
+                    merge 1 [ 20, 40, 60 ] [ 10, 30, 50 ]
+                        |> Expect.equal
+                            [ OneWatchOnly StopwatchTwo 10
+                            , OneWatchOnly StopwatchOne 20
+                            , OneWatchOnly StopwatchTwo 30
+                            , OneWatchOnly StopwatchOne 40
+                            , OneWatchOnly StopwatchTwo 50
+                            , OneWatchOnly StopwatchOne 60
+                            ]
             , test "merging two lists with near-matches returns expected result" <|
                 \() ->
                     merge 1 [ 10, 30, 50 ] [ 10, 31, 50 ]
@@ -247,14 +258,26 @@ suite =
                 \() ->
                     merge 2 [ 8, 30, 50 ] [ 14, 30, 50 ]
                         |> Expect.equal [ NotNearMatch 8 14, ExactMatch 30, ExactMatch 50 ]
+            , test "merging two lists with a not-near-match at the start the other way around returns expected result" <|
+                \() ->
+                    merge 2 [ 14, 30, 50 ] [ 8, 30, 50 ]
+                        |> Expect.equal [ NotNearMatch 14 8, ExactMatch 30, ExactMatch 50 ]
             , test "merging two lists with a not-near-match in the middle returns expected result" <|
                 \() ->
                     merge 2 [ 10, 28, 50 ] [ 10, 34, 50 ]
                         |> Expect.equal [ ExactMatch 10, NotNearMatch 28 34, ExactMatch 50 ]
+            , test "merging two lists with a not-near-match in the middle the other way around returns expected result" <|
+                \() ->
+                    merge 2 [ 10, 34, 50 ] [ 10, 28, 50 ]
+                        |> Expect.equal [ ExactMatch 10, NotNearMatch 34 28, ExactMatch 50 ]
             , test "merging two lists with a not-near-match at the end returns expected result" <|
                 \() ->
                     merge 2 [ 10, 30, 48 ] [ 10, 30, 54 ]
                         |> Expect.equal [ ExactMatch 10, ExactMatch 30, NotNearMatch 48 54 ]
+            , test "merging two lists with a not-near-match at the end the other way around returns expected result" <|
+                \() ->
+                    merge 2 [ 10, 30, 54 ] [ 10, 30, 48 ]
+                        |> Expect.equal [ ExactMatch 10, ExactMatch 30, NotNearMatch 54 48 ]
             , test "merging two lists with times on alternating stopwatches returns expected result 1" <|
                 \() ->
                     merge 2 [ 10, 30, 48, 61 ] [ 10, 30, 54 ]
@@ -271,5 +294,147 @@ suite =
                 \() ->
                     merge 2 [ 118, 126, 127 ] [ 118, 127, 127 ]
                         |> Expect.equal [ ExactMatch 118, NearMatch 126 127, ExactMatch 127 ]
+            ]
+        , describe "createMergedTable tests"
+            [ test "Creating a merged table from an empty list generates empty data" <|
+                \() ->
+                    createMergedTable [] [] "empty1.txt" "empty2.txt"
+                        |> Expect.equal (Double (DoubleStopwatchData [] [] "empty1.txt" "empty2.txt" [] (StopwatchMatchSummary 0 0 0 0 0)))
+            , test "Creating a merged table from a list of identical times" <|
+                \() ->
+                    let
+                        times : List Int
+                        times =
+                            [ 10, 30, 50 ]
+
+                        mergedTable : List MergedTableRow
+                        mergedTable =
+                            merge 1 times times
+                                |> generateInitialTable
+                    in
+                    createMergedTable times times "identical1.txt" "identical2.txt"
+                        |> Expect.equal (Double (DoubleStopwatchData times times "identical1.txt" "identical2.txt" mergedTable (StopwatchMatchSummary 3 0 0 0 0)))
+            , test "Creating a merged table from a pair of lists of times with a near match" <|
+                \() ->
+                    let
+                        times1 : List Int
+                        times1 =
+                            [ 10, 30, 50 ]
+
+                        times2 : List Int
+                        times2 =
+                            [ 10, 31, 50 ]
+
+                        mergedTable : List MergedTableRow
+                        mergedTable =
+                            merge 1 times1 times2
+                                |> generateInitialTable
+                    in
+                    createMergedTable times1 times2 "nearmatch1.txt" "nearmatch2.txt"
+                        |> Expect.equal (Double (DoubleStopwatchData times1 times2 "nearmatch1.txt" "nearmatch2.txt" mergedTable (StopwatchMatchSummary 2 1 0 0 0)))
+            , test "Creating a merged table from a pair of lists of times with a not-near match" <|
+                \() ->
+                    let
+                        times1 : List Int
+                        times1 =
+                            [ 10, 29, 50 ]
+
+                        times2 : List Int
+                        times2 =
+                            [ 10, 31, 50 ]
+
+                        mergedTable : List MergedTableRow
+                        mergedTable =
+                            merge 1 times1 times2
+                                |> generateInitialTable
+                    in
+                    createMergedTable times1 times2 "notnearmatch1.txt" "notnearmatch2.txt"
+                        |> Expect.equal (Double (DoubleStopwatchData times1 times2 "notnearmatch1.txt" "notnearmatch2.txt" mergedTable (StopwatchMatchSummary 2 0 1 0 0)))
+            , test "Creating a merged table from a pair of lists of times with a time only on the first watch" <|
+                \() ->
+                    let
+                        times1 : List Int
+                        times1 =
+                            [ 10, 30, 50 ]
+
+                        times2 : List Int
+                        times2 =
+                            [ 10, 50 ]
+
+                        mergedTable : List MergedTableRow
+                        mergedTable =
+                            merge 1 times1 times2
+                                |> generateInitialTable
+                    in
+                    createMergedTable times1 times2 "watch1only1.txt" "watch1only2.txt"
+                        |> Expect.equal (Double (DoubleStopwatchData times1 times2 "watch1only1.txt" "watch1only2.txt" mergedTable (StopwatchMatchSummary 2 0 0 1 0)))
+            , test "Creating a merged table from a pair of lists of times with a time only on the second watch" <|
+                \() ->
+                    let
+                        times1 : List Int
+                        times1 =
+                            [ 10, 50 ]
+
+                        times2 : List Int
+                        times2 =
+                            [ 10, 30, 50 ]
+
+                        mergedTable : List MergedTableRow
+                        mergedTable =
+                            merge 1 times1 times2
+                                |> generateInitialTable
+                    in
+                    createMergedTable times1 times2 "watch2only1.txt" "watch2only2.txt"
+                        |> Expect.equal (Double (DoubleStopwatchData times1 times2 "watch2only1.txt" "watch2only2.txt" mergedTable (StopwatchMatchSummary 2 0 0 0 1)))
+            ]
+        , describe "outputMergedTable tests"
+            [ test "outputMergedTable of an empty list of stopwatch times is empty" <|
+                \() ->
+                    outputMergedTable []
+                        |> Expect.equal (String.join crlf (header ++ [ footer ]))
+            , test "outputMergedTable of a single exact-match time is the time" <|
+                \() ->
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (ExactMatch 517) True noUnderlines ]
+                        |> Expect.equal (String.join crlf (header ++ [ "1,01/01/2001 00:08:37,00:08:37", footer ]))
+            , test "outputMergedTable of a single near-match time with the first smaller is the first time" <|
+                \() ->
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (NearMatch 662 663) True noUnderlines ]
+                        |> Expect.equal (String.join crlf (header ++ [ "1,01/01/2001 00:11:02,00:11:02", footer ]))
+            , test "outputMergedTable of a single near-match time with the second smaller is the second time" <|
+                \() ->
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (NearMatch 663 662) True noUnderlines ]
+                        |> Expect.equal (String.join crlf (header ++ [ "1,01/01/2001 00:11:02,00:11:02", footer ]))
+            , test "outputMergedTable of a single not-near-match time with the first smaller is the first time" <|
+                \() ->
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (NotNearMatch 772 779) True noUnderlines ]
+                        |> Expect.equal (String.join crlf (header ++ [ "1,01/01/2001 00:12:52,00:12:52", footer ]))
+            , test "outputMergedTable of a single not-near-match time with the second smaller is the second time" <|
+                \() ->
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (NotNearMatch 779 772) True noUnderlines ]
+                        |> Expect.equal (String.join crlf (header ++ [ "1,01/01/2001 00:12:52,00:12:52", footer ]))
+            , test "outputMergedTable of a single time only on stopwatch 1 is the single time" <|
+                \() ->
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneWatchOnly StopwatchOne 588) True noUnderlines ]
+                        |> Expect.equal (String.join crlf (header ++ [ "1,01/01/2001 00:09:48,00:09:48", footer ]))
+            , test "outputMergedTable of a single time only on stopwatch 2 is the single time" <|
+                \() ->
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneWatchOnly StopwatchTwo 588) True noUnderlines ]
+                        |> Expect.equal (String.join crlf (header ++ [ "1,01/01/2001 00:09:48,00:09:48", footer ]))
+            , test "outputMergedTable of a non-included single time only on stopwatch 1 is empty" <|
+                \() ->
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneWatchOnly StopwatchOne 588) False noUnderlines ]
+                        |> Expect.equal (String.join crlf (header ++ [ footer ]))
+            , test "outputMergedTable of a non-included single time only on stopwatch 2 is empty" <|
+                \() ->
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneWatchOnly StopwatchTwo 588) False noUnderlines ]
+                        |> Expect.equal (String.join crlf (header ++ [ footer ]))
+            , test "outputMergedTable of a single time on stopwatch 1 with no row number is empty" <|
+                \() ->
+                    outputMergedTable [ MergedTableRow 1 Nothing (OneWatchOnly StopwatchOne 588) True noUnderlines ]
+                        |> Expect.equal (String.join crlf (header ++ [ footer ]))
+            , test "outputMergedTable of a single time on stopwatch 2 with no row number is empty" <|
+                \() ->
+                    outputMergedTable [ MergedTableRow 1 Nothing (OneWatchOnly StopwatchTwo 588) True noUnderlines ]
+                        |> Expect.equal (String.join crlf (header ++ [ footer ]))
             ]
         ]
