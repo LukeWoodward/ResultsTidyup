@@ -537,9 +537,6 @@ update msg model =
         CloseModal ->
             ( { model | dialogDetails = NoDialog }, NoCommand )
 
-        ToggleDropdown newDropdownState ->
-            ( { model | actionsDropdownState = newDropdownState }, NoCommand )
-
         OpenUploadFileDialog ->
             ( model, SelectFileForUpload )
 

@@ -10,7 +10,6 @@ module Model exposing
 
 import BarcodeScanner exposing (BarcodeScannerData, LineContents)
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, BarcodeScannerRowEditLocation)
-import Bootstrap.Dropdown as Dropdown
 import Bootstrap.Tab as Tab
 import Error exposing (FileError)
 import EventDateAndTime exposing (EventDateAndTime)
@@ -64,7 +63,6 @@ type alias Model =
     , secondTab : Tab.State
     , barcodeScannerTab : Tab.State
     , dialogDetails : DialogDetails
-    , actionsDropdownState : Dropdown.State
     }
 
 
@@ -83,5 +81,4 @@ initModel =
     , secondTab = Tab.initialState
     , barcodeScannerTab = Tab.initialState
     , dialogDetails = NoDialog
-    , actionsDropdownState = Dropdown.initialState
     }

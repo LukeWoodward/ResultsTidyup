@@ -6,7 +6,6 @@ import BarcodeScannerView exposing (barcodeScannersView)
 import Bootstrap.Alert as Alert
 import Bootstrap.Badge as Badge
 import Bootstrap.Button as Button
-import Bootstrap.Dropdown as Dropdown
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
@@ -80,7 +79,6 @@ subscriptions model =
     Sub.batch
         [ filesDropped FilesDropped
         , heightUpdated ContainerHeightChanged
-        , Dropdown.subscriptions model.actionsDropdownState ToggleDropdown
         ]
 
 
@@ -201,20 +199,16 @@ updateAndMapCommand msg model =
         |> Tuple.mapSecond mapCommand
 
 
-actionsDropdownView : Model -> Html Msg
-actionsDropdownView model =
+actionsPanelView : Model -> Html Msg
+actionsPanelView model =
     div
-        [ id "actionsDropdownContainer" ]
-        [ Dropdown.dropdown
-            model.actionsDropdownState
-            { toggleMsg = ToggleDropdown
-            , toggleButton = Dropdown.toggle [ Button.primary ] [ text "Actions" ]
-            , options = [ Dropdown.alignMenuRight ]
-            , items =
-                [ Dropdown.buttonItem [ onClick OpenUploadFileDialog ] [ text "Upload files..." ]
-                , Dropdown.buttonItem [ onClick ClearAllData ] [ text "Clear all data" ]
-                ]
-            }
+        [ id "actionsPanelContainer" ]
+        [ Button.button
+            [ Button.primary, Button.onClick OpenUploadFileDialog ]
+            [ text "Upload files..." ]
+        , Button.button
+            [ Button.primary, Button.onClick ClearAllData ]
+            [ text "Clear all data" ]
         ]
 
 
@@ -243,7 +237,7 @@ view model =
                 , stopwatchesView model.stopwatches model.barcodeScannerData model.lastHeight model.highlightedNumberCheckerId
                 ]
             , Grid.col [ Col.xs6 ]
-                [ actionsDropdownView model
+                [ actionsPanelView model
                 , problemsView model.problems
                 , Tab.config ChangeSecondTab
                     |> Tab.items

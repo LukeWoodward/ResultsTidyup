@@ -2,7 +2,6 @@ module Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 
 import BarcodeScanner exposing (LineContents)
 import BarcodeScannerEditing exposing (BarcodeScannerEditDetails, BarcodeScannerRowEditDetails, BarcodeScannerRowEditLocation)
-import Bootstrap.Dropdown as Dropdown
 import Bootstrap.Tab as Tab
 import Commands exposing (DownloadOperation)
 import File exposing (File)
@@ -52,6 +51,5 @@ type Msg
     | DeleteRowFromBarcodeScannerEditModal BarcodeScannerRowEditLocation
     | ReturnKeyPressed
     | CloseModal
-    | ToggleDropdown Dropdown.State
     | OpenUploadFileDialog
     | FilesUploaded File (List File)

@@ -190,8 +190,12 @@ div.validation-error {
     color: #dc3545;
 }
 
-div#actionsDropdownContainer {
+div#actionsPanelContainer {
     margin-bottom: 20px;
+}
+
+div#actionsPanelContainer button {
+    margin-right: 10px;
 }
 
 div#stopwatchMatchSummaryView {
