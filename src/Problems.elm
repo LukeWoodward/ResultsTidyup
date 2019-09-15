@@ -338,16 +338,15 @@ identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsSt
 
 identifyStopwatchTimeOffset : Stopwatches -> List Problem
 identifyStopwatchTimeOffset stopwatches =
-    let
-        offset : Int
-        offset =
-            getStopwatchTimeOffset stopwatches
-    in
-    if offset == 0 then
-        []
+    case getStopwatchTimeOffset stopwatches of
+        Nothing ->
+            []
 
-    else
-        [ Fixable (StopwatchTimeOffset offset) ]
+        Just 0 ->
+            []
+
+        Just offset ->
+            [ Fixable (StopwatchTimeOffset offset) ]
 
 
 {-| We've found the start of a possible wrong-way-around section. See if we can

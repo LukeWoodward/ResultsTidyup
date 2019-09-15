@@ -340,8 +340,8 @@ suite =
                 \() ->
                     identifyProblems
                         (Double
-                            { times1 = [ 1000, 1100, 1200 ]
-                            , times2 = [ 1000, 1100, 1200 ]
+                            { times1 = [ 1000, 1080, 1200 ]
+                            , times2 = [ 1000, 1080, 1200 ]
                             , filename1 = "stopwatches1.txt"
                             , filename2 = "stopwatches2.txt"
                             , mergedTableRows = wrapMergeEntriesInTable [ ExactMatch 1000, ExactMatch 1100, ExactMatch 1200 ]
@@ -355,8 +355,8 @@ suite =
                 \() ->
                     identifyProblems
                         (Double
-                            { times1 = [ 1000, 1100, 1201 ]
-                            , times2 = [ 1000, 1100, 1200 ]
+                            { times1 = [ 1000, 1080, 1201 ]
+                            , times2 = [ 1000, 1080, 1200 ]
                             , filename1 = "stopwatches1.txt"
                             , filename2 = "stopwatches2.txt"
                             , mergedTableRows = wrapMergeEntriesInTable [ ExactMatch 1000, ExactMatch 1100, NearMatch 1201 1200 ]
@@ -370,8 +370,8 @@ suite =
                 \() ->
                     identifyProblems
                         (Double
-                            { times1 = [ 1000, 1100, 1200 ]
-                            , times2 = [ 1005, 1105, 1205 ]
+                            { times1 = [ 1000, 1080, 1200 ]
+                            , times2 = [ 1005, 1085, 1205 ]
                             , filename1 = "stopwatches1.txt"
                             , filename2 = "stopwatches2.txt"
                             , mergedTableRows =

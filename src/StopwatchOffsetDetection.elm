@@ -10,9 +10,22 @@ stopwatchTimeOffsetRange =
     10
 
 
-minOffsetCountRequired : Int
-minOffsetCountRequired =
-    3
+{-| The minimum number of times a offset needs to appear in order for it to
+be considered as a possible offset, as a proportion of the average number of
+times on the two stopwatches.
+
+This is used to help prevent spurious offsets being detected among unrelated
+timer files, such as two files from two different events. In this situation
+we would not expect to identify an offset between the timer files.
+
+For timer files from the same event, the actual offset has been recorded at
+least 60% of the time. For timer files from different events, offsets were
+recorded no more than about 27% of the time.
+
+-}
+offsetCountThresholdRatio : Float
+offsetCountThresholdRatio =
+    0.5
 
 
 type alias MostCommonStatus =
@@ -50,14 +63,14 @@ at least a specified minimum number of times. Returns Nothing if the source
 list is empty or doesn't contain any number repeated at least as many times
 as the minimum.
 -}
-findMostCommonNumber : List Int -> Maybe Int
-findMostCommonNumber numbers =
+findMostCommonNumber : Int -> List Int -> Maybe Int
+findMostCommonNumber minCountRequired numbers =
     let
         mostCommonStatus : MostCommonStatus
         mostCommonStatus =
             List.foldr addNextNumber (MostCommonStatus Dict.empty Nothing 0) numbers
     in
-    if mostCommonStatus.mostFrequentCount >= minOffsetCountRequired then
+    if mostCommonStatus.mostFrequentCount >= minCountRequired then
         mostCommonStatus.mostFrequent
 
     else
@@ -69,7 +82,7 @@ scale index1 length1 length2 =
     round (toFloat index1 * (toFloat length2 - 1) / (toFloat length1 - 1) + 0.5)
 
 
-getStopwatchTimeOffsetInDoubleStopwatchData : DoubleStopwatchData -> Int
+getStopwatchTimeOffsetInDoubleStopwatchData : DoubleStopwatchData -> Maybe Int
 getStopwatchTimeOffsetInDoubleStopwatchData doubleStopwatchData =
     {- The implementation of this is somewhat basic: we compare corresponding
        times that are within a given number of positions away from each other.
@@ -133,19 +146,22 @@ getStopwatchTimeOffsetInDoubleStopwatchData doubleStopwatchData =
         timeDifferences : List Int
         timeDifferences =
             List.filterMap getTimeDiff allIndexes
+
+        minOffsetCountRequired : Int
+        minOffsetCountRequired =
+            round (toFloat (length1 + length2) * 0.5 * offsetCountThresholdRatio)
     in
-    findMostCommonNumber timeDifferences
-        |> Maybe.withDefault 0
+    findMostCommonNumber minOffsetCountRequired timeDifferences
 
 
-getStopwatchTimeOffset : Stopwatches -> Int
+getStopwatchTimeOffset : Stopwatches -> Maybe Int
 getStopwatchTimeOffset stopwatches =
     case stopwatches of
         Double doubleStopwatchData ->
             getStopwatchTimeOffsetInDoubleStopwatchData doubleStopwatchData
 
         Single _ _ ->
-            0
+            Nothing
 
         None ->
-            0
+            Nothing
