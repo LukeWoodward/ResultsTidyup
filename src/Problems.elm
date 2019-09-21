@@ -361,34 +361,38 @@ findEndOfWrongWayAroundSection startLineNumber prevFinishToken lines =
             Nothing
 
         first :: rest ->
-            case first.contents of
-                BarcodeScanner.MisScan text ->
-                    -- Hit a mis-scan: abandon the search.
-                    Nothing
+            if first.deletionStatus == NotDeleted then
+                case first.contents of
+                    BarcodeScanner.MisScan text ->
+                        -- Hit a mis-scan: abandon the search.
+                        Nothing
 
-                Ordinary "" _ ->
-                    -- Another position-only record.  Abandon the search.
-                    Nothing
+                    Ordinary "" _ ->
+                        -- Another position-only record.  Abandon the search.
+                        Nothing
 
-                Ordinary athlete Nothing ->
-                    -- Athlete-only record.  Stop things here.
-                    Just ( startLineNumber, first.lineNumber )
+                    Ordinary athlete Nothing ->
+                        -- Athlete-only record.  Stop things here.
+                        Just ( startLineNumber, first.lineNumber )
 
-                Ordinary athlete (Just thisFinishToken) ->
-                    if thisFinishToken == prevFinishToken then
-                        if startLineNumber + 1 == first.lineNumber then
-                            -- We have a complete record immediately following a finish-token-only
-                            -- record with the same token.  Ignore the former record: there's no
-                            -- sequence of reversed scans.
-                            Nothing
+                    Ordinary athlete (Just thisFinishToken) ->
+                        if thisFinishToken == prevFinishToken then
+                            if startLineNumber + 1 == first.lineNumber then
+                                -- We have a complete record immediately following a finish-token-only
+                                -- record with the same token.  Ignore the former record: there's no
+                                -- sequence of reversed scans.
+                                Nothing
+
+                            else
+                                -- End things here on the previous row: this is an intact record, and
+                                -- the finish token in the previous record will be an error.
+                                Just ( startLineNumber, first.lineNumber - 1 )
 
                         else
-                            -- End things here on the previous row: this is an intact record, and
-                            -- the finish token in the previous record will be an error.
-                            Just ( startLineNumber, first.lineNumber - 1 )
+                            findEndOfWrongWayAroundSection startLineNumber thisFinishToken rest
 
-                    else
-                        findEndOfWrongWayAroundSection startLineNumber thisFinishToken rest
+            else
+                findEndOfWrongWayAroundSection startLineNumber prevFinishToken rest
 
 
 identifyWrongWayArounds : String -> List BarcodeScannerFileLine -> List FixableProblem
@@ -398,8 +402,8 @@ identifyWrongWayArounds filename lines =
             []
 
         firstLine :: remainingLines ->
-            case firstLine.contents of
-                Ordinary "" (Just finishToken) ->
+            case ( firstLine.contents, firstLine.deletionStatus ) of
+                ( Ordinary "" (Just finishToken), NotDeleted ) ->
                     -- Finish token with no athlete: here's the start of a possible run of
                     -- reversed scans.
                     let
