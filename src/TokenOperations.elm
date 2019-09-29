@@ -1,13 +1,13 @@
 module TokenOperations exposing
     ( RangeEntry
-    , TokenOperationEditState
+    , TokenOperationEditDetails
     , TokenOperationOptions(..)
     , TokenOperationValidationError(..)
     , TokenRange
     , TokenRangeField(..)
     , emptyEditState
     , parseRange
-    , validateEditState
+    , validateEditDetails
     )
 
 
@@ -51,7 +51,7 @@ type TokenOperationValidationError
     | SwapTokenRangesOverlap
 
 
-type alias TokenOperationEditState =
+type alias TokenOperationEditDetails =
     { operation : TokenOperationOptions
     , insertTokenRange : RangeEntry
     , removeTokenRange : RangeEntry
@@ -66,9 +66,9 @@ emptyRange =
     RangeEntry "" Nothing
 
 
-emptyEditState : TokenOperationEditState
+emptyEditState : TokenOperationEditDetails
 emptyEditState =
-    TokenOperationEditState NoOptionSelected emptyRange emptyRange emptyRange emptyRange Nothing
+    TokenOperationEditDetails NoOptionSelected emptyRange emptyRange emptyRange emptyRange Nothing
 
 
 trimToInt : String -> Maybe Int
@@ -126,8 +126,8 @@ rangeTokenOverlapValidation swapTokenEntry1 swapTokenEntry2 =
             Nothing
 
 
-validateEditState : Int -> TokenOperationEditState -> Maybe TokenOperationValidationError
-validateEditState lastToken editState =
+validateEditDetails : Int -> TokenOperationEditDetails -> Maybe TokenOperationValidationError
+validateEditDetails lastToken editState =
     case editState.operation of
         NoOptionSelected ->
             Just TokenOperationNotSelected
