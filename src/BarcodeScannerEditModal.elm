@@ -1,4 +1,4 @@
-module BarcodeScannerEditModal exposing (athleteInputId, athleteRadioButtonId, barcodeScannerEditModal)
+module BarcodeScannerEditModal exposing (athleteInputId, athleteRadioButtonId, barcodeScannerDialogTitle, barcodeScannerEditButtons, editBarcodeScannerRowModalBody)
 
 import BarcodeScanner exposing (LineContents(..))
 import BarcodeScannerEditing
@@ -16,11 +16,9 @@ import Bootstrap.Form.Radio as Radio
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
-import Bootstrap.Modal as Modal
 import Html exposing (Html, b, div, text)
 import Html.Attributes exposing (class, type_)
 import Html.Events exposing (onClick)
-import Model exposing (DialogDetails(..), Model)
 import Msg exposing (Msg(..))
 import NumericEntry exposing (isValidEntry)
 
@@ -174,51 +172,27 @@ editBarcodeScannerRowModalBody rowEditDetails =
         |> Grid.containerFluid []
 
 
-dialogVisibility : DialogDetails -> Modal.Visibility
-dialogVisibility dialogDetails =
-    if dialogDetails == NoDialog then
-        Modal.hidden
+barcodeScannerDialogTitle : BarcodeScannerRowEditDetails -> String
+barcodeScannerDialogTitle rowEditDetails =
+    let
+        prefix : String
+        prefix =
+            if rowEditDetails.isDeleted then
+                "Reinstate "
 
-    else
-        Modal.shown
+            else
+                "Edit "
 
+        suffix : String
+        suffix =
+            case rowEditDetails.currentContents of
+                MisScan _ ->
+                    "mis-scanned barcode scanner row"
 
-dialogTitle : DialogDetails -> String
-dialogTitle dialogDetails =
-    case dialogDetails of
-        BarcodeScannerRowEditDialog rowEditDetails ->
-            let
-                prefix : String
-                prefix =
-                    if rowEditDetails.isDeleted then
-                        "Reinstate "
-
-                    else
-                        "Edit "
-
-                suffix : String
-                suffix =
-                    case rowEditDetails.currentContents of
-                        MisScan _ ->
-                            "mis-scanned barcode scanner row"
-
-                        Ordinary _ _ ->
-                            "barcode scanner row"
-            in
-            prefix ++ suffix
-
-        NoDialog ->
-            ""
-
-
-dialogBody : DialogDetails -> Html Msg
-dialogBody dialogDetails =
-    case dialogDetails of
-        NoDialog ->
-            div [] []
-
-        BarcodeScannerRowEditDialog rowEditDetails ->
-            editBarcodeScannerRowModalBody rowEditDetails
+                Ordinary _ _ ->
+                    "barcode scanner row"
+    in
+    prefix ++ suffix
 
 
 barcodeScannerEditButtons : BarcodeScannerRowEditDetails -> List (Html Msg)
@@ -276,22 +250,3 @@ barcodeScannerEditButtons barcodeScannerRowEditDetails =
         ]
         [ text "Close" ]
     ]
-
-
-barcodeScannerEditModal : Model -> Html Msg
-barcodeScannerEditModal model =
-    let
-        buttons : List (Html Msg)
-        buttons =
-            case model.dialogDetails of
-                NoDialog ->
-                    []
-
-                BarcodeScannerRowEditDialog barcodeScannerRowEditDetails ->
-                    barcodeScannerEditButtons barcodeScannerRowEditDetails
-    in
-    Modal.config CloseModal
-        |> Modal.h5 [] [ text (dialogTitle model.dialogDetails) ]
-        |> Modal.body [] [ dialogBody model.dialogDetails ]
-        |> Modal.footer [] buttons
-        |> Modal.view (dialogVisibility model.dialogDetails)

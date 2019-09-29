@@ -13,6 +13,7 @@ import Bootstrap.Tab as Tab
 import Browser
 import Browser.Dom
 import Commands exposing (Command(..), ElementToFocus(..))
+import Dialogs exposing (showModalDialog)
 import Error exposing (FileError)
 import EventDateAndTime exposing (EventDateAndTime)
 import EventDateAndTimeView exposing (eventDateAndTimeView)
@@ -255,4 +256,5 @@ view model =
                     |> Tab.view model.secondTab
                 ]
             ]
+        , showModalDialog model
         ]

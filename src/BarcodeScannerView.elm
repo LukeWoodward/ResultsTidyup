@@ -8,7 +8,6 @@ import BarcodeScanner
         , DeletionStatus(..)
         , LineContents(..)
         )
-import BarcodeScannerEditModal exposing (barcodeScannerEditModal)
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditLocation)
 import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button
@@ -184,5 +183,4 @@ barcodeScannersView model =
             , Tab.config ChangeBarcodeScannerTab
                 |> Tab.items (List.indexedMap barcodeScannerTabView model.barcodeScannerData.files)
                 |> Tab.view model.barcodeScannerTab
-            , barcodeScannerEditModal model
             ]
