@@ -1,12 +1,13 @@
 module TokenOperations exposing
     ( RangeEntry
     , TokenOperationEditDetails
-    , TokenOperationOptions(..)
+    , TokenOperationOption(..)
     , TokenOperationValidationError(..)
     , TokenRange
     , TokenRangeField(..)
-    , emptyEditState
+    , emptyEditDetails
     , parseRange
+    , rangeToString
     , validateEditDetails
     )
 
@@ -29,7 +30,7 @@ type TokenOperation
     | SwapTokenRange TokenRange TokenRange
 
 
-type TokenOperationOptions
+type TokenOperationOption
     = NoOptionSelected
     | InsertTokensOption
     | RemoveTokensOption
@@ -47,12 +48,12 @@ type TokenOperationValidationError
     = TokenOperationNotSelected
     | InvalidRange TokenRangeField
     | EmptyRange TokenRangeField
-    | RangeOffEndOfTokens TokenRangeField
+    | RangeOffEndOfTokens Int TokenRange TokenRangeField
     | SwapTokenRangesOverlap
 
 
 type alias TokenOperationEditDetails =
-    { operation : TokenOperationOptions
+    { operation : TokenOperationOption
     , insertTokenRange : RangeEntry
     , removeTokenRange : RangeEntry
     , swapTokenRange1 : RangeEntry
@@ -66,8 +67,8 @@ emptyRange =
     RangeEntry "" Nothing
 
 
-emptyEditState : TokenOperationEditDetails
-emptyEditState =
+emptyEditDetails : TokenOperationEditDetails
+emptyEditDetails =
     TokenOperationEditDetails NoOptionSelected emptyRange emptyRange emptyRange emptyRange Nothing
 
 
@@ -90,15 +91,24 @@ parseRange text =
             Nothing
 
 
-commonTokenValidation : TokenRangeField -> Int -> RangeEntry -> Maybe TokenOperationValidationError
-commonTokenValidation field lastToken entry =
+rangeToString : TokenRange -> String
+rangeToString range =
+    if range.start == range.end then
+        String.fromInt range.start
+
+    else
+        String.fromInt range.start ++ "-" ++ String.fromInt range.end
+
+
+commonTokenValidation : TokenRangeField -> Int -> (TokenRange -> Int) -> RangeEntry -> Maybe TokenOperationValidationError
+commonTokenValidation field lastToken rangeFieldGetter entry =
     case entry.range of
         Just someRange ->
             if someRange.start > someRange.end then
                 Just (EmptyRange field)
 
-            else if someRange.end > lastToken then
-                Just (RangeOffEndOfTokens field)
+            else if rangeFieldGetter someRange > lastToken then
+                Just (RangeOffEndOfTokens lastToken someRange field)
 
             else
                 Nothing
@@ -127,21 +137,21 @@ rangeTokenOverlapValidation swapTokenEntry1 swapTokenEntry2 =
 
 
 validateEditDetails : Int -> TokenOperationEditDetails -> Maybe TokenOperationValidationError
-validateEditDetails lastToken editState =
-    case editState.operation of
+validateEditDetails lastToken editDetails =
+    case editDetails.operation of
         NoOptionSelected ->
             Just TokenOperationNotSelected
 
         InsertTokensOption ->
-            commonTokenValidation InsertTokenRangeField lastToken editState.insertTokenRange
+            commonTokenValidation InsertTokenRangeField lastToken .start editDetails.insertTokenRange
 
         RemoveTokensOption ->
-            commonTokenValidation RemoveTokenRangeField lastToken editState.removeTokenRange
+            commonTokenValidation RemoveTokenRangeField lastToken .end editDetails.removeTokenRange
 
         SwapTokenRangeOption ->
-            [ commonTokenValidation SwapTokenRangeField1 lastToken editState.swapTokenRange1
-            , commonTokenValidation SwapTokenRangeField2 lastToken editState.swapTokenRange2
-            , rangeTokenOverlapValidation editState.swapTokenRange1 editState.swapTokenRange2
+            [ commonTokenValidation SwapTokenRangeField1 lastToken .end editDetails.swapTokenRange1
+            , commonTokenValidation SwapTokenRangeField2 lastToken .end editDetails.swapTokenRange2
+            , rangeTokenOverlapValidation editDetails.swapTokenRange1 editDetails.swapTokenRange2
             ]
                 |> List.filterMap identity
                 |> List.head

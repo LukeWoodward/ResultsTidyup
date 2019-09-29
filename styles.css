@@ -203,4 +203,11 @@ div#stopwatchMatchSummaryView {
     float: left;
 }
 
+div.token-operation-help-text {
+    padding-left: 20px;
+    padding-bottom: 25px;
+    color: #999999;
+    font-style: italic;
+}
+
 #header { float: left; }

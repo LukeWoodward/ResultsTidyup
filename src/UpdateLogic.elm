@@ -6,10 +6,11 @@ import BarcodeScanner
         , BarcodeScannerFile
         , deleteBarcodeScannerLine
         , generateDownloadText
+        , lastTokenUsed
         , regenerate
         , updateBarcodeScannerLine
         )
-import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, updateEditDetails)
+import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails)
 import Bootstrap.Tab as Tab
 import Commands exposing (Command(..), ElementToFocus(..))
 import DateHandling exposing (generateDownloadFilenameDatePart)
@@ -47,6 +48,8 @@ import Stopwatch
         )
 import Task exposing (Task)
 import Time exposing (Posix, Zone)
+import TokenOperations
+import TokenOperationsEditing
 
 
 stopwatchFileMimeType : String
@@ -514,7 +517,7 @@ update msg model =
                 newEditDetails =
                     case model.dialogDetails of
                         BarcodeScannerRowEditDialog barcodeScannerRowEditDetails ->
-                            updateEditDetails editChange barcodeScannerRowEditDetails
+                            BarcodeScannerEditing.updateEditDetails editChange barcodeScannerRowEditDetails
                                 |> BarcodeScannerRowEditDialog
 
                         _ ->
@@ -533,6 +536,33 @@ update msg model =
                 |> identifyProblemsIn
             , NoCommand
             )
+
+        ShowTokenOperationsModal ->
+            ( { model | dialogDetails = TokenOperationsDialog TokenOperations.emptyEditDetails }
+            , NoCommand
+            )
+
+        TokenOperationEdit editChange ->
+            let
+                lastToken : Int
+                lastToken =
+                    lastTokenUsed model.barcodeScannerData
+
+                newEditDetails : DialogDetails
+                newEditDetails =
+                    case model.dialogDetails of
+                        TokenOperationsDialog tokenOperationsEditDetails ->
+                            TokenOperationsEditing.updateEditDetails lastToken editChange tokenOperationsEditDetails
+                                |> TokenOperationsDialog
+
+                        _ ->
+                            model.dialogDetails
+            in
+            ( { model | dialogDetails = newEditDetails }, NoCommand )
+
+        ApplyTokenOperation _ ->
+            -- TODO
+            ( model, NoCommand )
 
         CloseModal ->
             ( { model | dialogDetails = NoDialog }, NoCommand )
@@ -556,6 +586,14 @@ update msg model =
                 BarcodeScannerRowEditDialog rowEditDetails ->
                     if rowEditDetails.validationError == Nothing then
                         ( updateRowFromBarcodeScannerEditModal rowEditDetails model, NoCommand )
+
+                    else
+                        ( model, NoCommand )
+
+                TokenOperationsDialog tokenOperationEditDetails ->
+                    if tokenOperationEditDetails.validationError == Nothing then
+                        -- TODO
+                        ( model, NoCommand )
 
                     else
                         ( model, NoCommand )

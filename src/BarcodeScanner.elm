@@ -13,6 +13,7 @@ module BarcodeScanner exposing
     , empty
     , generateDownloadText
     , isEmpty
+    , lastTokenUsed
     , maxFinishToken
     , mergeScannerData
     , readBarcodeScannerData
@@ -489,3 +490,10 @@ deleteBarcodeScannerLine fileName lineNumber barcodeScannerData =
             { line | deletionStatus = Deleted DeletedByUser }
     in
     applyBarcodeScannerDataModification deleteLine fileName lineNumber barcodeScannerData
+
+
+lastTokenUsed : BarcodeScannerData -> Int
+lastTokenUsed barcodeScannerData =
+    List.append (Dict.keys barcodeScannerData.scannedBarcodes) (List.map .position barcodeScannerData.finishTokensOnly)
+        |> List.maximum
+        |> Maybe.withDefault 0

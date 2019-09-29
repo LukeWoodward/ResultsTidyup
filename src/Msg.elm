@@ -9,6 +9,8 @@ import FileHandling exposing (InteropFile)
 import ProblemFixing exposing (ProblemFix)
 import Stopwatch exposing (WhichStopwatch(..))
 import Time exposing (Posix, Zone)
+import TokenOperations exposing (TokenOperationEditDetails)
+import TokenOperationsEditing exposing (TokenOperationChangeType(..))
 
 
 type NumberCheckerFieldChange
@@ -49,6 +51,9 @@ type Msg
     | BarcodeScannerEdit BarcodeScannerEditDetails
     | UpdateRowFromBarcodeScannerEditModal BarcodeScannerRowEditDetails
     | DeleteRowFromBarcodeScannerEditModal BarcodeScannerRowEditLocation
+    | ShowTokenOperationsModal
+    | TokenOperationEdit TokenOperationChangeType
+    | ApplyTokenOperation TokenOperationEditDetails
     | ReturnKeyPressed
     | CloseModal
     | OpenUploadFileDialog

@@ -18,6 +18,7 @@ import NumericEntry exposing (NumericEntry)
 import Problems exposing (Problem)
 import Stopwatch exposing (Stopwatches(..))
 import Time exposing (Posix)
+import TokenOperations exposing (TokenOperationEditDetails)
 
 
 emptyNumericEntry : NumericEntry
@@ -47,6 +48,7 @@ type alias ProblemEntry =
 type DialogDetails
     = NoDialog
     | BarcodeScannerRowEditDialog BarcodeScannerRowEditDetails
+    | TokenOperationsDialog TokenOperationEditDetails
 
 
 type alias Model =

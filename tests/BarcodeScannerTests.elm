@@ -16,6 +16,7 @@ import BarcodeScanner
         , empty
         , generateDownloadText
         , isEmpty
+        , lastTokenUsed
         , maxFinishToken
         , readBarcodeScannerData
         , regenerate
@@ -552,5 +553,59 @@ suite =
                                 ]
                     in
                     Expect.equal initialBarcodeScannerData (deleteBarcodeScannerLine "wrong-filename.txt" 1 initialBarcodeScannerData)
+            ]
+        , describe "lastTokenUsed tests"
+            [ test "lastTokenUsed of empty barcode scanner data is zero" <|
+                \() ->
+                    lastTokenUsed empty
+                        |> Expect.equal 0
+            , test "lastTokenUsed of some valid barcode scanner data is the largest finish token used among successfully-scanned records" <|
+                \() ->
+                    let
+                        barcodeScannerData : BarcodeScannerData
+                        barcodeScannerData =
+                            createBarcodeScannerDataFromFiles
+                                [ BarcodeScannerFile
+                                    "barcodes.txt"
+                                    [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "A1866207" (Just 39) "14/03/2018 09:48:44"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+                    in
+                    lastTokenUsed barcodeScannerData
+                        |> Expect.equal 47
+            , test "lastTokenUsed of some valid barcode scanner data is the largest finish token used among finish-token-only records" <|
+                \() ->
+                    let
+                        barcodeScannerData : BarcodeScannerData
+                        barcodeScannerData =
+                            createBarcodeScannerDataFromFiles
+                                [ BarcodeScannerFile
+                                    "barcodes.txt"
+                                    [ ordinaryFileLine 1 "" (Just 36) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "" (Just 43) "14/03/2018 09:48:44"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+                    in
+                    lastTokenUsed barcodeScannerData
+                        |> Expect.equal 43
+            , test "lastTokenUsed of some valid barcode scanner data is the largest finish token used among a combination of successful and finish-token-only records" <|
+                \() ->
+                    let
+                        barcodeScannerData : BarcodeScannerData
+                        barcodeScannerData =
+                            createBarcodeScannerDataFromFiles
+                                [ BarcodeScannerFile
+                                    "barcodes.txt"
+                                    [ ordinaryFileLine 1 "A4580442" (Just 29) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "" (Just 33) "14/03/2018 09:48:44"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+                    in
+                    lastTokenUsed barcodeScannerData
+                        |> Expect.equal 33
             ]
         ]

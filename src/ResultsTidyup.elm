@@ -208,6 +208,12 @@ actionsPanelView model =
             [ Button.primary, Button.onClick OpenUploadFileDialog ]
             [ text "Upload files..." ]
         , Button.button
+            [ Button.primary
+            , Button.onClick ShowTokenOperationsModal
+            , Button.disabled (BarcodeScanner.isEmpty model.barcodeScannerData)
+            ]
+            [ text "Token operations..." ]
+        , Button.button
             [ Button.primary, Button.onClick ClearAllData ]
             [ text "Clear all data" ]
         ]
