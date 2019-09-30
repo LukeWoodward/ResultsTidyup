@@ -115,8 +115,8 @@ rangeToString range =
         String.fromInt range.start ++ "-" ++ String.fromInt range.end
 
 
-commonTokenValidation : TokenRangeField -> RangeEntry -> Maybe TokenOperationValidationError
-commonTokenValidation field entry =
+commonTokenRangeValidation : TokenRangeField -> RangeEntry -> Maybe TokenOperationValidationError
+commonTokenRangeValidation field entry =
     case entry.range of
         Just someRange ->
             if someRange.start > someRange.end then
@@ -215,20 +215,20 @@ validateEditDetails allTokens editDetails =
                     [ Just TokenOperationNotSelected ]
 
                 InsertTokensOption ->
-                    [ commonTokenValidation InsertTokenRangeField editDetails.insertTokenRange
+                    [ commonTokenRangeValidation InsertTokenRangeField editDetails.insertTokenRange
                     , insertTokenRangeEndOffTokens lastToken editDetails.insertTokenRange
                     ]
 
                 RemoveTokensOption ->
-                    [ commonTokenValidation RemoveTokenRangeField editDetails.removeTokenRange
+                    [ commonTokenRangeValidation RemoveTokenRangeField editDetails.removeTokenRange
                     , tokenRangeEndOffTokens lastToken RemoveTokenRangeField editDetails.removeTokenRange
                     , removingExistingTokens allTokens editDetails.removeTokenRange
                     ]
 
                 SwapTokenRangeOption ->
-                    [ commonTokenValidation SwapTokenRangeField1 editDetails.swapTokenRange1
+                    [ commonTokenRangeValidation SwapTokenRangeField1 editDetails.swapTokenRange1
                     , tokenRangeEndOffTokens lastToken SwapTokenRangeField1 editDetails.swapTokenRange1
-                    , commonTokenValidation SwapTokenRangeField2 editDetails.swapTokenRange2
+                    , commonTokenRangeValidation SwapTokenRangeField2 editDetails.swapTokenRange2
                     , tokenRangeEndOffTokens lastToken SwapTokenRangeField2 editDetails.swapTokenRange2
                     , rangeTokenOverlapValidation editDetails.swapTokenRange1 editDetails.swapTokenRange2
                     ]
