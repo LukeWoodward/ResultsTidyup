@@ -9,8 +9,7 @@ import FileHandling exposing (InteropFile)
 import ProblemFixing exposing (ProblemFix)
 import Stopwatch exposing (WhichStopwatch(..))
 import Time exposing (Posix, Zone)
-import TokenOperations exposing (TokenOperationEditDetails)
-import TokenOperationsEditing exposing (TokenOperationChangeType(..))
+import TokenOperations exposing (TokenOperationChangeType(..), TokenOperationEditDetails)
 
 
 type NumberCheckerFieldChange

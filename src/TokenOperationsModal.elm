@@ -11,14 +11,19 @@ import Html exposing (Html, div, label, text)
 import Html.Attributes exposing (class, for)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg(..))
-import TokenOperations exposing (RangeEntry, TokenOperationEditDetails, TokenOperationOption(..), TokenOperationValidationError(..), TokenRangeField(..), rangeToString)
-import TokenOperationsEditing
+import TokenOperations
     exposing
-        ( TokenOperationChangeType(..)
+        ( RangeEntry
+        , TokenOperationChangeType(..)
+        , TokenOperationEditDetails
+        , TokenOperationOption(..)
+        , TokenOperationValidationError(..)
+        , TokenRangeField(..)
         , isInsertTokenRangeFieldInvalid
         , isRemoveTokenRangeFieldInvalid
         , isSwapTokenRange1FieldInvalid
         , isSwapTokenRange2FieldInvalid
+        , rangeToString
         )
 
 

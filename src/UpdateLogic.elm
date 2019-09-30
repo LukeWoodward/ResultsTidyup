@@ -49,7 +49,6 @@ import Stopwatch
 import Task exposing (Task)
 import Time exposing (Posix, Zone)
 import TokenOperations
-import TokenOperationsEditing
 
 
 stopwatchFileMimeType : String
@@ -552,7 +551,7 @@ update msg model =
                 newEditDetails =
                     case model.dialogDetails of
                         TokenOperationsDialog tokenOperationsEditDetails ->
-                            TokenOperationsEditing.updateEditDetails lastToken editChange tokenOperationsEditDetails
+                            TokenOperations.updateEditDetails lastToken editChange tokenOperationsEditDetails
                                 |> TokenOperationsDialog
 
                         _ ->
