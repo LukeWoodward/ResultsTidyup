@@ -9,11 +9,11 @@ module BarcodeScanner exposing
     , MisScannedItem
     , PositionAndTimePair
     , UnrecognisedLine
+    , allTokensUsed
     , deleteBarcodeScannerLine
     , empty
     , generateDownloadText
     , isEmpty
-    , lastTokenUsed
     , maxFinishToken
     , mergeScannerData
     , readBarcodeScannerData
@@ -28,6 +28,7 @@ import FileHandling exposing (crlf, isPossibleBinary, splitLines)
 import Parser exposing ((|.), (|=), Parser, end, int, run, succeed, symbol)
 import Parsers exposing (digitsRange)
 import Result.Extra
+import Set exposing (Set)
 import Time exposing (Posix)
 
 
@@ -492,8 +493,7 @@ deleteBarcodeScannerLine fileName lineNumber barcodeScannerData =
     applyBarcodeScannerDataModification deleteLine fileName lineNumber barcodeScannerData
 
 
-lastTokenUsed : BarcodeScannerData -> Int
-lastTokenUsed barcodeScannerData =
+allTokensUsed : BarcodeScannerData -> Set Int
+allTokensUsed barcodeScannerData =
     List.append (Dict.keys barcodeScannerData.scannedBarcodes) (List.map .position barcodeScannerData.finishTokensOnly)
-        |> List.maximum
-        |> Maybe.withDefault 0
+        |> Set.fromList

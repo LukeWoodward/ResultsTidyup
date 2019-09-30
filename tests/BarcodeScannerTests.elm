@@ -12,11 +12,11 @@ import BarcodeScanner
         , MisScannedItem
         , PositionAndTimePair
         , UnrecognisedLine
+        , allTokensUsed
         , deleteBarcodeScannerLine
         , empty
         , generateDownloadText
         , isEmpty
-        , lastTokenUsed
         , maxFinishToken
         , readBarcodeScannerData
         , regenerate
@@ -27,6 +27,7 @@ import Error exposing (Error)
 import Errors exposing (expectError)
 import Expect exposing (Expectation)
 import FileHandling exposing (crlf)
+import Set exposing (Set)
 import Test exposing (Test, describe, test)
 import TestData exposing (createBarcodeScannerDataFromFiles, ordinaryFileLine, toPosix)
 import Time exposing (Posix)
@@ -554,12 +555,12 @@ suite =
                     in
                     Expect.equal initialBarcodeScannerData (deleteBarcodeScannerLine "wrong-filename.txt" 1 initialBarcodeScannerData)
             ]
-        , describe "lastTokenUsed tests"
-            [ test "lastTokenUsed of empty barcode scanner data is zero" <|
+        , describe "allTokensUsed tests"
+            [ test "allTokensUsed of empty barcode scanner data is an empty set" <|
                 \() ->
-                    lastTokenUsed empty
-                        |> Expect.equal 0
-            , test "lastTokenUsed of some valid barcode scanner data is the largest finish token used among successfully-scanned records" <|
+                    allTokensUsed empty
+                        |> Expect.equal Set.empty
+            , test "allTokensUsed of some valid barcode scanner data is the set of all finish token scans from scanned barcodes" <|
                 \() ->
                     let
                         barcodeScannerData : BarcodeScannerData
@@ -573,9 +574,9 @@ suite =
                                     (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
                     in
-                    lastTokenUsed barcodeScannerData
-                        |> Expect.equal 47
-            , test "lastTokenUsed of some valid barcode scanner data is the largest finish token used among finish-token-only records" <|
+                    allTokensUsed barcodeScannerData
+                        |> Expect.equal (Set.fromList [ 39, 47 ])
+            , test "allTokensUsed of some valid barcode scanner data is the set of all finish token scans from finish-token-only records" <|
                 \() ->
                     let
                         barcodeScannerData : BarcodeScannerData
@@ -589,9 +590,9 @@ suite =
                                     (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
                     in
-                    lastTokenUsed barcodeScannerData
-                        |> Expect.equal 43
-            , test "lastTokenUsed of some valid barcode scanner data is the largest finish token used among a combination of successful and finish-token-only records" <|
+                    allTokensUsed barcodeScannerData
+                        |> Expect.equal (Set.fromList [ 36, 43 ])
+            , test "allTokensUsed of some valid barcode scanner data is the combination of all finish token scans from scanned barcodes and finish-token-only records" <|
                 \() ->
                     let
                         barcodeScannerData : BarcodeScannerData
@@ -605,7 +606,7 @@ suite =
                                     (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
                     in
-                    lastTokenUsed barcodeScannerData
-                        |> Expect.equal 33
+                    allTokensUsed barcodeScannerData
+                        |> Expect.equal (Set.fromList [ 29, 33 ])
             ]
         ]

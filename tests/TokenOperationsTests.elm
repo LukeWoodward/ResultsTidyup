@@ -1,6 +1,7 @@
 module TokenOperationsTests exposing (makeEntry, suite)
 
 import Expect
+import Set exposing (Set)
 import Test exposing (Test, describe, test)
 import TokenOperations
     exposing
@@ -33,6 +34,11 @@ makeEntry start end =
 invalidEntry : RangeEntry
 invalidEntry =
     RangeEntry "invalid" Nothing
+
+
+tokenSet : Set Int
+tokenSet =
+    Set.fromList [ 1, 2, 8, 14, 17, 23, 26, 27, 28, 41, 48, 50 ]
 
 
 suite : Test
@@ -97,97 +103,101 @@ suite =
         , describe "validateEditDetails tests"
             [ test "validating the default details returns the nothing-selected options" <|
                 \() ->
-                    validateEditDetails 50 emptyEditDetails
+                    validateEditDetails tokenSet emptyEditDetails
                         |> Expect.equal (Just TokenOperationNotSelected)
             , test "validating a valid insert operation returns no error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = InsertTokensOption, insertTokenRange = makeEntry 10 20 }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = InsertTokensOption, insertTokenRange = makeEntry 10 20 }
                         |> Expect.equal Nothing
             , test "validating an insert operation with an invalid range returns an error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = InsertTokensOption, insertTokenRange = invalidEntry }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = InsertTokensOption, insertTokenRange = invalidEntry }
                         |> Expect.equal (Just (InvalidRange InsertTokenRangeField))
             , test "validating an insert operation with an empty range returns an error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = InsertTokensOption, insertTokenRange = makeEntry 20 10 }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = InsertTokensOption, insertTokenRange = makeEntry 20 10 }
                         |> Expect.equal (Just (EmptyRange InsertTokenRangeField))
             , test "validating an insert operation with the start of the range off the end of the tokens returns an error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = InsertTokensOption, insertTokenRange = makeEntry 55 65 }
-                        |> Expect.equal (Just (RangeOffEndOfTokens 50 (TokenRange 55 65) InsertTokenRangeField))
+                    validateEditDetails tokenSet { emptyEditDetails | operation = InsertTokensOption, insertTokenRange = makeEntry 55 65 }
+                        |> Expect.equal (Just (InsertRangeOffEndOfTokens 50 (TokenRange 55 65)))
             , test "validating an insert operation with only the end of the range off the end of the tokens is valid" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = InsertTokensOption, insertTokenRange = makeEntry 45 55 }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = InsertTokensOption, insertTokenRange = makeEntry 45 55 }
                         |> Expect.equal Nothing
             , test "validating a valid remove operation returns no error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = RemoveTokensOption, removeTokenRange = makeEntry 10 20 }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = RemoveTokensOption, removeTokenRange = makeEntry 30 40 }
                         |> Expect.equal Nothing
             , test "validating a remove operation with an invalid range returns an error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = RemoveTokensOption, removeTokenRange = invalidEntry }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = RemoveTokensOption, removeTokenRange = invalidEntry }
                         |> Expect.equal (Just (InvalidRange RemoveTokenRangeField))
             , test "validating a remove operation with an empty range returns an error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = RemoveTokensOption, removeTokenRange = makeEntry 20 10 }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = RemoveTokensOption, removeTokenRange = makeEntry 20 10 }
                         |> Expect.equal (Just (EmptyRange RemoveTokenRangeField))
+            , test "validating a remove operation that attempts to remove unused tokens returns an error" <|
+                \() ->
+                    validateEditDetails tokenSet { emptyEditDetails | operation = RemoveTokensOption, removeTokenRange = makeEntry 40 50 }
+                        |> Expect.equal (Just (RemovingExistingTokens [ 41, 48, 50 ] (TokenRange 40 50)))
             , test "validating a remove operation with a range off the end returns an error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = RemoveTokensOption, removeTokenRange = makeEntry 45 55 }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = RemoveTokensOption, removeTokenRange = makeEntry 45 55 }
                         |> Expect.equal (Just (RangeOffEndOfTokens 50 (TokenRange 45 55) RemoveTokenRangeField))
             , test "validating a valid swap operation returns no error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 30 40 }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 30 40 }
                         |> Expect.equal Nothing
             , test "validating a swap operation with an invalid first range returns an error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = invalidEntry, swapTokenRange2 = makeEntry 30 40 }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = invalidEntry, swapTokenRange2 = makeEntry 30 40 }
                         |> Expect.equal (Just (InvalidRange SwapTokenRangeField1))
             , test "validating a swap operation with an empty first range returns an error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 20 10, swapTokenRange2 = makeEntry 30 40 }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 20 10, swapTokenRange2 = makeEntry 30 40 }
                         |> Expect.equal (Just (EmptyRange SwapTokenRangeField1))
             , test "validating a swap operation with a first range off the end returns an error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 45 55, swapTokenRange2 = makeEntry 30 40 }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 45 55, swapTokenRange2 = makeEntry 30 40 }
                         |> Expect.equal (Just (RangeOffEndOfTokens 50 (TokenRange 45 55) SwapTokenRangeField1))
             , test "validating a swap operation with an invalid second range returns an error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = invalidEntry }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = invalidEntry }
                         |> Expect.equal (Just (InvalidRange SwapTokenRangeField2))
             , test "validating a swap operation with an empty second range returns an error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 40 30 }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 40 30 }
                         |> Expect.equal (Just (EmptyRange SwapTokenRangeField2))
             , test "validating a swap operation with a second range off the end returns an error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 45 55 }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 45 55 }
                         |> Expect.equal (Just (RangeOffEndOfTokens 50 (TokenRange 45 55) SwapTokenRangeField2))
             , test "validating a swap operation with overlapping ranges returns an error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 15 25 }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 15 25 }
                         |> Expect.equal (Just SwapTokenRangesOverlap)
             , test "validating a swap operation with ranges overlapping by a single value returns an error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 20 30 }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 20 30 }
                         |> Expect.equal (Just SwapTokenRangesOverlap)
             , test "validating a swap operation with both ranges invalid returns an error with the first range" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = invalidEntry, swapTokenRange2 = invalidEntry }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = invalidEntry, swapTokenRange2 = invalidEntry }
                         |> Expect.equal (Just (InvalidRange SwapTokenRangeField1))
             , test "validating a swap operation with the first range off the end and overlapping the second returns the off-the-end error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 35 55, swapTokenRange2 = makeEntry 30 40 }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 35 55, swapTokenRange2 = makeEntry 30 40 }
                         |> Expect.equal (Just (RangeOffEndOfTokens 50 (TokenRange 35 55) SwapTokenRangeField1))
             , test "validating a swap operation with the second range off the end and overlapping the first returns the off-the-end error" <|
                 \() ->
-                    validateEditDetails 50 { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 30 40, swapTokenRange2 = makeEntry 35 55 }
+                    validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 30 40, swapTokenRange2 = makeEntry 35 55 }
                         |> Expect.equal (Just (RangeOffEndOfTokens 50 (TokenRange 35 55) SwapTokenRangeField2))
             ]
         , describe "updateEditDetails tests"
             [ test "ChangeOperation changes the operation and runs validation" <|
                 \() ->
-                    updateEditDetails 50 (ChangeOperation InsertTokensOption) emptyEditDetails
+                    updateEditDetails tokenSet (ChangeOperation InsertTokensOption) emptyEditDetails
                         |> Expect.equal { emptyEditDetails | operation = InsertTokensOption, validationError = Just (InvalidRange InsertTokenRangeField) }
             , test "RangeEdited updates the insert-tokens range and runs validation with a valid range" <|
                 \() ->
@@ -196,8 +206,8 @@ suite =
                         initialDetails =
                             { emptyEditDetails | operation = InsertTokensOption, insertTokenRange = RangeEntry "" Nothing, validationError = Just (InvalidRange InsertTokenRangeField) }
                     in
-                    updateEditDetails 50 (RangeEdited InsertTokenRangeField "40-50") initialDetails
-                        |> Expect.equal { initialDetails | insertTokenRange = makeEntry 40 50, validationError = Nothing }
+                    updateEditDetails tokenSet (RangeEdited InsertTokenRangeField "30-40") initialDetails
+                        |> Expect.equal { initialDetails | insertTokenRange = makeEntry 30 40, validationError = Nothing }
             , test "RangeEdited updates the insert-tokens range and runs validation with an empty range" <|
                 \() ->
                     let
@@ -205,8 +215,8 @@ suite =
                         initialDetails =
                             { emptyEditDetails | operation = InsertTokensOption, insertTokenRange = RangeEntry "" Nothing, validationError = Just (InvalidRange InsertTokenRangeField) }
                     in
-                    updateEditDetails 50 (RangeEdited InsertTokenRangeField "50-40") initialDetails
-                        |> Expect.equal { initialDetails | insertTokenRange = makeEntry 50 40, validationError = Just (EmptyRange InsertTokenRangeField) }
+                    updateEditDetails tokenSet (RangeEdited InsertTokenRangeField "40-30") initialDetails
+                        |> Expect.equal { initialDetails | insertTokenRange = makeEntry 40 30, validationError = Just (EmptyRange InsertTokenRangeField) }
             , test "RangeEdited updates the remove-tokens range and runs validation with a valid range" <|
                 \() ->
                     let
@@ -214,8 +224,8 @@ suite =
                         initialDetails =
                             { emptyEditDetails | operation = RemoveTokensOption, removeTokenRange = RangeEntry "" Nothing, validationError = Just (InvalidRange RemoveTokenRangeField) }
                     in
-                    updateEditDetails 50 (RangeEdited RemoveTokenRangeField "40-50") initialDetails
-                        |> Expect.equal { initialDetails | removeTokenRange = makeEntry 40 50, validationError = Nothing }
+                    updateEditDetails tokenSet (RangeEdited RemoveTokenRangeField "30-40") initialDetails
+                        |> Expect.equal { initialDetails | removeTokenRange = makeEntry 30 40, validationError = Nothing }
             , test "RangeEdited updates the remove-tokens range and runs validation with an empty range" <|
                 \() ->
                     let
@@ -223,44 +233,44 @@ suite =
                         initialDetails =
                             { emptyEditDetails | operation = RemoveTokensOption, removeTokenRange = RangeEntry "" Nothing, validationError = Just (InvalidRange RemoveTokenRangeField) }
                     in
-                    updateEditDetails 50 (RangeEdited RemoveTokenRangeField "50-40") initialDetails
-                        |> Expect.equal { initialDetails | removeTokenRange = makeEntry 50 40, validationError = Just (EmptyRange RemoveTokenRangeField) }
+                    updateEditDetails tokenSet (RangeEdited RemoveTokenRangeField "40-30") initialDetails
+                        |> Expect.equal { initialDetails | removeTokenRange = makeEntry 40 30, validationError = Just (EmptyRange RemoveTokenRangeField) }
             , test "RangeEdited updates the first swap-tokens range and runs validation with a valid range" <|
                 \() ->
                     let
                         initialDetails : TokenOperationEditDetails
                         initialDetails =
-                            { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = RangeEntry "" Nothing, swapTokenRange2 = makeEntry 20 30, validationError = Just (InvalidRange SwapTokenRangeField1) }
+                            { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = RangeEntry "" Nothing, swapTokenRange2 = makeEntry 15 25, validationError = Just (InvalidRange SwapTokenRangeField1) }
                     in
-                    updateEditDetails 50 (RangeEdited SwapTokenRangeField1 "40-50") initialDetails
-                        |> Expect.equal { initialDetails | swapTokenRange1 = makeEntry 40 50, validationError = Nothing }
+                    updateEditDetails tokenSet (RangeEdited SwapTokenRangeField1 "30-40") initialDetails
+                        |> Expect.equal { initialDetails | swapTokenRange1 = makeEntry 30 40, validationError = Nothing }
             , test "RangeEdited updates the first swap-tokens range and runs validation with an empty range" <|
                 \() ->
                     let
                         initialDetails : TokenOperationEditDetails
                         initialDetails =
-                            { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = RangeEntry "" Nothing, swapTokenRange2 = makeEntry 20 30, validationError = Just (InvalidRange SwapTokenRangeField1) }
+                            { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = RangeEntry "" Nothing, swapTokenRange2 = makeEntry 15 25, validationError = Just (InvalidRange SwapTokenRangeField1) }
                     in
-                    updateEditDetails 50 (RangeEdited SwapTokenRangeField1 "50-40") initialDetails
-                        |> Expect.equal { initialDetails | swapTokenRange1 = makeEntry 50 40, validationError = Just (EmptyRange SwapTokenRangeField1) }
+                    updateEditDetails tokenSet (RangeEdited SwapTokenRangeField1 "40-30") initialDetails
+                        |> Expect.equal { initialDetails | swapTokenRange1 = makeEntry 40 30, validationError = Just (EmptyRange SwapTokenRangeField1) }
             , test "RangeEdited updates the second swap-tokens range and runs validation with a valid range" <|
                 \() ->
                     let
                         initialDetails : TokenOperationEditDetails
                         initialDetails =
-                            { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 20 30, swapTokenRange2 = RangeEntry "" Nothing, validationError = Just (InvalidRange SwapTokenRangeField2) }
+                            { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 15 25, swapTokenRange2 = RangeEntry "" Nothing, validationError = Just (InvalidRange SwapTokenRangeField2) }
                     in
-                    updateEditDetails 50 (RangeEdited SwapTokenRangeField2 "40-50") initialDetails
-                        |> Expect.equal { initialDetails | swapTokenRange2 = makeEntry 40 50, validationError = Nothing }
+                    updateEditDetails tokenSet (RangeEdited SwapTokenRangeField2 "30-40") initialDetails
+                        |> Expect.equal { initialDetails | swapTokenRange2 = makeEntry 30 40, validationError = Nothing }
             , test "RangeEdited updates the second swap-tokens range and runs validation with an empty range" <|
                 \() ->
                     let
                         initialDetails : TokenOperationEditDetails
                         initialDetails =
-                            { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 20 30, swapTokenRange2 = RangeEntry "" Nothing, validationError = Just (InvalidRange SwapTokenRangeField2) }
+                            { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 15 25, swapTokenRange2 = RangeEntry "" Nothing, validationError = Just (InvalidRange SwapTokenRangeField2) }
                     in
-                    updateEditDetails 50 (RangeEdited SwapTokenRangeField2 "50-40") initialDetails
-                        |> Expect.equal { initialDetails | swapTokenRange2 = makeEntry 50 40, validationError = Just (EmptyRange SwapTokenRangeField2) }
+                    updateEditDetails tokenSet (RangeEdited SwapTokenRangeField2 "40-30") initialDetails
+                        |> Expect.equal { initialDetails | swapTokenRange2 = makeEntry 40 30, validationError = Just (EmptyRange SwapTokenRangeField2) }
             ]
         , describe "isInsertTokenRangeFieldInvalid tests"
             [ test "insert token range field not invalid if no validation error" <|

@@ -4,9 +4,9 @@ import BarcodeScanner
     exposing
         ( BarcodeScannerData
         , BarcodeScannerFile
+        , allTokensUsed
         , deleteBarcodeScannerLine
         , generateDownloadText
-        , lastTokenUsed
         , regenerate
         , updateBarcodeScannerLine
         )
@@ -33,6 +33,7 @@ import NumberCheckerEditing
         )
 import ProblemFixing exposing (fixProblem)
 import Problems exposing (Problem, identifyProblems)
+import Set exposing (Set)
 import Stopwatch
     exposing
         ( DoubleStopwatchData
@@ -543,15 +544,15 @@ update msg model =
 
         TokenOperationEdit editChange ->
             let
-                lastToken : Int
-                lastToken =
-                    lastTokenUsed model.barcodeScannerData
+                allTokens : Set Int
+                allTokens =
+                    allTokensUsed model.barcodeScannerData
 
                 newEditDetails : DialogDetails
                 newEditDetails =
                     case model.dialogDetails of
                         TokenOperationsDialog tokenOperationsEditDetails ->
-                            TokenOperations.updateEditDetails lastToken editChange tokenOperationsEditDetails
+                            TokenOperations.updateEditDetails allTokens editChange tokenOperationsEditDetails
                                 |> TokenOperationsDialog
 
                         _ ->
