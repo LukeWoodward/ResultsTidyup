@@ -49,7 +49,7 @@ import Stopwatch
         )
 import Task exposing (Task)
 import Time exposing (Posix, Zone)
-import TokenOperations
+import TokenOperations exposing (TokenOperationValidationError(..))
 
 
 stopwatchFileMimeType : String
@@ -591,7 +591,7 @@ update msg model =
                         ( model, NoCommand )
 
                 TokenOperationsDialog tokenOperationEditDetails ->
-                    if tokenOperationEditDetails.validationError == Nothing then
+                    if tokenOperationEditDetails.validationError == NoValidationError then
                         -- TODO
                         ( model, NoCommand )
 

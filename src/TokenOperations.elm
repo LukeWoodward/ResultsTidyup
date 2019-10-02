@@ -53,7 +53,8 @@ type TokenRangeField
 
 
 type TokenOperationValidationError
-    = TokenOperationNotSelected
+    = NoValidationError
+    | TokenOperationNotSelected
     | InvalidRange TokenRangeField
     | EmptyRange TokenRangeField
     | InsertRangeOffEndOfTokens Int TokenRange
@@ -68,7 +69,7 @@ type alias TokenOperationEditDetails =
     , removeTokenRange : RangeEntry
     , swapTokenRange1 : RangeEntry
     , swapTokenRange2 : RangeEntry
-    , validationError : Maybe TokenOperationValidationError
+    , validationError : TokenOperationValidationError
     }
 
 
@@ -84,7 +85,7 @@ emptyRange =
 
 emptyEditDetails : TokenOperationEditDetails
 emptyEditDetails =
-    TokenOperationEditDetails NoOptionSelected emptyRange emptyRange emptyRange emptyRange Nothing
+    TokenOperationEditDetails NoOptionSelected emptyRange emptyRange emptyRange emptyRange NoValidationError
 
 
 trimToInt : String -> Maybe Int
@@ -199,7 +200,7 @@ rangeTokenOverlapValidation swapTokenEntry1 swapTokenEntry2 =
             Nothing
 
 
-validateEditDetails : Set Int -> TokenOperationEditDetails -> Maybe TokenOperationValidationError
+validateEditDetails : Set Int -> TokenOperationEditDetails -> TokenOperationValidationError
 validateEditDetails allTokens editDetails =
     let
         lastToken : Int
@@ -235,6 +236,7 @@ validateEditDetails allTokens editDetails =
     in
     List.filterMap identity allErrors
         |> List.head
+        |> Maybe.withDefault NoValidationError
 
 
 rangeEntryFromString : String -> RangeEntry
@@ -269,29 +271,29 @@ updateEditDetails allTokens change editDetails =
 isTokenRangeFieldInvalid : TokenRangeField -> TokenOperationEditDetails -> Bool
 isTokenRangeFieldInvalid field tokenOperationEditDetails =
     case tokenOperationEditDetails.validationError of
-        Just TokenOperationNotSelected ->
+        NoValidationError ->
             False
 
-        Just (InvalidRange errorField) ->
+        TokenOperationNotSelected ->
+            False
+
+        InvalidRange errorField ->
             errorField == field
 
-        Just (EmptyRange errorField) ->
+        EmptyRange errorField ->
             errorField == field
 
-        Just (InsertRangeOffEndOfTokens _ _) ->
+        InsertRangeOffEndOfTokens _ _ ->
             field == InsertTokenRangeField
 
-        Just (RangeOffEndOfTokens _ _ errorField) ->
+        RangeOffEndOfTokens _ _ errorField ->
             errorField == field
 
-        Just (RemovingExistingTokens _ _) ->
+        RemovingExistingTokens _ _ ->
             field == RemoveTokenRangeField
 
-        Just SwapTokenRangesOverlap ->
+        SwapTokenRangesOverlap ->
             field == SwapTokenRangeField1 || field == SwapTokenRangeField2
-
-        Nothing ->
-            False
 
 
 isInsertTokenRangeFieldInvalid : TokenOperationEditDetails -> Bool

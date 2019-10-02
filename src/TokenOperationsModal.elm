@@ -74,6 +74,9 @@ inputTextField rangeEntryGetter field option validator tokenOperationEditDetails
 validationErrorToString : TokenOperationValidationError -> String
 validationErrorToString validationError =
     case validationError of
+        NoValidationError ->
+            ""
+
         TokenOperationNotSelected ->
             "Please select a token operation"
 
@@ -114,14 +117,9 @@ validationErrorToString validationError =
             "The ranges of tokens to swap overlap.  Please enter two non-overlapping ranges of tokens"
 
 
-validationErrorRow : Maybe TokenOperationValidationError -> Html Msg
-validationErrorRow validationErrorMaybe =
-    case validationErrorMaybe of
-        Just validationError ->
-            div [ class "validation-error" ] [ text (validationErrorToString validationError) ]
-
-        Nothing ->
-            div [] []
+validationErrorRow : TokenOperationValidationError -> Html Msg
+validationErrorRow validationError =
+    div [ class "validation-error" ] [ text (validationErrorToString validationError) ]
 
 
 tokenOperationsModalBody : TokenOperationEditDetails -> Html Msg
@@ -187,7 +185,7 @@ tokenOperationsButtons tokenOperationEditDetails =
                 Just buttonText ->
                     [ Button.button
                         [ Button.primary
-                        , Button.disabled (tokenOperationEditDetails.validationError /= Nothing)
+                        , Button.disabled (tokenOperationEditDetails.validationError /= NoValidationError)
                         , Button.onClick (ApplyTokenOperation tokenOperationEditDetails)
                         ]
                         [ text buttonText ]
