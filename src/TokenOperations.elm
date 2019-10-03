@@ -32,12 +32,6 @@ type alias RangeEntry =
     }
 
 
-type TokenOperation
-    = InsertTokens TokenRange
-    | RemoveTokens TokenRange
-    | SwapTokenRange TokenRange TokenRange
-
-
 type TokenOperationOption
     = NoOptionSelected
     | InsertTokensOption
