@@ -1,5 +1,7 @@
 module TokenOperationsTests exposing (makeEntry, suite)
 
+import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, PositionAndTimePair, empty)
+import Dict exposing (Dict)
 import Expect
 import Set exposing (Set)
 import Test exposing (Test, describe, test)
@@ -12,6 +14,7 @@ import TokenOperations
         , TokenOperationValidationError(..)
         , TokenRange
         , TokenRangeField(..)
+        , applyTokenOperationToBarcodeScannerData
         , emptyEditDetails
         , isInsertTokenRangeFieldInvalid
         , isRemoveTokenRangeFieldInvalid
@@ -39,6 +42,37 @@ invalidEntry =
 tokenSet : Set Int
 tokenSet =
     Set.fromList [ 1, 2, 8, 14, 17, 23, 26, 27, 28, 41, 48, 50 ]
+
+
+makeScannedBarcodes : List String -> Dict Int (List AthleteAndTimePair)
+makeScannedBarcodes items =
+    let
+        makeItem : ( Int, String ) -> ( Int, List AthleteAndTimePair )
+        makeItem ( index, athlete ) =
+            ( index + 1, [ AthleteAndTimePair athlete "scanTime" ] )
+    in
+    List.indexedMap Tuple.pair items
+        |> List.filter (\( _, athlete ) -> athlete /= "")
+        |> List.map makeItem
+        |> Dict.fromList
+
+
+makeFinishTokensOnly : List Int -> List PositionAndTimePair
+makeFinishTokensOnly tokens =
+    let
+        makeItem : Int -> PositionAndTimePair
+        makeItem position =
+            PositionAndTimePair position "scanTime"
+    in
+    List.map makeItem tokens
+
+
+barcodeScannerDataForTokenOperationsTesting : BarcodeScannerData
+barcodeScannerDataForTokenOperationsTesting =
+    { empty
+        | scannedBarcodes = makeScannedBarcodes [ "A48223", "A37192", "A60804", "A53779", "A84311", "", "A29046", "A76535", "", "A12680" ]
+        , finishTokensOnly = makeFinishTokensOnly [ 6, 9 ]
+    }
 
 
 suite : Test
@@ -423,5 +457,163 @@ suite =
                 \() ->
                     isSwapTokenRange2FieldInvalid { emptyEditDetails | validationError = SwapTokenRangesOverlap }
                         |> Expect.equal True
+            ]
+        , describe "applyTokenOperationToBarcodeScannerData tests"
+            [ describe "general tests"
+                [ test "applying the operation with no operation selected does nothing" <|
+                    \() ->
+                        applyTokenOperationToBarcodeScannerData emptyEditDetails barcodeScannerDataForTokenOperationsTesting
+                            |> Expect.equal barcodeScannerDataForTokenOperationsTesting
+                ]
+            , describe "insert operation tests"
+                [ test "applying an insert operation with a validation error does nothing" <|
+                    \() ->
+                        let
+                            editDetails : TokenOperationEditDetails
+                            editDetails =
+                                { emptyEditDetails
+                                    | operation = InsertTokensOption
+                                    , validationError = InvalidRange InsertTokenRangeField
+                                }
+                        in
+                        applyTokenOperationToBarcodeScannerData editDetails barcodeScannerDataForTokenOperationsTesting
+                            |> Expect.equal barcodeScannerDataForTokenOperationsTesting
+                , test "applying an insert operation with an invalid range does nothing" <|
+                    \() ->
+                        let
+                            editDetails : TokenOperationEditDetails
+                            editDetails =
+                                { emptyEditDetails
+                                    | operation = InsertTokensOption
+                                    , insertTokenRange = RangeEntry "Invalid range" Nothing
+                                }
+                        in
+                        applyTokenOperationToBarcodeScannerData editDetails barcodeScannerDataForTokenOperationsTesting
+                            |> Expect.equal barcodeScannerDataForTokenOperationsTesting
+                , test "applying an insert operation has the expected effect" <|
+                    \() ->
+                        let
+                            editDetails : TokenOperationEditDetails
+                            editDetails =
+                                { emptyEditDetails
+                                    | operation = InsertTokensOption
+                                    , insertTokenRange = RangeEntry "8-10" (Just (TokenRange 8 10))
+                                }
+
+                            expectedBarcodeScannerData : BarcodeScannerData
+                            expectedBarcodeScannerData =
+                                { empty
+                                    | scannedBarcodes = makeScannedBarcodes [ "A48223", "A37192", "A60804", "A53779", "A84311", "", "A29046", "", "", "", "A76535", "", "A12680" ]
+                                    , finishTokensOnly = makeFinishTokensOnly [ 6, 12 ]
+                                }
+                        in
+                        applyTokenOperationToBarcodeScannerData editDetails barcodeScannerDataForTokenOperationsTesting
+                            |> Expect.equal expectedBarcodeScannerData
+                ]
+            , describe "remove operation tests"
+                [ test "applying a remove operation with a validation error does nothing" <|
+                    \() ->
+                        let
+                            editDetails : TokenOperationEditDetails
+                            editDetails =
+                                { emptyEditDetails
+                                    | operation = RemoveTokensOption
+                                    , validationError = InvalidRange RemoveTokenRangeField
+                                }
+                        in
+                        applyTokenOperationToBarcodeScannerData editDetails barcodeScannerDataForTokenOperationsTesting
+                            |> Expect.equal barcodeScannerDataForTokenOperationsTesting
+                , test "applying a remove operation with an invalid range does nothing" <|
+                    \() ->
+                        let
+                            editDetails : TokenOperationEditDetails
+                            editDetails =
+                                { emptyEditDetails
+                                    | operation = RemoveTokensOption
+                                    , removeTokenRange = RangeEntry "Invalid range" Nothing
+                                }
+                        in
+                        applyTokenOperationToBarcodeScannerData editDetails barcodeScannerDataForTokenOperationsTesting
+                            |> Expect.equal barcodeScannerDataForTokenOperationsTesting
+                , test "applying a remove operation has the expected effect" <|
+                    \() ->
+                        let
+                            editDetails : TokenOperationEditDetails
+                            editDetails =
+                                { emptyEditDetails
+                                    | operation = RemoveTokensOption
+                                    , removeTokenRange = RangeEntry "8-10" (Just (TokenRange 8 10))
+                                }
+
+                            initialBarcodeScannerData : BarcodeScannerData
+                            initialBarcodeScannerData =
+                                { empty
+                                    | scannedBarcodes = makeScannedBarcodes [ "A48223", "A37192", "A60804", "A53779", "A84311", "", "A29046", "", "", "", "A76535", "", "A12680" ]
+                                    , finishTokensOnly = makeFinishTokensOnly [ 6, 12 ]
+                                }
+                        in
+                        applyTokenOperationToBarcodeScannerData editDetails initialBarcodeScannerData
+                            |> Expect.equal barcodeScannerDataForTokenOperationsTesting
+                ]
+            , describe "swap operation tests"
+                [ test "applying a swap operation with a validation error does nothing" <|
+                    \() ->
+                        let
+                            editDetails : TokenOperationEditDetails
+                            editDetails =
+                                { emptyEditDetails
+                                    | operation = SwapTokenRangeOption
+                                    , validationError = InvalidRange SwapTokenRangeField1
+                                }
+                        in
+                        applyTokenOperationToBarcodeScannerData editDetails barcodeScannerDataForTokenOperationsTesting
+                            |> Expect.equal barcodeScannerDataForTokenOperationsTesting
+                , test "applying a swap operation with an invalid first range does nothing" <|
+                    \() ->
+                        let
+                            editDetails : TokenOperationEditDetails
+                            editDetails =
+                                { emptyEditDetails
+                                    | operation = SwapTokenRangeOption
+                                    , swapTokenRange1 = RangeEntry "Invalid range" Nothing
+                                    , swapTokenRange2 = RangeEntry "8-10" (Just (TokenRange 8 10))
+                                }
+                        in
+                        applyTokenOperationToBarcodeScannerData editDetails barcodeScannerDataForTokenOperationsTesting
+                            |> Expect.equal barcodeScannerDataForTokenOperationsTesting
+                , test "applying a swap operation with an invalid second range does nothing" <|
+                    \() ->
+                        let
+                            editDetails : TokenOperationEditDetails
+                            editDetails =
+                                { emptyEditDetails
+                                    | operation = SwapTokenRangeOption
+                                    , swapTokenRange1 = RangeEntry "8-10" (Just (TokenRange 8 10))
+                                    , swapTokenRange2 = RangeEntry "Invalid range" Nothing
+                                }
+                        in
+                        applyTokenOperationToBarcodeScannerData editDetails barcodeScannerDataForTokenOperationsTesting
+                            |> Expect.equal barcodeScannerDataForTokenOperationsTesting
+                , test "applying a swap operation has the expected effect" <|
+                    \() ->
+                        let
+                            editDetails : TokenOperationEditDetails
+                            editDetails =
+                                { emptyEditDetails
+                                    | operation = SwapTokenRangeOption
+                                    , swapTokenRange1 = RangeEntry "4-6" (Just (TokenRange 4 6))
+                                    , swapTokenRange2 = RangeEntry "8-10" (Just (TokenRange 8 10))
+                                }
+
+                            expectedBarcodeScannerData : BarcodeScannerData
+                            expectedBarcodeScannerData =
+                                { empty
+                                    | scannedBarcodes = makeScannedBarcodes [ "A48223", "A37192", "A60804", "A76535", "", "A12680", "A29046", "A53779", "A84311", "" ]
+                                    , finishTokensOnly = makeFinishTokensOnly [ 5, 10 ]
+                                }
+                        in
+                        applyTokenOperationToBarcodeScannerData editDetails barcodeScannerDataForTokenOperationsTesting
+                            |> Expect.equal expectedBarcodeScannerData
+                ]
             ]
         ]

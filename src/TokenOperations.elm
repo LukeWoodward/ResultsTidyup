@@ -6,6 +6,7 @@ module TokenOperations exposing
     , TokenOperationValidationError(..)
     , TokenRange
     , TokenRangeField(..)
+    , applyTokenOperationToBarcodeScannerData
     , emptyEditDetails
     , isInsertTokenRangeFieldInvalid
     , isRemoveTokenRangeFieldInvalid
@@ -17,6 +18,8 @@ module TokenOperations exposing
     , validateEditDetails
     )
 
+import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, PositionAndTimePair)
+import Dict exposing (Dict)
 import Set exposing (Set)
 
 
@@ -308,3 +311,175 @@ isSwapTokenRange1FieldInvalid tokenOperationEditDetails =
 isSwapTokenRange2FieldInvalid : TokenOperationEditDetails -> Bool
 isSwapTokenRange2FieldInvalid tokenOperationEditDetails =
     isTokenRangeFieldInvalid SwapTokenRangeField2 tokenOperationEditDetails
+
+
+insertTokensIntoBarcodeScannerData : TokenRange -> BarcodeScannerData -> BarcodeScannerData
+insertTokensIntoBarcodeScannerData range barcodeScannerData =
+    let
+        offset : Int
+        offset =
+            range.end - range.start + 1
+
+        mapFinishTokenOnly : PositionAndTimePair -> PositionAndTimePair
+        mapFinishTokenOnly pair =
+            if pair.position < range.start then
+                pair
+
+            else
+                { pair | position = pair.position + offset }
+
+        mapScannedBarcodeEntry : ( Int, List AthleteAndTimePair ) -> ( Int, List AthleteAndTimePair )
+        mapScannedBarcodeEntry ( token, athletes ) =
+            if token < range.start then
+                ( token, athletes )
+
+            else
+                ( token + offset, athletes )
+    in
+    { barcodeScannerData
+        | scannedBarcodes =
+            barcodeScannerData.scannedBarcodes
+                |> Dict.toList
+                |> List.map mapScannedBarcodeEntry
+                |> Dict.fromList
+        , finishTokensOnly = List.map mapFinishTokenOnly barcodeScannerData.finishTokensOnly
+    }
+
+
+removeTokensFromBarcodeScannerData : TokenRange -> BarcodeScannerData -> BarcodeScannerData
+removeTokensFromBarcodeScannerData range barcodeScannerData =
+    let
+        offset : Int
+        offset =
+            range.end - range.start + 1
+
+        filterPosition : Int -> Bool
+        filterPosition position =
+            not (range.start <= position && position <= range.end)
+
+        filterFinishTokenOnly : PositionAndTimePair -> Bool
+        filterFinishTokenOnly pair =
+            filterPosition pair.position
+
+        mapFinishTokenOnly : PositionAndTimePair -> PositionAndTimePair
+        mapFinishTokenOnly pair =
+            if pair.position <= range.end then
+                pair
+
+            else
+                { pair | position = pair.position - offset }
+
+        filterScannedBarcodeEntry : ( Int, List AthleteAndTimePair ) -> Bool
+        filterScannedBarcodeEntry ( token, _ ) =
+            filterPosition token
+
+        mapScannedBarcodeEntry : ( Int, List AthleteAndTimePair ) -> ( Int, List AthleteAndTimePair )
+        mapScannedBarcodeEntry ( token, athletes ) =
+            if token <= range.end then
+                ( token, athletes )
+
+            else
+                ( token - offset, athletes )
+    in
+    { barcodeScannerData
+        | scannedBarcodes =
+            barcodeScannerData.scannedBarcodes
+                |> Dict.toList
+                |> List.filter filterScannedBarcodeEntry
+                |> List.map mapScannedBarcodeEntry
+                |> Dict.fromList
+        , finishTokensOnly =
+            barcodeScannerData.finishTokensOnly
+                |> List.filter filterFinishTokenOnly
+                |> List.map mapFinishTokenOnly
+    }
+
+
+swapTokensInBarcodeScannerData : TokenRange -> Int -> BarcodeScannerData -> BarcodeScannerData
+swapTokensInBarcodeScannerData range1 range2Start barcodeScannerData =
+    let
+        range2End : Int
+        range2End =
+            range2Start + range1.end - range1.start
+
+        oneToTwoOffset : Int
+        oneToTwoOffset =
+            range2Start - range1.start
+
+        twoToOneOffset : Int
+        twoToOneOffset =
+            -oneToTwoOffset
+
+        mapFinishTokenOnly : PositionAndTimePair -> PositionAndTimePair
+        mapFinishTokenOnly pair =
+            if range1.start <= pair.position && pair.position <= range1.end then
+                { pair | position = pair.position + oneToTwoOffset }
+
+            else if range2Start <= pair.position && pair.position <= range2End then
+                { pair | position = pair.position + twoToOneOffset }
+
+            else
+                pair
+
+        mapScannedBarcodeEntry : ( Int, List AthleteAndTimePair ) -> ( Int, List AthleteAndTimePair )
+        mapScannedBarcodeEntry ( token, athletes ) =
+            if range1.start <= token && token <= range1.end then
+                ( token + oneToTwoOffset, athletes )
+
+            else if range2Start <= token && token <= range2End then
+                ( token + twoToOneOffset, athletes )
+
+            else
+                ( token, athletes )
+    in
+    { barcodeScannerData
+        | scannedBarcodes =
+            barcodeScannerData.scannedBarcodes
+                |> Dict.toList
+                |> List.map mapScannedBarcodeEntry
+                |> Dict.fromList
+        , finishTokensOnly =
+            List.map mapFinishTokenOnly barcodeScannerData.finishTokensOnly
+                |> List.sortBy .position
+    }
+
+
+applyTokenOperationToBarcodeScannerData : TokenOperationEditDetails -> BarcodeScannerData -> BarcodeScannerData
+applyTokenOperationToBarcodeScannerData tokenOperationEditDetails barcodeScannerData =
+    if tokenOperationEditDetails.validationError == NoValidationError then
+        case tokenOperationEditDetails.operation of
+            NoOptionSelected ->
+                barcodeScannerData
+
+            InsertTokensOption ->
+                case tokenOperationEditDetails.insertTokenRange.range of
+                    Just range ->
+                        insertTokensIntoBarcodeScannerData range barcodeScannerData
+
+                    Nothing ->
+                        barcodeScannerData
+
+            RemoveTokensOption ->
+                case tokenOperationEditDetails.removeTokenRange.range of
+                    Just range ->
+                        removeTokensFromBarcodeScannerData range barcodeScannerData
+
+                    Nothing ->
+                        barcodeScannerData
+
+            SwapTokenRangeOption ->
+                case ( tokenOperationEditDetails.swapTokenRange1.range, tokenOperationEditDetails.swapTokenRange2.range ) of
+                    ( Just range1, Just range2 ) ->
+                        if range2.end - range2.start == range1.end - range1.start then
+                            swapTokensInBarcodeScannerData range1 range2.start barcodeScannerData
+
+                        else
+                            -- Validation on range sizes being equal should have been done by
+                            -- the time we get here, but if not, let's just do nothing.
+                            barcodeScannerData
+
+                    _ ->
+                        barcodeScannerData
+
+    else
+        barcodeScannerData
