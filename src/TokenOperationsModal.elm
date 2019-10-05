@@ -113,6 +113,9 @@ validationErrorToString validationError =
         RangeOffEndOfTokens lastToken range field ->
             "The range " ++ rangeToString range ++ " goes beyond the last token used (" ++ String.fromInt lastToken ++ ")"
 
+        SwapTokenRangesOfDifferentSizes ->
+            "The ranges of tokens to swap are of different sizes.  Please enter two ranges of tokens that are the same size."
+
         SwapTokenRangesOverlap ->
             "The ranges of tokens to swap overlap.  Please enter two non-overlapping ranges of tokens"
 

@@ -207,6 +207,10 @@ suite =
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 45 55 }
                         |> Expect.equal (RangeOffEndOfTokens 50 (TokenRange 45 55) SwapTokenRangeField2)
+            , test "validating a swap operation with ranges of different sizes returns an error" <|
+                \() ->
+                    validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 30 35 }
+                        |> Expect.equal SwapTokenRangesOfDifferentSizes
             , test "validating a swap operation with overlapping ranges returns an error" <|
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 15 25 }
@@ -227,6 +231,10 @@ suite =
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 30 40, swapTokenRange2 = makeEntry 35 55 }
                         |> Expect.equal (RangeOffEndOfTokens 50 (TokenRange 35 55) SwapTokenRangeField2)
+            , test "validating a swap operation with ranges of different sizes and which overlap returns an error" <|
+                \() ->
+                    validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 18 22 }
+                        |> Expect.equal SwapTokenRangesOfDifferentSizes
             ]
         , describe "updateEditDetails tests"
             [ test "ChangeOperation changes the operation and runs validation" <|

@@ -57,6 +57,7 @@ type TokenOperationValidationError
     | InsertRangeOffEndOfTokens Int TokenRange
     | RangeOffEndOfTokens Int TokenRange TokenRangeField
     | RemovingExistingTokens (List Int) TokenRange
+    | SwapTokenRangesOfDifferentSizes
     | SwapTokenRangesOverlap
 
 
@@ -178,6 +179,20 @@ removingExistingTokens allTokens entry =
             Nothing
 
 
+rangesOfDifferentSizeValidation : RangeEntry -> RangeEntry -> Maybe TokenOperationValidationError
+rangesOfDifferentSizeValidation swapTokenEntry1 swapTokenEntry2 =
+    case ( swapTokenEntry1.range, swapTokenEntry2.range ) of
+        ( Just range1, Just range2 ) ->
+            if range1.end - range1.start == range2.end - range2.start then
+                Nothing
+
+            else
+                Just SwapTokenRangesOfDifferentSizes
+
+        _ ->
+            Nothing
+
+
 rangeTokenOverlapValidation : RangeEntry -> RangeEntry -> Maybe TokenOperationValidationError
 rangeTokenOverlapValidation swapTokenEntry1 swapTokenEntry2 =
     case ( swapTokenEntry1.range, swapTokenEntry2.range ) of
@@ -228,6 +243,7 @@ validateEditDetails allTokens editDetails =
                     , tokenRangeEndOffTokens lastToken SwapTokenRangeField1 editDetails.swapTokenRange1
                     , commonTokenRangeValidation SwapTokenRangeField2 editDetails.swapTokenRange2
                     , tokenRangeEndOffTokens lastToken SwapTokenRangeField2 editDetails.swapTokenRange2
+                    , rangesOfDifferentSizeValidation editDetails.swapTokenRange1 editDetails.swapTokenRange2
                     , rangeTokenOverlapValidation editDetails.swapTokenRange1 editDetails.swapTokenRange2
                     ]
     in
@@ -288,6 +304,9 @@ isTokenRangeFieldInvalid field tokenOperationEditDetails =
 
         RemovingExistingTokens _ _ ->
             field == RemoveTokenRangeField
+
+        SwapTokenRangesOfDifferentSizes ->
+            field == SwapTokenRangeField1 || field == SwapTokenRangeField2
 
         SwapTokenRangesOverlap ->
             field == SwapTokenRangeField1 || field == SwapTokenRangeField2
