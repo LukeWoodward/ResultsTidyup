@@ -49,7 +49,7 @@ import Stopwatch
         )
 import Task exposing (Task)
 import Time exposing (Posix, Zone)
-import TokenOperations exposing (TokenOperationValidationError(..))
+import TokenOperations exposing (TokenOperationValidationError(..), applyTokenOperationToBarcodeScannerData)
 
 
 stopwatchFileMimeType : String
@@ -382,6 +382,22 @@ updateRowFromBarcodeScannerEditModal rowEditDetails model =
         |> identifyProblemsIn
 
 
+applyTokenOperation : Model -> Model
+applyTokenOperation model =
+    case model.dialogDetails of
+        TokenOperationsDialog tokenOperationEditDetails ->
+            identifyProblemsIn
+                { model
+                    | barcodeScannerData =
+                        applyTokenOperationToBarcodeScannerData tokenOperationEditDetails model.barcodeScannerData
+                            |> regenerate
+                    , dialogDetails = NoDialog
+                }
+
+        _ ->
+            model
+
+
 update : Msg -> Model -> ( Model, Command )
 update msg model =
     case msg of
@@ -561,8 +577,7 @@ update msg model =
             ( { model | dialogDetails = newEditDetails }, NoCommand )
 
         ApplyTokenOperation _ ->
-            -- TODO
-            ( model, NoCommand )
+            ( applyTokenOperation model, NoCommand )
 
         CloseModal ->
             ( { model | dialogDetails = NoDialog }, NoCommand )
@@ -592,8 +607,7 @@ update msg model =
 
                 TokenOperationsDialog tokenOperationEditDetails ->
                     if tokenOperationEditDetails.validationError == NoValidationError then
-                        -- TODO
-                        ( model, NoCommand )
+                        ( applyTokenOperation model, NoCommand )
 
                     else
                         ( model, NoCommand )
