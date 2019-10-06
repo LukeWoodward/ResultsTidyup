@@ -354,7 +354,6 @@ applyTokenOperation model =
                 { model
                     | barcodeScannerData =
                         applyTokenOperationToBarcodeScannerData tokenOperationEditDetails model.barcodeScannerData
-                            |> regenerate
                     , dialogDetails = NoDialog
                 }
 

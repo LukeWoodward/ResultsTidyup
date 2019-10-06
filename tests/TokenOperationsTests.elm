@@ -1,6 +1,17 @@
-module TokenOperationsTests exposing (makeEntry, suite)
+module TokenOperationsTests exposing (suite)
 
-import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, PositionAndTimePair, empty)
+import BarcodeScanner
+    exposing
+        ( AthleteAndTimePair
+        , BarcodeScannerData
+        , BarcodeScannerFile
+        , BarcodeScannerFileLine
+        , DeletionStatus(..)
+        , LineContents(..)
+        , PositionAndTimePair
+        , empty
+        , regenerate
+        )
 import Dict exposing (Dict)
 import Expect
 import Set exposing (Set)
@@ -44,35 +55,23 @@ tokenSet =
     Set.fromList [ 1, 2, 8, 14, 17, 23, 26, 27, 28, 41, 48, 50 ]
 
 
-makeScannedBarcodes : List String -> Dict Int (List AthleteAndTimePair)
-makeScannedBarcodes items =
+makeBarcodeScannerData : List ( Int, String ) -> BarcodeScannerData
+makeBarcodeScannerData items =
     let
-        makeItem : ( Int, String ) -> ( Int, List AthleteAndTimePair )
-        makeItem ( index, athlete ) =
-            ( index + 1, [ AthleteAndTimePair athlete "scanTime" ] )
-    in
-    List.indexedMap Tuple.pair items
-        |> List.filter (\( _, athlete ) -> athlete /= "")
-        |> List.map makeItem
-        |> Dict.fromList
+        lines : List BarcodeScannerFileLine
+        lines =
+            List.indexedMap (\index ( position, athlete ) -> { lineNumber = index + 1, contents = Ordinary athlete (Just position), scanTime = "scanTime", deletionStatus = NotDeleted }) items
 
-
-makeFinishTokensOnly : List Int -> List PositionAndTimePair
-makeFinishTokensOnly tokens =
-    let
-        makeItem : Int -> PositionAndTimePair
-        makeItem position =
-            PositionAndTimePair position "scanTime"
+        files : List BarcodeScannerFile
+        files =
+            [ { name = "file1.txt", lines = lines, maxScanDate = Nothing } ]
     in
-    List.map makeItem tokens
+    regenerate { empty | files = files }
 
 
 barcodeScannerDataForTokenOperationsTesting : BarcodeScannerData
 barcodeScannerDataForTokenOperationsTesting =
-    { empty
-        | scannedBarcodes = makeScannedBarcodes [ "A48223", "A37192", "A60804", "A53779", "A84311", "", "A29046", "A76535", "", "A12680" ]
-        , finishTokensOnly = makeFinishTokensOnly [ 6, 9 ]
-    }
+    makeBarcodeScannerData [ ( 1, "A48223" ), ( 2, "A37192" ), ( 3, "A60804" ), ( 4, "A53779" ), ( 5, "A84311" ), ( 6, "" ), ( 7, "A29046" ), ( 8, "A76535" ), ( 9, "" ), ( 10, "A12680" ) ]
 
 
 suite : Test
@@ -510,10 +509,8 @@ suite =
 
                             expectedBarcodeScannerData : BarcodeScannerData
                             expectedBarcodeScannerData =
-                                { empty
-                                    | scannedBarcodes = makeScannedBarcodes [ "A48223", "A37192", "A60804", "A53779", "A84311", "", "A29046", "", "", "", "A76535", "", "A12680" ]
-                                    , finishTokensOnly = makeFinishTokensOnly [ 6, 12 ]
-                                }
+                                makeBarcodeScannerData
+                                    [ ( 1, "A48223" ), ( 2, "A37192" ), ( 3, "A60804" ), ( 4, "A53779" ), ( 5, "A84311" ), ( 6, "" ), ( 7, "A29046" ), ( 11, "A76535" ), ( 12, "" ), ( 13, "A12680" ) ]
                         in
                         applyTokenOperationToBarcodeScannerData editDetails barcodeScannerDataForTokenOperationsTesting
                             |> Expect.equal expectedBarcodeScannerData
@@ -555,10 +552,8 @@ suite =
 
                             initialBarcodeScannerData : BarcodeScannerData
                             initialBarcodeScannerData =
-                                { empty
-                                    | scannedBarcodes = makeScannedBarcodes [ "A48223", "A37192", "A60804", "A53779", "A84311", "", "A29046", "", "", "", "A76535", "", "A12680" ]
-                                    , finishTokensOnly = makeFinishTokensOnly [ 6, 12 ]
-                                }
+                                makeBarcodeScannerData
+                                    [ ( 1, "A48223" ), ( 2, "A37192" ), ( 3, "A60804" ), ( 4, "A53779" ), ( 5, "A84311" ), ( 6, "" ), ( 7, "A29046" ), ( 11, "A76535" ), ( 12, "" ), ( 13, "A12680" ) ]
                         in
                         applyTokenOperationToBarcodeScannerData editDetails initialBarcodeScannerData
                             |> Expect.equal barcodeScannerDataForTokenOperationsTesting
@@ -615,10 +610,7 @@ suite =
 
                             expectedBarcodeScannerData : BarcodeScannerData
                             expectedBarcodeScannerData =
-                                { empty
-                                    | scannedBarcodes = makeScannedBarcodes [ "A48223", "A37192", "A60804", "A76535", "", "A12680", "A29046", "A53779", "A84311", "" ]
-                                    , finishTokensOnly = makeFinishTokensOnly [ 5, 10 ]
-                                }
+                                makeBarcodeScannerData [ ( 1, "A48223" ), ( 2, "A37192" ), ( 3, "A60804" ), ( 8, "A53779" ), ( 9, "A84311" ), ( 10, "" ), ( 7, "A29046" ), ( 4, "A76535" ), ( 5, "" ), ( 6, "A12680" ) ]
                         in
                         applyTokenOperationToBarcodeScannerData editDetails barcodeScannerDataForTokenOperationsTesting
                             |> Expect.equal expectedBarcodeScannerData
