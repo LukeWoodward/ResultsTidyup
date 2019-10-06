@@ -24,7 +24,6 @@ import Model
         ( DialogDetails(..)
         , Model
         , NumberCheckerManualEntryRow
-        , ProblemEntry
         , emptyNumberCheckerManualEntryRow
         , initModel
         )
@@ -32,7 +31,7 @@ import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import NumericEntry exposing (NumericEntry, emptyNumericEntry)
 import ProblemFixing exposing (ProblemFix(..))
-import Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..))
+import Problems exposing (AthleteAndPositionPair, Problems, noProblems)
 import Stopwatch exposing (Stopwatch(..), Stopwatches(..), WhichStopwatch(..))
 import Test exposing (Test, describe, test)
 import TestData exposing (..)
@@ -94,19 +93,9 @@ expectBarcodeScannerData expectedBarcodeScannerData ( model, _ ) =
     Expect.equal expectedBarcodeScannerData model.barcodeScannerData
 
 
-expectProblems : List Problem -> ( Model, Command ) -> Expectation
+expectProblems : Problems -> ( Model, Command ) -> Expectation
 expectProblems expectedProblems ( model, _ ) =
-    let
-        expectedProblemEntries : List ProblemEntry
-        expectedProblemEntries =
-            List.indexedMap (\index problem -> ProblemEntry problem index False) expectedProblems
-    in
-    Expect.equal expectedProblemEntries model.problems
-
-
-expectProblemEntries : List ProblemEntry -> ( Model, Command ) -> Expectation
-expectProblemEntries expectedProblemEntries ( model, _ ) =
-    Expect.equal expectedProblemEntries model.problems
+    Expect.equal expectedProblems model.problems
 
 
 expectEventDateAndTime : EventDateAndTime -> ( Model, Command ) -> Expectation
@@ -176,7 +165,7 @@ defaultAssertionsExcept exceptions =
                 Nothing
 
               else
-                Just (expectProblems [])
+                Just (expectProblems noProblems)
             , if List.member EventDateAndTimeAssertion exceptions then
                 Nothing
 
@@ -224,7 +213,7 @@ createBarcodeScannerDataForRemovingUnassociatedFinishTokens finishTokens =
     in
     { initModel
         | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines Nothing ] }
-        , problems = List.indexedMap (\index position -> ProblemEntry (Fixable (PositionWithAndWithoutAthlete position (fakeAthlete index))) index False) finishTokens
+        , problems = { noProblems | positionsWithAndWithoutAthlete = List.indexedMap (\index position -> AthleteAndPositionPair (fakeAthlete index) position) finishTokens }
     }
 
 
@@ -308,7 +297,7 @@ suite =
                             |> Expect.all
                                 (expectBarcodeScannerData parsedBarcodeScannerDataWithIncompleteRecordFirst
                                     :: expectEventDateAndTime parsedEventDateOnly
-                                    :: expectProblems [ NonFixable (PositionMissingAthlete 33) ]
+                                    :: expectProblems { noProblems | positionsMissingAthlete = [ 33 ] }
                                     :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, EventDateAndTimeAssertion, Problems ]
                                 )
                 ]
@@ -391,9 +380,10 @@ suite =
                         , numberCheckerEntries = [ AnnotatedNumberCheckerEntry 2 2 0 2 0 2 0 2 ]
                         , numberCheckerManualEntryRow = NumberCheckerManualEntryRow (NumericEntry "2" (Just 2)) (NumericEntry "2" (Just 2)) (NumericEntry "2" (Just 2))
                         , problems =
-                            [ ProblemEntry (Fixable (PositionWithAndWithoutAthlete 5 "A123")) 1 False
-                            , ProblemEntry (NonFixable (Problems.MisScan "something")) 0 False
-                            ]
+                            { noProblems
+                                | positionsWithAndWithoutAthlete = [ AthleteAndPositionPair "A123" 5 ]
+                                , misScans = [ "something" ]
+                            }
                     }
                         |> update ClearAllData
                         |> Expect.all
@@ -710,10 +700,9 @@ suite =
                         |> Expect.all
                             (expectBarcodeScannerData expectedBarcodeScannerData
                                 :: expectProblems
-                                    [ Fixable (PositionWithAndWithoutAthlete 14 "A1")
-                                    , Fixable (PositionWithAndWithoutAthlete 18 "A2")
-                                    , Fixable (PositionWithAndWithoutAthlete 44 "A4")
-                                    ]
+                                    { noProblems
+                                        | positionsWithAndWithoutAthlete = [ AthleteAndPositionPair "A1" 14, AthleteAndPositionPair "A2" 18, AthleteAndPositionPair "A4" 44 ]
+                                    }
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems ]
                             )
             ]
@@ -806,54 +795,6 @@ suite =
                         |> Expect.all
                             (expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2, 3 ])
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
-                            )
-            ]
-        , describe "IgnoreProblems tests"
-            [ test "Can ignore a problem with a given index" <|
-                \() ->
-                    { initModel
-                        | problems =
-                            [ ProblemEntry (NonFixable (Problems.MisScan "&junk")) 0 False
-                            , ProblemEntry (NonFixable (Problems.MisScan "&junk2")) 1 False
-                            ]
-                    }
-                        |> update (IgnoreProblem 1)
-                        |> Expect.all
-                            (expectProblemEntries
-                                [ ProblemEntry (NonFixable (Problems.MisScan "&junk")) 0 False
-                                , ProblemEntry (NonFixable (Problems.MisScan "&junk2")) 1 True
-                                ]
-                                :: defaultAssertionsExcept [ Problems ]
-                            )
-            , test "Does nothing for a problem with a given index already ignored" <|
-                \() ->
-                    let
-                        problemEntries : List ProblemEntry
-                        problemEntries =
-                            [ ProblemEntry (NonFixable (Problems.MisScan "&junk")) 0 False
-                            , ProblemEntry (NonFixable (Problems.MisScan "&junk2")) 1 True
-                            ]
-                    in
-                    { initModel | problems = problemEntries }
-                        |> update (IgnoreProblem 1)
-                        |> Expect.all
-                            (expectProblemEntries problemEntries
-                                :: defaultAssertionsExcept [ Problems ]
-                            )
-            , test "Does nothing for a problem with an unrecognised index being ignored" <|
-                \() ->
-                    let
-                        problemEntries : List ProblemEntry
-                        problemEntries =
-                            [ ProblemEntry (NonFixable (Problems.MisScan "&junk")) 0 False
-                            , ProblemEntry (NonFixable (Problems.MisScan "&junk2")) 1 False
-                            ]
-                    in
-                    { initModel | problems = problemEntries }
-                        |> update (IgnoreProblem 2)
-                        |> Expect.all
-                            (expectProblemEntries problemEntries
-                                :: defaultAssertionsExcept [ Problems ]
                             )
             ]
         , describe "UpdateRowFromBarcodeScannerEditModal tests"

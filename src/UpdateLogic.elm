@@ -20,7 +20,7 @@ import EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeC
 import File exposing (File)
 import FileDropHandling exposing (handleFilesDropped)
 import FileHandling exposing (InteropFile)
-import Model exposing (DialogDetails(..), Model, NumberCheckerManualEntryRow, ProblemEntry, emptyNumberCheckerManualEntryRow, initModel)
+import Model exposing (DialogDetails(..), Model, NumberCheckerManualEntryRow, emptyNumberCheckerManualEntryRow, initModel)
 import Msg exposing (Msg(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import NumberCheckerEditing
@@ -32,7 +32,7 @@ import NumberCheckerEditing
         , modifyNumberCheckerRows
         )
 import ProblemFixing exposing (fixProblem)
-import Problems exposing (Problem, identifyProblems)
+import Problems exposing (Problems, identifyProblems, noProblems)
 import Set exposing (Set)
 import Stopwatch
     exposing
@@ -89,32 +89,14 @@ underlineStopwatches stopwatches numberCheckerEntries =
                     }
 
 
-{-| Creates a list of ProblemEntry items from the given list of problems,
-transferring ignored problems from the given list of current problem entries.
--}
-transferIgnoredProblems : List ProblemEntry -> List Problem -> List ProblemEntry
-transferIgnoredProblems currentProblemEntries newProblems =
-    let
-        currentlyIgnoredProblems : List Problem
-        currentlyIgnoredProblems =
-            List.filter .ignored currentProblemEntries
-                |> List.map .problem
-    in
-    List.indexedMap
-        (\index problem -> ProblemEntry problem index (List.member problem currentlyIgnoredProblems))
-        newProblems
-
-
 identifyProblemsIn : Model -> Model
 identifyProblemsIn model =
     let
-        newProblems : List Problem
+        newProblems : Problems
         newProblems =
             identifyProblems model.stopwatches model.barcodeScannerData model.eventDateAndTime
     in
-    { model
-        | problems = transferIgnoredProblems model.problems newProblems
-    }
+    { model | problems = newProblems }
 
 
 toggleTableRow : Int -> Model -> Model
@@ -239,7 +221,7 @@ clearAllData model =
         , lastHeight = Nothing
         , highlightedNumberCheckerId = Nothing
         , barcodeScannerData = BarcodeScanner.empty
-        , problems = []
+        , problems = noProblems
         , eventDateAndTime = EventDateAndTime "" Nothing model.eventDateAndTime.enteredTime model.eventDateAndTime.validatedTime
         , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
         , barcodeScannerTab = Tab.initialState
@@ -328,24 +310,6 @@ deleteBarcodeScannerFileWithName fileName model =
         { model
             | barcodeScannerData = regenerate { barcodeScannerData | files = List.filter (\file -> file.name /= fileName) model.barcodeScannerData.files }
         }
-
-
-ignoreProblem : Int -> Model -> Model
-ignoreProblem problemIndex model =
-    let
-        ignoreProblemIfIndexMatches : ProblemEntry -> ProblemEntry
-        ignoreProblemIfIndexMatches problem =
-            if problem.index == problemIndex then
-                { problem | ignored = True }
-
-            else
-                problem
-
-        newProblems : List ProblemEntry
-        newProblems =
-            List.map ignoreProblemIfIndexMatches model.problems
-    in
-    { model | problems = newProblems }
 
 
 select : Bool -> a -> a -> a
@@ -517,7 +481,8 @@ update msg model =
             ( deleteBarcodeScannerFileWithName fileName model, NoCommand )
 
         IgnoreProblem problemIndex ->
-            ( ignoreProblem problemIndex model, NoCommand )
+            -- TODO
+            ( model, NoCommand )
 
         ShowBarcodeScannerEditModal location contents isDeleted ->
             ( { model

@@ -4,277 +4,460 @@ import Bootstrap.Alert as Alert
 import Html exposing (Html, button, div, h4, li, text, ul)
 import Html.Attributes exposing (class, type_)
 import Html.Events exposing (onClick)
-import Model exposing (ProblemEntry)
 import Msg exposing (Msg)
 import ProblemFixing exposing (ProblemFix(..))
-import Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..))
+import Problems
+    exposing
+        ( AthleteAndPositionPair
+        , AthleteWithMultiplePositionsProblem
+        , BarcodesScannedBeforeEventStartProblem
+        , BarcodesScannedTheWrongWayAroundProblem
+        , InconsistentBarcodeScannerDatesProblem
+        , PositionOffEndOfTimesProblem
+        , PositionWithMultipleAthletesProblem
+        , Problems
+        )
 import Stopwatch exposing (WhichStopwatch(..))
 import ViewCommon exposing (smallButton)
 
 
-nonFixableProblemToString : NonFixableProblem -> String
-nonFixableProblemToString problem =
-    case problem of
-        InconsistentBarcodeScannerDates earlierDate laterDate ->
-            "Inconsistent dates were found among the barcode scanner files (" ++ earlierDate ++ " and " ++ laterDate ++ ").  Please check that you have uploaded files from the same date"
-
-        AthleteWithMultiplePositions athlete positions ->
-            "Athlete barcode " ++ athlete ++ " has been scanned with more than one finish token: " ++ String.join ", " (List.map String.fromInt positions)
-
-        PositionWithMultipleAthletes position athletes ->
-            "Multiple athlete barcodes have been scanned with finish token " ++ String.fromInt position ++ ": " ++ String.join ", " athletes
-
-        PositionOffEndOfTimes numberOfTimes maxPosition ->
-            "The highest finish token scanned was " ++ String.fromInt maxPosition ++ " but there are only " ++ String.fromInt numberOfTimes ++ " times recorded on the stopwatch(es)"
-
-        AthleteMissingPosition athlete ->
-            "Athlete barcode " ++ athlete ++ " was scanned without a corresponding finish token"
-
-        PositionMissingAthlete position ->
-            "Finish token " ++ String.fromInt position ++ " was scanned without a corresponding athlete barcode"
-
-        MisScan misScannedText ->
-            "An unrecognised item '" ++ misScannedText ++ "' was scanned"
-
-        UnrecognisedBarcodeScannerLine line ->
-            "The line '" ++ line ++ "' in a barcode scanner file was not recognised"
-
-        IdenticalStopwatchTimes ->
-            "Both stopwatch files have identical times.  It is very unlikely in practice for two stopwatches to contain the same times.  "
-                ++ "Please check you haven't downloaded times from the same stopwatch twice"
-
-        StopwatchesInconsistentWithNumberChecker ->
-            "TODO"
-
-        StopwatchesAndFinishTokensInconsistentWithNumberChecker ->
-            "TODO"
+warningAlert : List (Html Msg) -> Html Msg
+warningAlert contents =
+    Alert.simpleWarning [ class "warning-condensed" ] contents
 
 
-nonFixableProblemView : Int -> NonFixableProblem -> Html Msg
-nonFixableProblemView index problem =
-    li
-        []
-        [ text (nonFixableProblemToString problem)
-        , text " "
-        , smallButton (Msg.IgnoreProblem index) [] "Ignore"
+dangerAlert : List (Html Msg) -> Html Msg
+dangerAlert contents =
+    Alert.simpleDanger [ class "warning-condensed" ] contents
+
+
+barcodesScannedBeforeEventStartProblemView : BarcodesScannedBeforeEventStartProblem -> Html Msg
+barcodesScannedBeforeEventStartProblemView problem =
+    let
+        barcodesStringPrefix : String
+        barcodesStringPrefix =
+            if problem.numberOfScansBeforeEventStart == 1 then
+                "One barcode was"
+
+            else
+                String.fromInt problem.numberOfScansBeforeEventStart ++ " barcodes were"
+
+        problemText : String
+        problemText =
+            barcodesStringPrefix
+                ++ " scanned before the event start ("
+                ++ problem.eventStartTime
+                ++ ") "
+    in
+    warningAlert
+        [ text problemText
+        , smallButton (Msg.FixProblem (RemoveScansBeforeEventStart problem.eventStartTimeMillis)) [] "Remove barcodes scanned before event start"
         ]
 
 
-nonFixableProblemsView : List (Html Msg) -> Html Msg
-nonFixableProblemsView nonFixableProblems =
-    if List.isEmpty nonFixableProblems then
-        div [] []
-
-    else
-        let
-            problemsHeader : String
-            problemsHeader =
-                if List.length nonFixableProblems == 1 then
-                    "The following problem was found:"
-
-                else
-                    "The following problems were found:"
-        in
-        Alert.simpleDanger
-            []
-            [ h4 [] [ text problemsHeader ]
-            , ul [] nonFixableProblems
-            ]
+generateButton : ProblemFix -> String -> Html Msg
+generateButton problemFix buttonLabel =
+    smallButton (Msg.FixProblem problemFix) [] buttonLabel
 
 
-fixableProblemView : Int -> FixableProblem -> Html Msg
-fixableProblemView index fixableProblem =
-    case fixableProblem of
-        AthleteInSamePositionMultipleTimes athlete position ->
-            li []
-                [ text "Athlete barcode "
-                , text athlete
-                , text " has been scanned with finish token "
-                , text (String.fromInt position)
-                , text " more than once "
-                , smallButton (Msg.FixProblem (RemoveDuplicateScans position athlete)) [] "Remove duplicates"
-                , text " "
-                , smallButton (Msg.IgnoreProblem index) [] "Ignore"
+athleteAndPositionRow : (AthleteAndPositionPair -> ProblemFix) -> String -> AthleteAndPositionPair -> Html Msg
+athleteAndPositionRow problemFixGenerator buttonLabel pair =
+    li []
+        [ text (pair.athlete ++ " and " ++ String.fromInt pair.position ++ " ")
+        , generateButton (problemFixGenerator pair) buttonLabel
+        ]
+
+
+athletesInSamePositionMultipleTimesView : List AthleteAndPositionPair -> Html Msg
+athletesInSamePositionMultipleTimesView athleteAndPositionPairs =
+    let
+        buttonLabel : String
+        buttonLabel =
+            "Remove duplicate scans"
+
+        problemFixGenerator : AthleteAndPositionPair -> ProblemFix
+        problemFixGenerator pair =
+            RemoveDuplicateScans pair.position pair.athlete
+    in
+    case athleteAndPositionPairs of
+        [ pair ] ->
+            warningAlert
+                [ text ("Athlete " ++ pair.athlete ++ " has been scanned with finish token " ++ String.fromInt pair.position ++ " more than once. ")
+                , generateButton (problemFixGenerator pair) buttonLabel
                 ]
 
-        AthleteWithAndWithoutPosition athlete position ->
-            li []
-                [ text "Athlete "
-                , text athlete
-                , text " has been scanned with finish token "
-                , text (String.fromInt position)
-                , text " and also without a corresponding finish token "
-                , smallButton (Msg.FixProblem (RemoveUnassociatedAthlete athlete)) [] "Remove unassociated athlete barcode scan"
-                , text " "
-                , smallButton (Msg.IgnoreProblem index) [] "Ignore"
+        _ ->
+            warningAlert
+                [ text "The following athletes have been scanned multiple times with same finish token more than once:"
+                , ul [] (List.map (athleteAndPositionRow problemFixGenerator buttonLabel) athleteAndPositionPairs)
                 ]
 
-        PositionWithAndWithoutAthlete position athlete ->
-            li []
-                [ text "Finish token "
-                , text (String.fromInt position)
-                , text " has been scanned with athlete barcode "
-                , text athlete
-                , text " and also without a corresponding athlete barcode "
-                , smallButton (Msg.FixProblem (RemoveUnassociatedFinishToken position)) [] "Remove unassociated finish token scan"
-                , text " "
-                , smallButton (Msg.IgnoreProblem index) [] "Ignore"
+
+athletesWithAndWithoutPositionView : List AthleteAndPositionPair -> Html Msg
+athletesWithAndWithoutPositionView athleteAndPositionPairs =
+    let
+        buttonLabel : String
+        buttonLabel =
+            "Remove unassociated athlete scan"
+
+        problemFixGenerator : AthleteAndPositionPair -> ProblemFix
+        problemFixGenerator pair =
+            RemoveUnassociatedAthlete pair.athlete
+    in
+    case athleteAndPositionPairs of
+        [ pair ] ->
+            warningAlert
+                [ text
+                    ("Athlete "
+                        ++ pair.athlete
+                        ++ " has been scanned with finish token "
+                        ++ String.fromInt pair.position
+                        ++ " and also without a corresponding finish token."
+                    )
+                , generateButton (problemFixGenerator pair) buttonLabel
                 ]
 
-        BarcodesScannedBeforeEventStart number eventStartTimeMillis eventStart ->
-            let
-                barcodesString : String
-                barcodesString =
-                    if number == 1 then
-                        "One barcode was"
-
-                    else
-                        String.fromInt number ++ " barcodes were"
-            in
-            li []
-                [ text barcodesString
-                , text " scanned before the event start ("
-                , text eventStart
-                , text ") "
-                , smallButton (Msg.FixProblem (RemoveScansBeforeEventStart eventStartTimeMillis)) [] "Remove barcodes scanned before event start"
-                , text " "
-                , smallButton (Msg.IgnoreProblem index) [] "Ignore"
+        _ ->
+            warningAlert
+                [ text "The following athletes have been scanned multiple times with a finish token and without a finish token:"
+                , ul [] (List.map (athleteAndPositionRow problemFixGenerator buttonLabel) athleteAndPositionPairs)
                 ]
 
-        StopwatchTimeOffset offset ->
-            let
-                offsetDescription : String
-                offsetDescription =
-                    if abs offset == 1 then
-                        "1 second"
 
-                    else
-                        String.fromInt (abs offset) ++ " seconds"
+positionsWithAndWithoutAthleteView : List AthleteAndPositionPair -> Html Msg
+positionsWithAndWithoutAthleteView athleteAndPositionPairs =
+    let
+        buttonLabel : String
+        buttonLabel =
+            "Remove unassociated finish token scan"
 
-                laterStopwatch : String
-                laterStopwatch =
-                    if offset < 0 then
-                        "stopwatch 1"
-
-                    else
-                        "stopwatch 2"
-
-                stopwatch1AdjustText : String
-                stopwatch1AdjustText =
-                    if offset < 0 then
-                        "Stopwatch 1 is slow - add " ++ offsetDescription
-
-                    else
-                        "Stopwatch 1 is fast - take off " ++ offsetDescription
-
-                stopwatch2AdjustText : String
-                stopwatch2AdjustText =
-                    if offset < 0 then
-                        "Stopwatch 2 is fast - take off " ++ offsetDescription
-
-                    else
-                        "Stopwatch 2 is slow - add " ++ offsetDescription
-            in
-            li []
-                [ text "There seems to be a difference of "
-                , text offsetDescription
-                , text " between the stopwatches, with "
-                , text laterStopwatch
-                , text " being the one started later."
-                , smallButton (Msg.FixProblem (AdjustStopwatch StopwatchOne -offset)) [] stopwatch1AdjustText
-                , text " "
-                , smallButton (Msg.FixProblem (AdjustStopwatch StopwatchTwo offset)) [] stopwatch2AdjustText
-                , text " "
-                , smallButton (Msg.IgnoreProblem index) [] "Ignore"
+        problemFixGenerator : AthleteAndPositionPair -> ProblemFix
+        problemFixGenerator pair =
+            RemoveUnassociatedFinishToken pair.position
+    in
+    case athleteAndPositionPairs of
+        [ pair ] ->
+            warningAlert
+                [ text
+                    ("Finish token "
+                        ++ String.fromInt pair.position
+                        ++ " has been scanned with athlete "
+                        ++ pair.athlete
+                        ++ " and also without a corresponding athlete."
+                    )
+                , generateButton (problemFixGenerator pair) buttonLabel
                 ]
 
-        BarcodesScannedTheWrongWayAround fileName startLineNumber endLineNumber ->
-            let
-                pairsIntro : String
-                pairsIntro =
-                    if endLineNumber == startLineNumber + 1 then
-                        "One pair"
+        _ ->
+            warningAlert
+                [ text "The following finish tokens have been scanned multiple times with an athlete and without an athlete:"
+                , ul [] (List.map (athleteAndPositionRow problemFixGenerator buttonLabel) athleteAndPositionPairs)
+                ]
 
-                    else
-                        String.fromInt (endLineNumber - startLineNumber) ++ " pairs"
 
-                haveOrHas : String
-                haveOrHas =
-                    if endLineNumber == startLineNumber + 1 then
-                        "has"
+barcodesScannedTheWrongWayAroundView : List BarcodesScannedTheWrongWayAroundProblem -> Html Msg
+barcodesScannedTheWrongWayAroundView barcodesScannedTheWrongWayAround =
+    let
+        makeButton : BarcodesScannedTheWrongWayAroundProblem -> Html Msg
+        makeButton range =
+            smallButton (Msg.FixProblem (SwapBarcodes range.filename range.startLineNumber range.endLineNumber)) [] "Swap over"
 
-                    else
-                        "have"
-            in
-            li []
-                [ text pairsIntro
+        pairsIntro : BarcodesScannedTheWrongWayAroundProblem -> String
+        pairsIntro range =
+            if range.endLineNumber == range.startLineNumber + 1 then
+                "One pair"
+
+            else
+                String.fromInt (range.endLineNumber - range.startLineNumber) ++ " pairs"
+
+        haveOrHas : BarcodesScannedTheWrongWayAroundProblem -> String
+        haveOrHas range =
+            if range.endLineNumber == range.startLineNumber + 1 then
+                "has"
+
+            else
+                "have"
+
+        generateRow : BarcodesScannedTheWrongWayAroundProblem -> Html Msg
+        generateRow range =
+            li
+                []
+                [ text
+                    (pairsIntro range
+                        ++ ", in file "
+                        ++ range.filename
+                        ++ ", lines "
+                        ++ String.fromInt range.startLineNumber
+                        ++ " to "
+                        ++ String.fromInt range.endLineNumber
+                        ++ ". "
+                    )
+                , makeButton range
+                ]
+    in
+    case barcodesScannedTheWrongWayAround of
+        [ singleRange ] ->
+            warningAlert
+                [ text (pairsIntro singleRange)
                 , text " of barcodes in file "
-                , text fileName
+                , text singleRange.filename
                 , text " "
-                , text haveOrHas
+                , text (haveOrHas singleRange)
                 , text " been scanned the wrong way around between lines "
-                , text (String.fromInt startLineNumber)
+                , text (String.fromInt singleRange.startLineNumber)
                 , text " and "
-                , text (String.fromInt endLineNumber)
-                , text " "
-                , smallButton (Msg.FixProblem (SwapBarcodes fileName startLineNumber endLineNumber)) [] "Swap over"
-                , text " "
-                , smallButton (Msg.IgnoreProblem index) [] "Ignore"
+                , text (String.fromInt singleRange.endLineNumber)
+                , text ". "
+                , makeButton singleRange
+                ]
+
+        _ ->
+            warningAlert
+                [ text "The following ranges of barcodes have been scanned the wrong way around:"
+                , ul [] (List.map generateRow barcodesScannedTheWrongWayAround)
                 ]
 
 
-fixableProblemsView : List (Html Msg) -> Html Msg
-fixableProblemsView fixableProblems =
-    if List.isEmpty fixableProblems then
-        div [] []
+stopwatchTimeOffsetView : Int -> Maybe (Html Msg)
+stopwatchTimeOffsetView offset =
+    if offset == 0 then
+        Nothing
 
     else
         let
-            fixableProblemsHeader : String
-            fixableProblemsHeader =
-                if List.length fixableProblems == 1 then
-                    "The following fixable problem was found:"
+            offsetDescription : String
+            offsetDescription =
+                if abs offset == 1 then
+                    "1 second"
 
                 else
-                    "The following fixable problems were found:"
+                    String.fromInt (abs offset) ++ " seconds"
+
+            laterStopwatch : String
+            laterStopwatch =
+                if offset < 0 then
+                    "stopwatch 1"
+
+                else
+                    "stopwatch 2"
+
+            stopwatch1AdjustText : String
+            stopwatch1AdjustText =
+                if offset < 0 then
+                    "Stopwatch 1 is slow - add " ++ offsetDescription
+
+                else
+                    "Stopwatch 1 is fast - take off " ++ offsetDescription
+
+            stopwatch2AdjustText : String
+            stopwatch2AdjustText =
+                if offset < 0 then
+                    "Stopwatch 2 is fast - take off " ++ offsetDescription
+
+                else
+                    "Stopwatch 2 is slow - add " ++ offsetDescription
         in
-        Alert.simpleWarning
-            []
-            [ h4 [] [ text fixableProblemsHeader ]
-            , ul [] fixableProblems
+        warningAlert
+            [ text "There seems to be a difference of "
+            , text offsetDescription
+            , text " between the stopwatches, with "
+            , text laterStopwatch
+            , text " being the one started later."
+            , smallButton (Msg.FixProblem (AdjustStopwatch StopwatchOne -offset)) [] stopwatch1AdjustText
+            , text " "
+            , smallButton (Msg.FixProblem (AdjustStopwatch StopwatchTwo offset)) [] stopwatch2AdjustText
             ]
+            |> Just
 
 
-problemView : ProblemEntry -> ( Maybe (Html Msg), Maybe (Html Msg) )
-problemView problemEntry =
-    case problemEntry.problem of
-        Fixable fixableProblem ->
-            ( Just (fixableProblemView problemEntry.index fixableProblem), Nothing )
+inconsistentBarcodeScannerDatesView : InconsistentBarcodeScannerDatesProblem -> Html Msg
+inconsistentBarcodeScannerDatesView inconsistentBarcodeScannerDatesProblem =
+    dangerAlert
+        [ text
+            ("Inconsistent dates were found among the barcode scanner files ("
+                ++ inconsistentBarcodeScannerDatesProblem.scannerDate1
+                ++ " and "
+                ++ inconsistentBarcodeScannerDatesProblem.scannerDate2
+                ++ ").  Please check that you have uploaded files from the same date."
+            )
+        ]
 
-        NonFixable nonFixableProblem ->
-            ( Nothing, Just (nonFixableProblemView problemEntry.index nonFixableProblem) )
+
+athletesWithMultiplePositionsView : List AthleteWithMultiplePositionsProblem -> Html Msg
+athletesWithMultiplePositionsView athletesWithMultiplePositions =
+    let
+        commaSeparate : List Int -> String
+        commaSeparate numbers =
+            String.join ", " (List.map String.fromInt numbers)
+
+        rowGenerator : AthleteWithMultiplePositionsProblem -> Html Msg
+        rowGenerator athleteWithMultiplePositions =
+            li [] [ text (athleteWithMultiplePositions.athlete ++ " and " ++ commaSeparate athleteWithMultiplePositions.positions) ]
+    in
+    case athletesWithMultiplePositions of
+        [ singleAthlete ] ->
+            dangerAlert
+                [ text ("Athlete barcode " ++ singleAthlete.athlete ++ " has been scanned with more than one finish token: " ++ commaSeparate singleAthlete.positions ++ ".") ]
+
+        _ ->
+            dangerAlert
+                [ text "The following athletes have been scanned with more than one finish token:"
+                , ul [] (List.map rowGenerator athletesWithMultiplePositions)
+                ]
 
 
-problemsView : List ProblemEntry -> Html Msg
+positionsWithMultipleAthletesView : List PositionWithMultipleAthletesProblem -> Html Msg
+positionsWithMultipleAthletesView positionsWithMultipleAthletes =
+    let
+        rowGenerator : PositionWithMultipleAthletesProblem -> Html Msg
+        rowGenerator positionWithMultipleAthletes =
+            li [] [ text (String.fromInt positionWithMultipleAthletes.position ++ " and " ++ String.join ", " positionWithMultipleAthletes.athletes) ]
+    in
+    case positionsWithMultipleAthletes of
+        [ singlePosition ] ->
+            dangerAlert
+                [ text ("Finish token " ++ String.fromInt singlePosition.position ++ " has been scanned with more than one athlete: " ++ String.join ", " singlePosition.athletes ++ ".") ]
+
+        _ ->
+            dangerAlert
+                [ text "The following finish tokens have been scanned with more than one athlete:"
+                , ul [] (List.map rowGenerator positionsWithMultipleAthletes)
+                ]
+
+
+positionOffEndOfTimesView : PositionOffEndOfTimesProblem -> Html Msg
+positionOffEndOfTimesView positionOffEndOfTimes =
+    dangerAlert
+        [ text
+            ("The highest finish token scanned was "
+                ++ String.fromInt positionOffEndOfTimes.maxPosition
+                ++ " but there are only "
+                ++ String.fromInt positionOffEndOfTimes.stopwatchTimeCount
+                ++ " times recorded on the stopwatch(es)"
+            )
+        ]
+
+
+athletesMissingPositionView : List String -> Html Msg
+athletesMissingPositionView athletes =
+    let
+        generateRow : String -> Html Msg
+        generateRow athlete =
+            li [] [ text athlete ]
+    in
+    case athletes of
+        [ singleAthlete ] ->
+            dangerAlert
+                [ text ("Athlete barcode " ++ singleAthlete ++ " was scanned without a corresponding finish token.") ]
+
+        _ ->
+            dangerAlert
+                [ text "The following athletes have been scanned without corresponding finish tokens:"
+                , ul [] (List.map generateRow athletes)
+                ]
+
+
+hideIfEmpty : (List a -> Html Msg) -> List a -> Maybe (Html Msg)
+hideIfEmpty viewer list =
+    if List.isEmpty list then
+        Nothing
+
+    else
+        Just (viewer list)
+
+
+positionsMissingAthleteView : List Int -> Html Msg
+positionsMissingAthleteView positions =
+    let
+        generateRow : Int -> Html Msg
+        generateRow position =
+            li [] [ text (String.fromInt position) ]
+    in
+    case positions of
+        [ singlePosition ] ->
+            dangerAlert
+                [ text ("Finish token " ++ String.fromInt singlePosition ++ " was scanned without a corresponding athlete barcode.") ]
+
+        _ ->
+            dangerAlert
+                [ text "The following finish tokens have been scanned without corresponding athletes:"
+                , ul [] (List.map generateRow positions)
+                ]
+
+
+misScannedItemsView : List String -> Html Msg
+misScannedItemsView misScans =
+    let
+        generateRow : String -> Html Msg
+        generateRow misScanText =
+            li [] [ text misScanText ]
+    in
+    case misScans of
+        [ singleMisScan ] ->
+            dangerAlert
+                [ text ("An unrecognised item  '" ++ singleMisScan ++ "' was scanned.") ]
+
+        _ ->
+            dangerAlert
+                [ text "The following unrecognised items were scanned:"
+                , ul [] (List.map generateRow misScans)
+                ]
+
+
+unrecognisedBarcodeScannerLinesView : List String -> Html Msg
+unrecognisedBarcodeScannerLinesView unrecognisedBarcodeScannerLines =
+    let
+        generateRow : String -> Html Msg
+        generateRow unrecognisedLine =
+            li [] [ text unrecognisedLine ]
+    in
+    case unrecognisedBarcodeScannerLines of
+        [ singleLine ] ->
+            dangerAlert
+                [ text ("The line '" ++ singleLine ++ "' in a barcode scanner file was not recognised.") ]
+
+        _ ->
+            dangerAlert
+                [ text "The following lines in barcode scanner files were not recognised:"
+                , ul [] (List.map generateRow unrecognisedBarcodeScannerLines)
+                ]
+
+
+identicalStopwatchTimesView : Bool -> Maybe (Html Msg)
+identicalStopwatchTimesView identicalStopwatchTimes =
+    if identicalStopwatchTimes then
+        dangerAlert
+            [ text
+                ("Both stopwatch files have identical times.  It is very unlikely in practice for two stopwatches to contain the same times.  "
+                    ++ "Please check you haven't downloaded times from the same stopwatch twice."
+                )
+            ]
+            |> Just
+
+    else
+        Nothing
+
+
+problemsView : Problems -> Html Msg
 problemsView problems =
     let
-        nonIgnoredProblems : List ProblemEntry
-        nonIgnoredProblems =
-            List.filter (not << .ignored) problems
-
-        splitProblems : List ( Maybe (Html Msg), Maybe (Html Msg) )
-        splitProblems =
-            List.map problemView nonIgnoredProblems
-
-        fixableProblems : List (Html Msg)
-        fixableProblems =
-            List.filterMap Tuple.first splitProblems
-
-        nonFixableProblems : List (Html Msg)
-        nonFixableProblems =
-            List.filterMap Tuple.second splitProblems
+        problemViewSections : List (Maybe (Html Msg))
+        problemViewSections =
+            [ Maybe.map barcodesScannedBeforeEventStartProblemView problems.barcodesScannedBeforeEventStart
+            , Maybe.andThen stopwatchTimeOffsetView problems.stopwatchTimeOffset
+            , hideIfEmpty athletesInSamePositionMultipleTimesView problems.athletesInSamePositionMultipleTimes
+            , hideIfEmpty athletesWithAndWithoutPositionView problems.athletesWithAndWithoutPosition
+            , hideIfEmpty positionsWithAndWithoutAthleteView problems.positionsWithAndWithoutAthlete
+            , hideIfEmpty barcodesScannedTheWrongWayAroundView problems.barcodesScannedTheWrongWayAround
+            , Maybe.map inconsistentBarcodeScannerDatesView problems.inconsistentBarcodeScannerDates
+            , hideIfEmpty athletesWithMultiplePositionsView problems.athletesWithMultiplePositions
+            , hideIfEmpty positionsWithMultipleAthletesView problems.positionsWithMultipleAthletes
+            , Maybe.map positionOffEndOfTimesView problems.positionOffEndOfTimes
+            , hideIfEmpty athletesMissingPositionView problems.athletesMissingPosition
+            , hideIfEmpty positionsMissingAthleteView problems.positionsMissingAthlete
+            , hideIfEmpty misScannedItemsView problems.misScans
+            , hideIfEmpty unrecognisedBarcodeScannerLinesView problems.unrecognisedBarcodeScannerLines
+            , identicalStopwatchTimesView problems.identicalStopwatchTimes
+            ]
     in
-    div []
-        [ fixableProblemsView fixableProblems
-        , nonFixableProblemsView nonFixableProblems
-        ]
+    div [] (List.filterMap identity problemViewSections)

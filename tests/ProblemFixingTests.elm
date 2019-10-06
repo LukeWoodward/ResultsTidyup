@@ -16,9 +16,8 @@ import BarcodeScanner
 import BarcodeScannerTests exposing (createBarcodeScannerData)
 import Dict
 import Expect exposing (Expectation)
-import Model exposing (Model, NumberCheckerManualEntryRow, ProblemEntry, emptyNumberCheckerManualEntryRow, initModel)
+import Model exposing (Model, NumberCheckerManualEntryRow, emptyNumberCheckerManualEntryRow, initModel)
 import ProblemFixing exposing (ProblemFix(..), fixProblem)
-import Problems exposing (FixableProblem(..), NonFixableProblem(..), Problem(..))
 import Stopwatch exposing (Stopwatches, WhichStopwatch(..))
 import Test exposing (Test, describe, test)
 import TestData exposing (defaultTime, doubleStopwatches, ordinaryFileLine, stopwatchesForAdjusting, toPosix)
@@ -154,11 +153,6 @@ ifLineNumberGreaterThanOne line =
 
     else
         line
-
-
-makeProblemEntries : List Problem -> List ProblemEntry
-makeProblemEntries problems =
-    List.indexedMap (\index problem -> ProblemEntry problem index False) problems
 
 
 {-| 2018-03-14T09:00:00

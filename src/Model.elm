@@ -2,7 +2,6 @@ module Model exposing
     ( DialogDetails(..)
     , Model
     , NumberCheckerManualEntryRow
-    , ProblemEntry
     , emptyNumberCheckerManualEntryRow
     , emptyNumericEntry
     , initModel
@@ -15,7 +14,7 @@ import Error exposing (FileError)
 import EventDateAndTime exposing (EventDateAndTime)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import NumericEntry exposing (NumericEntry)
-import Problems exposing (Problem)
+import Problems exposing (Problems)
 import Stopwatch exposing (Stopwatches(..))
 import Time exposing (Posix)
 import TokenOperations exposing (TokenOperationEditDetails)
@@ -38,13 +37,6 @@ emptyNumberCheckerManualEntryRow =
     NumberCheckerManualEntryRow emptyNumericEntry emptyNumericEntry emptyNumericEntry
 
 
-type alias ProblemEntry =
-    { problem : Problem
-    , index : Int
-    , ignored : Bool
-    }
-
-
 type DialogDetails
     = NoDialog
     | BarcodeScannerRowEditDialog BarcodeScannerRowEditDetails
@@ -59,7 +51,7 @@ type alias Model =
     , lastHeight : Maybe Int
     , highlightedNumberCheckerId : Maybe Int
     , barcodeScannerData : BarcodeScannerData
-    , problems : List ProblemEntry
+    , problems : Problems
     , eventDateAndTime : EventDateAndTime
     , numberCheckerManualEntryRow : NumberCheckerManualEntryRow
     , secondTab : Tab.State
@@ -77,7 +69,7 @@ initModel =
     , lastHeight = Nothing
     , highlightedNumberCheckerId = Nothing
     , barcodeScannerData = BarcodeScanner.empty
-    , problems = []
+    , problems = Problems.noProblems
     , eventDateAndTime = EventDateAndTime "" Nothing "" Nothing
     , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
     , secondTab = Tab.initialState

@@ -14,7 +14,6 @@ import BarcodeScanner
         )
 import DateHandling exposing (dateStringToPosix)
 import Model exposing (Model)
-import Problems exposing (FixableProblem(..), NonFixableProblem(..))
 import Stopwatch exposing (DoubleStopwatchData, Stopwatches(..), WhichStopwatch(..), createMergedTable)
 import Time exposing (Posix)
 

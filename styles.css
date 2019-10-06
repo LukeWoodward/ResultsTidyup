@@ -211,3 +211,7 @@ div.token-operation-help-text {
 }
 
 #header { float: left; }
+
+.alert.warning-condensed {
+    padding: .375rem 0.625rem;
+}
