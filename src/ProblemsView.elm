@@ -1,7 +1,7 @@
 module ProblemsView exposing (problemsView)
 
 import Bootstrap.Alert as Alert
-import Html exposing (Html, button, div, h4, li, text, ul)
+import Html exposing (Html, button, div, h4, li, span, text, ul)
 import Html.Attributes exposing (class, type_)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg)
@@ -112,7 +112,7 @@ athletesWithAndWithoutPositionView athleteAndPositionPairs =
                         ++ pair.athlete
                         ++ " has been scanned with finish token "
                         ++ String.fromInt pair.position
-                        ++ " and also without a corresponding finish token."
+                        ++ " and also without a finish token."
                     )
                 , generateButton (problemFixGenerator pair) buttonLabel
                 ]
@@ -143,7 +143,7 @@ positionsWithAndWithoutAthleteView athleteAndPositionPairs =
                         ++ String.fromInt pair.position
                         ++ " has been scanned with athlete "
                         ++ pair.athlete
-                        ++ " and also without a corresponding athlete."
+                        ++ " and also without an athlete."
                     )
                 , generateButton (problemFixGenerator pair) buttonLabel
                 ]
@@ -340,20 +340,16 @@ positionOffEndOfTimesView positionOffEndOfTimes =
 
 athletesMissingPositionView : List String -> Html Msg
 athletesMissingPositionView athletes =
-    let
-        generateRow : String -> Html Msg
-        generateRow athlete =
-            li [] [ text athlete ]
-    in
     case athletes of
         [ singleAthlete ] ->
             dangerAlert
-                [ text ("Athlete barcode " ++ singleAthlete ++ " was scanned without a corresponding finish token.") ]
+                [ text ("Athlete barcode " ++ singleAthlete ++ " was scanned without a finish token.") ]
 
         _ ->
             dangerAlert
-                [ text "The following athletes have been scanned without corresponding finish tokens:"
-                , ul [] (List.map generateRow athletes)
+                [ text "The following athletes have been scanned without finish tokens: "
+                , span [] (List.map text athletes |> List.intersperse (text ", "))
+                , text "."
                 ]
 
 
@@ -368,20 +364,16 @@ hideIfEmpty viewer list =
 
 positionsMissingAthleteView : List Int -> Html Msg
 positionsMissingAthleteView positions =
-    let
-        generateRow : Int -> Html Msg
-        generateRow position =
-            li [] [ text (String.fromInt position) ]
-    in
     case positions of
         [ singlePosition ] ->
             dangerAlert
-                [ text ("Finish token " ++ String.fromInt singlePosition ++ " was scanned without a corresponding athlete barcode.") ]
+                [ text ("Finish token " ++ String.fromInt singlePosition ++ " was scanned without an athlete barcode.") ]
 
         _ ->
             dangerAlert
-                [ text "The following finish tokens have been scanned without corresponding athletes:"
-                , ul [] (List.map generateRow positions)
+                [ text "The following finish tokens have been scanned without athlete barcodes: "
+                , span [] (List.map (text << String.fromInt) positions |> List.intersperse (text ", "))
+                , text "."
                 ]
 
 
