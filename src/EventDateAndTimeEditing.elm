@@ -1,6 +1,6 @@
 module EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeChange)
 
-import DateHandling exposing (dateStringToPosix)
+import DateHandling exposing (dateTimeStringToPosix)
 import EventDateAndTime exposing (EventDateAndTime)
 import Model exposing (Model)
 import Time exposing (Posix)
@@ -14,7 +14,7 @@ handleEventDateChange newEventDate model =
         newParsedDate =
             newEventDate
                 ++ " 00:00:00"
-                |> dateStringToPosix
+                |> dateTimeStringToPosix
 
         oldEventDateAndTime : EventDateAndTime
         oldEventDateAndTime =

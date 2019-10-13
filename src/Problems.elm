@@ -15,7 +15,7 @@ module Problems exposing
     )
 
 import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, BarcodeScannerFileLine, DeletionStatus(..), LineContents(..), MisScannedItem, UnrecognisedLine)
-import DateHandling exposing (dateStringToPosix, dateToString)
+import DateHandling exposing (dateTimeStringToPosix, posixToDateString)
 import Dict exposing (Dict)
 import EventDateAndTime exposing (EventDateAndTime)
 import Set exposing (Set)
@@ -43,7 +43,7 @@ type BarcodeScannerClockDifferences
 
 type alias BarcodesScannedBeforeEventStartProblem =
     { numberOfScansBeforeEventStart : Int
-    , eventStartTimeMillis : Int
+    , eventStartDateTimeMillis : Int
     , eventStartTime : String
     }
 
@@ -205,11 +205,11 @@ identifyInconsistentBarcodeScannerDates barcodeScannerData =
     let
         maxScanDates : List String
         maxScanDates =
-            List.filterMap .maxScanDate barcodeScannerData.files
+            List.filterMap .maxScanDateTime barcodeScannerData.files
                 |> List.map Time.posixToMillis
                 |> deduplicate
                 |> List.map Time.millisToPosix
-                |> List.map dateToString
+                |> List.map posixToDateString
     in
     Maybe.map (\( first, second ) -> InconsistentBarcodeScannerDatesProblem first second) (hasDifferentValues maxScanDates)
 
@@ -315,18 +315,18 @@ getSingleValue list =
             Nothing
 
 
-countScansBeforeTime : Int -> BarcodeScannerFile -> Int
-countScansBeforeTime timeMillis file =
+countScansBefore : Int -> BarcodeScannerFile -> Int
+countScansBefore timeMillis file =
     let
         countDatesBefore : List String -> Int
         countDatesBefore dates =
-            List.filterMap dateStringToPosix dates
+            List.filterMap dateTimeStringToPosix dates
                 |> List.map Time.posixToMillis
                 |> List.filter (\t -> t < timeMillis)
                 |> List.length
     in
     List.filter (\line -> line.deletionStatus == NotDeleted) file.lines
-        |> List.map .scanTime
+        |> List.map .scanDateTime
         |> countDatesBefore
 
 
@@ -390,22 +390,22 @@ identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly =
 
 
 identifyRecordsScannedBeforeEventStartTime : BarcodeScannerData -> String -> Int -> Maybe BarcodesScannedBeforeEventStartProblem
-identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString eventStartTimeMillis =
+identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString eventStartDateTimeMillis =
     let
         totalNumberOfScansBeforeEventStart : Int
         totalNumberOfScansBeforeEventStart =
-            List.map (countScansBeforeTime eventStartTimeMillis) barcodeScannerData.files
+            List.map (countScansBefore eventStartDateTimeMillis) barcodeScannerData.files
                 |> List.sum
     in
     if totalNumberOfScansBeforeEventStart == 0 then
         Nothing
 
     else
-        Just (BarcodesScannedBeforeEventStartProblem totalNumberOfScansBeforeEventStart eventStartTimeMillis eventStartTimeAsString)
+        Just (BarcodesScannedBeforeEventStartProblem totalNumberOfScansBeforeEventStart eventStartDateTimeMillis eventStartTimeAsString)
 
 
 identifyBarcodeScannerClockBeingOut : Int -> BarcodeScannerFile -> Maybe BarcodeScannerClockDifference
-identifyBarcodeScannerClockBeingOut eventStartTimeMillis file =
+identifyBarcodeScannerClockBeingOut eventStartDateTimeMillis file =
     let
         totalScans : Int
         totalScans =
@@ -413,19 +413,19 @@ identifyBarcodeScannerClockBeingOut eventStartTimeMillis file =
 
         countBeforeEventStart : Int
         countBeforeEventStart =
-            countScansBeforeTime eventStartTimeMillis file
+            countScansBefore eventStartDateTimeMillis file
 
         countOneHourBeforeEventStart : Int
         countOneHourBeforeEventStart =
-            countScansBeforeTime (eventStartTimeMillis - 60 * 60 * 1000) file
+            countScansBefore (eventStartDateTimeMillis - 60 * 60 * 1000) file
 
         countWithinOneHourAfterEventStart : Int
         countWithinOneHourAfterEventStart =
-            countScansBeforeTime (eventStartTimeMillis + 60 * 60 * 1000) file
+            countScansBefore (eventStartDateTimeMillis + 60 * 60 * 1000) file
 
         countWithinTwoHoursAfterEventStart : Int
         countWithinTwoHoursAfterEventStart =
-            countScansBeforeTime (eventStartTimeMillis + 2 * 60 * 60 * 1000) file
+            countScansBefore (eventStartDateTimeMillis + 2 * 60 * 60 * 1000) file
 
         mostOf : Int -> Bool
         mostOf num =
@@ -474,13 +474,13 @@ repeatedElement list =
 
 
 identifyBarcodeScannerClocksBeingOut : BarcodeScannerData -> Maybe Int -> BarcodeScannerClockDifferences
-identifyBarcodeScannerClocksBeingOut barcodeScannerData eventStartTimeMillisMaybe =
-    case eventStartTimeMillisMaybe of
-        Just eventStartTimeMillis ->
+identifyBarcodeScannerClocksBeingOut barcodeScannerData eventStartDateTimeMillisMaybe =
+    case eventStartDateTimeMillisMaybe of
+        Just eventStartDateTimeMillis ->
             let
                 allClockDifferences : List BarcodeScannerClockDifference
                 allClockDifferences =
-                    List.filterMap (identifyBarcodeScannerClockBeingOut eventStartTimeMillis) barcodeScannerData.files
+                    List.filterMap (identifyBarcodeScannerClockBeingOut eventStartDateTimeMillis) barcodeScannerData.files
 
                 allDifferenceTypes : List BarcodeScannerClockDifferenceType
                 allDifferenceTypes =
@@ -628,8 +628,8 @@ identifyProblems stopwatches barcodeScannerData eventDateAndTime =
         finishTokensOnly =
             List.map .position barcodeScannerData.finishTokensOnly
 
-        eventStartTimeMillis : Maybe Int
-        eventStartTimeMillis =
+        eventStartDateTimeMillis : Maybe Int
+        eventStartDateTimeMillis =
             Maybe.map2
                 (\dateAsPosix timeInMinutes -> Time.posixToMillis dateAsPosix + timeInMinutes * 60 * 1000)
                 eventDateAndTime.validatedDate
@@ -639,8 +639,8 @@ identifyProblems stopwatches barcodeScannerData eventDateAndTime =
         eventStartTimeAsString =
             eventDateAndTime.enteredDate ++ " " ++ eventDateAndTime.enteredTime
     in
-    { barcodeScannerClockDifferences = identifyBarcodeScannerClocksBeingOut barcodeScannerData eventStartTimeMillis
-    , barcodesScannedBeforeEventStart = Maybe.andThen (identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString) eventStartTimeMillis
+    { barcodeScannerClockDifferences = identifyBarcodeScannerClocksBeingOut barcodeScannerData eventStartDateTimeMillis
+    , barcodesScannedBeforeEventStart = Maybe.andThen (identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString) eventStartDateTimeMillis
     , athletesInSamePositionMultipleTimes = identifyDuplicateScans positionToAthletesDict
     , athletesWithAndWithoutPosition = identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly
     , positionsWithAndWithoutAthlete = identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly

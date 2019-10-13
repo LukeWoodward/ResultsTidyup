@@ -60,11 +60,11 @@ makeBarcodeScannerData items =
     let
         lines : List BarcodeScannerFileLine
         lines =
-            List.indexedMap (\index ( position, athlete ) -> { lineNumber = index + 1, contents = Ordinary athlete (Just position), scanTime = "scanTime", deletionStatus = NotDeleted }) items
+            List.indexedMap (\index ( position, athlete ) -> { lineNumber = index + 1, contents = Ordinary athlete (Just position), scanDateTime = "scanDateTime", deletionStatus = NotDeleted }) items
 
         files : List BarcodeScannerFile
         files =
-            [ { name = "file1.txt", lines = lines, maxScanDate = Nothing } ]
+            [ { name = "file1.txt", lines = lines, maxScanDateTime = Nothing } ]
     in
     regenerate { empty | files = files }
 

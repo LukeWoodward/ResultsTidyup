@@ -1,4 +1,4 @@
-module DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart, posixToDateTimeString)
+module DateHandling exposing (dateTimeStringToPosix, generateDownloadFilenameDatePart, posixToDateString, posixToDateTimeString)
 
 import Iso8601
 import Parser exposing ((|.), (|=), Parser, end, run, symbol)
@@ -69,8 +69,8 @@ generateDownloadFilenameDatePart zone time =
         |> String.join ""
 
 
-barcodeScannerDateParser : Parser ()
-barcodeScannerDateParser =
+barcodeScannerDateTimeParser : Parser ()
+barcodeScannerDateTimeParser =
     digits 2
         |. symbol "/"
         |. digits 2
@@ -85,22 +85,22 @@ barcodeScannerDateParser =
         |. end
 
 
-dateStringToPosix : String -> Maybe Posix
-dateStringToPosix dateString =
-    if Result.Extra.isOk (run barcodeScannerDateParser dateString) then
+dateTimeStringToPosix : String -> Maybe Posix
+dateTimeStringToPosix dateTimeString =
+    if Result.Extra.isOk (run barcodeScannerDateTimeParser dateTimeString) then
         let
-            isoDateString : String
-            isoDateString =
-                String.slice 6 10 dateString
+            isoDateTimeString : String
+            isoDateTimeString =
+                String.slice 6 10 dateTimeString
                     ++ "-"
-                    ++ String.slice 3 5 dateString
+                    ++ String.slice 3 5 dateTimeString
                     ++ "-"
-                    ++ String.left 2 dateString
+                    ++ String.left 2 dateTimeString
                     ++ "T"
-                    ++ String.right 8 dateString
+                    ++ String.right 8 dateTimeString
                     ++ ".000Z"
         in
-        case Iso8601.toTime isoDateString of
+        case Iso8601.toTime isoDateTimeString of
             Ok time ->
                 Just time
 
@@ -111,26 +111,26 @@ dateStringToPosix dateString =
         Nothing
 
 
+posixToDateString : Posix -> String
+posixToDateString date =
+    [ Time.toDay Time.utc date
+    , getMonthNumber Time.utc date
+    , Time.toYear Time.utc date
+    ]
+        |> List.map formatToAtLeastTwoChars
+        |> String.join "/"
+
+
 posixToDateTimeString : Posix -> String
-posixToDateTimeString time =
+posixToDateTimeString dateTime =
     let
         timeString : String
         timeString =
-            [ Time.toHour Time.utc time
-            , Time.toMinute Time.utc time
-            , Time.toSecond Time.utc time
+            [ Time.toHour Time.utc dateTime
+            , Time.toMinute Time.utc dateTime
+            , Time.toSecond Time.utc dateTime
             ]
                 |> List.map formatToAtLeastTwoChars
                 |> String.join ":"
     in
-    dateToString time ++ " " ++ timeString
-
-
-dateToString : Posix -> String
-dateToString time =
-    [ Time.toDay Time.utc time
-    , getMonthNumber Time.utc time
-    , Time.toYear Time.utc time
-    ]
-        |> List.map formatToAtLeastTwoChars
-        |> String.join "/"
+    posixToDateString dateTime ++ " " ++ timeString

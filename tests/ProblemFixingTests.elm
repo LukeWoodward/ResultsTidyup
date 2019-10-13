@@ -21,7 +21,7 @@ import ProblemFixing exposing (ProblemFix(..), fixProblem)
 import Problems exposing (BarcodeScannerClockDifferenceType(..))
 import Stopwatch exposing (Stopwatches, WhichStopwatch(..))
 import Test exposing (Test, describe, test)
-import TestData exposing (createBarcodeScannerDataFromFiles, defaultTime, doubleStopwatches, ordinaryFileLine, stopwatchesForAdjusting, toPosix)
+import TestData exposing (createBarcodeScannerDataFromFiles, defaultDateTime, doubleStopwatches, ordinaryFileLine, stopwatchesForAdjusting, toPosix)
 import Time
 
 
@@ -78,7 +78,7 @@ createBarcodeScannerDataForRemovingDuplicateScans numberOfTimes =
                         BarcodeScannerFileLine index (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" NotDeleted
                     )
     in
-    regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines defaultTime ] }
+    regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines defaultDateTime ] }
 
 
 barcodeScannerDataForEventStartTimeFiltering : BarcodeScannerData
@@ -323,10 +323,10 @@ suite =
                             startingBarcodeScannerData =
                                 { initialBarcodeScannerData
                                     | files =
-                                        [ BarcodeScannerFile "barcodes1.txt" [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ] defaultTime
-                                        , BarcodeScannerFile "barcodes2.txt" [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ] defaultTime
+                                        [ BarcodeScannerFile "barcodes1.txt" [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ] defaultDateTime
+                                        , BarcodeScannerFile "barcodes2.txt" [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ] defaultDateTime
                                         ]
-                                    , lastScanDate = defaultTime
+                                    , lastScanDateTime = defaultDateTime
                                 }
 
                             expectedBarcodeScannerData : BarcodeScannerData
@@ -337,13 +337,13 @@ suite =
                                         [ BarcodeScannerFile
                                             "barcodes1.txt"
                                             [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ]
-                                            defaultTime
+                                            defaultDateTime
                                         , BarcodeScannerFile
                                             "barcodes2.txt"
                                             [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" (Deleted (DuplicateScan "A1234" 27)) ]
-                                            defaultTime
+                                            defaultDateTime
                                         ]
-                                    , lastScanDate = defaultTime
+                                    , lastScanDateTime = defaultDateTime
                                 }
                         in
                         runTestForFixingProblem (RemoveDuplicateScans 27 "A1234") startingBarcodeScannerData expectedBarcodeScannerData
@@ -383,7 +383,7 @@ suite =
                                     , ordinaryFileLine 3 "A3456" (Just 27) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 4 "A9012" (Just 27) "14/03/2018 09:47:03"
                                     ]
-                                    defaultTime
+                                    defaultDateTime
 
                             barcodeScannerData : BarcodeScannerData
                             barcodeScannerData =
@@ -391,7 +391,7 @@ suite =
 
                             initialBarcodeScannerData : BarcodeScannerData
                             initialBarcodeScannerData =
-                                { barcodeScannerData | files = [ file ], lastScanDate = defaultTime }
+                                { barcodeScannerData | files = [ file ], lastScanDateTime = defaultDateTime }
                         in
                         runTestForFixingProblem (RemoveDuplicateScans 27 "A1234") initialBarcodeScannerData initialBarcodeScannerData
                 ]

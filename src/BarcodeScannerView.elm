@@ -103,7 +103,7 @@ barcodeScannerViewRow fileName line =
         (List.map Table.rowAttr rowAttributes)
         ([ Table.td [] [ text (String.fromInt line.lineNumber) ] ]
             ++ barcodeScannerContents line.contents
-            ++ [ Table.td [] [ text line.scanTime ] ]
+            ++ [ Table.td [] [ text line.scanDateTime ] ]
         )
 
 

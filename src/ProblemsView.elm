@@ -106,7 +106,7 @@ barcodesScannedBeforeEventStartProblemView problem =
     in
     warningAlert
         [ text problemText
-        , smallButton (Msg.FixProblem (RemoveScansBeforeEventStart problem.eventStartTimeMillis)) [] "Remove barcodes scanned before event start"
+        , smallButton (Msg.FixProblem (RemoveScansBeforeEventStart problem.eventStartDateTimeMillis)) [] "Remove barcodes scanned before event start"
         ]
 
 

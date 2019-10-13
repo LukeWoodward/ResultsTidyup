@@ -1,8 +1,8 @@
 module TestData exposing
     ( createBarcodeScannerDataFromFiles
     , createNumberCheckerManualEntryRow
+    , defaultDateTime
     , defaultMatchSummary
-    , defaultTime
     , doubleStopwatches
     , expectedDownloadedStopwatchData1
     , expectedDownloadedStopwatchData2
@@ -66,8 +66,8 @@ import Stopwatch
 import Time exposing (Posix)
 
 
-defaultTime : Maybe Time.Posix
-defaultTime =
+defaultDateTime : Maybe Time.Posix
+defaultDateTime =
     toPosix "2018-03-14T09:47:03.000Z"
 
 
@@ -242,14 +242,14 @@ parsedBarcodeScannerData1 =
         [ BarcodeScannerFile
             "barcodes1.txt"
             [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
-            defaultTime
+            defaultDateTime
         ]
         (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
         []
         []
         []
         []
-        defaultTime
+        defaultDateTime
 
 
 parsedBarcodeScannerData1And2 : BarcodeScannerData
@@ -258,7 +258,7 @@ parsedBarcodeScannerData1And2 =
         [ BarcodeScannerFile
             "barcodes1.txt"
             [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
-            defaultTime
+            defaultDateTime
         , BarcodeScannerFile
             "barcodes2.txt"
             [ ordinaryFileLine 1 "A2044293" (Just 59) "14/03/2018 09:49:44" ]
@@ -284,14 +284,14 @@ parsedBarcodeScannerDataWithIncompleteRecordFirst =
             [ ordinaryFileLine 1 "" (Just 33) "14/03/2018 09:44:06"
             , ordinaryFileLine 2 "A4580442" (Just 47) "14/03/2018 09:47:03"
             ]
-            defaultTime
+            defaultDateTime
         ]
         (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
         []
         [ PositionAndTimePair 33 "14/03/2018 09:44:06" ]
         []
         []
-        defaultTime
+        defaultDateTime
 
 
 parsedInvalidBarcodeScannerData : BarcodeScannerData

@@ -12,7 +12,7 @@ import BarcodeScanner
         , PositionAndTimePair
         , regenerate
         )
-import DateHandling exposing (dateStringToPosix, posixToDateTimeString)
+import DateHandling exposing (dateTimeStringToPosix, posixToDateTimeString)
 import Model exposing (Model)
 import Problems exposing (BarcodeScannerClockDifference, BarcodeScannerClockDifferenceType(..))
 import Stopwatch exposing (DoubleStopwatchData, Stopwatches(..), WhichStopwatch(..), createMergedTable)
@@ -75,10 +75,10 @@ deleteUnassociatedFinishPosition position line =
 
 
 deleteBeforeEventStart : Int -> BarcodeScannerFileLine -> BarcodeScannerFileLine
-deleteBeforeEventStart eventStartTimeMillis line =
-    case Maybe.map Time.posixToMillis (dateStringToPosix line.scanTime) of
-        Just scanTimeMillis ->
-            if scanTimeMillis < eventStartTimeMillis then
+deleteBeforeEventStart eventStartDateTimeMillis line =
+    case Maybe.map Time.posixToMillis (dateTimeStringToPosix line.scanDateTime) of
+        Just scanDateTimeMillis ->
+            if scanDateTimeMillis < eventStartDateTimeMillis then
                 { line | deletionStatus = Deleted BeforeEventStart }
 
             else
@@ -135,15 +135,15 @@ deleteDuplicateScansWithinFile athlete position file startingFound =
         ( transformedLines, finalFound ) =
             transformLines file.lines startingFound
 
-        newMaxScanDate : Maybe Posix
-        newMaxScanDate =
+        newMaxScanDateTime : Maybe Posix
+        newMaxScanDateTime =
             transformedLines
-                |> List.filterMap (\line -> dateStringToPosix line.scanTime)
+                |> List.filterMap (\line -> dateTimeStringToPosix line.scanDateTime)
                 |> List.map Time.posixToMillis
                 |> List.maximum
                 |> Maybe.map Time.millisToPosix
     in
-    ( BarcodeScannerFile file.name transformedLines newMaxScanDate, finalFound )
+    ( BarcodeScannerFile file.name transformedLines newMaxScanDateTime, finalFound )
 
 
 deleteDuplicateScansWithinFilesInternal : String -> Int -> List BarcodeScannerFile -> Bool -> ( List BarcodeScannerFile, Bool )
@@ -236,11 +236,11 @@ swapBarcodesAround fileName first last files =
 
 applyCorrectionToLine : Int -> BarcodeScannerFileLine -> BarcodeScannerFileLine
 applyCorrectionToLine offset line =
-    case dateStringToPosix line.scanTime of
-        Just somePosixTime ->
+    case dateTimeStringToPosix line.scanDateTime of
+        Just somePosixValue ->
             { line
-                | scanTime =
-                    Time.posixToMillis somePosixTime
+                | scanDateTime =
+                    Time.posixToMillis somePosixValue
                         |> (+) offset
                         |> Time.millisToPosix
                         |> posixToDateTimeString
@@ -262,14 +262,14 @@ correctBarcodeScannerClock differenceType file =
                 OneHourFast ->
                     -60 * 60 * 1000
 
-        newMaxScanDate : Maybe Posix
-        newMaxScanDate =
-            file.maxScanDate
+        newMaxScanDateTime : Maybe Posix
+        newMaxScanDateTime =
+            file.maxScanDateTime
                 |> Maybe.map Time.posixToMillis
                 |> Maybe.map ((+) offset)
                 |> Maybe.map Time.millisToPosix
     in
-    { file | lines = List.map (applyCorrectionToLine offset) file.lines, maxScanDate = newMaxScanDate }
+    { file | lines = List.map (applyCorrectionToLine offset) file.lines, maxScanDateTime = newMaxScanDateTime }
 
 
 correctBarcodeScannerClockIfFilenameMatches : BarcodeScannerClockDifference -> BarcodeScannerFile -> BarcodeScannerFile
@@ -309,10 +309,10 @@ fixProblem problemFix model =
                             | files = deleteDuplicateScansWithinFiles athlete position oldBarcodeScannerData.files
                         }
 
-                RemoveScansBeforeEventStart eventStartTimeMillis ->
+                RemoveScansBeforeEventStart eventStartDateTimeMillis ->
                     regenerate
                         { oldBarcodeScannerData
-                            | files = deleteWithinFiles (deleteBeforeEventStart eventStartTimeMillis) oldBarcodeScannerData.files
+                            | files = deleteWithinFiles (deleteBeforeEventStart eventStartDateTimeMillis) oldBarcodeScannerData.files
                         }
 
                 SwapBarcodes fileName first last ->

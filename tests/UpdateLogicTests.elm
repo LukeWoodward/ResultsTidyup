@@ -247,17 +247,17 @@ getBarcodeScannerDataWithFiles numbers =
         files : List BarcodeScannerFile
         files =
             List.map String.fromInt numbers
-                |> List.map (\num -> BarcodeScannerFile (num ++ ".txt") [] defaultTime)
+                |> List.map (\num -> BarcodeScannerFile (num ++ ".txt") [] defaultDateTime)
 
-        lastScanDate : Maybe Time.Posix
-        lastScanDate =
+        lastScanDateTime : Maybe Time.Posix
+        lastScanDateTime =
             if List.isEmpty numbers then
                 Nothing
 
             else
-                defaultTime
+                defaultDateTime
     in
-    { empty | files = files, lastScanDate = lastScanDate }
+    { empty | files = files, lastScanDateTime = lastScanDateTime }
 
 
 makeBarcodeScannerRowEditDetails : BarcodeScannerRowEditLocation -> Maybe Int -> Maybe Int -> BarcodeScannerRowEditDetails

@@ -1,7 +1,7 @@
 module FileDropHandling exposing (handleFilesDropped)
 
 import BarcodeScanner exposing (BarcodeScannerData, mergeScannerData, readBarcodeScannerData)
-import DateHandling exposing (dateToString)
+import DateHandling exposing (posixToDateString)
 import Error exposing (Error, FileError, mapError)
 import EventDateAndTimeEditing exposing (handleEventDateChange)
 import FileHandling exposing (InteropFile)
@@ -80,8 +80,8 @@ setEventDateAndTimeIn model =
     let
         newEventDate : Maybe String
         newEventDate =
-            model.barcodeScannerData.lastScanDate
-                |> Maybe.map dateToString
+            model.barcodeScannerData.lastScanDateTime
+                |> Maybe.map posixToDateString
     in
     case ( newEventDate, model.eventDateAndTime.validatedDate ) of
         ( Just _, Just _ ) ->

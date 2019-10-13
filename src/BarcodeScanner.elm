@@ -21,7 +21,7 @@ module BarcodeScanner exposing
     , updateBarcodeScannerLine
     )
 
-import DateHandling exposing (dateStringToPosix)
+import DateHandling exposing (dateTimeStringToPosix)
 import Dict exposing (Dict)
 import Error exposing (Error)
 import FileHandling exposing (crlf, isPossibleBinary, splitLines)
@@ -33,24 +33,24 @@ import Time exposing (Posix)
 
 
 type alias Timed a =
-    { a | scanTime : String }
+    { a | scanDateTime : String }
 
 
 type alias AthleteAndTimePair =
     { athlete : String
-    , scanTime : String
+    , scanDateTime : String
     }
 
 
 type alias PositionAndTimePair =
     { position : Int
-    , scanTime : String
+    , scanDateTime : String
     }
 
 
 type alias MisScannedItem =
     { scannedText : String
-    , scanTime : String
+    , scanDateTime : String
     }
 
 
@@ -83,7 +83,7 @@ type LineContents
 type alias BarcodeScannerFileLine =
     { lineNumber : Int
     , contents : LineContents
-    , scanTime : String
+    , scanDateTime : String
     , deletionStatus : DeletionStatus
     }
 
@@ -91,7 +91,7 @@ type alias BarcodeScannerFileLine =
 type alias BarcodeScannerFile =
     { name : String
     , lines : List BarcodeScannerFileLine
-    , maxScanDate : Maybe Posix
+    , maxScanDateTime : Maybe Posix
     }
 
 
@@ -102,7 +102,7 @@ type alias BarcodeScannerData =
     , finishTokensOnly : List PositionAndTimePair
     , misScannedItems : List MisScannedItem
     , unrecognisedLines : List UnrecognisedLine
-    , lastScanDate : Maybe Posix
+    , lastScanDateTime : Maybe Posix
     }
 
 
@@ -143,8 +143,8 @@ positionParser =
 
 
 okDefaultFileLine : Int -> LineContents -> String -> Result e BarcodeScannerFileLine
-okDefaultFileLine lineNumber contents scanTime =
-    Ok (BarcodeScannerFileLine lineNumber contents scanTime NotDeleted)
+okDefaultFileLine lineNumber contents scanDateTime =
+    Ok (BarcodeScannerFileLine lineNumber contents scanDateTime NotDeleted)
 
 
 removeNull : String -> String
@@ -234,10 +234,10 @@ mergeEntry line barcodeData =
             barcodeData
 
         Ordinary athlete Nothing ->
-            { barcodeData | athleteBarcodesOnly = List.append barcodeData.athleteBarcodesOnly [ AthleteAndTimePair athlete line.scanTime ] }
+            { barcodeData | athleteBarcodesOnly = List.append barcodeData.athleteBarcodesOnly [ AthleteAndTimePair athlete line.scanDateTime ] }
 
         Ordinary "" (Just position) ->
-            { barcodeData | finishTokensOnly = List.append barcodeData.finishTokensOnly [ PositionAndTimePair position line.scanTime ] }
+            { barcodeData | finishTokensOnly = List.append barcodeData.finishTokensOnly [ PositionAndTimePair position line.scanDateTime ] }
 
         Ordinary athlete (Just pos) ->
             let
@@ -245,13 +245,13 @@ mergeEntry line barcodeData =
                 updater currentValue =
                     currentValue
                         |> Maybe.withDefault []
-                        |> (\x -> List.append x [ AthleteAndTimePair athlete line.scanTime ])
+                        |> (\x -> List.append x [ AthleteAndTimePair athlete line.scanDateTime ])
                         |> Just
             in
             { barcodeData | scannedBarcodes = Dict.update pos updater barcodeData.scannedBarcodes }
 
         MisScan misScannedText ->
-            { barcodeData | misScannedItems = List.append barcodeData.misScannedItems [ MisScannedItem misScannedText line.scanTime ] }
+            { barcodeData | misScannedItems = List.append barcodeData.misScannedItems [ MisScannedItem misScannedText line.scanDateTime ] }
 
 
 mergeEntries : List BarcodeScannerFileLine -> BarcodeScannerData
@@ -292,34 +292,34 @@ maxDate maxDate1 maxDate2 =
             maxDate2
 
 
-withLastScanDate : BarcodeScannerData -> BarcodeScannerData
-withLastScanDate barcodeScannerData =
+withLastScanDateTime : BarcodeScannerData -> BarcodeScannerData
+withLastScanDateTime barcodeScannerData =
     let
-        allTimes : List String
-        allTimes =
+        allDateTimes : List String
+        allDateTimes =
             List.concat
                 [ Dict.values barcodeScannerData.scannedBarcodes
                     |> List.concat
-                    |> List.map .scanTime
-                , List.map .scanTime barcodeScannerData.athleteBarcodesOnly
-                , List.map .scanTime barcodeScannerData.finishTokensOnly
-                , List.map .scanTime barcodeScannerData.misScannedItems
+                    |> List.map .scanDateTime
+                , List.map .scanDateTime barcodeScannerData.athleteBarcodesOnly
+                , List.map .scanDateTime barcodeScannerData.finishTokensOnly
+                , List.map .scanDateTime barcodeScannerData.misScannedItems
                 ]
 
-        lastScanDate : Maybe Posix
-        lastScanDate =
-            allTimes
-                |> List.filterMap dateStringToPosix
+        lastScanDateTime : Maybe Posix
+        lastScanDateTime =
+            allDateTimes
+                |> List.filterMap dateTimeStringToPosix
                 |> List.map Time.posixToMillis
                 |> List.maximum
                 |> Maybe.map Time.millisToPosix
     in
-    { barcodeScannerData | lastScanDate = lastScanDate }
+    { barcodeScannerData | lastScanDateTime = lastScanDateTime }
 
 
 withFile : String -> List BarcodeScannerFileLine -> BarcodeScannerData -> BarcodeScannerData
 withFile filename lines barcodeScannerData =
-    { barcodeScannerData | files = barcodeScannerData.files ++ [ BarcodeScannerFile filename lines barcodeScannerData.lastScanDate ] }
+    { barcodeScannerData | files = barcodeScannerData.files ++ [ BarcodeScannerFile filename lines barcodeScannerData.lastScanDateTime ] }
 
 
 mergeScannerData : BarcodeScannerData -> BarcodeScannerData -> BarcodeScannerData
@@ -331,7 +331,7 @@ mergeScannerData data1 data2 =
         (data1.finishTokensOnly ++ data2.finishTokensOnly)
         (data1.misScannedItems ++ data2.misScannedItems)
         (data1.unrecognisedLines ++ data2.unrecognisedLines)
-        (maxDate data1.lastScanDate data2.lastScanDate)
+        (maxDate data1.lastScanDateTime data2.lastScanDateTime)
 
 
 readBarcodeScannerData : String -> String -> Result Error BarcodeScannerData
@@ -368,7 +368,7 @@ readBarcodeScannerData filename text =
         else
             mergeEntries validLines
                 |> withUnrecognisedLines
-                |> withLastScanDate
+                |> withLastScanDateTime
                 |> withFile filename validLines
                 |> Ok
 
@@ -411,16 +411,16 @@ regenerate barcodeScannerData =
                 |> List.filter notDeleted
                 |> mergeEntries
 
-        newMaxScanDate : Maybe Posix
-        newMaxScanDate =
-            List.filterMap .maxScanDate barcodeScannerData.files
+        newMaxScanDateTime : Maybe Posix
+        newMaxScanDateTime =
+            List.filterMap .maxScanDateTime barcodeScannerData.files
                 |> List.map Time.posixToMillis
                 |> List.maximum
                 |> Maybe.map Time.millisToPosix
     in
     { mergedData
         | unrecognisedLines = barcodeScannerData.unrecognisedLines
-        , lastScanDate = newMaxScanDate
+        , lastScanDateTime = newMaxScanDateTime
         , files = barcodeScannerData.files
     }
 
@@ -442,7 +442,7 @@ generateDownloadText file =
 
         lineToString : BarcodeScannerFileLine -> String
         lineToString line =
-            contentsToString line.contents ++ "," ++ line.scanTime ++ crlf
+            contentsToString line.contents ++ "," ++ line.scanDateTime ++ crlf
     in
     file.lines
         |> List.filter notDeleted
