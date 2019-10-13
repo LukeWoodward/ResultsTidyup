@@ -18,9 +18,11 @@ import Dict
 import Expect exposing (Expectation)
 import Model exposing (Model, NumberCheckerManualEntryRow, emptyNumberCheckerManualEntryRow, initModel)
 import ProblemFixing exposing (ProblemFix(..), fixProblem)
+import Problems exposing (BarcodeScannerClockDifferenceType(..))
 import Stopwatch exposing (Stopwatches, WhichStopwatch(..))
 import Test exposing (Test, describe, test)
-import TestData exposing (defaultTime, doubleStopwatches, ordinaryFileLine, stopwatchesForAdjusting, toPosix)
+import TestData exposing (createBarcodeScannerDataFromFiles, defaultTime, doubleStopwatches, ordinaryFileLine, stopwatchesForAdjusting, toPosix)
+import Time
 
 
 createBarcodeScannerDataForRemovingUnassociatedFinishTokens : List Int -> BarcodeScannerData
@@ -81,7 +83,7 @@ createBarcodeScannerDataForRemovingDuplicateScans numberOfTimes =
 
 barcodeScannerDataForEventStartTimeFiltering : BarcodeScannerData
 barcodeScannerDataForEventStartTimeFiltering =
-    { files =
+    createBarcodeScannerDataFromFiles
         [ BarcodeScannerFile
             "barcodes1.txt"
             [ ordinaryFileLine 1 "A123456" (Just 27) "14/03/2018 09:22:08"
@@ -90,13 +92,25 @@ barcodeScannerDataForEventStartTimeFiltering =
             ]
             Nothing
         ]
-    , scannedBarcodes = Dict.singleton 27 [ AthleteAndTimePair "A123456" "14/03/2018 09:22:08" ]
-    , athleteBarcodesOnly = [ AthleteAndTimePair "A345678" "14/03/2018 09:47:54" ]
-    , finishTokensOnly = [ PositionAndTimePair 19 "14/03/2018 10:11:16" ]
-    , misScannedItems = []
-    , unrecognisedLines = []
-    , lastScanDate = Nothing
-    }
+
+
+barcodeScannerDataForScanTimeAdjustments : BarcodeScannerData
+barcodeScannerDataForScanTimeAdjustments =
+    createBarcodeScannerDataFromFiles
+        [ BarcodeScannerFile
+            "barcodes1.txt"
+            [ ordinaryFileLine 1 "A123456" (Just 27) "14/03/2018 09:22:08"
+            , ordinaryFileLine 2 "A345678" Nothing "14/03/2018 09:47:54"
+            , ordinaryFileLine 3 "A888888" (Just 88) "Not a valid time"
+            ]
+            (Just (Time.millisToPosix 1521020874000))
+        , BarcodeScannerFile
+            "barcodes2.txt"
+            [ ordinaryFileLine 1 "" (Just 19) "14/03/2018 10:11:16"
+            , ordinaryFileLine 2 "A987654" (Just 38) "14/03/2018 11:08:44"
+            ]
+            (Just (Time.millisToPosix 1521018668000))
+        ]
 
 
 deleteLinesWithinFile : (BarcodeScannerFileLine -> BarcodeScannerFileLine) -> List BarcodeScannerFile -> List BarcodeScannerFile
@@ -639,5 +653,140 @@ suite =
                             { initialModel | stopwatches = doubleStopwatches }
                             actualModel
                 ]
+            ]
+        , describe "CorrectBarcodeScannerClock tests"
+            [ test "Can add an hour to barcode scanner scan time when clock slow, matching single file by name" <|
+                \() ->
+                    let
+                        actualModel : Model
+                        actualModel =
+                            { initModel | barcodeScannerData = barcodeScannerDataForScanTimeAdjustments }
+                                |> fixProblem (CorrectBarcodeScannerClock { filename = "barcodes1.txt", differenceType = OneHourSlow })
+
+                        expectedModel : Model
+                        expectedModel =
+                            { initModel
+                                | barcodeScannerData =
+                                    createBarcodeScannerDataFromFiles
+                                        [ BarcodeScannerFile
+                                            "barcodes1.txt"
+                                            [ ordinaryFileLine 1 "A123456" (Just 27) "14/03/2018 10:22:08"
+                                            , ordinaryFileLine 2 "A345678" Nothing "14/03/2018 10:47:54"
+                                            , ordinaryFileLine 3 "A888888" (Just 88) "Not a valid time"
+                                            ]
+                                            (Just (Time.millisToPosix (1521020874000 + 60 * 60 * 1000)))
+                                        , BarcodeScannerFile
+                                            "barcodes2.txt"
+                                            [ ordinaryFileLine 1 "" (Just 19) "14/03/2018 10:11:16"
+                                            , ordinaryFileLine 2 "A987654" (Just 38) "14/03/2018 11:08:44"
+                                            ]
+                                            (Just (Time.millisToPosix 1521018668000))
+                                        ]
+                            }
+                    in
+                    Expect.equal expectedModel actualModel
+            , test "Can take an hour from barcode scanner scan time when clock fast, matching single file by name" <|
+                \() ->
+                    let
+                        actualModel : Model
+                        actualModel =
+                            { initModel | barcodeScannerData = barcodeScannerDataForScanTimeAdjustments }
+                                |> fixProblem (CorrectBarcodeScannerClock { filename = "barcodes2.txt", differenceType = OneHourFast })
+
+                        expectedModel : Model
+                        expectedModel =
+                            { initModel
+                                | barcodeScannerData =
+                                    createBarcodeScannerDataFromFiles
+                                        [ BarcodeScannerFile
+                                            "barcodes1.txt"
+                                            [ ordinaryFileLine 1 "A123456" (Just 27) "14/03/2018 09:22:08"
+                                            , ordinaryFileLine 2 "A345678" Nothing "14/03/2018 09:47:54"
+                                            , ordinaryFileLine 3 "A888888" (Just 88) "Not a valid time"
+                                            ]
+                                            (Just (Time.millisToPosix 1521020874000))
+                                        , BarcodeScannerFile
+                                            "barcodes2.txt"
+                                            [ ordinaryFileLine 1 "" (Just 19) "14/03/2018 09:11:16"
+                                            , ordinaryFileLine 2 "A987654" (Just 38) "14/03/2018 10:08:44"
+                                            ]
+                                            (Just (Time.millisToPosix (1521018668000 - 60 * 60 * 1000)))
+                                        ]
+                            }
+                    in
+                    Expect.equal expectedModel actualModel
+            , test "Adjusting scan times has no effect when filename does not match" <|
+                \() ->
+                    let
+                        initialModel : Model
+                        initialModel =
+                            { initModel | barcodeScannerData = barcodeScannerDataForScanTimeAdjustments }
+
+                        actualModel : Model
+                        actualModel =
+                            initialModel
+                                |> fixProblem (CorrectBarcodeScannerClock { filename = "wrong-name.txt", differenceType = OneHourFast })
+                    in
+                    Expect.equal initialModel actualModel
+            , test "Can add an hour to barcode scanner scan time when clock slow, for all files" <|
+                \() ->
+                    let
+                        actualModel : Model
+                        actualModel =
+                            { initModel | barcodeScannerData = barcodeScannerDataForScanTimeAdjustments }
+                                |> fixProblem (CorrectAllBarcodeScannerClocks OneHourSlow)
+
+                        expectedModel : Model
+                        expectedModel =
+                            { initModel
+                                | barcodeScannerData =
+                                    createBarcodeScannerDataFromFiles
+                                        [ BarcodeScannerFile
+                                            "barcodes1.txt"
+                                            [ ordinaryFileLine 1 "A123456" (Just 27) "14/03/2018 10:22:08"
+                                            , ordinaryFileLine 2 "A345678" Nothing "14/03/2018 10:47:54"
+                                            , ordinaryFileLine 3 "A888888" (Just 88) "Not a valid time"
+                                            ]
+                                            (Just (Time.millisToPosix (1521020874000 + 60 * 60 * 1000)))
+                                        , BarcodeScannerFile
+                                            "barcodes2.txt"
+                                            [ ordinaryFileLine 1 "" (Just 19) "14/03/2018 11:11:16"
+                                            , ordinaryFileLine 2 "A987654" (Just 38) "14/03/2018 12:08:44"
+                                            ]
+                                            (Just (Time.millisToPosix (1521018668000 + 60 * 60 * 1000)))
+                                        ]
+                            }
+                    in
+                    Expect.equal expectedModel actualModel
+            , test "Can take an hour from barcode scanner scan time when clock fast, for all files" <|
+                \() ->
+                    let
+                        actualModel : Model
+                        actualModel =
+                            { initModel | barcodeScannerData = barcodeScannerDataForScanTimeAdjustments }
+                                |> fixProblem (CorrectAllBarcodeScannerClocks OneHourFast)
+
+                        expectedModel : Model
+                        expectedModel =
+                            { initModel
+                                | barcodeScannerData =
+                                    createBarcodeScannerDataFromFiles
+                                        [ BarcodeScannerFile
+                                            "barcodes1.txt"
+                                            [ ordinaryFileLine 1 "A123456" (Just 27) "14/03/2018 08:22:08"
+                                            , ordinaryFileLine 2 "A345678" Nothing "14/03/2018 08:47:54"
+                                            , ordinaryFileLine 3 "A888888" (Just 88) "Not a valid time"
+                                            ]
+                                            (Just (Time.millisToPosix (1521020874000 - 60 * 60 * 1000)))
+                                        , BarcodeScannerFile
+                                            "barcodes2.txt"
+                                            [ ordinaryFileLine 1 "" (Just 19) "14/03/2018 09:11:16"
+                                            , ordinaryFileLine 2 "A987654" (Just 38) "14/03/2018 10:08:44"
+                                            ]
+                                            (Just (Time.millisToPosix (1521018668000 - 60 * 60 * 1000)))
+                                        ]
+                            }
+                    in
+                    Expect.equal expectedModel actualModel
             ]
         ]

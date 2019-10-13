@@ -46,7 +46,26 @@ clockDifferenceTypeToString differenceType =
 
 singleClockDifferenceView : BarcodeScannerClockDifference -> Html Msg
 singleClockDifferenceView difference =
-    div [] [ text ("The clock in the scanner that " ++ difference.filename ++ " was downloaded from appears to be " ++ clockDifferenceTypeToString difference.difference ++ ".") ]
+    div []
+        [ text
+            ("The clock in the scanner that "
+                ++ difference.filename
+                ++ " was downloaded from appears to be "
+                ++ clockDifferenceTypeToString difference.differenceType
+                ++ ". "
+            )
+        , smallButton (Msg.FixProblem (CorrectBarcodeScannerClock difference)) [] (clockCorrectionButtonText difference.differenceType)
+        ]
+
+
+clockCorrectionButtonText : BarcodeScannerClockDifferenceType -> String
+clockCorrectionButtonText differenceType =
+    case differenceType of
+        OneHourFast ->
+            "Take one hour off"
+
+        OneHourSlow ->
+            "Add one hour on"
 
 
 barcodeScannerClockDifferencesView : BarcodeScannerClockDifferences -> Maybe (Html Msg)
@@ -60,7 +79,10 @@ barcodeScannerClockDifferencesView clockDifferences =
                 |> Just
 
         AllClocksDifferent differenceType ->
-            warningAlert [ text ("All barcode scanner clocks appear to be " ++ clockDifferenceTypeToString differenceType ++ ".") ]
+            warningAlert
+                [ text ("All barcode scanner clocks appear to be " ++ clockDifferenceTypeToString differenceType ++ ". ")
+                , smallButton (Msg.FixProblem (CorrectAllBarcodeScannerClocks differenceType)) [] (clockCorrectionButtonText differenceType)
+                ]
                 |> Just
 
 

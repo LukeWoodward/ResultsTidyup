@@ -1,6 +1,6 @@
 module DateHandlingTests exposing (suite)
 
-import DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart)
+import DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart, posixToDateTimeString)
 import Errors exposing (expectError)
 import Expect
 import Test exposing (Test, describe, test)
@@ -128,5 +128,11 @@ suite =
                 \() ->
                     dateToString (Time.millisToPosix 1512500000000)
                         |> Expect.equal "05/12/2017"
+            ]
+        , describe "posixToDateTimeString tests"
+            [ test "Can format a Posix value to a string" <|
+                \() ->
+                    posixToDateTimeString (Time.millisToPosix 1500000000000)
+                        |> Expect.equal "14/07/2017 02:40:00"
             ]
         ]

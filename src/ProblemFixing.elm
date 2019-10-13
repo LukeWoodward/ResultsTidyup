@@ -12,8 +12,9 @@ import BarcodeScanner
         , PositionAndTimePair
         , regenerate
         )
-import DateHandling exposing (dateStringToPosix)
+import DateHandling exposing (dateStringToPosix, posixToDateTimeString)
 import Model exposing (Model)
+import Problems exposing (BarcodeScannerClockDifference, BarcodeScannerClockDifferenceType(..))
 import Stopwatch exposing (DoubleStopwatchData, Stopwatches(..), WhichStopwatch(..), createMergedTable)
 import Time exposing (Posix)
 
@@ -25,6 +26,8 @@ type ProblemFix
     | RemoveScansBeforeEventStart Int
     | AdjustStopwatch WhichStopwatch Int
     | SwapBarcodes String Int Int
+    | CorrectBarcodeScannerClock BarcodeScannerClockDifference
+    | CorrectAllBarcodeScannerClocks BarcodeScannerClockDifferenceType
 
 
 deleteWithinFiles : (BarcodeScannerFileLine -> BarcodeScannerFileLine) -> List BarcodeScannerFile -> List BarcodeScannerFile
@@ -231,6 +234,53 @@ swapBarcodesAround fileName first last files =
             files
 
 
+applyCorrectionToLine : Int -> BarcodeScannerFileLine -> BarcodeScannerFileLine
+applyCorrectionToLine offset line =
+    case dateStringToPosix line.scanTime of
+        Just somePosixTime ->
+            { line
+                | scanTime =
+                    Time.posixToMillis somePosixTime
+                        |> (+) offset
+                        |> Time.millisToPosix
+                        |> posixToDateTimeString
+            }
+
+        Nothing ->
+            line
+
+
+correctBarcodeScannerClock : BarcodeScannerClockDifferenceType -> BarcodeScannerFile -> BarcodeScannerFile
+correctBarcodeScannerClock differenceType file =
+    let
+        offset : Int
+        offset =
+            case differenceType of
+                OneHourSlow ->
+                    60 * 60 * 1000
+
+                OneHourFast ->
+                    -60 * 60 * 1000
+
+        newMaxScanDate : Maybe Posix
+        newMaxScanDate =
+            file.maxScanDate
+                |> Maybe.map Time.posixToMillis
+                |> Maybe.map ((+) offset)
+                |> Maybe.map Time.millisToPosix
+    in
+    { file | lines = List.map (applyCorrectionToLine offset) file.lines, maxScanDate = newMaxScanDate }
+
+
+correctBarcodeScannerClockIfFilenameMatches : BarcodeScannerClockDifference -> BarcodeScannerFile -> BarcodeScannerFile
+correctBarcodeScannerClockIfFilenameMatches { filename, differenceType } file =
+    if file.name == filename then
+        correctBarcodeScannerClock differenceType file
+
+    else
+        file
+
+
 fixProblem : ProblemFix -> Model -> Model
 fixProblem problemFix model =
     let
@@ -274,6 +324,18 @@ fixProblem problemFix model =
                 AdjustStopwatch whichStopwatch offset ->
                     -- This problem-fix applies no change to the barcode-scanner data.
                     oldBarcodeScannerData
+
+                CorrectBarcodeScannerClock differenceDetected ->
+                    regenerate
+                        { oldBarcodeScannerData
+                            | files = List.map (correctBarcodeScannerClockIfFilenameMatches differenceDetected) oldBarcodeScannerData.files
+                        }
+
+                CorrectAllBarcodeScannerClocks differenceType ->
+                    regenerate
+                        { oldBarcodeScannerData
+                            | files = List.map (correctBarcodeScannerClock differenceType) oldBarcodeScannerData.files
+                        }
 
         oldStopwatches : Stopwatches
         oldStopwatches =

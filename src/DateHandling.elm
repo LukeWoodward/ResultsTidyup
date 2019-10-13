@@ -1,4 +1,4 @@
-module DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart)
+module DateHandling exposing (dateStringToPosix, dateToString, generateDownloadFilenameDatePart, posixToDateTimeString)
 
 import Iso8601
 import Parser exposing ((|.), (|=), Parser, end, run, symbol)
@@ -109,6 +109,21 @@ dateStringToPosix dateString =
 
     else
         Nothing
+
+
+posixToDateTimeString : Posix -> String
+posixToDateTimeString time =
+    let
+        timeString : String
+        timeString =
+            [ Time.toHour Time.utc time
+            , Time.toMinute Time.utc time
+            , Time.toSecond Time.utc time
+            ]
+                |> List.map formatToAtLeastTwoChars
+                |> String.join ":"
+    in
+    dateToString time ++ " " ++ timeString
 
 
 dateToString : Posix -> String

@@ -31,7 +31,7 @@ type BarcodeScannerClockDifferenceType
 
 type alias BarcodeScannerClockDifference =
     { filename : String
-    , difference : BarcodeScannerClockDifferenceType
+    , differenceType : BarcodeScannerClockDifferenceType
     }
 
 
@@ -432,10 +432,10 @@ identifyBarcodeScannerClockBeingOut eventStartTimeMillis file =
             totalScans > 1 && toFloat num > toFloat totalScans * 0.75
     in
     if mostOf countBeforeEventStart && not (mostOf countOneHourBeforeEventStart) then
-        Just { filename = file.name, difference = OneHourSlow }
+        Just { filename = file.name, differenceType = OneHourSlow }
 
     else if not (mostOf countWithinOneHourAfterEventStart) && mostOf countWithinTwoHoursAfterEventStart then
-        Just { filename = file.name, difference = OneHourFast }
+        Just { filename = file.name, differenceType = OneHourFast }
 
     else
         Nothing
@@ -484,7 +484,7 @@ identifyBarcodeScannerClocksBeingOut barcodeScannerData eventStartTimeMillisMayb
 
                 allDifferenceTypes : List BarcodeScannerClockDifferenceType
                 allDifferenceTypes =
-                    List.map .difference allClockDifferences
+                    List.map .differenceType allClockDifferences
 
                 commonDifferenceType : RepeatedElementResult BarcodeScannerClockDifferenceType
                 commonDifferenceType =

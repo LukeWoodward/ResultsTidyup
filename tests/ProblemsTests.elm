@@ -513,8 +513,8 @@ suite =
                                 | barcodesScannedBeforeEventStart = Just (BarcodesScannedBeforeEventStartProblem 3 baseEventStartTime "14/03/2018 09:00")
                                 , barcodeScannerClockDifferences =
                                     SomeClocksDifferent
-                                        [ { difference = OneHourSlow, filename = "barcodes1.txt" }
-                                        , { difference = OneHourFast, filename = "barcodes2.txt" }
+                                        [ { filename = "barcodes1.txt", differenceType = OneHourSlow }
+                                        , { filename = "barcodes2.txt", differenceType = OneHourFast }
                                         ]
                             }
             , test "identifyProblems returns a problem for stopwatches exactly in sync" <|
