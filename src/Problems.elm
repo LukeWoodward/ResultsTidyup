@@ -1,6 +1,9 @@
 module Problems exposing
     ( AthleteAndPositionPair
     , AthleteWithMultiplePositionsProblem
+    , BarcodeScannerClockDifference
+    , BarcodeScannerClockDifferenceType(..)
+    , BarcodeScannerClockDifferences(..)
     , BarcodesScannedBeforeEventStartProblem
     , BarcodesScannedTheWrongWayAroundProblem
     , InconsistentBarcodeScannerDatesProblem
@@ -19,6 +22,23 @@ import Set exposing (Set)
 import Stopwatch exposing (MergeEntry(..), MergedTableRow, Stopwatches(..))
 import StopwatchOffsetDetection exposing (getStopwatchTimeOffset)
 import Time exposing (posixToMillis)
+
+
+type BarcodeScannerClockDifferenceType
+    = OneHourSlow
+    | OneHourFast
+
+
+type alias BarcodeScannerClockDifference =
+    { filename : String
+    , difference : BarcodeScannerClockDifferenceType
+    }
+
+
+type BarcodeScannerClockDifferences
+    = NoClockDifferences
+    | SomeClocksDifferent (List BarcodeScannerClockDifference)
+    | AllClocksDifferent BarcodeScannerClockDifferenceType
 
 
 type alias BarcodesScannedBeforeEventStartProblem =
@@ -66,7 +86,8 @@ type alias PositionOffEndOfTimesProblem =
 
 
 type alias Problems =
-    { barcodesScannedBeforeEventStart : Maybe BarcodesScannedBeforeEventStartProblem
+    { barcodeScannerClockDifferences : BarcodeScannerClockDifferences
+    , barcodesScannedBeforeEventStart : Maybe BarcodesScannedBeforeEventStartProblem
     , athletesInSamePositionMultipleTimes : List AthleteAndPositionPair
     , athletesWithAndWithoutPosition : List AthleteAndPositionPair
     , positionsWithAndWithoutAthlete : List AthleteAndPositionPair
@@ -88,7 +109,8 @@ type alias Problems =
 
 noProblems : Problems
 noProblems =
-    { barcodesScannedBeforeEventStart = Nothing
+    { barcodeScannerClockDifferences = NoClockDifferences
+    , barcodesScannedBeforeEventStart = Nothing
     , athletesInSamePositionMultipleTimes = []
     , athletesWithAndWithoutPosition = []
     , positionsWithAndWithoutAthlete = []
@@ -293,6 +315,21 @@ getSingleValue list =
             Nothing
 
 
+countScansBeforeTime : Int -> BarcodeScannerFile -> Int
+countScansBeforeTime timeMillis file =
+    let
+        countDatesBefore : List String -> Int
+        countDatesBefore dates =
+            List.filterMap dateStringToPosix dates
+                |> List.map Time.posixToMillis
+                |> List.filter (\t -> t < timeMillis)
+                |> List.length
+    in
+    List.filter (\line -> line.deletionStatus == NotDeleted) file.lines
+        |> List.map .scanTime
+        |> countDatesBefore
+
+
 identifyAthletesWithNoPositions : List String -> Dict String (List Int) -> List String
 identifyAthletesWithNoPositions unpairedAthletes athleteToPositionsDict =
     deduplicate unpairedAthletes
@@ -355,25 +392,9 @@ identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly =
 identifyRecordsScannedBeforeEventStartTime : BarcodeScannerData -> String -> Int -> Maybe BarcodesScannedBeforeEventStartProblem
 identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString eventStartTimeMillis =
     let
-        countDatesBeforeEventStart : List String -> Int
-        countDatesBeforeEventStart dates =
-            List.filterMap dateStringToPosix dates
-                |> List.map Time.posixToMillis
-                |> List.filter (\t -> t < eventStartTimeMillis)
-                |> List.length
-
-        linesBeforeEventStart : BarcodeScannerFile -> ( Int, Int )
-        linesBeforeEventStart file =
-            ( List.filter (\line -> line.deletionStatus == NotDeleted) file.lines
-                |> List.map .scanTime
-                |> countDatesBeforeEventStart
-            , List.length file.lines
-            )
-
         totalNumberOfScansBeforeEventStart : Int
         totalNumberOfScansBeforeEventStart =
-            List.map linesBeforeEventStart barcodeScannerData.files
-                |> List.map Tuple.first
+            List.map (countScansBeforeTime eventStartTimeMillis) barcodeScannerData.files
                 |> List.sum
     in
     if totalNumberOfScansBeforeEventStart == 0 then
@@ -381,6 +402,110 @@ identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsSt
 
     else
         Just (BarcodesScannedBeforeEventStartProblem totalNumberOfScansBeforeEventStart eventStartTimeMillis eventStartTimeAsString)
+
+
+identifyBarcodeScannerClockBeingOut : Int -> BarcodeScannerFile -> Maybe BarcodeScannerClockDifference
+identifyBarcodeScannerClockBeingOut eventStartTimeMillis file =
+    let
+        totalScans : Int
+        totalScans =
+            List.length file.lines
+
+        countBeforeEventStart : Int
+        countBeforeEventStart =
+            countScansBeforeTime eventStartTimeMillis file
+
+        countOneHourBeforeEventStart : Int
+        countOneHourBeforeEventStart =
+            countScansBeforeTime (eventStartTimeMillis - 60 * 60 * 1000) file
+
+        countWithinOneHourAfterEventStart : Int
+        countWithinOneHourAfterEventStart =
+            countScansBeforeTime (eventStartTimeMillis + 60 * 60 * 1000) file
+
+        countWithinTwoHoursAfterEventStart : Int
+        countWithinTwoHoursAfterEventStart =
+            countScansBeforeTime (eventStartTimeMillis + 2 * 60 * 60 * 1000) file
+
+        mostOf : Int -> Bool
+        mostOf num =
+            totalScans > 1 && toFloat num > toFloat totalScans * 0.75
+    in
+    if mostOf countBeforeEventStart && not (mostOf countOneHourBeforeEventStart) then
+        Just { filename = file.name, difference = OneHourSlow }
+
+    else if not (mostOf countWithinOneHourAfterEventStart) && mostOf countWithinTwoHoursAfterEventStart then
+        Just { filename = file.name, difference = OneHourFast }
+
+    else
+        Nothing
+
+
+type RepeatedElementResult a
+    = NoElements
+    | NoRepeatedElement
+    | RepeatedElement a
+
+
+{-| If a list contains only the same element repeated, return that element,
+otherwise return Nothing.
+
+    allElementsEqual [] == Nothing
+
+    allElementsEqual [ 5 ] == Just 5
+
+    allElementsEqual [ 5, 5, 5 ] == Just 5
+
+    allElementsEqual [ 5, 5, 6 ] == Nothing
+
+-}
+repeatedElement : List a -> RepeatedElementResult a
+repeatedElement list =
+    case list of
+        [] ->
+            NoElements
+
+        first :: rest ->
+            if List.isEmpty (List.filter ((/=) first) rest) then
+                RepeatedElement first
+
+            else
+                NoRepeatedElement
+
+
+identifyBarcodeScannerClocksBeingOut : BarcodeScannerData -> Maybe Int -> BarcodeScannerClockDifferences
+identifyBarcodeScannerClocksBeingOut barcodeScannerData eventStartTimeMillisMaybe =
+    case eventStartTimeMillisMaybe of
+        Just eventStartTimeMillis ->
+            let
+                allClockDifferences : List BarcodeScannerClockDifference
+                allClockDifferences =
+                    List.filterMap (identifyBarcodeScannerClockBeingOut eventStartTimeMillis) barcodeScannerData.files
+
+                allDifferenceTypes : List BarcodeScannerClockDifferenceType
+                allDifferenceTypes =
+                    List.map .difference allClockDifferences
+
+                commonDifferenceType : RepeatedElementResult BarcodeScannerClockDifferenceType
+                commonDifferenceType =
+                    repeatedElement allDifferenceTypes
+            in
+            case commonDifferenceType of
+                NoElements ->
+                    NoClockDifferences
+
+                RepeatedElement differenceType ->
+                    if List.length allClockDifferences == List.length barcodeScannerData.files && List.length barcodeScannerData.files > 1 then
+                        AllClocksDifferent differenceType
+
+                    else
+                        SomeClocksDifferent allClockDifferences
+
+                NoRepeatedElement ->
+                    SomeClocksDifferent allClockDifferences
+
+        Nothing ->
+            NoClockDifferences
 
 
 {-| We've found the start of a possible wrong-way-around section. See if we can
@@ -514,7 +639,8 @@ identifyProblems stopwatches barcodeScannerData eventDateAndTime =
         eventStartTimeAsString =
             eventDateAndTime.enteredDate ++ " " ++ eventDateAndTime.enteredTime
     in
-    { barcodesScannedBeforeEventStart = Maybe.andThen (identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString) eventStartTimeMillis
+    { barcodeScannerClockDifferences = identifyBarcodeScannerClocksBeingOut barcodeScannerData eventStartTimeMillis
+    , barcodesScannedBeforeEventStart = Maybe.andThen (identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString) eventStartTimeMillis
     , athletesInSamePositionMultipleTimes = identifyDuplicateScans positionToAthletesDict
     , athletesWithAndWithoutPosition = identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly
     , positionsWithAndWithoutAthlete = identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly
