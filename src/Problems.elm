@@ -88,7 +88,24 @@ type alias Problems =
 
 noProblems : Problems
 noProblems =
-    Problems Nothing [] [] [] [] Nothing Nothing [] [] Nothing [] [] [] [] False False False
+    { barcodesScannedBeforeEventStart = Nothing
+    , athletesInSamePositionMultipleTimes = []
+    , athletesWithAndWithoutPosition = []
+    , positionsWithAndWithoutAthlete = []
+    , barcodesScannedTheWrongWayAround = []
+    , stopwatchTimeOffset = Nothing
+    , inconsistentBarcodeScannerDates = Nothing
+    , athletesWithMultiplePositions = []
+    , positionsWithMultipleAthletes = []
+    , positionOffEndOfTimes = Nothing
+    , athletesMissingPosition = []
+    , positionsMissingAthlete = []
+    , misScans = []
+    , unrecognisedBarcodeScannerLines = []
+    , identicalStopwatchTimes = False
+    , stopwatchesInconsistentWithNumberChecker = False
+    , stopwatchesAndFinishTokensInconsistentWithNumberChecker = False
+    }
 
 
 flattenItem : ( Int, List String ) -> List ( Int, String )
