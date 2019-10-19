@@ -167,7 +167,7 @@ athletesWithAndWithoutPositionView athleteAndPositionPairs =
                         ++ pair.athlete
                         ++ " has been scanned with finish token "
                         ++ String.fromInt pair.position
-                        ++ " and also without a finish token."
+                        ++ " and also without a finish token. "
                     )
                 , generateButton (problemFixGenerator pair) buttonLabel
                 ]
@@ -198,7 +198,7 @@ positionsWithAndWithoutAthleteView athleteAndPositionPairs =
                         ++ String.fromInt pair.position
                         ++ " has been scanned with athlete "
                         ++ pair.athlete
-                        ++ " and also without an athlete."
+                        ++ " and also without an athlete. "
                     )
                 , generateButton (problemFixGenerator pair) buttonLabel
                 ]
