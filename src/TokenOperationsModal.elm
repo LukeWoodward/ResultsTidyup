@@ -86,6 +86,9 @@ validationErrorToString validationError =
         EmptyRange field ->
             "Please enter token ranges with the lower end of the range first, e.g. 81-90"
 
+        ZeroInRange field ->
+            "Token number 0 cannot be used"
+
         InsertRangeOffEndOfTokens lastToken range ->
             "The range " ++ rangeToString range ++ " is entirely beyond the last token used (" ++ String.fromInt lastToken ++ ")"
 

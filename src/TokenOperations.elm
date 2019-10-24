@@ -65,6 +65,7 @@ type TokenOperationValidationError
     | TokenOperationNotSelected
     | InvalidRange TokenRangeField
     | EmptyRange TokenRangeField
+    | ZeroInRange TokenRangeField
     | InsertRangeOffEndOfTokens Int TokenRange
     | RangeOffEndOfTokens Int TokenRange TokenRangeField
     | RemovingExistingTokens (List Int) TokenRange
@@ -129,7 +130,10 @@ commonTokenRangeValidation : TokenRangeField -> RangeEntry -> Maybe TokenOperati
 commonTokenRangeValidation field entry =
     case entry.range of
         Just someRange ->
-            if someRange.start > someRange.end then
+            if someRange.start == 0 || someRange.end == 0 then
+                Just (ZeroInRange field)
+
+            else if someRange.start > someRange.end then
                 Just (EmptyRange field)
 
             else
@@ -305,6 +309,9 @@ isTokenRangeFieldInvalid field tokenOperationEditDetails =
             errorField == field
 
         EmptyRange errorField ->
+            errorField == field
+
+        ZeroInRange errorField ->
             errorField == field
 
         InsertRangeOffEndOfTokens _ _ ->
