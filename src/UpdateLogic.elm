@@ -4,7 +4,6 @@ import BarcodeScanner
     exposing
         ( BarcodeScannerData
         , BarcodeScannerFile
-        , allTokensUsed
         , deleteBarcodeScannerLine
         , generateDownloadText
         , regenerate
@@ -49,7 +48,7 @@ import Stopwatch
         )
 import Task exposing (Task)
 import Time exposing (Posix, Zone)
-import TokenOperations exposing (TokenOperationValidationError(..), applyTokenOperationToBarcodeScannerData)
+import TokenOperations exposing (TokenOperationValidationError(..), tryApplyTokenOperationToBarcodeScannerData)
 
 
 stopwatchFileMimeType : String
@@ -346,16 +345,22 @@ updateRowFromBarcodeScannerEditModal rowEditDetails model =
         |> identifyProblemsIn
 
 
-applyTokenOperation : Model -> Model
-applyTokenOperation model =
+tryApplyTokenOperation : Model -> Model
+tryApplyTokenOperation model =
     case model.dialogDetails of
         TokenOperationsDialog tokenOperationEditDetails ->
-            identifyProblemsIn
-                { model
-                    | barcodeScannerData =
-                        applyTokenOperationToBarcodeScannerData tokenOperationEditDetails model.barcodeScannerData
-                    , dialogDetails = NoDialog
-                }
+            case tryApplyTokenOperationToBarcodeScannerData tokenOperationEditDetails model.barcodeScannerData of
+                Ok updatedBarcodeScannerData ->
+                    identifyProblemsIn
+                        { model
+                            | barcodeScannerData = updatedBarcodeScannerData
+                            , dialogDetails = NoDialog
+                        }
+
+                Err validationError ->
+                    { model
+                        | dialogDetails = TokenOperationsDialog { tokenOperationEditDetails | validationError = validationError }
+                    }
 
         _ ->
             model
@@ -524,15 +529,11 @@ update msg model =
 
         TokenOperationEdit editChange ->
             let
-                allTokens : Set Int
-                allTokens =
-                    allTokensUsed model.barcodeScannerData
-
                 newEditDetails : DialogDetails
                 newEditDetails =
                     case model.dialogDetails of
                         TokenOperationsDialog tokenOperationsEditDetails ->
-                            TokenOperations.updateEditDetails allTokens editChange tokenOperationsEditDetails
+                            TokenOperations.updateEditDetails editChange tokenOperationsEditDetails
                                 |> TokenOperationsDialog
 
                         _ ->
@@ -541,7 +542,7 @@ update msg model =
             ( { model | dialogDetails = newEditDetails }, NoCommand )
 
         ApplyTokenOperation _ ->
-            ( applyTokenOperation model, NoCommand )
+            ( tryApplyTokenOperation model, NoCommand )
 
         CloseModal ->
             ( { model | dialogDetails = NoDialog }, NoCommand )
@@ -570,8 +571,4 @@ update msg model =
                         ( model, NoCommand )
 
                 TokenOperationsDialog tokenOperationEditDetails ->
-                    if tokenOperationEditDetails.validationError == NoValidationError then
-                        ( applyTokenOperation model, NoCommand )
-
-                    else
-                        ( model, NoCommand )
+                    ( tryApplyTokenOperation model, NoCommand )

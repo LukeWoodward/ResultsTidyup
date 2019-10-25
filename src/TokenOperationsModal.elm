@@ -191,7 +191,6 @@ tokenOperationsButtons tokenOperationEditDetails =
                 Just buttonText ->
                     [ Button.button
                         [ Button.primary
-                        , Button.disabled (tokenOperationEditDetails.validationError /= NoValidationError)
                         , Button.onClick (ApplyTokenOperation tokenOperationEditDetails)
                         ]
                         [ text buttonText ]

@@ -6,7 +6,6 @@ module TokenOperations exposing
     , TokenOperationValidationError(..)
     , TokenRange
     , TokenRangeField(..)
-    , applyTokenOperationToBarcodeScannerData
     , emptyEditDetails
     , isInsertTokenRangeFieldInvalid
     , isRemoveTokenRangeFieldInvalid
@@ -14,6 +13,7 @@ module TokenOperations exposing
     , isSwapTokenRange2FieldInvalid
     , parseRange
     , rangeToString
+    , tryApplyTokenOperationToBarcodeScannerData
     , updateEditDetails
     , validateEditDetails
     )
@@ -28,6 +28,7 @@ import BarcodeScanner
         , DeletionStatus(..)
         , LineContents(..)
         , PositionAndTimePair
+        , allTokensUsed
         , regenerate
         )
 import Dict exposing (Dict)
@@ -272,8 +273,8 @@ rangeEntryFromString rangeString =
     { enteredText = rangeString, range = parseRange rangeString }
 
 
-updateEditDetails : Set Int -> TokenOperationChangeType -> TokenOperationEditDetails -> TokenOperationEditDetails
-updateEditDetails allTokens change editDetails =
+updateEditDetails : TokenOperationChangeType -> TokenOperationEditDetails -> TokenOperationEditDetails
+updateEditDetails change editDetails =
     let
         updatedDetails : TokenOperationEditDetails
         updatedDetails =
@@ -293,7 +294,7 @@ updateEditDetails allTokens change editDetails =
                 RangeEdited SwapTokenRangeField2 newValue ->
                     { editDetails | swapTokenRange2 = rangeEntryFromString newValue }
     in
-    { updatedDetails | validationError = validateEditDetails allTokens updatedDetails }
+    { updatedDetails | validationError = NoValidationError }
 
 
 isTokenRangeFieldInvalid : TokenRangeField -> TokenOperationEditDetails -> Bool
@@ -449,42 +450,51 @@ applyOperation operation barcodeScannerData =
     regenerate { barcodeScannerData | files = List.map applyOperationToFile barcodeScannerData.files }
 
 
-applyTokenOperationToBarcodeScannerData : TokenOperationEditDetails -> BarcodeScannerData -> BarcodeScannerData
-applyTokenOperationToBarcodeScannerData tokenOperationEditDetails barcodeScannerData =
-    if tokenOperationEditDetails.validationError == NoValidationError then
+tryApplyTokenOperationToBarcodeScannerData : TokenOperationEditDetails -> BarcodeScannerData -> Result TokenOperationValidationError BarcodeScannerData
+tryApplyTokenOperationToBarcodeScannerData tokenOperationEditDetails barcodeScannerData =
+    let
+        validationError : TokenOperationValidationError
+        validationError =
+            validateEditDetails (allTokensUsed barcodeScannerData) tokenOperationEditDetails
+
+        apply : (BarcodeScannerFileLine -> Maybe BarcodeScannerFileLine) -> Result TokenOperationValidationError BarcodeScannerData
+        apply operation =
+            Ok (applyOperation operation barcodeScannerData)
+    in
+    if validationError == NoValidationError then
         case tokenOperationEditDetails.operation of
             NoOptionSelected ->
-                barcodeScannerData
+                Ok barcodeScannerData
 
             InsertTokensOption ->
                 case tokenOperationEditDetails.insertTokenRange.range of
                     Just range ->
-                        applyOperation (insertTokensIntoBarcodeScannerData range) barcodeScannerData
+                        apply (insertTokensIntoBarcodeScannerData range)
 
                     Nothing ->
-                        barcodeScannerData
+                        Ok barcodeScannerData
 
             RemoveTokensOption ->
                 case tokenOperationEditDetails.removeTokenRange.range of
                     Just range ->
-                        applyOperation (removeTokensFromBarcodeScannerData range) barcodeScannerData
+                        apply (removeTokensFromBarcodeScannerData range)
 
                     Nothing ->
-                        barcodeScannerData
+                        Ok barcodeScannerData
 
             SwapTokenRangeOption ->
                 case ( tokenOperationEditDetails.swapTokenRange1.range, tokenOperationEditDetails.swapTokenRange2.range ) of
                     ( Just range1, Just range2 ) ->
                         if range2.end - range2.start == range1.end - range1.start then
-                            applyOperation (swapTokensInBarcodeScannerData range1 range2.start) barcodeScannerData
+                            apply (swapTokensInBarcodeScannerData range1 range2.start)
 
                         else
                             -- Validation on range sizes being equal should have been done by
                             -- the time we get here, but if not, let's just do nothing.
-                            barcodeScannerData
+                            Ok barcodeScannerData
 
                     _ ->
-                        barcodeScannerData
+                        Ok barcodeScannerData
 
     else
-        barcodeScannerData
+        Err validationError
