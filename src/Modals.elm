@@ -1,4 +1,4 @@
-module Dialogs exposing (showModalDialog)
+module Modals exposing (showModalDialog)
 
 import BarcodeScannerEditModal exposing (barcodeScannerDialogTitle, barcodeScannerEditButtons, editBarcodeScannerRowModalBody)
 import Bootstrap.Modal as Modal

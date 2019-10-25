@@ -13,7 +13,6 @@ import Bootstrap.Tab as Tab
 import Browser
 import Browser.Dom
 import Commands exposing (Command(..), ElementToFocus(..))
-import Dialogs exposing (showModalDialog)
 import Error exposing (FileError)
 import EventDateAndTime exposing (EventDateAndTime)
 import EventDateAndTimeView exposing (eventDateAndTimeView)
@@ -25,6 +24,7 @@ import Html exposing (Html, a, div, h1, h3, li, span, text, ul)
 import Html.Attributes exposing (attribute, class, href, id, style)
 import Html.Events exposing (on, onClick)
 import Json.Decode exposing (Decoder, andThen, fail, field, int, succeed)
+import Modals exposing (showModalDialog)
 import Model exposing (Model, initModel)
 import Msg exposing (Msg(..))
 import NumberCheckerView exposing (numberCheckerView)
