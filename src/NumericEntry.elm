@@ -27,7 +27,7 @@ numericEntryFromString stringValue =
 
 numericEntryFromAthleteNumber : String -> NumericEntry
 numericEntryFromAthleteNumber athleteNumber =
-    if String.startsWith "A" athleteNumber then
+    if String.startsWith "A" athleteNumber || String.startsWith "a" athleteNumber then
         NumericEntry athleteNumber (String.toInt (String.dropLeft 1 athleteNumber))
 
     else

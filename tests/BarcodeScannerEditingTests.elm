@@ -167,6 +167,10 @@ suite =
                     \() ->
                         updateEditDetails (AthleteChanged "A769422") initialDetails
                             |> Expect.equal { initialDetails | athleteEntered = NumericEntry "A769422" (Just 769422) }
+                , test "Can change an athlete to a valid value lowercased" <|
+                    \() ->
+                        updateEditDetails (AthleteChanged "a769422") initialDetails
+                            |> Expect.equal { initialDetails | athleteEntered = NumericEntry "a769422" (Just 769422) }
                 , test "Can change an athlete to an invalid value" <|
                     \() ->
                         updateEditDetails (AthleteChanged "Invalid number") initialDetails
