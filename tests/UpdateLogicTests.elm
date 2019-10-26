@@ -801,10 +801,6 @@ suite =
             [ test "Can update a row in a barcode scanner file" <|
                 \() ->
                     let
-                        lineToDelete : BarcodeScannerFileLine
-                        lineToDelete =
-                            ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
-
                         initialBarcodeScannerData : BarcodeScannerData
                         initialBarcodeScannerData =
                             createBarcodeScannerDataFromFiles
@@ -888,10 +884,6 @@ suite =
             , test "Can update a row in a barcode scanner file by pressing Return when dialog opened" <|
                 \() ->
                     let
-                        lineToDelete : BarcodeScannerFileLine
-                        lineToDelete =
-                            ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
-
                         initialBarcodeScannerData : BarcodeScannerData
                         initialBarcodeScannerData =
                             createBarcodeScannerDataFromFiles
