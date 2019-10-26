@@ -48,7 +48,7 @@ import Stopwatch
         )
 import Task exposing (Task)
 import Time exposing (Posix, Zone)
-import TokenOperations exposing (TokenOperationValidationError(..), tryApplyTokenOperationToBarcodeScannerData)
+import TokenOperations exposing (TokenOperationEditDetails, TokenOperationValidationError(..), tryApplyTokenOperationToBarcodeScannerData)
 
 
 stopwatchFileMimeType : String
@@ -345,25 +345,20 @@ updateRowFromBarcodeScannerEditModal rowEditDetails model =
         |> identifyProblemsIn
 
 
-tryApplyTokenOperation : Model -> Model
-tryApplyTokenOperation model =
-    case model.dialogDetails of
-        TokenOperationsDialog tokenOperationEditDetails ->
-            case tryApplyTokenOperationToBarcodeScannerData tokenOperationEditDetails model.barcodeScannerData of
-                Ok updatedBarcodeScannerData ->
-                    identifyProblemsIn
-                        { model
-                            | barcodeScannerData = updatedBarcodeScannerData
-                            , dialogDetails = NoDialog
-                        }
+tryApplyTokenOperation : TokenOperationEditDetails -> Model -> Model
+tryApplyTokenOperation tokenOperationEditDetails model =
+    case tryApplyTokenOperationToBarcodeScannerData tokenOperationEditDetails model.barcodeScannerData of
+        Ok updatedBarcodeScannerData ->
+            identifyProblemsIn
+                { model
+                    | barcodeScannerData = updatedBarcodeScannerData
+                    , dialogDetails = NoDialog
+                }
 
-                Err validationError ->
-                    { model
-                        | dialogDetails = TokenOperationsDialog { tokenOperationEditDetails | validationError = validationError }
-                    }
-
-        _ ->
-            model
+        Err validationError ->
+            { model
+                | dialogDetails = TokenOperationsDialog { tokenOperationEditDetails | validationError = validationError }
+            }
 
 
 update : Msg -> Model -> ( Model, Command )
@@ -541,8 +536,8 @@ update msg model =
             in
             ( { model | dialogDetails = newEditDetails }, NoCommand )
 
-        ApplyTokenOperation _ ->
-            ( tryApplyTokenOperation model, NoCommand )
+        ApplyTokenOperation tokenOperationEditDetails ->
+            ( tryApplyTokenOperation tokenOperationEditDetails model, NoCommand )
 
         CloseModal ->
             ( { model | dialogDetails = NoDialog }, NoCommand )
@@ -571,4 +566,4 @@ update msg model =
                         ( model, NoCommand )
 
                 TokenOperationsDialog tokenOperationEditDetails ->
-                    ( tryApplyTokenOperation model, NoCommand )
+                    ( tryApplyTokenOperation tokenOperationEditDetails model, NoCommand )
