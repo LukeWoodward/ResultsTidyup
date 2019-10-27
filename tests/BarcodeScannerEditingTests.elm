@@ -1,6 +1,6 @@
 module BarcodeScannerEditingTests exposing (suite)
 
-import BarcodeScanner exposing (LineContents(..))
+import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, LineContents(..))
 import BarcodeScannerEditing
     exposing
         ( BarcodeScannerEditDetails(..)
@@ -9,13 +9,17 @@ import BarcodeScannerEditing
         , BarcodeScannerRowEditLocation
         , BarcodeScannerValidationError(..)
         , elementToFocusWhenOpening
+        , isValidAthlete
+        , isValidFinishPosition
         , startEditing
+        , tryUpdateBarcodeScannerLine
         , updateEditDetails
         )
 import Commands exposing (ElementToFocus(..))
 import Expect exposing (Expectation)
 import NumericEntry exposing (NumericEntry)
 import Test exposing (Test, describe, test)
+import TestData exposing (createBarcodeScannerDataFromFiles, ordinaryFileLine, toPosix)
 
 
 initialDetails : BarcodeScannerRowEditDetails
@@ -43,7 +47,7 @@ invalidNumericEntry =
 runValidationTest : Maybe BarcodeScannerValidationError -> BarcodeScannerRowEditDetails -> Expectation
 runValidationTest validationError editDetails =
     BarcodeScannerEditing.validate editDetails
-        |> Expect.equal { editDetails | validationError = validationError }
+        |> Expect.equal validationError
 
 
 suite : Test
@@ -73,7 +77,7 @@ suite =
                                 (NumericEntry "" Nothing)
                                 (NumericEntry "" Nothing)
                                 Neither
-                                (Just NeitherSelected)
+                                Nothing
                                 False
                             )
             ]
@@ -171,28 +175,20 @@ suite =
                     \() ->
                         updateEditDetails (AthleteChanged "a769422") initialDetails
                             |> Expect.equal { initialDetails | athleteEntered = NumericEntry "a769422" (Just 769422) }
-                , test "Can change an athlete to an invalid value" <|
+                , test "Can change an athlete to an invalid value with no validation error" <|
                     \() ->
                         updateEditDetails (AthleteChanged "Invalid number") initialDetails
-                            |> Expect.equal
-                                { initialDetails
-                                    | athleteEntered = NumericEntry "Invalid number" Nothing
-                                    , validationError = Just InvalidAthleteNumber
-                                }
+                            |> Expect.equal { initialDetails | athleteEntered = NumericEntry "Invalid number" Nothing }
                 ]
             , describe "FinishPositionChanged tests"
                 [ test "Can change a finish position to a valid value" <|
                     \() ->
                         updateEditDetails (FinishPositionChanged "77") initialDetails
                             |> Expect.equal { initialDetails | finishPositionEntered = NumericEntry "77" (Just 77) }
-                , test "Can change an athlete to an invalid value" <|
+                , test "Can change an athlete to an invalid value with no validation error" <|
                     \() ->
                         updateEditDetails (FinishPositionChanged "Invalid number") initialDetails
-                            |> Expect.equal
-                                { initialDetails
-                                    | finishPositionEntered = NumericEntry "Invalid number" Nothing
-                                    , validationError = Just InvalidFinishPosition
-                                }
+                            |> Expect.equal { initialDetails | finishPositionEntered = NumericEntry "Invalid number" Nothing }
                 ]
             ]
         , describe "validate tests"
@@ -233,5 +229,93 @@ suite =
                     runValidationTest
                         (Just InvalidAthleteNumberAndFinishPosition)
                         { initialDetails | fieldBeingEdited = Both, athleteEntered = invalidNumericEntry, finishPositionEntered = invalidNumericEntry }
+            ]
+        , describe "isValidAthlete tests"
+            [ test "Athlete not valid if validation error for the athlete" <|
+                \() ->
+                    isValidAthlete { initialDetails | validationError = Just InvalidAthleteNumber }
+                        |> Expect.equal False
+            , test "Athlete valid if validation error for the finish position" <|
+                \() ->
+                    isValidAthlete { initialDetails | validationError = Just InvalidFinishPosition }
+                        |> Expect.equal True
+            , test "Athlete not valid if validation error for both the athlete and the finish position" <|
+                \() ->
+                    isValidAthlete { initialDetails | validationError = Just InvalidAthleteNumberAndFinishPosition }
+                        |> Expect.equal False
+            , test "Athlete valid if validation error for neither selected" <|
+                \() ->
+                    isValidAthlete { initialDetails | validationError = Just NeitherSelected }
+                        |> Expect.equal True
+            , test "Athlete valid if no validation error" <|
+                \() ->
+                    isValidAthlete initialDetails
+                        |> Expect.equal True
+            ]
+        , describe "isValidFinishPosition tests"
+            [ test "Finish position valid if validation error for the athlete" <|
+                \() ->
+                    isValidFinishPosition { initialDetails | validationError = Just InvalidAthleteNumber }
+                        |> Expect.equal True
+            , test "Finish position not valid if validation error for the finish position" <|
+                \() ->
+                    isValidFinishPosition { initialDetails | validationError = Just InvalidFinishPosition }
+                        |> Expect.equal False
+            , test "Finish position not valid if validation error for both the athlete and the finish position" <|
+                \() ->
+                    isValidFinishPosition { initialDetails | validationError = Just InvalidAthleteNumberAndFinishPosition }
+                        |> Expect.equal False
+            , test "Finish position valid if validation error for neither selected" <|
+                \() ->
+                    isValidFinishPosition { initialDetails | validationError = Just NeitherSelected }
+                        |> Expect.equal True
+            , test "Finish position valid if no validation error" <|
+                \() ->
+                    isValidFinishPosition initialDetails
+                        |> Expect.equal True
+            ]
+        , describe "tryUpdateBarcodeScannerLine tests"
+            [ test "Updating barcode scanner line when successful returns success" <|
+                \() ->
+                    let
+                        initialBarcodeScannerData : BarcodeScannerData
+                        initialBarcodeScannerData =
+                            createBarcodeScannerDataFromFiles
+                                [ BarcodeScannerFile
+                                    "barcodes6.txt"
+                                    [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+
+                        expectedBarcodeScannerData : BarcodeScannerData
+                        expectedBarcodeScannerData =
+                            createBarcodeScannerDataFromFiles
+                                [ BarcodeScannerFile
+                                    "barcodes6.txt"
+                                    [ ordinaryFileLine 1 "A2022807" (Just 37) "14/03/2018 09:47:03"
+                                    , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
+                                    ]
+                                    (toPosix "2018-03-14T09:48:44.000Z")
+                                ]
+
+                        rowEditDetails : BarcodeScannerRowEditDetails
+                        rowEditDetails =
+                            BarcodeScannerRowEditDetails
+                                (BarcodeScannerRowEditLocation "barcodes6.txt" 1)
+                                (Ordinary "A4580442" (Just 47))
+                                (NumericEntry "A2022807" (Just 2022807))
+                                (NumericEntry "37" (Just 37))
+                                Both
+                                Nothing
+                                False
+                    in
+                    tryUpdateBarcodeScannerLine rowEditDetails initialBarcodeScannerData
+                        |> Expect.equal (Ok expectedBarcodeScannerData)
+            , test "Updating barcode scanner line when unsuccessful returns validation error" <|
+                \() ->
+                    tryUpdateBarcodeScannerLine { initialDetails | fieldBeingEdited = Neither } BarcodeScanner.empty
+                        |> Expect.equal (Err NeitherSelected)
             ]
         ]

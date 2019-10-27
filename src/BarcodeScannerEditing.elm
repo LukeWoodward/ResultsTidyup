@@ -5,12 +5,15 @@ module BarcodeScannerEditing exposing
     , BarcodeScannerRowEditLocation
     , BarcodeScannerValidationError(..)
     , elementToFocusWhenOpening
+    , isValidAthlete
+    , isValidFinishPosition
     , startEditing
+    , tryUpdateBarcodeScannerLine
     , updateEditDetails
     , validate
     )
 
-import BarcodeScanner exposing (LineContents(..))
+import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFileLine, DeletionStatus(..), LineContents(..), updateBarcodeScannerLine)
 import Commands exposing (ElementToFocus(..))
 import NumericEntry
     exposing
@@ -64,10 +67,10 @@ startEditing : BarcodeScannerRowEditLocation -> LineContents -> Bool -> BarcodeS
 startEditing location contents isDeleted =
     case contents of
         Ordinary athlete finishPosition ->
-            validate (BarcodeScannerRowEditDetails location contents (numericEntryFromAthleteNumber athlete) (numericEntryFromMaybeInt finishPosition) Both Nothing isDeleted)
+            BarcodeScannerRowEditDetails location contents (numericEntryFromAthleteNumber athlete) (numericEntryFromMaybeInt finishPosition) Both Nothing isDeleted
 
         MisScan misScannedText ->
-            validate (BarcodeScannerRowEditDetails location contents emptyNumericEntry emptyNumericEntry Neither Nothing isDeleted)
+            BarcodeScannerRowEditDetails location contents emptyNumericEntry emptyNumericEntry Neither Nothing isDeleted
 
 
 elementToFocusWhenOpening : LineContents -> ElementToFocus
@@ -82,67 +85,136 @@ elementToFocusWhenOpening contents =
 
 updateEditDetails : BarcodeScannerEditDetails -> BarcodeScannerRowEditDetails -> BarcodeScannerRowEditDetails
 updateEditDetails editDetails currentDetails =
-    case editDetails of
-        ChangeWhatsBeingEdited newEditedField ->
-            if currentDetails.fieldBeingEdited == Both then
-                currentDetails
+    let
+        updatedDetails : BarcodeScannerRowEditDetails
+        updatedDetails =
+            case editDetails of
+                ChangeWhatsBeingEdited newEditedField ->
+                    if currentDetails.fieldBeingEdited == Both then
+                        currentDetails
+
+                    else
+                        case newEditedField of
+                            AthleteOnly ->
+                                { currentDetails | fieldBeingEdited = AthleteOnly }
+
+                            FinishPositionOnly ->
+                                { currentDetails | fieldBeingEdited = FinishPositionOnly }
+
+                            Both ->
+                                currentDetails
+
+                            Neither ->
+                                currentDetails
+
+                AthleteChanged newAthlete ->
+                    { currentDetails | athleteEntered = numericEntryFromAthleteNumber newAthlete }
+
+                FinishPositionChanged newFinishPosition ->
+                    { currentDetails | finishPositionEntered = numericEntryFromString newFinishPosition }
+    in
+    { updatedDetails | validationError = Nothing }
+
+
+isValidAthlete : BarcodeScannerRowEditDetails -> Bool
+isValidAthlete rowEditDetails =
+    case rowEditDetails.validationError of
+        Just InvalidAthleteNumber ->
+            False
+
+        Just InvalidFinishPosition ->
+            True
+
+        Just InvalidAthleteNumberAndFinishPosition ->
+            False
+
+        Just NeitherSelected ->
+            True
+
+        Nothing ->
+            True
+
+
+isValidFinishPosition : BarcodeScannerRowEditDetails -> Bool
+isValidFinishPosition rowEditDetails =
+    case rowEditDetails.validationError of
+        Just InvalidAthleteNumber ->
+            True
+
+        Just InvalidFinishPosition ->
+            False
+
+        Just InvalidAthleteNumberAndFinishPosition ->
+            False
+
+        Just NeitherSelected ->
+            True
+
+        Nothing ->
+            True
+
+
+validate : BarcodeScannerRowEditDetails -> Maybe BarcodeScannerValidationError
+validate currentDetails =
+    case currentDetails.fieldBeingEdited of
+        Neither ->
+            Just NeitherSelected
+
+        AthleteOnly ->
+            if isValidEntry currentDetails.athleteEntered then
+                Nothing
 
             else
-                case newEditedField of
-                    AthleteOnly ->
-                        validate { currentDetails | fieldBeingEdited = AthleteOnly }
+                Just InvalidAthleteNumber
 
-                    FinishPositionOnly ->
-                        validate { currentDetails | fieldBeingEdited = FinishPositionOnly }
+        FinishPositionOnly ->
+            if isValidEntry currentDetails.finishPositionEntered then
+                Nothing
 
-                    Both ->
-                        currentDetails
+            else
+                Just InvalidFinishPosition
 
-                    Neither ->
-                        currentDetails
+        Both ->
+            case ( isValidEntry currentDetails.athleteEntered, isValidEntry currentDetails.finishPositionEntered ) of
+                ( False, False ) ->
+                    Just InvalidAthleteNumberAndFinishPosition
 
-        AthleteChanged newAthlete ->
-            validate { currentDetails | athleteEntered = numericEntryFromAthleteNumber newAthlete }
+                ( False, True ) ->
+                    Just InvalidAthleteNumber
 
-        FinishPositionChanged newFinishPosition ->
-            validate { currentDetails | finishPositionEntered = numericEntryFromString newFinishPosition }
+                ( True, False ) ->
+                    Just InvalidFinishPosition
+
+                ( True, True ) ->
+                    Nothing
 
 
-validate : BarcodeScannerRowEditDetails -> BarcodeScannerRowEditDetails
-validate currentDetails =
+tryUpdateBarcodeScannerLine : BarcodeScannerRowEditDetails -> BarcodeScannerData -> Result BarcodeScannerValidationError BarcodeScannerData
+tryUpdateBarcodeScannerLine rowEditDetails barcodeScannerData =
     let
-        validationError : Maybe BarcodeScannerValidationError
-        validationError =
-            case currentDetails.fieldBeingEdited of
-                Neither ->
-                    Just NeitherSelected
-
-                AthleteOnly ->
-                    if isValidEntry currentDetails.athleteEntered then
-                        Nothing
-
-                    else
-                        Just InvalidAthleteNumber
-
-                FinishPositionOnly ->
-                    if isValidEntry currentDetails.finishPositionEntered then
-                        Nothing
-
-                    else
-                        Just InvalidFinishPosition
-
-                Both ->
-                    case ( isValidEntry currentDetails.athleteEntered, isValidEntry currentDetails.finishPositionEntered ) of
-                        ( False, False ) ->
-                            Just InvalidAthleteNumberAndFinishPosition
-
-                        ( False, True ) ->
-                            Just InvalidAthleteNumber
-
-                        ( True, False ) ->
-                            Just InvalidFinishPosition
-
-                        ( True, True ) ->
-                            Nothing
+        validationErrorMaybe : Maybe BarcodeScannerValidationError
+        validationErrorMaybe =
+            validate rowEditDetails
     in
-    { currentDetails | validationError = validationError }
+    case validationErrorMaybe of
+        Just validationError ->
+            Err validationError
+
+        Nothing ->
+            let
+                athlete : String
+                athlete =
+                    case rowEditDetails.athleteEntered.parsedValue of
+                        Just athleteNum ->
+                            "A" ++ String.fromInt athleteNum
+
+                        Nothing ->
+                            ""
+            in
+            updateBarcodeScannerLine
+                rowEditDetails.location.fileName
+                rowEditDetails.location.lineNumber
+                athlete
+                rowEditDetails.finishPositionEntered.parsedValue
+                barcodeScannerData
+                |> Ok

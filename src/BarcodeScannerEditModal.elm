@@ -8,6 +8,8 @@ import BarcodeScannerEditing
         , BarcodeScannerRowEditDetails
         , BarcodeScannerRowEditLocation
         , BarcodeScannerValidationError(..)
+        , isValidAthlete
+        , isValidFinishPosition
         )
 import Bootstrap.Button as Button
 import Bootstrap.Form as Form
@@ -20,7 +22,6 @@ import Html exposing (Html, b, div, text)
 import Html.Attributes exposing (class, type_)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg(..))
-import NumericEntry exposing (isValidEntry)
 
 
 athleteInputId : String
@@ -91,7 +92,7 @@ editBarcodeScannerRowModalBody rowEditDetails =
 
         athleteDanger : List (Input.Option Msg)
         athleteDanger =
-            if isAthleteEditable && not (isValidEntry rowEditDetails.athleteEntered) then
+            if isAthleteEditable && not (isValidAthlete rowEditDetails) then
                 [ Input.danger ]
 
             else
@@ -103,7 +104,7 @@ editBarcodeScannerRowModalBody rowEditDetails =
 
         finishPositionDanger : List (Input.Option Msg)
         finishPositionDanger =
-            if isFinishPositionEditable && not (isValidEntry rowEditDetails.finishPositionEntered) then
+            if isFinishPositionEditable && not (isValidFinishPosition rowEditDetails) then
                 [ Input.danger ]
 
             else
@@ -232,15 +233,10 @@ barcodeScannerEditButtons barcodeScannerRowEditDetails =
 
             else
                 "Update row"
-
-        updateButtonDisabled : Bool
-        updateButtonDisabled =
-            barcodeScannerRowEditDetails.validationError /= Nothing
     in
     [ deleteButton
     , Button.button
         [ Button.outlinePrimary
-        , Button.disabled updateButtonDisabled
         , Button.attrs updateButtonAttrs
         ]
         [ text updateButtonText ]

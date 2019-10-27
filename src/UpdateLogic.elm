@@ -7,9 +7,8 @@ import BarcodeScanner
         , deleteBarcodeScannerLine
         , generateDownloadText
         , regenerate
-        , updateBarcodeScannerLine
         )
-import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails)
+import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, BarcodeScannerValidationError, tryUpdateBarcodeScannerLine)
 import Bootstrap.Tab as Tab
 import Commands exposing (Command(..), ElementToFocus(..))
 import DateHandling exposing (generateDownloadFilenameDatePart)
@@ -320,29 +319,20 @@ select condition trueValue falseValue =
         falseValue
 
 
-updateRowFromBarcodeScannerEditModal : BarcodeScannerRowEditDetails -> Model -> Model
-updateRowFromBarcodeScannerEditModal rowEditDetails model =
+tryUpdateRowFromBarcodeScannerEditModal : BarcodeScannerRowEditDetails -> Model -> Model
+tryUpdateRowFromBarcodeScannerEditModal rowEditDetails model =
     let
-        athlete : String
-        athlete =
-            case rowEditDetails.athleteEntered.parsedValue of
-                Just athleteNum ->
-                    "A" ++ String.fromInt athleteNum
-
-                Nothing ->
-                    ""
+        updateBarcodeScannerLineResult : Result BarcodeScannerValidationError BarcodeScannerData
+        updateBarcodeScannerLineResult =
+            tryUpdateBarcodeScannerLine rowEditDetails model.barcodeScannerData
     in
-    { model
-        | dialogDetails = NoDialog
-        , barcodeScannerData =
-            updateBarcodeScannerLine
-                rowEditDetails.location.fileName
-                rowEditDetails.location.lineNumber
-                athlete
-                rowEditDetails.finishPositionEntered.parsedValue
-                model.barcodeScannerData
-    }
-        |> identifyProblemsIn
+    case updateBarcodeScannerLineResult of
+        Ok barcodeScannerData ->
+            { model | dialogDetails = NoDialog, barcodeScannerData = barcodeScannerData }
+                |> identifyProblemsIn
+
+        Err validationError ->
+            { model | dialogDetails = BarcodeScannerRowEditDialog { rowEditDetails | validationError = Just validationError } }
 
 
 tryApplyTokenOperation : TokenOperationEditDetails -> Model -> Model
@@ -506,7 +496,7 @@ update msg model =
             ( { model | dialogDetails = newEditDetails }, NoCommand )
 
         UpdateRowFromBarcodeScannerEditModal rowEditDetails ->
-            ( updateRowFromBarcodeScannerEditModal rowEditDetails model, NoCommand )
+            ( tryUpdateRowFromBarcodeScannerEditModal rowEditDetails model, NoCommand )
 
         DeleteRowFromBarcodeScannerEditModal location ->
             ( { model
@@ -560,7 +550,7 @@ update msg model =
 
                 BarcodeScannerRowEditDialog rowEditDetails ->
                     if rowEditDetails.validationError == Nothing then
-                        ( updateRowFromBarcodeScannerEditModal rowEditDetails model, NoCommand )
+                        ( tryUpdateRowFromBarcodeScannerEditModal rowEditDetails model, NoCommand )
 
                     else
                         ( model, NoCommand )
