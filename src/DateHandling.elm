@@ -1,7 +1,7 @@
 module DateHandling exposing (dateTimeStringToPosix, generateDownloadFilenameDatePart, posixToDateString, posixToDateTimeString)
 
 import Iso8601
-import Parser exposing ((|.), (|=), Parser, end, run, symbol)
+import Parser exposing ((|.), (|=), DeadEnd, Parser, end, keyword, oneOf, run, spaces, symbol)
 import Parsers exposing (digits)
 import Result.Extra
 import Time exposing (Month(..), Posix, Zone)
@@ -69,6 +69,16 @@ generateDownloadFilenameDatePart zone time =
         |> String.join ""
 
 
+amPm : Parser ()
+amPm =
+    oneOf
+        [ keyword "AM"
+        , keyword "PM"
+        , keyword "am"
+        , keyword "pm"
+        ]
+
+
 barcodeScannerDateTimeParser : Parser ()
 barcodeScannerDateTimeParser =
     digits 2
@@ -82,7 +92,10 @@ barcodeScannerDateTimeParser =
         |. digits 2
         |. symbol ":"
         |. digits 2
-        |. end
+        |. oneOf
+            [ spaces |. amPm |. end
+            , end
+            ]
 
 
 dateTimeStringToPosix : String -> Maybe Posix
@@ -97,12 +110,28 @@ dateTimeStringToPosix dateTimeString =
                     ++ "-"
                     ++ String.left 2 dateTimeString
                     ++ "T"
-                    ++ String.right 8 dateTimeString
+                    ++ String.slice 11 19 dateTimeString
                     ++ ".000Z"
+
+            isPm : Bool
+            isPm =
+                String.toLower dateTimeString
+                    |> String.endsWith "pm"
+
+            applyPmOffset : Posix -> Posix
+            applyPmOffset time =
+                if isPm then
+                    time
+                        |> Time.posixToMillis
+                        |> (+) (12 * 60 * 60 * 1000)
+                        |> Time.millisToPosix
+
+                else
+                    time
         in
         case Iso8601.toTime isoDateTimeString of
             Ok time ->
-                Just time
+                Just (applyPmOffset time)
 
             Err _ ->
                 Nothing

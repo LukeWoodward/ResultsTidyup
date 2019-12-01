@@ -22,6 +22,26 @@ suite =
                     dateTimeStringToPosix "14/07/2017 02:40:00"
                         |> Maybe.map Time.posixToMillis
                         |> Expect.equal (Just 1500000000000)
+            , test "Can parse an actual time with AM suffix into a Posix value" <|
+                \() ->
+                    dateTimeStringToPosix "14/07/2017 02:40:00 AM"
+                        |> Maybe.map Time.posixToMillis
+                        |> Expect.equal (Just 1500000000000)
+            , test "Can parse an actual time with am suffix into a Posix value" <|
+                \() ->
+                    dateTimeStringToPosix "14/07/2017 02:40:00 am"
+                        |> Maybe.map Time.posixToMillis
+                        |> Expect.equal (Just 1500000000000)
+            , test "Can parse an actual time with PM suffix into a Posix value" <|
+                \() ->
+                    dateTimeStringToPosix "14/07/2017 02:40:00 PM"
+                        |> Maybe.map Time.posixToMillis
+                        |> Expect.equal (Just 1500043200000)
+            , test "Can parse an actual time with pm suffix into a Posix value" <|
+                \() ->
+                    dateTimeStringToPosix "14/07/2017 02:40:00 pm"
+                        |> Maybe.map Time.posixToMillis
+                        |> Expect.equal (Just 1500043200000)
             , test "Can parse an invalid time into Nothing" <|
                 \() ->
                     dateTimeStringToPosix "29/02/2017 09:57:22"
