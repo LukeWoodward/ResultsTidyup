@@ -138,6 +138,9 @@ getDownloadOperation downloadOperation =
         Commands.DownloadMergedStopwatches ->
             DownloadMergedStopwatchData
 
+        Commands.DownloadAllBarcodeScannerData ->
+            DownloadAllBarcodeScannerData
+
         Commands.DownloadBarcodeScannerFile filename ->
             DownloadBarcodeScannerFile filename
 

@@ -44,6 +44,7 @@ type Msg
     | ChangeBarcodeScannerTab Tab.State
     | ClearErrors
     | DownloadBarcodeScannerFile String Zone Posix
+    | DownloadAllBarcodeScannerData Zone Posix
     | DeleteBarcodeScannerFile String
     | IgnoreProblem Int
     | ShowBarcodeScannerEditModal BarcodeScannerRowEditLocation LineContents Bool

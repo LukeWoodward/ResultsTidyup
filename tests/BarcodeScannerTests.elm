@@ -16,6 +16,7 @@ import BarcodeScanner
         , deleteBarcodeScannerLine
         , empty
         , generateDownloadText
+        , generateDownloadTextForAllScanners
         , isEmpty
         , maxFinishToken
         , readBarcodeScannerData
@@ -346,6 +347,43 @@ suite =
                                 ++ ",P0047,19/09/2018 09:40:09"
                                 ++ crlf
                                 ++ "&d084,04/07/2018 09:42:22"
+                                ++ crlf
+                            )
+            ]
+        , describe "generateDownloadTextForAllScanners tests"
+            [ test "generateDownloadTextForAllScanners returns an empty string for empty list of files" <|
+                \() ->
+                    generateDownloadTextForAllScanners []
+                        |> Expect.equal ""
+            , test "generateDownloadTextForAllScanners returns a string for a single scanned barcode" <|
+                \() ->
+                    generateDownloadTextForAllScanners [ BarcodeScannerFile "barcodes.txt" [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03" ] Nothing ]
+                        |> Expect.equal ("A123456,P0047,14/03/2018 09:47:03" ++ crlf)
+            , test "generateDownloadTextForAllScanners returns the correct string for multiple files" <|
+                \() ->
+                    generateDownloadTextForAllScanners
+                        [ BarcodeScannerFile
+                            "barcodes1.txt"
+                            [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03"
+                            , ordinaryFileLine 2 "A123456" Nothing "19/09/2018 09:33:37"
+                            , ordinaryFileLine 3 "" (Just 47) "19/09/2018 09:40:09"
+                            ]
+                            Nothing
+                        , BarcodeScannerFile
+                            "barcodes2.txt"
+                            [ BarcodeScannerFileLine 4 (MisScan "&d084") "04/07/2018 09:42:22" NotDeleted
+                            , BarcodeScannerFileLine 5 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted BeforeEventStart)
+                            ]
+                            Nothing
+                        ]
+                        |> Expect.equal
+                            ("A123456,P0047,14/03/2018 09:47:03"
+                                ++ crlf
+                                ++ "&d084,04/07/2018 09:42:22"
+                                ++ crlf
+                                ++ "A123456,,19/09/2018 09:33:37"
+                                ++ crlf
+                                ++ ",P0047,19/09/2018 09:40:09"
                                 ++ crlf
                             )
             ]

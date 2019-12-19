@@ -13,6 +13,7 @@ module BarcodeScanner exposing
     , deleteBarcodeScannerLine
     , empty
     , generateDownloadText
+    , generateDownloadTextForAllScanners
     , isEmpty
     , maxFinishToken
     , mergeScannerData
@@ -425,27 +426,46 @@ regenerate barcodeScannerData =
     }
 
 
+lineContentsToString : LineContents -> String
+lineContentsToString contents =
+    case contents of
+        Ordinary athlete Nothing ->
+            athlete ++ ","
+
+        Ordinary athlete (Just position) ->
+            athlete ++ "," ++ formatPosition position
+
+        MisScan text ->
+            text
+
+
+lineToString : BarcodeScannerFileLine -> String
+lineToString line =
+    lineContentsToString line.contents ++ "," ++ line.scanDateTime ++ crlf
+
+
 generateDownloadText : BarcodeScannerFile -> String
 generateDownloadText file =
-    let
-        contentsToString : LineContents -> String
-        contentsToString contents =
-            case contents of
-                Ordinary athlete Nothing ->
-                    athlete ++ ","
-
-                Ordinary athlete (Just position) ->
-                    athlete ++ "," ++ formatPosition position
-
-                MisScan text ->
-                    text
-
-        lineToString : BarcodeScannerFileLine -> String
-        lineToString line =
-            contentsToString line.contents ++ "," ++ line.scanDateTime ++ crlf
-    in
     file.lines
         |> List.filter notDeleted
+        |> List.map lineToString
+        |> String.join ""
+
+
+generateDownloadTextForAllScanners : List BarcodeScannerFile -> String
+generateDownloadTextForAllScanners files =
+    let
+        lineSortKey : BarcodeScannerFileLine -> Int
+        lineSortKey line =
+            dateTimeStringToPosix line.scanDateTime
+                |> Maybe.map Time.posixToMillis
+                |> Maybe.withDefault 99999999999999
+    in
+    files
+        |> List.map .lines
+        |> List.concat
+        |> List.filter notDeleted
+        |> List.sortBy lineSortKey
         |> List.map lineToString
         |> String.join ""
 

@@ -14,7 +14,7 @@ import Bootstrap.Button as Button
 import Bootstrap.Tab as Tab
 import Bootstrap.Table as Table
 import Commands
-import Html exposing (Attribute, Html, button, div, h4, small, text)
+import Html exposing (Attribute, Html, button, div, h4, small, span, text)
 import Html.Attributes exposing (class, colspan, rowspan, title)
 import Html.Events exposing (onClick, onDoubleClick)
 import Model exposing (Model)
@@ -178,8 +178,25 @@ barcodeScannersView model =
         Alert.simpleInfo [ class "no-barcode-scanner-files" ] [ text "No barcode scanner files have been loaded" ]
 
     else
+        let
+            additionalHeaderContent : List (Html Msg)
+            additionalHeaderContent =
+                if List.length model.barcodeScannerData.files == 1 then
+                    []
+
+                else
+                    [ div
+                        [ class "barcode-scanner-buttons" ]
+                        [ smallButton
+                            (GetCurrentDateForDownloadFile Commands.DownloadAllBarcodeScannerData)
+                            [ title "Downloads a file containing all barcode data from all scanners" ]
+                            "Download all scanned barcodes"
+                        ]
+                    ]
+        in
         div []
-            [ h4 [] [ text "Barcode scanner files" ]
+            [ h4 []
+                (text "Barcode scanner files" :: additionalHeaderContent)
             , Tab.config ChangeBarcodeScannerTab
                 |> Tab.items (List.indexedMap barcodeScannerTabView model.barcodeScannerData.files)
                 |> Tab.view model.barcodeScannerTab

@@ -6,6 +6,7 @@ import BarcodeScanner
         , BarcodeScannerFile
         , deleteBarcodeScannerLine
         , generateDownloadText
+        , generateDownloadTextForAllScanners
         , regenerate
         )
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, BarcodeScannerValidationError, tryUpdateBarcodeScannerLine)
@@ -297,6 +298,20 @@ createSingleBarcodeScannerData fileName files zone time =
             NoCommand
 
 
+createAllBarcodeScannerData : List BarcodeScannerFile -> Zone -> Posix -> Command
+createAllBarcodeScannerData files zone time =
+    let
+        downloadFileContents : String
+        downloadFileContents =
+            generateDownloadTextForAllScanners files
+
+        downloadFileName : String
+        downloadFileName =
+            "results_tidyup_barcode_" ++ generateDownloadFilenameDatePart zone time ++ ".txt"
+    in
+    DownloadFile barcodeScannerFileMimeType (InteropFile downloadFileName downloadFileContents)
+
+
 deleteBarcodeScannerFileWithName : String -> Model -> Model
 deleteBarcodeScannerFileWithName fileName model =
     let
@@ -463,8 +478,11 @@ update msg model =
         ClearErrors ->
             ( { model | lastErrors = [] }, NoCommand )
 
-        DownloadBarcodeScannerFile index zone time ->
-            ( model, createSingleBarcodeScannerData index model.barcodeScannerData.files zone time )
+        DownloadBarcodeScannerFile filename zone time ->
+            ( model, createSingleBarcodeScannerData filename model.barcodeScannerData.files zone time )
+
+        DownloadAllBarcodeScannerData zone time ->
+            ( model, createAllBarcodeScannerData model.barcodeScannerData.files zone time )
 
         DeleteBarcodeScannerFile fileName ->
             ( deleteBarcodeScannerFileWithName fileName model, NoCommand )

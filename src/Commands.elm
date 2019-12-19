@@ -16,6 +16,7 @@ type DownloadOperation
     = DownloadSingleStopwatch WhichStopwatch
     | DownloadMergedStopwatches
     | DownloadBarcodeScannerFile String
+    | DownloadAllBarcodeScannerData
 
 
 type Command
