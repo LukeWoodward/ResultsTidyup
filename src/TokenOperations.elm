@@ -9,6 +9,7 @@ module TokenOperations exposing
     , emptyEditDetails
     , isInsertTokenRangeFieldInvalid
     , isRemoveTokenRangeFieldInvalid
+    , isReverseTokenRangeFieldInvalid
     , isSwapTokenRange1FieldInvalid
     , isSwapTokenRange2FieldInvalid
     , parseRange
@@ -52,6 +53,7 @@ type TokenOperationOption
     | InsertTokensOption
     | RemoveTokensOption
     | SwapTokenRangeOption
+    | ReverseTokenRangeOption
 
 
 type TokenRangeField
@@ -59,6 +61,7 @@ type TokenRangeField
     | RemoveTokenRangeField
     | SwapTokenRangeField1
     | SwapTokenRangeField2
+    | ReverseTokenRangeField
 
 
 type TokenOperationValidationError
@@ -72,6 +75,7 @@ type TokenOperationValidationError
     | RemovingExistingTokens (List Int) TokenRange
     | SwapTokenRangesOfDifferentSizes
     | SwapTokenRangesOverlap
+    | ReverseTokenRangeSingleToken
 
 
 type alias TokenOperationEditDetails =
@@ -80,6 +84,7 @@ type alias TokenOperationEditDetails =
     , removeTokenRange : RangeEntry
     , swapTokenRange1 : RangeEntry
     , swapTokenRange2 : RangeEntry
+    , reverseTokenRange : RangeEntry
     , validationError : TokenOperationValidationError
     }
 
@@ -96,7 +101,7 @@ emptyRange =
 
 emptyEditDetails : TokenOperationEditDetails
 emptyEditDetails =
-    TokenOperationEditDetails NoOptionSelected emptyRange emptyRange emptyRange emptyRange NoValidationError
+    TokenOperationEditDetails NoOptionSelected emptyRange emptyRange emptyRange emptyRange emptyRange NoValidationError
 
 
 trimToInt : String -> Maybe Int
@@ -228,6 +233,20 @@ rangeTokenOverlapValidation swapTokenEntry1 swapTokenEntry2 =
             Nothing
 
 
+reverseSingleTokenValidation : RangeEntry -> Maybe TokenOperationValidationError
+reverseSingleTokenValidation reverseTokenEntry =
+    case reverseTokenEntry.range of
+        Just someRange ->
+            if someRange.start == someRange.end then
+                Just ReverseTokenRangeSingleToken
+
+            else
+                Nothing
+
+        Nothing ->
+            Nothing
+
+
 validateEditDetails : Set Int -> TokenOperationEditDetails -> TokenOperationValidationError
 validateEditDetails allTokens editDetails =
     let
@@ -262,6 +281,12 @@ validateEditDetails allTokens editDetails =
                     , rangesOfDifferentSizeValidation editDetails.swapTokenRange1 editDetails.swapTokenRange2
                     , rangeTokenOverlapValidation editDetails.swapTokenRange1 editDetails.swapTokenRange2
                     ]
+
+                ReverseTokenRangeOption ->
+                    [ commonTokenRangeValidation ReverseTokenRangeField editDetails.reverseTokenRange
+                    , tokenRangeEndOffTokens lastToken ReverseTokenRangeField editDetails.reverseTokenRange
+                    , reverseSingleTokenValidation editDetails.reverseTokenRange
+                    ]
     in
     List.filterMap identity allErrors
         |> List.head
@@ -293,6 +318,9 @@ updateEditDetails change editDetails =
 
                 RangeEdited SwapTokenRangeField2 newValue ->
                     { editDetails | swapTokenRange2 = rangeEntryFromString newValue }
+
+                RangeEdited ReverseTokenRangeField newValue ->
+                    { editDetails | reverseTokenRange = rangeEntryFromString newValue }
     in
     { updatedDetails | validationError = NoValidationError }
 
@@ -330,6 +358,9 @@ isTokenRangeFieldInvalid field tokenOperationEditDetails =
         SwapTokenRangesOverlap ->
             field == SwapTokenRangeField1 || field == SwapTokenRangeField2
 
+        ReverseTokenRangeSingleToken ->
+            field == ReverseTokenRangeField
+
 
 isInsertTokenRangeFieldInvalid : TokenOperationEditDetails -> Bool
 isInsertTokenRangeFieldInvalid tokenOperationEditDetails =
@@ -349,6 +380,11 @@ isSwapTokenRange1FieldInvalid tokenOperationEditDetails =
 isSwapTokenRange2FieldInvalid : TokenOperationEditDetails -> Bool
 isSwapTokenRange2FieldInvalid tokenOperationEditDetails =
     isTokenRangeFieldInvalid SwapTokenRangeField2 tokenOperationEditDetails
+
+
+isReverseTokenRangeFieldInvalid : TokenOperationEditDetails -> Bool
+isReverseTokenRangeFieldInvalid tokenOperationEditDetails =
+    isTokenRangeFieldInvalid ReverseTokenRangeField tokenOperationEditDetails
 
 
 insertTokensIntoBarcodeScannerData : TokenRange -> BarcodeScannerFileLine -> Maybe BarcodeScannerFileLine
@@ -431,6 +467,23 @@ swapTokensInBarcodeScannerData range1 range2Start line =
             Just line
 
 
+reverseTokenRangeInBarcodeScannerData : TokenRange -> BarcodeScannerFileLine -> Maybe BarcodeScannerFileLine
+reverseTokenRangeInBarcodeScannerData range line =
+    case line.contents of
+        Ordinary athlete (Just token) ->
+            if range.start <= token && token <= range.end then
+                Just { line | contents = Ordinary athlete (Just (range.start + range.end - token)) }
+
+            else
+                Just line
+
+        Ordinary _ Nothing ->
+            Just line
+
+        MisScan _ ->
+            Just line
+
+
 applyOperation : (BarcodeScannerFileLine -> Maybe BarcodeScannerFileLine) -> BarcodeScannerData -> BarcodeScannerData
 applyOperation operation barcodeScannerData =
     let
@@ -494,6 +547,14 @@ tryApplyTokenOperationToBarcodeScannerData tokenOperationEditDetails barcodeScan
                             Ok barcodeScannerData
 
                     _ ->
+                        Ok barcodeScannerData
+
+            ReverseTokenRangeOption ->
+                case tokenOperationEditDetails.reverseTokenRange.range of
+                    Just range ->
+                        apply (reverseTokenRangeInBarcodeScannerData range)
+
+                    Nothing ->
                         Ok barcodeScannerData
 
     else

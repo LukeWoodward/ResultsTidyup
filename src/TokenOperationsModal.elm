@@ -21,6 +21,7 @@ import TokenOperations
         , TokenRangeField(..)
         , isInsertTokenRangeFieldInvalid
         , isRemoveTokenRangeFieldInvalid
+        , isReverseTokenRangeFieldInvalid
         , isSwapTokenRange1FieldInvalid
         , isSwapTokenRange2FieldInvalid
         , rangeToString
@@ -122,6 +123,9 @@ validationErrorToString validationError =
         SwapTokenRangesOverlap ->
             "The ranges of tokens to swap overlap.  Please enter two non-overlapping ranges of tokens"
 
+        ReverseTokenRangeSingleToken ->
+            "You cannot reverse a single token.  Please specify a range of tokens to reverse"
+
 
 validationErrorRow : TokenOperationValidationError -> Html Msg
 validationErrorRow validationError =
@@ -158,6 +162,11 @@ tokenOperationsModalBody tokenOperationEditDetails =
             ("Use this option if you give out tokens in batches (e.g. 25, 50 or 100 tokens) but one or more of "
                 ++ "these batches were given out in the wrong order."
             )
+        , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
+            [ radioButton "reverseTokensRadioButtonId" ReverseTokenRangeOption "Reverse tokens" tokenOperationEditDetails
+            , inputTextField .reverseTokenRange ReverseTokenRangeField ReverseTokenRangeOption isReverseTokenRangeFieldInvalid tokenOperationEditDetails
+            ]
+        , textRow "Use this option if a range of tokens was given out in the reverse order."
         , validationErrorRow tokenOperationEditDetails.validationError
         ]
 
@@ -176,6 +185,9 @@ processTokenOperationsButtonText tokenOperationEditDetails =
 
         SwapTokenRangeOption ->
             Just "Swap tokens"
+
+        ReverseTokenRangeOption ->
+            Just "Reverse tokens"
 
 
 tokenOperationsButtons : TokenOperationEditDetails -> List (Html Msg)
