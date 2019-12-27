@@ -5,13 +5,16 @@ module DataEntry exposing
     , emptyEntry
     , floatEntryFromString
     , integerEntryFromAthleteNumber
+    , integerEntryFromHoursAndMinutes
     , integerEntryFromInt
     , integerEntryFromMaybeInt
     , integerEntryFromString
+    , integerEntryFromTime
     , isValidEntry
     )
 
 import Time exposing (Posix)
+import TimeHandling exposing (parseHoursAndMinutes, parseTime)
 
 
 type alias Entry a =
@@ -76,6 +79,20 @@ integerEntryFromMaybeInt maybeIntValue =
                 |> Maybe.withDefault ""
     in
     IntegerEntry stringValue maybeIntValue
+
+
+integerEntryFromHoursAndMinutes : String -> IntegerEntry
+integerEntryFromHoursAndMinutes hoursAndMinutes =
+    parseHoursAndMinutes hoursAndMinutes
+        |> Result.toMaybe
+        |> IntegerEntry hoursAndMinutes
+
+
+integerEntryFromTime : String -> IntegerEntry
+integerEntryFromTime time =
+    parseTime time
+        |> Result.toMaybe
+        |> IntegerEntry time
 
 
 isPositive : Entry number -> Bool

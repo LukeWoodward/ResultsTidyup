@@ -1,11 +1,10 @@
 module EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeChange)
 
-import DataEntry exposing (DateEntry, IntegerEntry)
+import DataEntry exposing (DateEntry, IntegerEntry, integerEntryFromHoursAndMinutes)
 import DateHandling exposing (dateTimeStringToPosix)
 import EventDateAndTime exposing (EventDateAndTime)
 import Model exposing (Model)
 import Time exposing (Posix)
-import TimeHandling exposing (parseHoursAndMinutes)
 
 
 handleEventDateChange : String -> Model -> Model
@@ -33,11 +32,6 @@ handleEventDateChange newEventDate model =
 handleEventTimeChange : String -> Model -> Model
 handleEventTimeChange newEventTime model =
     let
-        newParsedTime : Maybe Int
-        newParsedTime =
-            parseHoursAndMinutes newEventTime
-                |> Result.toMaybe
-
         oldEventDateAndTime : EventDateAndTime
         oldEventDateAndTime =
             model.eventDateAndTime
@@ -45,7 +39,7 @@ handleEventTimeChange newEventTime model =
         newEventDateAndTime : EventDateAndTime
         newEventDateAndTime =
             { oldEventDateAndTime
-                | time = IntegerEntry newEventTime newParsedTime
+                | time = integerEntryFromHoursAndMinutes newEventTime
             }
     in
     { model | eventDateAndTime = newEventDateAndTime }

@@ -6,9 +6,11 @@ import DataEntry
         , IntegerEntry
         , floatEntryFromString
         , integerEntryFromAthleteNumber
+        , integerEntryFromHoursAndMinutes
         , integerEntryFromInt
         , integerEntryFromMaybeInt
         , integerEntryFromString
+        , integerEntryFromTime
         , isValidEntry
         )
 import Expect
@@ -70,6 +72,30 @@ suite =
             , test "Can create an integer entry from a string containing an invalid value not beginning with A" <|
                 \() ->
                     integerEntryFromAthleteNumber "This is not valid"
+                        |> Expect.equal (IntegerEntry "This is not valid" Nothing)
+            ]
+        , describe "integerEntryFromHoursAndMinutes tests"
+            [ test "Can create an integer entry from valid hours and minutes values " <|
+                \() ->
+                    integerEntryFromHoursAndMinutes "12:35"
+                        |> Expect.equal (IntegerEntry "12:35" (Just (12 * 60 + 35)))
+            , test "Can create an integer entry from invalid hours and minutes values " <|
+                \() ->
+                    integerEntryFromHoursAndMinutes "This is not valid"
+                        |> Expect.equal (IntegerEntry "This is not valid" Nothing)
+            ]
+        , describe "integerEntryFromTime tests"
+            [ test "Can create an integer entry from a valid time value without hours" <|
+                \() ->
+                    integerEntryFromTime "29:44"
+                        |> Expect.equal (IntegerEntry "29:44" (Just (29 * 60 + 44)))
+            , test "Can create an integer entry from a valid time value with hours" <|
+                \() ->
+                    integerEntryFromTime "02:29:44"
+                        |> Expect.equal (IntegerEntry "02:29:44" (Just (2 * 60 * 60 + 29 * 60 + 44)))
+            , test "Can create an integer entry from an invalid time " <|
+                \() ->
+                    integerEntryFromTime "This is not valid"
                         |> Expect.equal (IntegerEntry "This is not valid" Nothing)
             ]
         , describe "isValidEntry tests"
