@@ -69,9 +69,24 @@ integerEntryFromString stringValue =
     IntegerEntry stringValue (String.toInt stringValue)
 
 
+requireFiniteFloat : Float -> Maybe Float
+requireFiniteFloat floatValue =
+    -- Strictly speaking the isNaN check in the line below is redundant if
+    -- passed a value from String.toFloat: at the time of writing,
+    -- String.toFloat "NaN" returns Nothing rather than Just NaN.  However,
+    -- we'll check this case anyway in case things change in future.
+    if isNaN floatValue || isInfinite floatValue then
+        Nothing
+
+    else
+        Just floatValue
+
+
 floatEntryFromString : String -> FloatEntry
 floatEntryFromString stringValue =
-    FloatEntry stringValue (String.toFloat stringValue)
+    String.toFloat stringValue
+        |> Maybe.andThen requireFiniteFloat
+        |> FloatEntry stringValue
 
 
 rangeEntryFromString : String -> RangeEntry

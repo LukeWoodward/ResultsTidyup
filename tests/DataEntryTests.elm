@@ -61,6 +61,18 @@ suite =
                 \() ->
                     floatEntryFromString "This is not valid"
                         |> Expect.equal (FloatEntry "This is not valid" Nothing)
+            , test "Can create an invalid float entry from a string containing positive infinity" <|
+                \() ->
+                    floatEntryFromString "Infinity"
+                        |> Expect.equal (FloatEntry "Infinity" Nothing)
+            , test "Can create an invalid float entry from a string containing negative infinity" <|
+                \() ->
+                    floatEntryFromString "-Infinity"
+                        |> Expect.equal (FloatEntry "-Infinity" Nothing)
+            , test "Can create a invalid float entry from a string containing NaN" <|
+                \() ->
+                    floatEntryFromString "NaN"
+                        |> Expect.equal (FloatEntry "NaN" Nothing)
             ]
         , describe "integerEntryFromAthleteNumber tests"
             [ test "Can create an integer entry from an athlete number containing an A and a valid int value" <|
