@@ -14,6 +14,7 @@ import DataEntry
         , integerEntryFromMaybeInt
         , integerEntryFromString
         , integerEntryFromTime
+        , isPositive
         , isValidEntry
         , rangeEntryFromString
         , rangeToString
@@ -175,7 +176,7 @@ suite =
             , test "A valid float value is valid" <|
                 \() ->
                     isValidEntry (FloatEntry "123.45" (Just 123.45))
-                        |> Expect.true "Valid positive integer value should be valid"
+                        |> Expect.true "Valid positive float value should be valid"
             , test "A negative integer value is invalid" <|
                 \() ->
                     isValidEntry (IntegerEntry "-442" (Just -442))
@@ -183,7 +184,7 @@ suite =
             , test "A negative float value is invalid" <|
                 \() ->
                     isValidEntry (FloatEntry "-123.45" (Just -123.45))
-                        |> Expect.false "Negative integer value should not be valid"
+                        |> Expect.false "Negative float value should not be valid"
             , test "A zero integer value is invalid" <|
                 \() ->
                     isValidEntry (IntegerEntry "0" (Just 0))
@@ -200,5 +201,47 @@ suite =
                 \() ->
                     isValidEntry (FloatEntry "This is not valid" Nothing)
                         |> Expect.false "Invalid float value should not be valid"
+            ]
+        , describe "isPositive tests"
+            [ test "An empty value is not positive" <|
+                \() ->
+                    isPositive (IntegerEntry "" Nothing)
+                        |> Expect.false "Empty integer value should not be positive"
+            , test "An empty float value is not positive" <|
+                \() ->
+                    isPositive (FloatEntry "" Nothing)
+                        |> Expect.false "Empty float value should not be positive"
+            , test "A valid positive integer value is positive" <|
+                \() ->
+                    isPositive (IntegerEntry "44092" (Just 44092))
+                        |> Expect.true "Valid positive integer value should be positive"
+            , test "A valid positive float value is positive" <|
+                \() ->
+                    isPositive (FloatEntry "123.45" (Just 123.45))
+                        |> Expect.true "Valid positive float value should be positive"
+            , test "A negative integer value is not positive" <|
+                \() ->
+                    isPositive (IntegerEntry "-442" (Just -442))
+                        |> Expect.false "Negative integer value should not be positive"
+            , test "A negative float value is not positive" <|
+                \() ->
+                    isPositive (FloatEntry "-123.45" (Just -123.45))
+                        |> Expect.false "Negative float value should not be positive"
+            , test "A zero integer value is not positive" <|
+                \() ->
+                    isPositive (IntegerEntry "0" (Just 0))
+                        |> Expect.false "Zero integer value should not be positive"
+            , test "A zero float value is not positive" <|
+                \() ->
+                    isPositive (FloatEntry "0.0" (Just 0.0))
+                        |> Expect.false "Zero float value should not be positive"
+            , test "An invalid integer value is not positive" <|
+                \() ->
+                    isPositive (IntegerEntry "This is not valid" Nothing)
+                        |> Expect.false "Invalid integer value should not be positive"
+            , test "An invalid float value is not positive" <|
+                \() ->
+                    isPositive (FloatEntry "This is not valid" Nothing)
+                        |> Expect.false "Invalid float value should not be positive"
             ]
         ]

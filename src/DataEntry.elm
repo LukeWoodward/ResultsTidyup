@@ -5,6 +5,7 @@ module DataEntry exposing
     , Range
     , RangeEntry
     , emptyEntry
+    , floatEntryFromFloat
     , floatEntryFromString
     , integerEntryFromAthleteNumber
     , integerEntryFromHoursAndMinutes
@@ -12,6 +13,7 @@ module DataEntry exposing
     , integerEntryFromMaybeInt
     , integerEntryFromString
     , integerEntryFromTime
+    , isPositive
     , isValidEntry
     , rangeEntryFromString
     , rangeToString
@@ -114,6 +116,11 @@ integerEntryFromTime time =
     parseTime time
         |> Result.toMaybe
         |> IntegerEntry time
+
+
+floatEntryFromFloat : Float -> FloatEntry
+floatEntryFromFloat floatValue =
+    FloatEntry (String.fromFloat floatValue) (Just floatValue)
 
 
 trimToInt : String -> Maybe Int
