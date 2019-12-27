@@ -83,7 +83,7 @@ setEventDateAndTimeIn model =
             model.barcodeScannerData.lastScanDateTime
                 |> Maybe.map posixToDateString
     in
-    case ( newEventDate, model.eventDateAndTime.validatedDate ) of
+    case ( newEventDate, model.eventDateAndTime.date.parsedValue ) of
         ( Just _, Just _ ) ->
             -- Already have an event date so leave it.
             model

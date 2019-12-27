@@ -1,6 +1,6 @@
 module EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeChange)
 
-import DataEntry exposing (IntegerEntry)
+import DataEntry exposing (DateEntry, IntegerEntry)
 import DateHandling exposing (dateTimeStringToPosix)
 import EventDateAndTime exposing (EventDateAndTime)
 import Model exposing (Model)
@@ -24,8 +24,7 @@ handleEventDateChange newEventDate model =
         newEventDateAndTime : EventDateAndTime
         newEventDateAndTime =
             { oldEventDateAndTime
-                | enteredDate = newEventDate
-                , validatedDate = newParsedDate
+                | date = DateEntry newEventDate newParsedDate
             }
     in
     { model | eventDateAndTime = newEventDateAndTime }

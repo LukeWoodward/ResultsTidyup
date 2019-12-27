@@ -46,7 +46,7 @@ import BarcodeScanner
         , PositionAndTimePair
         , regenerate
         )
-import DataEntry exposing (emptyEntry, integerEntryFromInt)
+import DataEntry exposing (DateEntry, emptyEntry, integerEntryFromInt)
 import Dict
 import EventDateAndTime exposing (EventDateAndTime)
 import FileHandling exposing (crlf)
@@ -312,7 +312,7 @@ parsedInvalidBarcodeScannerData =
 
 parsedEventDateOnly : EventDateAndTime
 parsedEventDateOnly =
-    EventDateAndTime "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z") emptyEntry
+    EventDateAndTime (DateEntry "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z")) emptyEntry
 
 
 validNumberCheckerData : String

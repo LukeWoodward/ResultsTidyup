@@ -12,6 +12,7 @@ import BarcodeScanner
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, BarcodeScannerValidationError, tryUpdateBarcodeScannerLine)
 import Bootstrap.Tab as Tab
 import Commands exposing (Command(..), ElementToFocus(..))
+import DataEntry exposing (emptyEntry)
 import DateHandling exposing (generateDownloadFilenameDatePart)
 import Dict
 import EventDateAndTime exposing (EventDateAndTime)
@@ -221,7 +222,7 @@ clearAllData model =
         , highlightedNumberCheckerId = Nothing
         , barcodeScannerData = BarcodeScanner.empty
         , problems = noProblems
-        , eventDateAndTime = EventDateAndTime "" Nothing model.eventDateAndTime.time
+        , eventDateAndTime = EventDateAndTime emptyEntry model.eventDateAndTime.time
         , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
         , barcodeScannerTab = Tab.initialState
         , dialogDetails = NoDialog

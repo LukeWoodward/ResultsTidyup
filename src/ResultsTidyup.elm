@@ -13,7 +13,7 @@ import Bootstrap.Tab as Tab
 import Browser
 import Browser.Dom
 import Commands exposing (Command(..), ElementToFocus(..))
-import DataEntry exposing (IntegerEntry)
+import DataEntry exposing (IntegerEntry, emptyEntry)
 import Error exposing (FileError)
 import EventDateAndTime exposing (EventDateAndTime)
 import EventDateAndTimeView exposing (eventDateAndTimeView)
@@ -66,7 +66,7 @@ init { startTime, isBeta } =
 
         initialEventDateAndTime : EventDateAndTime
         initialEventDateAndTime =
-            EventDateAndTime "" Nothing (IntegerEntry startTimeAsString startTime)
+            EventDateAndTime emptyEntry (IntegerEntry startTimeAsString startTime)
     in
     ( { initModel
         | isBeta = isBeta

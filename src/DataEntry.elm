@@ -1,5 +1,6 @@
 module DataEntry exposing
-    ( FloatEntry
+    ( DateEntry
+    , FloatEntry
     , IntegerEntry
     , emptyEntry
     , floatEntryFromString
@@ -9,6 +10,8 @@ module DataEntry exposing
     , integerEntryFromString
     , isValidEntry
     )
+
+import Time exposing (Posix)
 
 
 type alias Entry a =
@@ -26,6 +29,12 @@ type alias IntegerEntry =
 type alias FloatEntry =
     { enteredValue : String
     , parsedValue : Maybe Float
+    }
+
+
+type alias DateEntry =
+    { enteredValue : String
+    , parsedValue : Maybe Posix
     }
 
 
