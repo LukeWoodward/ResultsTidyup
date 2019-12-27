@@ -28,6 +28,7 @@ import Modals exposing (showModalDialog)
 import Model exposing (Model, initModel)
 import Msg exposing (Msg(..))
 import NumberCheckerView exposing (numberCheckerView)
+import NumericEntry exposing (IntegerEntry)
 import Ports exposing (filesDropped, getInitialHeight, heightUpdated, recordEventStartTime)
 import Problems
 import ProblemsView exposing (problemsView)
@@ -65,7 +66,7 @@ init { startTime, isBeta } =
 
         initialEventDateAndTime : EventDateAndTime
         initialEventDateAndTime =
-            EventDateAndTime "" Nothing startTimeAsString startTime
+            EventDateAndTime "" Nothing (IntegerEntry startTimeAsString startTime)
     in
     ( { initModel
         | isBeta = isBeta

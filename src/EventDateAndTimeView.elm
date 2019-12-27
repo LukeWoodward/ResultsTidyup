@@ -34,7 +34,7 @@ eventDateAndTimeView eventDateAndTime =
 
         timeInputClass : String
         timeInputClass =
-            if eventDateAndTime.enteredTime /= "" && eventDateAndTime.validatedTime == Nothing then
+            if eventDateAndTime.time.enteredValue /= "" && eventDateAndTime.time.parsedValue == Nothing then
                 "time-error form-control"
 
             else
@@ -71,7 +71,7 @@ eventDateAndTimeView eventDateAndTime =
                     , id "eventTimeBox"
                     , class timeInputClass
                     , onInput EventTimeChanged
-                    , value eventDateAndTime.enteredTime
+                    , value eventDateAndTime.time.enteredValue
                     ]
                     []
                     :: List.map eventTimeButton defaultEventTimes

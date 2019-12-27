@@ -170,7 +170,7 @@ defaultAssertionsExcept exceptions =
                 Nothing
 
               else
-                Just (expectEventDateAndTime (EventDateAndTime "" Nothing "" Nothing))
+                Just (expectEventDateAndTime (EventDateAndTime "" Nothing emptyEntry))
             , if List.member NumberCheckerManualEntryRowAssertion exceptions then
                 Nothing
 
@@ -372,7 +372,7 @@ suite =
                 \() ->
                     { initModel
                         | barcodeScannerData = createBarcodeScannerData (Dict.singleton 47 [ "A4580484" ]) [ "A123456" ] [ 11 ]
-                        , eventDateAndTime = { parsedEventDateOnly | enteredTime = "09:00", validatedTime = Just (9 * 60) }
+                        , eventDateAndTime = { parsedEventDateOnly | time = IntegerEntry "09:00" (Just (9 * 60)) }
                         , stopwatches = doubleStopwatches
                         , lastErrors = [ FileError "TEST_ERROR" "Some test error message" "somefile.txt" ]
                         , lastHeight = Just 700
@@ -387,7 +387,7 @@ suite =
                     }
                         |> update ClearAllData
                         |> Expect.all
-                            (expectEventDateAndTime (EventDateAndTime "" Nothing "09:00" (Just (9 * 60)))
+                            (expectEventDateAndTime (EventDateAndTime "" Nothing (IntegerEntry "09:00" (Just (9 * 60))))
                                 :: defaultAssertionsExcept [ EventDateAndTimeAssertion ]
                             )
             ]
@@ -532,7 +532,7 @@ suite =
                 \() ->
                     update (EventDateChanged "26/05/2018") initModel
                         |> Expect.all
-                            (expectEventDateAndTime (EventDateAndTime "26/05/2018" (toPosix "2018-05-26T00:00:00.000Z") "" Nothing)
+                            (expectEventDateAndTime (EventDateAndTime "26/05/2018" (toPosix "2018-05-26T00:00:00.000Z") emptyEntry)
                                 :: defaultAssertionsExcept [ EventDateAndTimeAssertion ]
                             )
             ]
@@ -541,7 +541,7 @@ suite =
                 \() ->
                     update (EventTimeChanged "09:30") initModel
                         |> Expect.all
-                            (expectEventDateAndTime (EventDateAndTime "" Nothing "09:30" (Just (9 * 60 + 30)))
+                            (expectEventDateAndTime (EventDateAndTime "" Nothing (IntegerEntry "09:30" (Just (9 * 60 + 30))))
                                 :: expectCommand (SaveEventStartTime (9 * 60 + 30))
                                 :: defaultAssertionsExcept [ EventDateAndTimeAssertion, Command ]
                             )
@@ -549,7 +549,7 @@ suite =
                 \() ->
                     update (EventTimeChanged "This is not a valid time") initModel
                         |> Expect.all
-                            (expectEventDateAndTime (EventDateAndTime "" Nothing "This is not a valid time" Nothing)
+                            (expectEventDateAndTime (EventDateAndTime "" Nothing (IntegerEntry "This is not a valid time" Nothing))
                                 :: defaultAssertionsExcept [ EventDateAndTimeAssertion ]
                             )
             ]

@@ -52,7 +52,7 @@ import FileHandling exposing (crlf)
 import Iso8601
 import Model exposing (NumberCheckerManualEntryRow)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
-import NumericEntry exposing (integerEntryFromInt)
+import NumericEntry exposing (emptyEntry, integerEntryFromInt)
 import Stopwatch
     exposing
         ( MergeEntry(..)
@@ -312,7 +312,7 @@ parsedInvalidBarcodeScannerData =
 
 parsedEventDateOnly : EventDateAndTime
 parsedEventDateOnly =
-    EventDateAndTime "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z") "" Nothing
+    EventDateAndTime "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z") emptyEntry
 
 
 validNumberCheckerData : String

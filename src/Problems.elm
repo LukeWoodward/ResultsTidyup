@@ -633,11 +633,11 @@ identifyProblems stopwatches barcodeScannerData eventDateAndTime =
             Maybe.map2
                 (\dateAsPosix timeInMinutes -> Time.posixToMillis dateAsPosix + timeInMinutes * 60 * 1000)
                 eventDateAndTime.validatedDate
-                eventDateAndTime.validatedTime
+                eventDateAndTime.time.parsedValue
 
         eventStartTimeAsString : String
         eventStartTimeAsString =
-            eventDateAndTime.enteredDate ++ " " ++ eventDateAndTime.enteredTime
+            eventDateAndTime.enteredDate ++ " " ++ eventDateAndTime.time.enteredValue
     in
     { barcodeScannerClockDifferences = identifyBarcodeScannerClocksBeingOut barcodeScannerData eventStartDateTimeMillis
     , barcodesScannedBeforeEventStart = Maybe.andThen (identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString) eventStartDateTimeMillis

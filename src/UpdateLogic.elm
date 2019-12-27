@@ -221,7 +221,7 @@ clearAllData model =
         , highlightedNumberCheckerId = Nothing
         , barcodeScannerData = BarcodeScanner.empty
         , problems = noProblems
-        , eventDateAndTime = EventDateAndTime "" Nothing model.eventDateAndTime.enteredTime model.eventDateAndTime.validatedTime
+        , eventDateAndTime = EventDateAndTime "" Nothing model.eventDateAndTime.time
         , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
         , barcodeScannerTab = Tab.initialState
         , dialogDetails = NoDialog
@@ -437,7 +437,7 @@ update msg model =
 
                 command : Command
                 command =
-                    Maybe.map SaveEventStartTime modelWithNewTime.eventDateAndTime.validatedTime
+                    Maybe.map SaveEventStartTime modelWithNewTime.eventDateAndTime.time.parsedValue
                         |> Maybe.withDefault NoCommand
             in
             ( identifyProblemsIn modelWithNewTime, command )

@@ -16,6 +16,7 @@ import Dict exposing (Dict)
 import Errors exposing (expectError)
 import EventDateAndTime exposing (EventDateAndTime)
 import Expect
+import NumericEntry exposing (IntegerEntry, emptyEntry)
 import Problems
     exposing
         ( AthleteAndPositionPair
@@ -38,17 +39,17 @@ import TestData exposing (createBarcodeScannerDataFromFiles, ordinaryFileLine, t
 
 emptyEventDateAndTime : EventDateAndTime
 emptyEventDateAndTime =
-    EventDateAndTime "" Nothing "" Nothing
+    EventDateAndTime "" Nothing emptyEntry
 
 
 exampleEventDateAndTime : EventDateAndTime
 exampleEventDateAndTime =
-    EventDateAndTime "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z") "09:00" (Just (9 * 60))
+    EventDateAndTime "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z") (IntegerEntry "09:00" (Just (9 * 60)))
 
 
 lateEventDateAndTime : EventDateAndTime
 lateEventDateAndTime =
-    EventDateAndTime "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z") "10:00" (Just (10 * 60))
+    EventDateAndTime "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z") (IntegerEntry "10:00" (Just (10 * 60)))
 
 
 {-| 2018-03-14T09:00:00

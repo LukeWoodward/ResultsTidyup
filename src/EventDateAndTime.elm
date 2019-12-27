@@ -1,11 +1,11 @@
 module EventDateAndTime exposing (EventDateAndTime)
 
+import NumericEntry exposing (IntegerEntry)
 import Time exposing (Posix)
 
 
 type alias EventDateAndTime =
     { enteredDate : String
     , validatedDate : Maybe Posix
-    , enteredTime : String
-    , validatedTime : Maybe Int
+    , time : IntegerEntry
     }

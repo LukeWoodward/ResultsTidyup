@@ -4,6 +4,7 @@ import EventDateAndTime exposing (EventDateAndTime)
 import EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeChange)
 import Expect
 import Model exposing (initModel)
+import NumericEntry exposing (IntegerEntry, emptyEntry)
 import Test exposing (Test, describe, test)
 import TestData exposing (toPosix)
 
@@ -15,17 +16,17 @@ suite =
             [ test "Setting a valid date sets the validated date" <|
                 \() ->
                     Expect.equal
-                        { initModel | eventDateAndTime = EventDateAndTime "26/05/2018" (toPosix "2018-05-26T00:00:00.000Z") "" Nothing }
+                        { initModel | eventDateAndTime = EventDateAndTime "26/05/2018" (toPosix "2018-05-26T00:00:00.000Z") emptyEntry }
                         (handleEventDateChange "26/05/2018" initModel)
             , test "Setting a nonexistent date clears the validated date" <|
                 \() ->
                     Expect.equal
-                        { initModel | eventDateAndTime = EventDateAndTime "29/02/2018" Nothing "" Nothing }
+                        { initModel | eventDateAndTime = EventDateAndTime "29/02/2018" Nothing emptyEntry }
                         (handleEventDateChange "29/02/2018" initModel)
             , test "Setting an invalid date clears the validated date" <|
                 \() ->
                     Expect.equal
-                        { initModel | eventDateAndTime = EventDateAndTime "This is not a valid date" Nothing "" Nothing }
+                        { initModel | eventDateAndTime = EventDateAndTime "This is not a valid date" Nothing emptyEntry }
                         (handleEventDateChange "This is not a valid date" initModel)
             , test "Setting an empty date clears the validated date" <|
                 \() ->
@@ -35,17 +36,17 @@ suite =
             [ test "Setting a valid time sets the validated time and issues a command" <|
                 \() ->
                     Expect.equal
-                        { initModel | eventDateAndTime = EventDateAndTime "" Nothing "09:30" (Just (9 * 60 + 30)) }
+                        { initModel | eventDateAndTime = EventDateAndTime "" Nothing (IntegerEntry "09:30" (Just (9 * 60 + 30))) }
                         (handleEventTimeChange "09:30" initModel)
             , test "Setting a nonexistent time clears the validated time" <|
                 \() ->
                     Expect.equal
-                        { initModel | eventDateAndTime = EventDateAndTime "" Nothing "25:30" Nothing }
+                        { initModel | eventDateAndTime = EventDateAndTime "" Nothing (IntegerEntry "25:30" Nothing) }
                         (handleEventTimeChange "25:30" initModel)
             , test "Setting an invalid time clears the validated time" <|
                 \() ->
                     Expect.equal
-                        { initModel | eventDateAndTime = EventDateAndTime "" Nothing "This is not a valid time" Nothing }
+                        { initModel | eventDateAndTime = EventDateAndTime "" Nothing (IntegerEntry "This is not a valid time" Nothing) }
                         (handleEventTimeChange "This is not a valid time" initModel)
             , test "Setting an empty time clears the validated time" <|
                 \() ->
