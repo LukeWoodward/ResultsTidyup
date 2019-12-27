@@ -9,7 +9,7 @@ module NumberCheckerEditing exposing
 import Model exposing (Model, NumberCheckerManualEntryRow, emptyNumberCheckerManualEntryRow)
 import Msg exposing (NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, addAndAnnotate, reannotate)
-import NumericEntry exposing (NumericEntry, numericEntryFromInt)
+import NumericEntry exposing (IntegerEntry, integerEntryFromInt)
 
 
 addNumberCheckerRow : Model -> ( Model, Bool )
@@ -54,9 +54,9 @@ editNumberCheckerRow entryNumber model =
             { modelWithEntryDeleted
                 | numberCheckerManualEntryRow =
                     NumberCheckerManualEntryRow
-                        (numericEntryFromInt entry.stopwatch1)
-                        (numericEntryFromInt entry.stopwatch2)
-                        (numericEntryFromInt entry.finishTokens)
+                        (integerEntryFromInt entry.stopwatch1)
+                        (integerEntryFromInt entry.stopwatch2)
+                        (integerEntryFromInt entry.finishTokens)
             }
 
         Nothing ->
@@ -90,11 +90,11 @@ handleNumberCheckerFieldChange fieldChange newValue model =
         oldNumberCheckerRow =
             model.numberCheckerManualEntryRow
 
-        newEntry : NumericEntry
+        newEntry : IntegerEntry
         newEntry =
             String.toInt newValue
                 |> Maybe.andThen ensureNonNegative
-                |> NumericEntry newValue
+                |> IntegerEntry newValue
 
         newNumberCheckerManualEntryRow : NumberCheckerManualEntryRow
         newNumberCheckerManualEntryRow =

@@ -3,7 +3,6 @@ module Model exposing
     , Model
     , NumberCheckerManualEntryRow
     , emptyNumberCheckerManualEntryRow
-    , emptyNumericEntry
     , initModel
     )
 
@@ -13,28 +12,23 @@ import Bootstrap.Tab as Tab
 import Error exposing (FileError)
 import EventDateAndTime exposing (EventDateAndTime)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
-import NumericEntry exposing (NumericEntry)
+import NumericEntry exposing (IntegerEntry, emptyIntegerEntry)
 import Problems exposing (Problems)
 import Stopwatch exposing (Stopwatches(..))
 import Time exposing (Posix)
 import TokenOperations exposing (TokenOperationEditDetails)
 
 
-emptyNumericEntry : NumericEntry
-emptyNumericEntry =
-    NumericEntry "" Nothing
-
-
 type alias NumberCheckerManualEntryRow =
-    { stopwatch1 : NumericEntry
-    , stopwatch2 : NumericEntry
-    , finishTokens : NumericEntry
+    { stopwatch1 : IntegerEntry
+    , stopwatch2 : IntegerEntry
+    , finishTokens : IntegerEntry
     }
 
 
 emptyNumberCheckerManualEntryRow : NumberCheckerManualEntryRow
 emptyNumberCheckerManualEntryRow =
-    NumberCheckerManualEntryRow emptyNumericEntry emptyNumericEntry emptyNumericEntry
+    NumberCheckerManualEntryRow emptyIntegerEntry emptyIntegerEntry emptyIntegerEntry
 
 
 type DialogDetails

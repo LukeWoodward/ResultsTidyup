@@ -3,84 +3,84 @@ module NumericEntryTests exposing (suite)
 import Expect
 import NumericEntry
     exposing
-        ( NumericEntry
-        , emptyNumericEntry
+        ( IntegerEntry
+        , emptyIntegerEntry
+        , integerEntryFromAthleteNumber
+        , integerEntryFromInt
+        , integerEntryFromMaybeInt
+        , integerEntryFromString
         , isValidEntry
-        , numericEntryFromAthleteNumber
-        , numericEntryFromInt
-        , numericEntryFromMaybeInt
-        , numericEntryFromString
         )
 import Test exposing (Test, describe, test)
 
 
 suite : Test
 suite =
-    describe "NumericEntry tests"
-        [ describe "numericEntryFromInt tests"
+    describe "IntegerEntry tests"
+        [ describe "integerEntryFromInt tests"
             [ test "Can create a numeric entry from an int" <|
                 \() ->
-                    numericEntryFromInt 149846
-                        |> Expect.equal (NumericEntry "149846" (Just 149846))
+                    integerEntryFromInt 149846
+                        |> Expect.equal (IntegerEntry "149846" (Just 149846))
             ]
-        , describe "numericEntryFromMaybeInt tests"
+        , describe "integerEntryFromMaybeInt tests"
             [ test "Can create a numeric entry from a Maybe Int with a value" <|
                 \() ->
-                    numericEntryFromMaybeInt (Just 72094)
-                        |> Expect.equal (NumericEntry "72094" (Just 72094))
+                    integerEntryFromMaybeInt (Just 72094)
+                        |> Expect.equal (IntegerEntry "72094" (Just 72094))
             , test "Can create a numeric entry from Nothing" <|
                 \() ->
-                    numericEntryFromMaybeInt Nothing
-                        |> Expect.equal (NumericEntry "" Nothing)
+                    integerEntryFromMaybeInt Nothing
+                        |> Expect.equal (IntegerEntry "" Nothing)
             ]
-        , describe "numericEntryFromString tests"
+        , describe "integerEntryFromString tests"
             [ test "Can create a numeric entry from a string containing a valid int value" <|
                 \() ->
-                    numericEntryFromString "50554"
-                        |> Expect.equal (NumericEntry "50554" (Just 50554))
+                    integerEntryFromString "50554"
+                        |> Expect.equal (IntegerEntry "50554" (Just 50554))
             , test "Can create a numeric entry from a string containing an invalid int value" <|
                 \() ->
-                    numericEntryFromString "This is not valid"
-                        |> Expect.equal (NumericEntry "This is not valid" Nothing)
+                    integerEntryFromString "This is not valid"
+                        |> Expect.equal (IntegerEntry "This is not valid" Nothing)
             ]
-        , describe "numericEntryFromAthleteNumber tests"
+        , describe "integerEntryFromAthleteNumber tests"
             [ test "Can create a numeric entry from an athlete number containing an A and a valid int value" <|
                 \() ->
-                    numericEntryFromAthleteNumber "A450442"
-                        |> Expect.equal (NumericEntry "A450442" (Just 450442))
+                    integerEntryFromAthleteNumber "A450442"
+                        |> Expect.equal (IntegerEntry "A450442" (Just 450442))
             , test "Can create a numeric entry from an athlete number containing an invalid value starting with an A" <|
                 \() ->
-                    numericEntryFromAthleteNumber "Absolutely not valid"
-                        |> Expect.equal (NumericEntry "Absolutely not valid" Nothing)
+                    integerEntryFromAthleteNumber "Absolutely not valid"
+                        |> Expect.equal (IntegerEntry "Absolutely not valid" Nothing)
             , test "Can create a numeric entry from an athlete number containing a valid int value" <|
                 \() ->
-                    numericEntryFromAthleteNumber "499702"
-                        |> Expect.equal (NumericEntry "499702" (Just 499702))
+                    integerEntryFromAthleteNumber "499702"
+                        |> Expect.equal (IntegerEntry "499702" (Just 499702))
             , test "Can create a numeric entry from a string containing an invalid value not beginning with A" <|
                 \() ->
-                    numericEntryFromAthleteNumber "This is not valid"
-                        |> Expect.equal (NumericEntry "This is not valid" Nothing)
+                    integerEntryFromAthleteNumber "This is not valid"
+                        |> Expect.equal (IntegerEntry "This is not valid" Nothing)
             ]
         , describe "isValidEntry tests"
             [ test "An empty value is valid" <|
                 \() ->
-                    isValidEntry emptyNumericEntry
+                    isValidEntry emptyIntegerEntry
                         |> Expect.true "Empty value should be valid"
             , test "An valid value is valid" <|
                 \() ->
-                    isValidEntry (NumericEntry "44092" (Just 44092))
+                    isValidEntry (IntegerEntry "44092" (Just 44092))
                         |> Expect.true "Valid positive value should be valid"
             , test "A negative value is invalid" <|
                 \() ->
-                    isValidEntry (NumericEntry "-442" (Just -442))
+                    isValidEntry (IntegerEntry "-442" (Just -442))
                         |> Expect.false "Negative value should not be valid"
             , test "A zero value is invalid" <|
                 \() ->
-                    isValidEntry (NumericEntry "0" (Just 0))
+                    isValidEntry (IntegerEntry "0" (Just 0))
                         |> Expect.false "Zero value should not be valid"
             , test "An invalid value is invalid" <|
                 \() ->
-                    isValidEntry (NumericEntry "This is not valid" Nothing)
+                    isValidEntry (IntegerEntry "This is not valid" Nothing)
                         |> Expect.false "Invalid value should not be valid"
             ]
         ]

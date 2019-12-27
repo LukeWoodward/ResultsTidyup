@@ -52,7 +52,7 @@ import FileHandling exposing (crlf)
 import Iso8601
 import Model exposing (NumberCheckerManualEntryRow)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
-import NumericEntry exposing (numericEntryFromInt)
+import NumericEntry exposing (integerEntryFromInt)
 import Stopwatch
     exposing
         ( MergeEntry(..)
@@ -528,7 +528,7 @@ sampleNumberCheckerDataWithSecondItemRemoved =
 
 createNumberCheckerManualEntryRow : Int -> Int -> Int -> NumberCheckerManualEntryRow
 createNumberCheckerManualEntryRow stopwatch1 stopwatch2 finishTokens =
-    NumberCheckerManualEntryRow (numericEntryFromInt stopwatch1) (numericEntryFromInt stopwatch2) (numericEntryFromInt finishTokens)
+    NumberCheckerManualEntryRow (integerEntryFromInt stopwatch1) (integerEntryFromInt stopwatch2) (integerEntryFromInt finishTokens)
 
 
 createBarcodeScannerDataFromFiles : List BarcodeScannerFile -> BarcodeScannerData

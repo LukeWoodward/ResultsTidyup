@@ -17,7 +17,7 @@ import BarcodeScannerEditing
         )
 import Commands exposing (ElementToFocus(..))
 import Expect exposing (Expectation)
-import NumericEntry exposing (NumericEntry)
+import NumericEntry exposing (IntegerEntry)
 import Test exposing (Test, describe, test)
 import TestData exposing (createBarcodeScannerDataFromFiles, ordinaryFileLine, toPosix)
 
@@ -27,21 +27,21 @@ initialDetails =
     BarcodeScannerRowEditDetails
         (BarcodeScannerRowEditLocation "file.txt" 3)
         (Ordinary "A229804" (Just 22))
-        (NumericEntry "A229804" (Just 229804))
-        (NumericEntry "22" (Just 22))
+        (IntegerEntry "A229804" (Just 229804))
+        (IntegerEntry "22" (Just 22))
         Both
         Nothing
         False
 
 
-validNumericEntry : NumericEntry
-validNumericEntry =
-    NumericEntry "944" (Just 944)
+validIntegerEntry : IntegerEntry
+validIntegerEntry =
+    IntegerEntry "944" (Just 944)
 
 
-invalidNumericEntry : NumericEntry
-invalidNumericEntry =
-    NumericEntry "Invalid" Nothing
+invalidIntegerEntry : IntegerEntry
+invalidIntegerEntry =
+    IntegerEntry "Invalid" Nothing
 
 
 runValidationTest : Maybe BarcodeScannerValidationError -> BarcodeScannerRowEditDetails -> Expectation
@@ -61,8 +61,8 @@ suite =
                             (BarcodeScannerRowEditDetails
                                 (BarcodeScannerRowEditLocation "file.txt" 34)
                                 (Ordinary "A182095" (Just 47))
-                                (NumericEntry "A182095" (Just 182095))
-                                (NumericEntry "47" (Just 47))
+                                (IntegerEntry "A182095" (Just 182095))
+                                (IntegerEntry "47" (Just 47))
                                 Both
                                 Nothing
                                 False
@@ -74,8 +74,8 @@ suite =
                             (BarcodeScannerRowEditDetails
                                 (BarcodeScannerRowEditLocation "file.txt" 51)
                                 (MisScan "d&084")
-                                (NumericEntry "" Nothing)
-                                (NumericEntry "" Nothing)
+                                (IntegerEntry "" Nothing)
+                                (IntegerEntry "" Nothing)
                                 Neither
                                 Nothing
                                 False
@@ -170,25 +170,25 @@ suite =
                 [ test "Can change an athlete to a valid value" <|
                     \() ->
                         updateEditDetails (AthleteChanged "A769422") initialDetails
-                            |> Expect.equal { initialDetails | athleteEntered = NumericEntry "A769422" (Just 769422) }
+                            |> Expect.equal { initialDetails | athleteEntered = IntegerEntry "A769422" (Just 769422) }
                 , test "Can change an athlete to a valid value lowercased" <|
                     \() ->
                         updateEditDetails (AthleteChanged "a769422") initialDetails
-                            |> Expect.equal { initialDetails | athleteEntered = NumericEntry "a769422" (Just 769422) }
+                            |> Expect.equal { initialDetails | athleteEntered = IntegerEntry "a769422" (Just 769422) }
                 , test "Can change an athlete to an invalid value with no validation error" <|
                     \() ->
                         updateEditDetails (AthleteChanged "Invalid number") initialDetails
-                            |> Expect.equal { initialDetails | athleteEntered = NumericEntry "Invalid number" Nothing }
+                            |> Expect.equal { initialDetails | athleteEntered = IntegerEntry "Invalid number" Nothing }
                 ]
             , describe "FinishPositionChanged tests"
                 [ test "Can change a finish position to a valid value" <|
                     \() ->
                         updateEditDetails (FinishPositionChanged "77") initialDetails
-                            |> Expect.equal { initialDetails | finishPositionEntered = NumericEntry "77" (Just 77) }
+                            |> Expect.equal { initialDetails | finishPositionEntered = IntegerEntry "77" (Just 77) }
                 , test "Can change an athlete to an invalid value with no validation error" <|
                     \() ->
                         updateEditDetails (FinishPositionChanged "Invalid number") initialDetails
-                            |> Expect.equal { initialDetails | finishPositionEntered = NumericEntry "Invalid number" Nothing }
+                            |> Expect.equal { initialDetails | finishPositionEntered = IntegerEntry "Invalid number" Nothing }
                 ]
             ]
         , describe "validate tests"
@@ -197,38 +197,38 @@ suite =
                     runValidationTest (Just NeitherSelected) { initialDetails | fieldBeingEdited = Neither }
             , test "Returns no validation error for athlete selected and valid entry" <|
                 \() ->
-                    runValidationTest Nothing { initialDetails | fieldBeingEdited = AthleteOnly, athleteEntered = validNumericEntry }
+                    runValidationTest Nothing { initialDetails | fieldBeingEdited = AthleteOnly, athleteEntered = validIntegerEntry }
             , test "Returns validation error for athlete selected and invalid entry" <|
                 \() ->
-                    runValidationTest (Just InvalidAthleteNumber) { initialDetails | fieldBeingEdited = AthleteOnly, athleteEntered = invalidNumericEntry }
+                    runValidationTest (Just InvalidAthleteNumber) { initialDetails | fieldBeingEdited = AthleteOnly, athleteEntered = invalidIntegerEntry }
             , test "Returns no validation error for finish position selected and valid entry" <|
                 \() ->
-                    runValidationTest Nothing { initialDetails | fieldBeingEdited = FinishPositionOnly, finishPositionEntered = validNumericEntry }
+                    runValidationTest Nothing { initialDetails | fieldBeingEdited = FinishPositionOnly, finishPositionEntered = validIntegerEntry }
             , test "Returns validation error for finish position selected and invalid entry" <|
                 \() ->
                     runValidationTest
                         (Just InvalidFinishPosition)
-                        { initialDetails | fieldBeingEdited = FinishPositionOnly, finishPositionEntered = invalidNumericEntry }
+                        { initialDetails | fieldBeingEdited = FinishPositionOnly, finishPositionEntered = invalidIntegerEntry }
             , test "Returns no validation error for both selected and both valid entries" <|
                 \() ->
                     runValidationTest
                         Nothing
-                        { initialDetails | fieldBeingEdited = Both, athleteEntered = validNumericEntry, finishPositionEntered = validNumericEntry }
+                        { initialDetails | fieldBeingEdited = Both, athleteEntered = validIntegerEntry, finishPositionEntered = validIntegerEntry }
             , test "Returns validation error for both selected, invalid athlete and valid finish position" <|
                 \() ->
                     runValidationTest
                         (Just InvalidAthleteNumber)
-                        { initialDetails | fieldBeingEdited = Both, athleteEntered = invalidNumericEntry, finishPositionEntered = validNumericEntry }
+                        { initialDetails | fieldBeingEdited = Both, athleteEntered = invalidIntegerEntry, finishPositionEntered = validIntegerEntry }
             , test "Returns validation error for both selected, valid athlete and invalid finish position" <|
                 \() ->
                     runValidationTest
                         (Just InvalidFinishPosition)
-                        { initialDetails | fieldBeingEdited = Both, athleteEntered = validNumericEntry, finishPositionEntered = invalidNumericEntry }
+                        { initialDetails | fieldBeingEdited = Both, athleteEntered = validIntegerEntry, finishPositionEntered = invalidIntegerEntry }
             , test "Returns validation error for both selected and both invalid entries" <|
                 \() ->
                     runValidationTest
                         (Just InvalidAthleteNumberAndFinishPosition)
-                        { initialDetails | fieldBeingEdited = Both, athleteEntered = invalidNumericEntry, finishPositionEntered = invalidNumericEntry }
+                        { initialDetails | fieldBeingEdited = Both, athleteEntered = invalidIntegerEntry, finishPositionEntered = invalidIntegerEntry }
             ]
         , describe "isValidAthlete tests"
             [ test "Athlete not valid if validation error for the athlete" <|
@@ -305,8 +305,8 @@ suite =
                             BarcodeScannerRowEditDetails
                                 (BarcodeScannerRowEditLocation "barcodes6.txt" 1)
                                 (Ordinary "A4580442" (Just 47))
-                                (NumericEntry "A2022807" (Just 2022807))
-                                (NumericEntry "37" (Just 37))
+                                (IntegerEntry "A2022807" (Just 2022807))
+                                (IntegerEntry "37" (Just 37))
                                 Both
                                 Nothing
                                 False

@@ -1,56 +1,56 @@
 module NumericEntry exposing
-    ( NumericEntry
-    , emptyNumericEntry
+    ( IntegerEntry
+    , emptyIntegerEntry
+    , integerEntryFromAthleteNumber
+    , integerEntryFromInt
+    , integerEntryFromMaybeInt
+    , integerEntryFromString
     , isValidEntry
-    , numericEntryFromAthleteNumber
-    , numericEntryFromInt
-    , numericEntryFromMaybeInt
-    , numericEntryFromString
     )
 
 
-type alias NumericEntry =
+type alias IntegerEntry =
     { enteredValue : String
     , parsedValue : Maybe Int
     }
 
 
-emptyNumericEntry : NumericEntry
-emptyNumericEntry =
-    NumericEntry "" Nothing
+emptyIntegerEntry : IntegerEntry
+emptyIntegerEntry =
+    IntegerEntry "" Nothing
 
 
-numericEntryFromString : String -> NumericEntry
-numericEntryFromString stringValue =
-    NumericEntry stringValue (String.toInt stringValue)
+integerEntryFromString : String -> IntegerEntry
+integerEntryFromString stringValue =
+    IntegerEntry stringValue (String.toInt stringValue)
 
 
-numericEntryFromAthleteNumber : String -> NumericEntry
-numericEntryFromAthleteNumber athleteNumber =
+integerEntryFromAthleteNumber : String -> IntegerEntry
+integerEntryFromAthleteNumber athleteNumber =
     if String.startsWith "A" athleteNumber || String.startsWith "a" athleteNumber then
-        NumericEntry athleteNumber (String.toInt (String.dropLeft 1 athleteNumber))
+        IntegerEntry athleteNumber (String.toInt (String.dropLeft 1 athleteNumber))
 
     else
-        numericEntryFromString athleteNumber
+        integerEntryFromString athleteNumber
 
 
-numericEntryFromInt : Int -> NumericEntry
-numericEntryFromInt intValue =
-    NumericEntry (String.fromInt intValue) (Just intValue)
+integerEntryFromInt : Int -> IntegerEntry
+integerEntryFromInt intValue =
+    IntegerEntry (String.fromInt intValue) (Just intValue)
 
 
-numericEntryFromMaybeInt : Maybe Int -> NumericEntry
-numericEntryFromMaybeInt maybeIntValue =
+integerEntryFromMaybeInt : Maybe Int -> IntegerEntry
+integerEntryFromMaybeInt maybeIntValue =
     let
         stringValue : String
         stringValue =
             Maybe.map String.fromInt maybeIntValue
                 |> Maybe.withDefault ""
     in
-    NumericEntry stringValue maybeIntValue
+    IntegerEntry stringValue maybeIntValue
 
 
-isPositive : NumericEntry -> Bool
+isPositive : IntegerEntry -> Bool
 isPositive entry =
     case entry.parsedValue of
         Just someInt ->
@@ -60,6 +60,6 @@ isPositive entry =
             False
 
 
-isValidEntry : NumericEntry -> Bool
+isValidEntry : IntegerEntry -> Bool
 isValidEntry entry =
     entry.enteredValue == "" || isPositive entry

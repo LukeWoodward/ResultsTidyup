@@ -17,12 +17,12 @@ import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFileLine, Dele
 import Commands exposing (ElementToFocus(..))
 import NumericEntry
     exposing
-        ( NumericEntry
-        , emptyNumericEntry
+        ( IntegerEntry
+        , emptyIntegerEntry
+        , integerEntryFromAthleteNumber
+        , integerEntryFromMaybeInt
+        , integerEntryFromString
         , isValidEntry
-        , numericEntryFromAthleteNumber
-        , numericEntryFromMaybeInt
-        , numericEntryFromString
         )
 
 
@@ -49,8 +49,8 @@ type BarcodeScannerValidationError
 type alias BarcodeScannerRowEditDetails =
     { location : BarcodeScannerRowEditLocation
     , currentContents : LineContents
-    , athleteEntered : NumericEntry
-    , finishPositionEntered : NumericEntry
+    , athleteEntered : IntegerEntry
+    , finishPositionEntered : IntegerEntry
     , fieldBeingEdited : BarcodeScannerFieldBeingEdited
     , validationError : Maybe BarcodeScannerValidationError
     , isDeleted : Bool
@@ -67,10 +67,10 @@ startEditing : BarcodeScannerRowEditLocation -> LineContents -> Bool -> BarcodeS
 startEditing location contents isDeleted =
     case contents of
         Ordinary athlete finishPosition ->
-            BarcodeScannerRowEditDetails location contents (numericEntryFromAthleteNumber athlete) (numericEntryFromMaybeInt finishPosition) Both Nothing isDeleted
+            BarcodeScannerRowEditDetails location contents (integerEntryFromAthleteNumber athlete) (integerEntryFromMaybeInt finishPosition) Both Nothing isDeleted
 
         MisScan misScannedText ->
-            BarcodeScannerRowEditDetails location contents emptyNumericEntry emptyNumericEntry Neither Nothing isDeleted
+            BarcodeScannerRowEditDetails location contents emptyIntegerEntry emptyIntegerEntry Neither Nothing isDeleted
 
 
 elementToFocusWhenOpening : LineContents -> ElementToFocus
@@ -108,10 +108,10 @@ updateEditDetails editDetails currentDetails =
                                 currentDetails
 
                 AthleteChanged newAthlete ->
-                    { currentDetails | athleteEntered = numericEntryFromAthleteNumber newAthlete }
+                    { currentDetails | athleteEntered = integerEntryFromAthleteNumber newAthlete }
 
                 FinishPositionChanged newFinishPosition ->
-                    { currentDetails | finishPositionEntered = numericEntryFromString newFinishPosition }
+                    { currentDetails | finishPositionEntered = integerEntryFromString newFinishPosition }
     in
     { updatedDetails | validationError = Nothing }
 

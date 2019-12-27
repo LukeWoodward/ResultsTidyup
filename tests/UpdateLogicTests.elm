@@ -29,7 +29,7 @@ import Model
         )
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
-import NumericEntry exposing (NumericEntry, emptyNumericEntry)
+import NumericEntry exposing (IntegerEntry, emptyIntegerEntry)
 import ProblemFixing exposing (ProblemFix(..))
 import Problems exposing (AthleteAndPositionPair, Problems, noProblems)
 import Stopwatch exposing (Stopwatch(..), Stopwatches(..), WhichStopwatch(..))
@@ -265,8 +265,8 @@ makeBarcodeScannerRowEditDetails location athlete finishPosition =
     BarcodeScannerRowEditDetails
         location
         (Ordinary "" Nothing)
-        (NumericEntry "" athlete)
-        (NumericEntry "" finishPosition)
+        (IntegerEntry "" athlete)
+        (IntegerEntry "" finishPosition)
         Both
         Nothing
         False
@@ -378,7 +378,7 @@ suite =
                         , lastHeight = Just 700
                         , highlightedNumberCheckerId = Just 2
                         , numberCheckerEntries = [ AnnotatedNumberCheckerEntry 2 2 0 2 0 2 0 2 ]
-                        , numberCheckerManualEntryRow = NumberCheckerManualEntryRow (NumericEntry "2" (Just 2)) (NumericEntry "2" (Just 2)) (NumericEntry "2" (Just 2))
+                        , numberCheckerManualEntryRow = NumberCheckerManualEntryRow (IntegerEntry "2" (Just 2)) (IntegerEntry "2" (Just 2)) (IntegerEntry "2" (Just 2))
                         , problems =
                             { noProblems
                                 | positionsWithAndWithoutAthlete = [ AthleteAndPositionPair "A123" 5 ]
@@ -558,69 +558,69 @@ suite =
                 \() ->
                     update (NumberCheckerFieldChanged Stopwatch1 "24") initModel
                         |> Expect.all
-                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow (NumericEntry "24" (Just 24)) emptyNumericEntry emptyNumericEntry)
+                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow (IntegerEntry "24" (Just 24)) emptyIntegerEntry emptyIntegerEntry)
                                 :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
                             )
             , test "Entering a valid value for stopwatch 2 sets the value" <|
                 \() ->
                     update (NumberCheckerFieldChanged Stopwatch2 "38") initModel
                         |> Expect.all
-                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyNumericEntry (NumericEntry "38" (Just 38)) emptyNumericEntry)
+                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyIntegerEntry (IntegerEntry "38" (Just 38)) emptyIntegerEntry)
                                 :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
                             )
             , test "Entering a valid value for finish tokens sets the value" <|
                 \() ->
                     update (NumberCheckerFieldChanged FinishTokens "17") initModel
                         |> Expect.all
-                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyNumericEntry emptyNumericEntry (NumericEntry "17" (Just 17)))
+                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyIntegerEntry emptyIntegerEntry (IntegerEntry "17" (Just 17)))
                                 :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
                             )
             , test "Entering a negative value for stopwatch 1 sets a blank value" <|
                 \() ->
-                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow (NumericEntry "24" (Just 24)) emptyNumericEntry emptyNumericEntry }
+                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow (IntegerEntry "24" (Just 24)) emptyIntegerEntry emptyIntegerEntry }
                         |> update (NumberCheckerFieldChanged Stopwatch1 "-2")
                         |> Expect.all
-                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow (NumericEntry "-2" Nothing) emptyNumericEntry emptyNumericEntry)
+                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow (IntegerEntry "-2" Nothing) emptyIntegerEntry emptyIntegerEntry)
                                 :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
                             )
             , test "Entering a negative value for stopwatch 2 sets a blank value" <|
                 \() ->
-                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow emptyNumericEntry (NumericEntry "38" (Just 38)) emptyNumericEntry }
+                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow emptyIntegerEntry (IntegerEntry "38" (Just 38)) emptyIntegerEntry }
                         |> update (NumberCheckerFieldChanged Stopwatch2 "-3")
                         |> Expect.all
-                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyNumericEntry (NumericEntry "-3" Nothing) emptyNumericEntry)
+                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyIntegerEntry (IntegerEntry "-3" Nothing) emptyIntegerEntry)
                                 :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
                             )
             , test "Entering a negative value for finish tokens sets a blank value" <|
                 \() ->
-                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow emptyNumericEntry emptyNumericEntry (NumericEntry "17" (Just 17)) }
+                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow emptyIntegerEntry emptyIntegerEntry (IntegerEntry "17" (Just 17)) }
                         |> update (NumberCheckerFieldChanged FinishTokens "-1")
                         |> Expect.all
-                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyNumericEntry emptyNumericEntry (NumericEntry "-1" Nothing))
+                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyIntegerEntry emptyIntegerEntry (IntegerEntry "-1" Nothing))
                                 :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
                             )
             , test "Entering an invalid value for stopwatch 1 sets a blank value" <|
                 \() ->
-                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow (NumericEntry "24" (Just 24)) emptyNumericEntry emptyNumericEntry }
+                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow (IntegerEntry "24" (Just 24)) emptyIntegerEntry emptyIntegerEntry }
                         |> update (NumberCheckerFieldChanged Stopwatch1 "nonsense")
                         |> Expect.all
-                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow (NumericEntry "nonsense" Nothing) emptyNumericEntry emptyNumericEntry)
+                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow (IntegerEntry "nonsense" Nothing) emptyIntegerEntry emptyIntegerEntry)
                                 :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
                             )
             , test "Entering an invalid value for stopwatch 2 sets a blank value" <|
                 \() ->
-                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow emptyNumericEntry (NumericEntry "38" (Just 38)) emptyNumericEntry }
+                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow emptyIntegerEntry (IntegerEntry "38" (Just 38)) emptyIntegerEntry }
                         |> update (NumberCheckerFieldChanged Stopwatch2 "nonsense")
                         |> Expect.all
-                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyNumericEntry (NumericEntry "nonsense" Nothing) emptyNumericEntry)
+                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyIntegerEntry (IntegerEntry "nonsense" Nothing) emptyIntegerEntry)
                                 :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
                             )
             , test "Entering an invalid value for finish tokens sets a blank value" <|
                 \() ->
-                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow emptyNumericEntry emptyNumericEntry (NumericEntry "17" (Just 17)) }
+                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow emptyIntegerEntry emptyIntegerEntry (IntegerEntry "17" (Just 17)) }
                         |> update (NumberCheckerFieldChanged FinishTokens "nonsense")
                         |> Expect.all
-                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyNumericEntry emptyNumericEntry (NumericEntry "nonsense" Nothing))
+                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyIntegerEntry emptyIntegerEntry (IntegerEntry "nonsense" Nothing))
                                 :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
                             )
             ]

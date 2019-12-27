@@ -4,7 +4,7 @@ import Expect exposing (Expectation)
 import Model exposing (Model, NumberCheckerManualEntryRow, emptyNumberCheckerManualEntryRow, initModel)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import NumberCheckerEditing exposing (addNumberCheckerRow, deleteNumberCheckerEntry, editNumberCheckerRow, modifyNumberCheckerRows)
-import NumericEntry exposing (NumericEntry, emptyNumericEntry)
+import NumericEntry exposing (IntegerEntry, emptyIntegerEntry)
 import Test exposing (Test, describe, test)
 import TestData exposing (..)
 
@@ -30,27 +30,27 @@ suite =
                     expectNoChangeForNumberCheckerManualEntryRow emptyNumberCheckerManualEntryRow
             , test "Cannot enter a number-checker row with only a valid value for stopwatch 1" <|
                 \() ->
-                    NumberCheckerManualEntryRow (NumericEntry "24" (Just 24)) emptyNumericEntry emptyNumericEntry
+                    NumberCheckerManualEntryRow (IntegerEntry "24" (Just 24)) emptyIntegerEntry emptyIntegerEntry
                         |> expectNoChangeForNumberCheckerManualEntryRow
             , test "Cannot enter a number-checker row with only a valid value for stopwatch 2" <|
                 \() ->
-                    NumberCheckerManualEntryRow emptyNumericEntry (NumericEntry "38" (Just 38)) emptyNumericEntry
+                    NumberCheckerManualEntryRow emptyIntegerEntry (IntegerEntry "38" (Just 38)) emptyIntegerEntry
                         |> expectNoChangeForNumberCheckerManualEntryRow
             , test "Cannot enter a number-checker row with only a valid value for stopwatches 1 and 2" <|
                 \() ->
-                    NumberCheckerManualEntryRow (NumericEntry "24" (Just 24)) (NumericEntry "38" (Just 38)) emptyNumericEntry
+                    NumberCheckerManualEntryRow (IntegerEntry "24" (Just 24)) (IntegerEntry "38" (Just 38)) emptyIntegerEntry
                         |> expectNoChangeForNumberCheckerManualEntryRow
             , test "Cannot enter a number-checker row with only a valid value for finish tokens" <|
                 \() ->
-                    NumberCheckerManualEntryRow emptyNumericEntry emptyNumericEntry (NumericEntry "17" (Just 17))
+                    NumberCheckerManualEntryRow emptyIntegerEntry emptyIntegerEntry (IntegerEntry "17" (Just 17))
                         |> expectNoChangeForNumberCheckerManualEntryRow
             , test "Cannot enter a number-checker row with only a valid value for stopwatch 1 and finish tokens" <|
                 \() ->
-                    NumberCheckerManualEntryRow (NumericEntry "24" (Just 24)) emptyNumericEntry (NumericEntry "17" (Just 17))
+                    NumberCheckerManualEntryRow (IntegerEntry "24" (Just 24)) emptyIntegerEntry (IntegerEntry "17" (Just 17))
                         |> expectNoChangeForNumberCheckerManualEntryRow
             , test "Cannot enter a number-checker row with only a valid value for stopwatch 2 and finish tokens" <|
                 \() ->
-                    NumberCheckerManualEntryRow emptyNumericEntry (NumericEntry "38" (Just 38)) (NumericEntry "17" (Just 17))
+                    NumberCheckerManualEntryRow emptyIntegerEntry (IntegerEntry "38" (Just 38)) (IntegerEntry "17" (Just 17))
                         |> expectNoChangeForNumberCheckerManualEntryRow
             , test "Can enter a number-checker row with all valid values" <|
                 \() ->

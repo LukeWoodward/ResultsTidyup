@@ -9,7 +9,7 @@ import Json.Decode as Json
 import Model exposing (NumberCheckerManualEntryRow)
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
-import NumericEntry exposing (NumericEntry)
+import NumericEntry exposing (IntegerEntry)
 import ViewCommon exposing (intCell, smallButton, tableHeaders)
 
 
@@ -125,7 +125,7 @@ numberCheckerRow entry =
         ]
 
 
-manualEntryFieldClass : NumericEntry -> String
+manualEntryFieldClass : IntegerEntry -> String
 manualEntryFieldClass entry =
     if entry.enteredValue /= "" && entry.parsedValue == Nothing then
         "number-checker-manual-entry number-error"
