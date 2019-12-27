@@ -12,7 +12,7 @@ import Bootstrap.Tab as Tab
 import Error exposing (FileError)
 import EventDateAndTime exposing (EventDateAndTime)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
-import NumericEntry exposing (IntegerEntry, emptyIntegerEntry)
+import NumericEntry exposing (IntegerEntry, emptyEntry)
 import Problems exposing (Problems)
 import Stopwatch exposing (Stopwatches(..))
 import Time exposing (Posix)
@@ -28,7 +28,7 @@ type alias NumberCheckerManualEntryRow =
 
 emptyNumberCheckerManualEntryRow : NumberCheckerManualEntryRow
 emptyNumberCheckerManualEntryRow =
-    NumberCheckerManualEntryRow emptyIntegerEntry emptyIntegerEntry emptyIntegerEntry
+    NumberCheckerManualEntryRow emptyEntry emptyEntry emptyEntry
 
 
 type DialogDetails

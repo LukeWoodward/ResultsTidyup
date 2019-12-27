@@ -1,6 +1,8 @@
 module NumericEntry exposing
-    ( IntegerEntry
-    , emptyIntegerEntry
+    ( FloatEntry
+    , IntegerEntry
+    , emptyEntry
+    , floatEntryFromString
     , integerEntryFromAthleteNumber
     , integerEntryFromInt
     , integerEntryFromMaybeInt
@@ -9,20 +11,37 @@ module NumericEntry exposing
     )
 
 
+type alias Entry a =
+    { enteredValue : String
+    , parsedValue : Maybe a
+    }
+
+
 type alias IntegerEntry =
     { enteredValue : String
     , parsedValue : Maybe Int
     }
 
 
-emptyIntegerEntry : IntegerEntry
-emptyIntegerEntry =
-    IntegerEntry "" Nothing
+type alias FloatEntry =
+    { enteredValue : String
+    , parsedValue : Maybe Float
+    }
+
+
+emptyEntry : Entry a
+emptyEntry =
+    Entry "" Nothing
 
 
 integerEntryFromString : String -> IntegerEntry
 integerEntryFromString stringValue =
     IntegerEntry stringValue (String.toInt stringValue)
+
+
+floatEntryFromString : String -> FloatEntry
+floatEntryFromString stringValue =
+    FloatEntry stringValue (String.toFloat stringValue)
 
 
 integerEntryFromAthleteNumber : String -> IntegerEntry
@@ -50,7 +69,7 @@ integerEntryFromMaybeInt maybeIntValue =
     IntegerEntry stringValue maybeIntValue
 
 
-isPositive : IntegerEntry -> Bool
+isPositive : Entry number -> Bool
 isPositive entry =
     case entry.parsedValue of
         Just someInt ->
@@ -60,6 +79,6 @@ isPositive entry =
             False
 
 
-isValidEntry : IntegerEntry -> Bool
+isValidEntry : Entry number -> Bool
 isValidEntry entry =
     entry.enteredValue == "" || isPositive entry

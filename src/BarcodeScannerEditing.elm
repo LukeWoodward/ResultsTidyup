@@ -18,7 +18,7 @@ import Commands exposing (ElementToFocus(..))
 import NumericEntry
     exposing
         ( IntegerEntry
-        , emptyIntegerEntry
+        , emptyEntry
         , integerEntryFromAthleteNumber
         , integerEntryFromMaybeInt
         , integerEntryFromString
@@ -70,7 +70,7 @@ startEditing location contents isDeleted =
             BarcodeScannerRowEditDetails location contents (integerEntryFromAthleteNumber athlete) (integerEntryFromMaybeInt finishPosition) Both Nothing isDeleted
 
         MisScan misScannedText ->
-            BarcodeScannerRowEditDetails location contents emptyIntegerEntry emptyIntegerEntry Neither Nothing isDeleted
+            BarcodeScannerRowEditDetails location contents emptyEntry emptyEntry Neither Nothing isDeleted
 
 
 elementToFocusWhenOpening : LineContents -> ElementToFocus
