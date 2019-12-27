@@ -12,11 +12,11 @@ import BarcodeScanner
         , UnrecognisedLine
         )
 import BarcodeScannerTests exposing (createBarcodeScannerData)
+import DataEntry exposing (IntegerEntry, emptyEntry)
 import Dict exposing (Dict)
 import Errors exposing (expectError)
 import EventDateAndTime exposing (EventDateAndTime)
 import Expect
-import NumericEntry exposing (IntegerEntry, emptyEntry)
 import Problems
     exposing
         ( AthleteAndPositionPair

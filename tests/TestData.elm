@@ -46,13 +46,13 @@ import BarcodeScanner
         , PositionAndTimePair
         , regenerate
         )
+import DataEntry exposing (emptyEntry, integerEntryFromInt)
 import Dict
 import EventDateAndTime exposing (EventDateAndTime)
 import FileHandling exposing (crlf)
 import Iso8601
 import Model exposing (NumberCheckerManualEntryRow)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
-import NumericEntry exposing (emptyEntry, integerEntryFromInt)
 import Stopwatch
     exposing
         ( MergeEntry(..)

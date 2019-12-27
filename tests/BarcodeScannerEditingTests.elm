@@ -16,8 +16,8 @@ import BarcodeScannerEditing
         , updateEditDetails
         )
 import Commands exposing (ElementToFocus(..))
+import DataEntry exposing (IntegerEntry)
 import Expect exposing (Expectation)
-import NumericEntry exposing (IntegerEntry)
 import Test exposing (Test, describe, test)
 import TestData exposing (createBarcodeScannerDataFromFiles, ordinaryFileLine, toPosix)
 

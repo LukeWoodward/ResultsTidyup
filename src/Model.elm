@@ -9,10 +9,10 @@ module Model exposing
 import BarcodeScanner exposing (BarcodeScannerData, LineContents)
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, BarcodeScannerRowEditLocation)
 import Bootstrap.Tab as Tab
+import DataEntry exposing (IntegerEntry, emptyEntry)
 import Error exposing (FileError)
 import EventDateAndTime exposing (EventDateAndTime)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
-import NumericEntry exposing (IntegerEntry, emptyEntry)
 import Problems exposing (Problems)
 import Stopwatch exposing (Stopwatches(..))
 import Time exposing (Posix)

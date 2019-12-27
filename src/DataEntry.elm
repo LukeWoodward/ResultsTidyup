@@ -1,4 +1,4 @@
-module NumericEntry exposing
+module DataEntry exposing
     ( FloatEntry
     , IntegerEntry
     , emptyEntry

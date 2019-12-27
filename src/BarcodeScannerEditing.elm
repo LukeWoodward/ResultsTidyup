@@ -15,7 +15,7 @@ module BarcodeScannerEditing exposing
 
 import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFileLine, DeletionStatus(..), LineContents(..), updateBarcodeScannerLine)
 import Commands exposing (ElementToFocus(..))
-import NumericEntry
+import DataEntry
     exposing
         ( IntegerEntry
         , emptyEntry

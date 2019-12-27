@@ -1,10 +1,10 @@
 module EventDateAndTimeEditingTests exposing (suite)
 
+import DataEntry exposing (IntegerEntry, emptyEntry)
 import EventDateAndTime exposing (EventDateAndTime)
 import EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeChange)
 import Expect
 import Model exposing (initModel)
-import NumericEntry exposing (IntegerEntry, emptyEntry)
 import Test exposing (Test, describe, test)
 import TestData exposing (toPosix)
 

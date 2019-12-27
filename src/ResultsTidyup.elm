@@ -13,6 +13,7 @@ import Bootstrap.Tab as Tab
 import Browser
 import Browser.Dom
 import Commands exposing (Command(..), ElementToFocus(..))
+import DataEntry exposing (IntegerEntry)
 import Error exposing (FileError)
 import EventDateAndTime exposing (EventDateAndTime)
 import EventDateAndTimeView exposing (eventDateAndTimeView)
@@ -28,7 +29,6 @@ import Modals exposing (showModalDialog)
 import Model exposing (Model, initModel)
 import Msg exposing (Msg(..))
 import NumberCheckerView exposing (numberCheckerView)
-import NumericEntry exposing (IntegerEntry)
 import Ports exposing (filesDropped, getInitialHeight, heightUpdated, recordEventStartTime)
 import Problems
 import ProblemsView exposing (problemsView)

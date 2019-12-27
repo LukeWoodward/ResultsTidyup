@@ -6,10 +6,10 @@ module NumberCheckerEditing exposing
     , modifyNumberCheckerRows
     )
 
+import DataEntry exposing (IntegerEntry, integerEntryFromInt)
 import Model exposing (Model, NumberCheckerManualEntryRow, emptyNumberCheckerManualEntryRow)
 import Msg exposing (NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, addAndAnnotate, reannotate)
-import NumericEntry exposing (IntegerEntry, integerEntryFromInt)
 
 
 addNumberCheckerRow : Model -> ( Model, Bool )

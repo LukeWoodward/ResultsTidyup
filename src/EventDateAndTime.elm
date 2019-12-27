@@ -1,6 +1,6 @@
 module EventDateAndTime exposing (EventDateAndTime)
 
-import NumericEntry exposing (IntegerEntry)
+import DataEntry exposing (IntegerEntry)
 import Time exposing (Posix)
 
 

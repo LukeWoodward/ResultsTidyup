@@ -1,7 +1,6 @@
-module NumericEntryTests exposing (suite)
+module DataEntryTests exposing (suite)
 
-import Expect
-import NumericEntry
+import DataEntry
     exposing
         ( FloatEntry
         , IntegerEntry
@@ -12,6 +11,7 @@ import NumericEntry
         , integerEntryFromString
         , isValidEntry
         )
+import Expect
 import Test exposing (Test, describe, test)
 
 

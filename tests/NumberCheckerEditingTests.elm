@@ -1,10 +1,10 @@
 module NumberCheckerEditingTests exposing (suite)
 
+import DataEntry exposing (IntegerEntry, emptyEntry)
 import Expect exposing (Expectation)
 import Model exposing (Model, NumberCheckerManualEntryRow, emptyNumberCheckerManualEntryRow, initModel)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import NumberCheckerEditing exposing (addNumberCheckerRow, deleteNumberCheckerEntry, editNumberCheckerRow, modifyNumberCheckerRows)
-import NumericEntry exposing (IntegerEntry, emptyEntry)
 import Test exposing (Test, describe, test)
 import TestData exposing (..)
 
