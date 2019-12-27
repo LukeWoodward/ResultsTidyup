@@ -1,10 +1,8 @@
 module TokenOperations exposing
-    ( RangeEntry
-    , TokenOperationChangeType(..)
+    ( TokenOperationChangeType(..)
     , TokenOperationEditDetails
     , TokenOperationOption(..)
     , TokenOperationValidationError(..)
-    , TokenRange
     , TokenRangeField(..)
     , emptyEditDetails
     , isInsertTokenRangeFieldInvalid
@@ -12,8 +10,6 @@ module TokenOperations exposing
     , isReverseTokenRangeFieldInvalid
     , isSwapTokenRange1FieldInvalid
     , isSwapTokenRange2FieldInvalid
-    , parseRange
-    , rangeToString
     , tryApplyTokenOperationToBarcodeScannerData
     , updateEditDetails
     , validateEditDetails
@@ -32,20 +28,9 @@ import BarcodeScanner
         , allTokensUsed
         , regenerate
         )
+import DataEntry exposing (Range, RangeEntry, emptyEntry, rangeEntryFromString)
 import Dict exposing (Dict)
 import Set exposing (Set)
-
-
-type alias TokenRange =
-    { start : Int
-    , end : Int
-    }
-
-
-type alias RangeEntry =
-    { enteredText : String
-    , range : Maybe TokenRange
-    }
 
 
 type TokenOperationOption
@@ -70,9 +55,9 @@ type TokenOperationValidationError
     | InvalidRange TokenRangeField
     | EmptyRange TokenRangeField
     | ZeroInRange TokenRangeField
-    | InsertRangeOffEndOfTokens Int TokenRange
-    | RangeOffEndOfTokens Int TokenRange TokenRangeField
-    | RemovingExistingTokens (List Int) TokenRange
+    | InsertRangeOffEndOfTokens Int Range
+    | RangeOffEndOfTokens Int Range TokenRangeField
+    | RemovingExistingTokens (List Int) Range
     | SwapTokenRangesOfDifferentSizes
     | SwapTokenRangesOverlap
     | ReverseTokenRangeSingleToken
@@ -94,47 +79,14 @@ type TokenOperationChangeType
     | RangeEdited TokenRangeField String
 
 
-emptyRange : RangeEntry
-emptyRange =
-    RangeEntry "" Nothing
-
-
 emptyEditDetails : TokenOperationEditDetails
 emptyEditDetails =
-    TokenOperationEditDetails NoOptionSelected emptyRange emptyRange emptyRange emptyRange emptyRange NoValidationError
-
-
-trimToInt : String -> Maybe Int
-trimToInt string =
-    String.toInt (String.trim string)
-
-
-parseRange : String -> Maybe TokenRange
-parseRange text =
-    case String.split "-" text of
-        [ singleString ] ->
-            trimToInt singleString
-                |> Maybe.map (\num -> TokenRange num num)
-
-        [ firstString, secondString ] ->
-            Maybe.map2 TokenRange (trimToInt firstString) (trimToInt secondString)
-
-        _ ->
-            Nothing
-
-
-rangeToString : TokenRange -> String
-rangeToString range =
-    if range.start == range.end then
-        String.fromInt range.start
-
-    else
-        String.fromInt range.start ++ "-" ++ String.fromInt range.end
+    TokenOperationEditDetails NoOptionSelected emptyEntry emptyEntry emptyEntry emptyEntry emptyEntry NoValidationError
 
 
 commonTokenRangeValidation : TokenRangeField -> RangeEntry -> Maybe TokenOperationValidationError
 commonTokenRangeValidation field entry =
-    case entry.range of
+    case entry.parsedValue of
         Just someRange ->
             if someRange.start == 0 || someRange.end == 0 then
                 Just (ZeroInRange field)
@@ -151,7 +103,7 @@ commonTokenRangeValidation field entry =
 
 insertTokenRangeEndOffTokens : Int -> RangeEntry -> Maybe TokenOperationValidationError
 insertTokenRangeEndOffTokens lastToken entry =
-    case entry.range of
+    case entry.parsedValue of
         Just someRange ->
             if lastToken < someRange.start && someRange.start <= someRange.end then
                 Just (InsertRangeOffEndOfTokens lastToken someRange)
@@ -165,7 +117,7 @@ insertTokenRangeEndOffTokens lastToken entry =
 
 tokenRangeEndOffTokens : Int -> TokenRangeField -> RangeEntry -> Maybe TokenOperationValidationError
 tokenRangeEndOffTokens lastToken field entry =
-    case entry.range of
+    case entry.parsedValue of
         Just someRange ->
             if someRange.start <= someRange.end && someRange.end > lastToken then
                 Just (RangeOffEndOfTokens lastToken someRange field)
@@ -179,7 +131,7 @@ tokenRangeEndOffTokens lastToken field entry =
 
 removingExistingTokens : Set Int -> RangeEntry -> Maybe TokenOperationValidationError
 removingExistingTokens allTokens entry =
-    case entry.range of
+    case entry.parsedValue of
         Just someRange ->
             let
                 removedExistingTokens : List Int
@@ -202,7 +154,7 @@ removingExistingTokens allTokens entry =
 
 rangesOfDifferentSizeValidation : RangeEntry -> RangeEntry -> Maybe TokenOperationValidationError
 rangesOfDifferentSizeValidation swapTokenEntry1 swapTokenEntry2 =
-    case ( swapTokenEntry1.range, swapTokenEntry2.range ) of
+    case ( swapTokenEntry1.parsedValue, swapTokenEntry2.parsedValue ) of
         ( Just range1, Just range2 ) ->
             if range1.end - range1.start == range2.end - range2.start then
                 Nothing
@@ -216,7 +168,7 @@ rangesOfDifferentSizeValidation swapTokenEntry1 swapTokenEntry2 =
 
 rangeTokenOverlapValidation : RangeEntry -> RangeEntry -> Maybe TokenOperationValidationError
 rangeTokenOverlapValidation swapTokenEntry1 swapTokenEntry2 =
-    case ( swapTokenEntry1.range, swapTokenEntry2.range ) of
+    case ( swapTokenEntry1.parsedValue, swapTokenEntry2.parsedValue ) of
         ( Just range1, Just range2 ) ->
             if
                 -- Two ranges overlap if each starts are less than or equal to each end.
@@ -235,7 +187,7 @@ rangeTokenOverlapValidation swapTokenEntry1 swapTokenEntry2 =
 
 reverseSingleTokenValidation : RangeEntry -> Maybe TokenOperationValidationError
 reverseSingleTokenValidation reverseTokenEntry =
-    case reverseTokenEntry.range of
+    case reverseTokenEntry.parsedValue of
         Just someRange ->
             if someRange.start == someRange.end then
                 Just ReverseTokenRangeSingleToken
@@ -291,11 +243,6 @@ validateEditDetails allTokens editDetails =
     List.filterMap identity allErrors
         |> List.head
         |> Maybe.withDefault NoValidationError
-
-
-rangeEntryFromString : String -> RangeEntry
-rangeEntryFromString rangeString =
-    { enteredText = rangeString, range = parseRange rangeString }
 
 
 updateEditDetails : TokenOperationChangeType -> TokenOperationEditDetails -> TokenOperationEditDetails
@@ -387,7 +334,7 @@ isReverseTokenRangeFieldInvalid tokenOperationEditDetails =
     isTokenRangeFieldInvalid ReverseTokenRangeField tokenOperationEditDetails
 
 
-insertTokensIntoBarcodeScannerData : TokenRange -> BarcodeScannerFileLine -> Maybe BarcodeScannerFileLine
+insertTokensIntoBarcodeScannerData : Range -> BarcodeScannerFileLine -> Maybe BarcodeScannerFileLine
 insertTokensIntoBarcodeScannerData range line =
     let
         offset : Int
@@ -409,7 +356,7 @@ insertTokensIntoBarcodeScannerData range line =
             Just line
 
 
-removeTokensFromBarcodeScannerData : TokenRange -> BarcodeScannerFileLine -> Maybe BarcodeScannerFileLine
+removeTokensFromBarcodeScannerData : Range -> BarcodeScannerFileLine -> Maybe BarcodeScannerFileLine
 removeTokensFromBarcodeScannerData range line =
     let
         offset : Int
@@ -434,7 +381,7 @@ removeTokensFromBarcodeScannerData range line =
             Just line
 
 
-swapTokensInBarcodeScannerData : TokenRange -> Int -> BarcodeScannerFileLine -> Maybe BarcodeScannerFileLine
+swapTokensInBarcodeScannerData : Range -> Int -> BarcodeScannerFileLine -> Maybe BarcodeScannerFileLine
 swapTokensInBarcodeScannerData range1 range2Start line =
     let
         range2End : Int
@@ -467,7 +414,7 @@ swapTokensInBarcodeScannerData range1 range2Start line =
             Just line
 
 
-reverseTokenRangeInBarcodeScannerData : TokenRange -> BarcodeScannerFileLine -> Maybe BarcodeScannerFileLine
+reverseTokenRangeInBarcodeScannerData : Range -> BarcodeScannerFileLine -> Maybe BarcodeScannerFileLine
 reverseTokenRangeInBarcodeScannerData range line =
     case line.contents of
         Ordinary athlete (Just token) ->
@@ -520,7 +467,7 @@ tryApplyTokenOperationToBarcodeScannerData tokenOperationEditDetails barcodeScan
                 Ok barcodeScannerData
 
             InsertTokensOption ->
-                case tokenOperationEditDetails.insertTokenRange.range of
+                case tokenOperationEditDetails.insertTokenRange.parsedValue of
                     Just range ->
                         apply (insertTokensIntoBarcodeScannerData range)
 
@@ -528,7 +475,7 @@ tryApplyTokenOperationToBarcodeScannerData tokenOperationEditDetails barcodeScan
                         Ok barcodeScannerData
 
             RemoveTokensOption ->
-                case tokenOperationEditDetails.removeTokenRange.range of
+                case tokenOperationEditDetails.removeTokenRange.parsedValue of
                     Just range ->
                         apply (removeTokensFromBarcodeScannerData range)
 
@@ -536,7 +483,7 @@ tryApplyTokenOperationToBarcodeScannerData tokenOperationEditDetails barcodeScan
                         Ok barcodeScannerData
 
             SwapTokenRangeOption ->
-                case ( tokenOperationEditDetails.swapTokenRange1.range, tokenOperationEditDetails.swapTokenRange2.range ) of
+                case ( tokenOperationEditDetails.swapTokenRange1.parsedValue, tokenOperationEditDetails.swapTokenRange2.parsedValue ) of
                     ( Just range1, Just range2 ) ->
                         if range2.end - range2.start == range1.end - range1.start then
                             apply (swapTokensInBarcodeScannerData range1 range2.start)
@@ -550,7 +497,7 @@ tryApplyTokenOperationToBarcodeScannerData tokenOperationEditDetails barcodeScan
                         Ok barcodeScannerData
 
             ReverseTokenRangeOption ->
-                case tokenOperationEditDetails.reverseTokenRange.range of
+                case tokenOperationEditDetails.reverseTokenRange.parsedValue of
                     Just range ->
                         apply (reverseTokenRangeInBarcodeScannerData range)
 

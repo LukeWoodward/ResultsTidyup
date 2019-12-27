@@ -4,6 +4,9 @@ import DataEntry
     exposing
         ( FloatEntry
         , IntegerEntry
+        , Range
+        , RangeEntry
+        , emptyEntry
         , floatEntryFromString
         , integerEntryFromAthleteNumber
         , integerEntryFromHoursAndMinutes
@@ -12,6 +15,8 @@ import DataEntry
         , integerEntryFromString
         , integerEntryFromTime
         , isValidEntry
+        , rangeEntryFromString
+        , rangeToString
         )
 import Expect
 import Test exposing (Test, describe, test)
@@ -34,7 +39,7 @@ suite =
             , test "Can create an integer entry from Nothing" <|
                 \() ->
                     integerEntryFromMaybeInt Nothing
-                        |> Expect.equal (IntegerEntry "" Nothing)
+                        |> Expect.equal emptyEntry
             ]
         , describe "integerEntryFromString tests"
             [ test "Can create an integer entry from a string containing a valid int value" <|
@@ -97,6 +102,62 @@ suite =
                 \() ->
                     integerEntryFromTime "This is not valid"
                         |> Expect.equal (IntegerEntry "This is not valid" Nothing)
+            ]
+        , describe "rangeEntryFromString tests"
+            [ test "rangeEntryFromString of an empty string is not valid" <|
+                \() ->
+                    rangeEntryFromString ""
+                        |> Expect.equal emptyEntry
+            , test "rangeEntryFromString of a string containing an invalid number is not valid" <|
+                \() ->
+                    rangeEntryFromString "this is not valid"
+                        |> Expect.equal (RangeEntry "this is not valid" Nothing)
+            , test "rangeEntryFromString of a string containing a single valid number is valid" <|
+                \() ->
+                    rangeEntryFromString "37"
+                        |> Expect.equal (RangeEntry "37" (Just (Range 37 37)))
+            , test "rangeEntryFromString of a string containing a single valid number with whitespace is valid" <|
+                \() ->
+                    rangeEntryFromString "    37      "
+                        |> Expect.equal (RangeEntry "    37      " (Just (Range 37 37)))
+            , test "rangeEntryFromString of a string containing two valid numbers is valid" <|
+                \() ->
+                    rangeEntryFromString "22-34"
+                        |> Expect.equal (RangeEntry "22-34" (Just (Range 22 34)))
+            , test "rangeEntryFromString of a string containing two valid numbers with whitespace is valid" <|
+                \() ->
+                    rangeEntryFromString "     22  -   34   "
+                        |> Expect.equal (RangeEntry "     22  -   34   " (Just (Range 22 34)))
+            , test "rangeEntryFromString of a string with a missing end number is invalid" <|
+                \() ->
+                    rangeEntryFromString "22-"
+                        |> Expect.equal (RangeEntry "22-" Nothing)
+            , test "rangeEntryFromString of a string with a missing start number is invalid" <|
+                \() ->
+                    rangeEntryFromString "-34"
+                        |> Expect.equal (RangeEntry "-34" Nothing)
+            , test "rangeEntryFromString of a string containing three valid numbers is invalid" <|
+                \() ->
+                    rangeEntryFromString "22-34-56"
+                        |> Expect.equal (RangeEntry "22-34-56" Nothing)
+            , test "rangeEntryFromString of a string containing the same valid number twice is valid" <|
+                \() ->
+                    rangeEntryFromString "34-34"
+                        |> Expect.equal (RangeEntry "34-34" (Just (Range 34 34)))
+            , test "rangeEntryFromString of a string containing two valid numbers the wrong way around is valid" <|
+                \() ->
+                    rangeEntryFromString "34-22"
+                        |> Expect.equal (RangeEntry "34-22" (Just (Range 34 22)))
+            ]
+        , describe "rangeToString tests"
+            [ test "formatting a single-value range returns a single number" <|
+                \() ->
+                    rangeToString (Range 59 59)
+                        |> Expect.equal "59"
+            , test "formatting a multi-value range returns two hyphen-separated numbers" <|
+                \() ->
+                    rangeToString (Range 47 52)
+                        |> Expect.equal "47-52"
             ]
         , describe "isValidEntry tests"
             [ test "An empty value is valid" <|

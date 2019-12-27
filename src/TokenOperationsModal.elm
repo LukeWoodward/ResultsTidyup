@@ -7,14 +7,14 @@ import Bootstrap.Form.Radio as Radio
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
+import DataEntry exposing (RangeEntry, rangeToString)
 import Html exposing (Html, div, label, text)
 import Html.Attributes exposing (class, for)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg(..))
 import TokenOperations
     exposing
-        ( RangeEntry
-        , TokenOperationChangeType(..)
+        ( TokenOperationChangeType(..)
         , TokenOperationEditDetails
         , TokenOperationOption(..)
         , TokenOperationValidationError(..)
@@ -24,7 +24,6 @@ import TokenOperations
         , isReverseTokenRangeFieldInvalid
         , isSwapTokenRange1FieldInvalid
         , isSwapTokenRange2FieldInvalid
-        , rangeToString
         )
 
 
@@ -63,7 +62,7 @@ inputTextField rangeEntryGetter field option validator tokenOperationEditDetails
     in
     Grid.col [ Col.xs3 ]
         [ Input.text
-            ([ Input.value (rangeEntryGetter tokenOperationEditDetails).enteredText
+            ([ Input.value (rangeEntryGetter tokenOperationEditDetails).enteredValue
              , Input.onInput (TokenOperationEdit << RangeEdited field)
              , Input.disabled (tokenOperationEditDetails.operation /= option)
              ]

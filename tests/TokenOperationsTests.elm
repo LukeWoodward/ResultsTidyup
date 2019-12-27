@@ -12,18 +12,17 @@ import BarcodeScanner
         , empty
         , regenerate
         )
+import DataEntry exposing (Range, RangeEntry)
 import Dict exposing (Dict)
 import Expect
 import Set exposing (Set)
 import Test exposing (Test, describe, test)
 import TokenOperations
     exposing
-        ( RangeEntry
-        , TokenOperationChangeType(..)
+        ( TokenOperationChangeType(..)
         , TokenOperationEditDetails
         , TokenOperationOption(..)
         , TokenOperationValidationError(..)
-        , TokenRange
         , TokenRangeField(..)
         , emptyEditDetails
         , isInsertTokenRangeFieldInvalid
@@ -31,8 +30,6 @@ import TokenOperations
         , isReverseTokenRangeFieldInvalid
         , isSwapTokenRange1FieldInvalid
         , isSwapTokenRange2FieldInvalid
-        , parseRange
-        , rangeToString
         , tryApplyTokenOperationToBarcodeScannerData
         , updateEditDetails
         , validateEditDetails
@@ -43,7 +40,7 @@ makeEntry : Int -> Int -> RangeEntry
 makeEntry start end =
     RangeEntry
         (String.fromInt start ++ "-" ++ String.fromInt end)
-        (Just (TokenRange start end))
+        (Just (Range start end))
 
 
 invalidEntry : RangeEntry
@@ -78,63 +75,7 @@ barcodeScannerDataForTokenOperationsTesting =
 suite : Test
 suite =
     describe "TokenOperations tests"
-        [ describe "parseRange tests"
-            [ test "parseRange of an empty string is not valid" <|
-                \() ->
-                    parseRange ""
-                        |> Expect.equal Nothing
-            , test "parseRange of a string containing an invalid number is not valid" <|
-                \() ->
-                    parseRange "this is not valid"
-                        |> Expect.equal Nothing
-            , test "parseRange of a string containing a single valid number is valid" <|
-                \() ->
-                    parseRange "37"
-                        |> Expect.equal (Just (TokenRange 37 37))
-            , test "parseRange of a string containing a single valid number with whitespace is valid" <|
-                \() ->
-                    parseRange "    37      "
-                        |> Expect.equal (Just (TokenRange 37 37))
-            , test "parseRange of a string containing two valid numbers is valid" <|
-                \() ->
-                    parseRange "22-34"
-                        |> Expect.equal (Just (TokenRange 22 34))
-            , test "parseRange of a string containing two valid numbers with whitespace is valid" <|
-                \() ->
-                    parseRange "     22  -   34   "
-                        |> Expect.equal (Just (TokenRange 22 34))
-            , test "parseRange of a string with a missing end number is invalid" <|
-                \() ->
-                    parseRange "22-"
-                        |> Expect.equal Nothing
-            , test "parseRange of a string with a missing start number is invalid" <|
-                \() ->
-                    parseRange "-34"
-                        |> Expect.equal Nothing
-            , test "parseRange of a string containing three valid numbers is invalid" <|
-                \() ->
-                    parseRange "22-34-56"
-                        |> Expect.equal Nothing
-            , test "parseRange of a string containing the same valid number twice is valid" <|
-                \() ->
-                    parseRange "34-34"
-                        |> Expect.equal (Just (TokenRange 34 34))
-            , test "parseRange of a string containing two valid numbers the wrong way around is valid" <|
-                \() ->
-                    parseRange "34-22"
-                        |> Expect.equal (Just (TokenRange 34 22))
-            ]
-        , describe "rangeToString tests"
-            [ test "formatting a single-value range returns a single number" <|
-                \() ->
-                    rangeToString (TokenRange 59 59)
-                        |> Expect.equal "59"
-            , test "formatting a multi-value range returns two hyphen-separated numbers" <|
-                \() ->
-                    rangeToString (TokenRange 47 52)
-                        |> Expect.equal "47-52"
-            ]
-        , describe "validateEditDetails tests"
+        [ describe "validateEditDetails tests"
             [ test "validating the default details returns the nothing-selected error" <|
                 \() ->
                     validateEditDetails tokenSet emptyEditDetails
@@ -162,7 +103,7 @@ suite =
             , test "validating an insert operation with the start of the range off the end of the tokens returns an error" <|
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = InsertTokensOption, insertTokenRange = makeEntry 55 65 }
-                        |> Expect.equal (InsertRangeOffEndOfTokens 50 (TokenRange 55 65))
+                        |> Expect.equal (InsertRangeOffEndOfTokens 50 (Range 55 65))
             , test "validating an insert operation with only the end of the range off the end of the tokens is valid" <|
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = InsertTokensOption, insertTokenRange = makeEntry 45 55 }
@@ -190,11 +131,11 @@ suite =
             , test "validating a remove operation that attempts to remove unused tokens returns an error" <|
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = RemoveTokensOption, removeTokenRange = makeEntry 40 50 }
-                        |> Expect.equal (RemovingExistingTokens [ 41, 48, 50 ] (TokenRange 40 50))
+                        |> Expect.equal (RemovingExistingTokens [ 41, 48, 50 ] (Range 40 50))
             , test "validating a remove operation with a range off the end returns an error" <|
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = RemoveTokensOption, removeTokenRange = makeEntry 45 55 }
-                        |> Expect.equal (RangeOffEndOfTokens 50 (TokenRange 45 55) RemoveTokenRangeField)
+                        |> Expect.equal (RangeOffEndOfTokens 50 (Range 45 55) RemoveTokenRangeField)
             , test "validating a valid swap operation returns no error" <|
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 30 40 }
@@ -218,7 +159,7 @@ suite =
             , test "validating a swap operation with a first range off the end returns an error" <|
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 45 55, swapTokenRange2 = makeEntry 30 40 }
-                        |> Expect.equal (RangeOffEndOfTokens 50 (TokenRange 45 55) SwapTokenRangeField1)
+                        |> Expect.equal (RangeOffEndOfTokens 50 (Range 45 55) SwapTokenRangeField1)
             , test "validating a swap operation with an invalid second range returns an error" <|
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = invalidEntry }
@@ -238,7 +179,7 @@ suite =
             , test "validating a swap operation with a second range off the end returns an error" <|
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 45 55 }
-                        |> Expect.equal (RangeOffEndOfTokens 50 (TokenRange 45 55) SwapTokenRangeField2)
+                        |> Expect.equal (RangeOffEndOfTokens 50 (Range 45 55) SwapTokenRangeField2)
             , test "validating a swap operation with ranges of different sizes returns an error" <|
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 30 35 }
@@ -258,11 +199,11 @@ suite =
             , test "validating a swap operation with the first range off the end and overlapping the second returns the off-the-end error" <|
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 35 55, swapTokenRange2 = makeEntry 30 40 }
-                        |> Expect.equal (RangeOffEndOfTokens 50 (TokenRange 35 55) SwapTokenRangeField1)
+                        |> Expect.equal (RangeOffEndOfTokens 50 (Range 35 55) SwapTokenRangeField1)
             , test "validating a swap operation with the second range off the end and overlapping the first returns the off-the-end error" <|
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 30 40, swapTokenRange2 = makeEntry 35 55 }
-                        |> Expect.equal (RangeOffEndOfTokens 50 (TokenRange 35 55) SwapTokenRangeField2)
+                        |> Expect.equal (RangeOffEndOfTokens 50 (Range 35 55) SwapTokenRangeField2)
             , test "validating a swap operation with ranges of different sizes and which overlap returns an error" <|
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 18 22 }
@@ -294,7 +235,7 @@ suite =
             , test "validating a reverse operation with a range off the end returns an error" <|
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = ReverseTokenRangeOption, reverseTokenRange = makeEntry 45 55 }
-                        |> Expect.equal (RangeOffEndOfTokens 50 (TokenRange 45 55) ReverseTokenRangeField)
+                        |> Expect.equal (RangeOffEndOfTokens 50 (Range 45 55) ReverseTokenRangeField)
             ]
         , describe "updateEditDetails tests"
             [ test "ChangeOperation changes the operation and clears validation" <|
@@ -424,11 +365,11 @@ suite =
                         |> Expect.equal False
             , test "insert token range field invalid if validation error is insert range off end of tokens" <|
                 \() ->
-                    isInsertTokenRangeFieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (TokenRange 60 70) InsertTokenRangeField }
+                    isInsertTokenRangeFieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) InsertTokenRangeField }
                         |> Expect.equal True
             , test "insert token range field not invalid if validation error is another range off end of tokens" <|
                 \() ->
-                    isInsertTokenRangeFieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (TokenRange 60 70) SwapTokenRangeField2 }
+                    isInsertTokenRangeFieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) SwapTokenRangeField2 }
                         |> Expect.equal False
             , test "insert token range field not invalid if validation error is token ranges overlap" <|
                 \() ->
@@ -466,11 +407,11 @@ suite =
                         |> Expect.equal False
             , test "remove token range field invalid if validation error is remove range off end of tokens" <|
                 \() ->
-                    isRemoveTokenRangeFieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (TokenRange 60 70) RemoveTokenRangeField }
+                    isRemoveTokenRangeFieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) RemoveTokenRangeField }
                         |> Expect.equal True
             , test "remove token range field not invalid if validation error is another range off end of tokens" <|
                 \() ->
-                    isRemoveTokenRangeFieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (TokenRange 60 70) InsertTokenRangeField }
+                    isRemoveTokenRangeFieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) InsertTokenRangeField }
                         |> Expect.equal False
             , test "remove token range field not invalid if validation error is token ranges overlap" <|
                 \() ->
@@ -508,11 +449,11 @@ suite =
                         |> Expect.equal False
             , test "first swap token range field invalid if validation error is first swap token range off end of tokens" <|
                 \() ->
-                    isSwapTokenRange1FieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (TokenRange 60 70) SwapTokenRangeField1 }
+                    isSwapTokenRange1FieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) SwapTokenRangeField1 }
                         |> Expect.equal True
             , test "first swap token range field not invalid if validation error is another range off end of tokens" <|
                 \() ->
-                    isSwapTokenRange1FieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (TokenRange 60 70) RemoveTokenRangeField }
+                    isSwapTokenRange1FieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) RemoveTokenRangeField }
                         |> Expect.equal False
             , test "first swap token range field invalid if validation error is token ranges overlap" <|
                 \() ->
@@ -550,11 +491,11 @@ suite =
                         |> Expect.equal False
             , test "second swap token range field invalid if validation error is second swap token range off end of tokens" <|
                 \() ->
-                    isSwapTokenRange2FieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (TokenRange 60 70) SwapTokenRangeField2 }
+                    isSwapTokenRange2FieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) SwapTokenRangeField2 }
                         |> Expect.equal True
             , test "second swap token range field not invalid if validation error is another range off end of tokens" <|
                 \() ->
-                    isSwapTokenRange2FieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (TokenRange 60 70) SwapTokenRangeField1 }
+                    isSwapTokenRange2FieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) SwapTokenRangeField1 }
                         |> Expect.equal False
             , test "second swap token range field invalid if validation error is token ranges overlap" <|
                 \() ->
@@ -592,11 +533,11 @@ suite =
                         |> Expect.equal False
             , test "reverse token range field invalid if validation error is reverse range off end of tokens" <|
                 \() ->
-                    isReverseTokenRangeFieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (TokenRange 60 70) ReverseTokenRangeField }
+                    isReverseTokenRangeFieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) ReverseTokenRangeField }
                         |> Expect.equal True
             , test "reverse token range field not invalid if validation error is another range off end of tokens" <|
                 \() ->
-                    isReverseTokenRangeFieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (TokenRange 60 70) InsertTokenRangeField }
+                    isReverseTokenRangeFieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) InsertTokenRangeField }
                         |> Expect.equal False
             , test "reverse token range field not invalid if validation error is token ranges overlap" <|
                 \() ->
@@ -634,7 +575,7 @@ suite =
                             editDetails =
                                 { emptyEditDetails
                                     | operation = InsertTokensOption
-                                    , insertTokenRange = RangeEntry "8-10" (Just (TokenRange 8 10))
+                                    , insertTokenRange = RangeEntry "8-10" (Just (Range 8 10))
                                 }
 
                             expectedBarcodeScannerData : BarcodeScannerData
@@ -665,7 +606,7 @@ suite =
                             editDetails =
                                 { emptyEditDetails
                                     | operation = RemoveTokensOption
-                                    , removeTokenRange = RangeEntry "8-10" (Just (TokenRange 8 10))
+                                    , removeTokenRange = RangeEntry "8-10" (Just (Range 8 10))
                                 }
 
                             initialBarcodeScannerData : BarcodeScannerData
@@ -685,7 +626,7 @@ suite =
                                 { emptyEditDetails
                                     | operation = SwapTokenRangeOption
                                     , swapTokenRange1 = RangeEntry "Invalid range" Nothing
-                                    , swapTokenRange2 = RangeEntry "8-10" (Just (TokenRange 8 10))
+                                    , swapTokenRange2 = RangeEntry "8-10" (Just (Range 8 10))
                                 }
                         in
                         tryApplyTokenOperationToBarcodeScannerData editDetails barcodeScannerDataForTokenOperationsTesting
@@ -697,7 +638,7 @@ suite =
                             editDetails =
                                 { emptyEditDetails
                                     | operation = SwapTokenRangeOption
-                                    , swapTokenRange1 = RangeEntry "8-10" (Just (TokenRange 8 10))
+                                    , swapTokenRange1 = RangeEntry "8-10" (Just (Range 8 10))
                                     , swapTokenRange2 = RangeEntry "Invalid range" Nothing
                                 }
                         in
@@ -710,8 +651,8 @@ suite =
                             editDetails =
                                 { emptyEditDetails
                                     | operation = SwapTokenRangeOption
-                                    , swapTokenRange1 = RangeEntry "4-6" (Just (TokenRange 4 6))
-                                    , swapTokenRange2 = RangeEntry "8-10" (Just (TokenRange 8 10))
+                                    , swapTokenRange1 = RangeEntry "4-6" (Just (Range 4 6))
+                                    , swapTokenRange2 = RangeEntry "8-10" (Just (Range 8 10))
                                 }
 
                             expectedBarcodeScannerData : BarcodeScannerData
@@ -741,7 +682,7 @@ suite =
                             editDetails =
                                 { emptyEditDetails
                                     | operation = ReverseTokenRangeOption
-                                    , reverseTokenRange = RangeEntry "5-8" (Just (TokenRange 5 8))
+                                    , reverseTokenRange = RangeEntry "5-8" (Just (Range 5 8))
                                 }
 
                             initialBarcodeScannerData : BarcodeScannerData

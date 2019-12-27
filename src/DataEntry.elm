@@ -2,6 +2,8 @@ module DataEntry exposing
     ( DateEntry
     , FloatEntry
     , IntegerEntry
+    , Range
+    , RangeEntry
     , emptyEntry
     , floatEntryFromString
     , integerEntryFromAthleteNumber
@@ -11,6 +13,8 @@ module DataEntry exposing
     , integerEntryFromString
     , integerEntryFromTime
     , isValidEntry
+    , rangeEntryFromString
+    , rangeToString
     )
 
 import Time exposing (Posix)
@@ -41,6 +45,18 @@ type alias DateEntry =
     }
 
 
+type alias Range =
+    { start : Int
+    , end : Int
+    }
+
+
+type alias RangeEntry =
+    { enteredValue : String
+    , parsedValue : Maybe Range
+    }
+
+
 emptyEntry : Entry a
 emptyEntry =
     Entry "" Nothing
@@ -54,6 +70,11 @@ integerEntryFromString stringValue =
 floatEntryFromString : String -> FloatEntry
 floatEntryFromString stringValue =
     FloatEntry stringValue (String.toFloat stringValue)
+
+
+rangeEntryFromString : String -> RangeEntry
+rangeEntryFromString rangeString =
+    RangeEntry rangeString (parseRange rangeString)
 
 
 integerEntryFromAthleteNumber : String -> IntegerEntry
@@ -93,6 +114,34 @@ integerEntryFromTime time =
     parseTime time
         |> Result.toMaybe
         |> IntegerEntry time
+
+
+trimToInt : String -> Maybe Int
+trimToInt string =
+    String.toInt (String.trim string)
+
+
+parseRange : String -> Maybe Range
+parseRange text =
+    case String.split "-" text of
+        [ singleString ] ->
+            trimToInt singleString
+                |> Maybe.map (\num -> Range num num)
+
+        [ firstString, secondString ] ->
+            Maybe.map2 Range (trimToInt firstString) (trimToInt secondString)
+
+        _ ->
+            Nothing
+
+
+rangeToString : Range -> String
+rangeToString range =
+    if range.start == range.end then
+        String.fromInt range.start
+
+    else
+        String.fromInt range.start ++ "-" ++ String.fromInt range.end
 
 
 isPositive : Entry number -> Bool
