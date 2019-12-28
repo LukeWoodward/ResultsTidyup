@@ -14,7 +14,7 @@ import BarcodeScanner
         )
 import DataEntry exposing (Range, RangeEntry)
 import Dict exposing (Dict)
-import Expect
+import Expect exposing (Expectation)
 import Set exposing (Set)
 import Test exposing (Test, describe, test)
 import TokenOperations
@@ -70,6 +70,57 @@ makeBarcodeScannerData items =
 barcodeScannerDataForTokenOperationsTesting : BarcodeScannerData
 barcodeScannerDataForTokenOperationsTesting =
     makeBarcodeScannerData [ ( 1, "A48223" ), ( 2, "A37192" ), ( 3, "A60804" ), ( 4, "A53779" ), ( 5, "A84311" ), ( 6, "" ), ( 7, "A29046" ), ( 8, "A76535" ), ( 9, "" ), ( 10, "A12680" ) ]
+
+
+allValidationErrors : TokenRangeField -> List ( String, TokenOperationValidationError )
+allValidationErrors field =
+    let
+        differentField : TokenRangeField
+        differentField =
+            case field of
+                InsertTokenRangeField ->
+                    RemoveTokenRangeField
+
+                RemoveTokenRangeField ->
+                    SwapTokenRangeField1
+
+                SwapTokenRangeField1 ->
+                    SwapTokenRangeField2
+
+                SwapTokenRangeField2 ->
+                    ReverseTokenRangeField
+
+                ReverseTokenRangeField ->
+                    InsertTokenRangeField
+
+        rangeOffEndOfTokensError : TokenRangeField -> TokenOperationValidationError
+        rangeOffEndOfTokensError errorField =
+            if errorField == InsertTokenRangeField then
+                InsertRangeOffEndOfTokens 50 (Range 60 70)
+
+            else
+                RangeOffEndOfTokens 65 (Range 60 70) errorField
+    in
+    [ ( "noValidationError", NoValidationError )
+    , ( "operationNotSelected", TokenOperationNotSelected )
+    , ( "fieldHasInvalidRange", InvalidRange field )
+    , ( "differentFieldHasInvalidRange", InvalidRange differentField )
+    , ( "fieldHasEmptyRange", EmptyRange field )
+    , ( "differentFieldHasEmptyRange", EmptyRange differentField )
+    , ( "fieldHasRangeOffEndOfTokens", rangeOffEndOfTokensError field )
+    , ( "differentFieldHasRangeOffEndOfTokens", rangeOffEndOfTokensError differentField )
+    , ( "removingExistingTokens", RemovingExistingTokens [ 65 ] (Range 60 70) )
+    , ( "swapTokenRangesOverlap", SwapTokenRangesOverlap )
+    , ( "reverseSingleTokenOnly", ReverseTokenRangeSingleToken )
+    ]
+
+
+runFieldValidationTest : (TokenOperationEditDetails -> Bool) -> TokenRangeField -> List String -> Expectation
+runFieldValidationTest validationFunction field expectedFields =
+    allValidationErrors field
+        |> List.filter (\( name, error ) -> validationFunction { emptyEditDetails | validationError = error })
+        |> List.map Tuple.first
+        |> Expect.equal expectedFields
 
 
 suite : Test
@@ -338,215 +389,22 @@ suite =
                     updateEditDetails (RangeEdited ReverseTokenRangeField "40-30") initialDetails
                         |> Expect.equal { initialDetails | reverseTokenRange = makeEntry 40 30, validationError = NoValidationError }
             ]
-        , describe "isInsertTokenRangeFieldInvalid tests"
-            [ test "insert token range field not invalid if no validation error" <|
+        , describe "Field validation function tests"
+            [ test "isInsertTokenRangeFieldInvalid returns correct results" <|
                 \() ->
-                    isInsertTokenRangeFieldInvalid emptyEditDetails
-                        |> Expect.equal False
-            , test "insert token range field not invalid if validation error is no option selected" <|
+                    runFieldValidationTest isInsertTokenRangeFieldInvalid InsertTokenRangeField [ "fieldHasInvalidRange", "fieldHasEmptyRange", "fieldHasRangeOffEndOfTokens" ]
+            , test "isRemoveTokenRangeFieldInvalid returns correct results" <|
                 \() ->
-                    isInsertTokenRangeFieldInvalid { emptyEditDetails | validationError = TokenOperationNotSelected }
-                        |> Expect.equal False
-            , test "insert token range field invalid if validation error is insert range invalid" <|
+                    runFieldValidationTest isRemoveTokenRangeFieldInvalid RemoveTokenRangeField [ "fieldHasInvalidRange", "fieldHasEmptyRange", "fieldHasRangeOffEndOfTokens", "removingExistingTokens" ]
+            , test "isSwapTokenRange1FieldInvalid returns correct results" <|
                 \() ->
-                    isInsertTokenRangeFieldInvalid { emptyEditDetails | validationError = InvalidRange InsertTokenRangeField }
-                        |> Expect.equal True
-            , test "insert token range field not invalid if validation error is another range invalid" <|
+                    runFieldValidationTest isSwapTokenRange1FieldInvalid SwapTokenRangeField1 [ "fieldHasInvalidRange", "fieldHasEmptyRange", "fieldHasRangeOffEndOfTokens", "swapTokenRangesOverlap" ]
+            , test "isSwapTokenRange2FieldInvalid returns correct results" <|
                 \() ->
-                    isInsertTokenRangeFieldInvalid { emptyEditDetails | validationError = InvalidRange RemoveTokenRangeField }
-                        |> Expect.equal False
-            , test "insert token range field invalid if validation error is insert range empty" <|
+                    runFieldValidationTest isSwapTokenRange2FieldInvalid SwapTokenRangeField2 [ "fieldHasInvalidRange", "fieldHasEmptyRange", "fieldHasRangeOffEndOfTokens", "swapTokenRangesOverlap" ]
+            , test "isReverseTokenRangeFieldInvalid returns correct results" <|
                 \() ->
-                    isInsertTokenRangeFieldInvalid { emptyEditDetails | validationError = EmptyRange InsertTokenRangeField }
-                        |> Expect.equal True
-            , test "insert token range field not invalid if validation error is another range empty" <|
-                \() ->
-                    isInsertTokenRangeFieldInvalid { emptyEditDetails | validationError = EmptyRange SwapTokenRangeField1 }
-                        |> Expect.equal False
-            , test "insert token range field invalid if validation error is insert range off end of tokens" <|
-                \() ->
-                    isInsertTokenRangeFieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) InsertTokenRangeField }
-                        |> Expect.equal True
-            , test "insert token range field not invalid if validation error is another range off end of tokens" <|
-                \() ->
-                    isInsertTokenRangeFieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) SwapTokenRangeField2 }
-                        |> Expect.equal False
-            , test "insert token range field not invalid if validation error is token ranges overlap" <|
-                \() ->
-                    isInsertTokenRangeFieldInvalid { emptyEditDetails | validationError = SwapTokenRangesOverlap }
-                        |> Expect.equal False
-            , test "insert token range field not invalid if validation error is reversing a single token only" <|
-                \() ->
-                    isInsertTokenRangeFieldInvalid { emptyEditDetails | validationError = ReverseTokenRangeSingleToken }
-                        |> Expect.equal False
-            ]
-        , describe "isRemoveTokenRangeFieldInvalid tests"
-            [ test "remove token range field not invalid if no validation error" <|
-                \() ->
-                    isRemoveTokenRangeFieldInvalid emptyEditDetails
-                        |> Expect.equal False
-            , test "remove token range field not invalid if validation error is no option selected" <|
-                \() ->
-                    isRemoveTokenRangeFieldInvalid { emptyEditDetails | validationError = TokenOperationNotSelected }
-                        |> Expect.equal False
-            , test "remove token range field invalid if validation error is remove range invalid" <|
-                \() ->
-                    isRemoveTokenRangeFieldInvalid { emptyEditDetails | validationError = InvalidRange RemoveTokenRangeField }
-                        |> Expect.equal True
-            , test "remove token range field not invalid if validation error is another range invalid" <|
-                \() ->
-                    isRemoveTokenRangeFieldInvalid { emptyEditDetails | validationError = InvalidRange SwapTokenRangeField1 }
-                        |> Expect.equal False
-            , test "remove token range field invalid if validation error is remove range empty" <|
-                \() ->
-                    isRemoveTokenRangeFieldInvalid { emptyEditDetails | validationError = EmptyRange RemoveTokenRangeField }
-                        |> Expect.equal True
-            , test "remove token range field not invalid if validation error is another range empty" <|
-                \() ->
-                    isRemoveTokenRangeFieldInvalid { emptyEditDetails | validationError = EmptyRange SwapTokenRangeField2 }
-                        |> Expect.equal False
-            , test "remove token range field invalid if validation error is remove range off end of tokens" <|
-                \() ->
-                    isRemoveTokenRangeFieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) RemoveTokenRangeField }
-                        |> Expect.equal True
-            , test "remove token range field not invalid if validation error is another range off end of tokens" <|
-                \() ->
-                    isRemoveTokenRangeFieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) InsertTokenRangeField }
-                        |> Expect.equal False
-            , test "remove token range field not invalid if validation error is token ranges overlap" <|
-                \() ->
-                    isRemoveTokenRangeFieldInvalid { emptyEditDetails | validationError = SwapTokenRangesOverlap }
-                        |> Expect.equal False
-            , test "remove token range field not invalid if validation error is reversing a single token only" <|
-                \() ->
-                    isRemoveTokenRangeFieldInvalid { emptyEditDetails | validationError = ReverseTokenRangeSingleToken }
-                        |> Expect.equal False
-            ]
-        , describe "isSwapTokenRangeField1Invalid tests"
-            [ test "first swap token range field not invalid if no validation error" <|
-                \() ->
-                    isSwapTokenRange1FieldInvalid emptyEditDetails
-                        |> Expect.equal False
-            , test "first swap token range field not invalid if validation error is no option selected" <|
-                \() ->
-                    isSwapTokenRange1FieldInvalid { emptyEditDetails | validationError = TokenOperationNotSelected }
-                        |> Expect.equal False
-            , test "first swap token range field invalid if validation error is first swap token range invalid" <|
-                \() ->
-                    isSwapTokenRange1FieldInvalid { emptyEditDetails | validationError = InvalidRange SwapTokenRangeField1 }
-                        |> Expect.equal True
-            , test "first swap token range field not invalid if validation error is another range invalid" <|
-                \() ->
-                    isSwapTokenRange1FieldInvalid { emptyEditDetails | validationError = InvalidRange SwapTokenRangeField2 }
-                        |> Expect.equal False
-            , test "first swap token range field invalid if validation error is first swap token range empty" <|
-                \() ->
-                    isSwapTokenRange1FieldInvalid { emptyEditDetails | validationError = EmptyRange SwapTokenRangeField1 }
-                        |> Expect.equal True
-            , test "first swap token range field not invalid if validation error is another range empty" <|
-                \() ->
-                    isSwapTokenRange1FieldInvalid { emptyEditDetails | validationError = EmptyRange InsertTokenRangeField }
-                        |> Expect.equal False
-            , test "first swap token range field invalid if validation error is first swap token range off end of tokens" <|
-                \() ->
-                    isSwapTokenRange1FieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) SwapTokenRangeField1 }
-                        |> Expect.equal True
-            , test "first swap token range field not invalid if validation error is another range off end of tokens" <|
-                \() ->
-                    isSwapTokenRange1FieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) RemoveTokenRangeField }
-                        |> Expect.equal False
-            , test "first swap token range field invalid if validation error is token ranges overlap" <|
-                \() ->
-                    isSwapTokenRange1FieldInvalid { emptyEditDetails | validationError = SwapTokenRangesOverlap }
-                        |> Expect.equal True
-            , test "first swap token range field not invalid if validation error is reversing a single token only" <|
-                \() ->
-                    isSwapTokenRange1FieldInvalid { emptyEditDetails | validationError = ReverseTokenRangeSingleToken }
-                        |> Expect.equal False
-            ]
-        , describe "isSwapTokenRangeField2Invalid tests"
-            [ test "second swap token range field not invalid if no validation error" <|
-                \() ->
-                    isSwapTokenRange2FieldInvalid emptyEditDetails
-                        |> Expect.equal False
-            , test "second swap token range field not invalid if validation error is no option selected" <|
-                \() ->
-                    isSwapTokenRange2FieldInvalid { emptyEditDetails | validationError = TokenOperationNotSelected }
-                        |> Expect.equal False
-            , test "second swap token range field invalid if validation error is second swap token range invalid" <|
-                \() ->
-                    isSwapTokenRange2FieldInvalid { emptyEditDetails | validationError = InvalidRange SwapTokenRangeField2 }
-                        |> Expect.equal True
-            , test "second swap token range field not invalid if validation error is another range invalid" <|
-                \() ->
-                    isSwapTokenRange2FieldInvalid { emptyEditDetails | validationError = InvalidRange InsertTokenRangeField }
-                        |> Expect.equal False
-            , test "second swap token range field invalid if validation error is second swap token range empty" <|
-                \() ->
-                    isSwapTokenRange2FieldInvalid { emptyEditDetails | validationError = EmptyRange SwapTokenRangeField2 }
-                        |> Expect.equal True
-            , test "second swap token range field not invalid if validation error is another range empty" <|
-                \() ->
-                    isSwapTokenRange2FieldInvalid { emptyEditDetails | validationError = EmptyRange RemoveTokenRangeField }
-                        |> Expect.equal False
-            , test "second swap token range field invalid if validation error is second swap token range off end of tokens" <|
-                \() ->
-                    isSwapTokenRange2FieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) SwapTokenRangeField2 }
-                        |> Expect.equal True
-            , test "second swap token range field not invalid if validation error is another range off end of tokens" <|
-                \() ->
-                    isSwapTokenRange2FieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) SwapTokenRangeField1 }
-                        |> Expect.equal False
-            , test "second swap token range field invalid if validation error is token ranges overlap" <|
-                \() ->
-                    isSwapTokenRange2FieldInvalid { emptyEditDetails | validationError = SwapTokenRangesOverlap }
-                        |> Expect.equal True
-            , test "second swap token range field not invalid if validation error is reversing a single token only" <|
-                \() ->
-                    isSwapTokenRange2FieldInvalid { emptyEditDetails | validationError = ReverseTokenRangeSingleToken }
-                        |> Expect.equal False
-            ]
-        , describe "isReverseeTokenRangeFieldInvalid tests"
-            [ test "reverse token range field not invalid if no validation error" <|
-                \() ->
-                    isReverseTokenRangeFieldInvalid emptyEditDetails
-                        |> Expect.equal False
-            , test "reverse token range field not invalid if validation error is no option selected" <|
-                \() ->
-                    isReverseTokenRangeFieldInvalid { emptyEditDetails | validationError = TokenOperationNotSelected }
-                        |> Expect.equal False
-            , test "reverse token range field invalid if validation error is reverse range invalid" <|
-                \() ->
-                    isReverseTokenRangeFieldInvalid { emptyEditDetails | validationError = InvalidRange ReverseTokenRangeField }
-                        |> Expect.equal True
-            , test "reverse token range field not invalid if validation error is another range invalid" <|
-                \() ->
-                    isReverseTokenRangeFieldInvalid { emptyEditDetails | validationError = InvalidRange SwapTokenRangeField1 }
-                        |> Expect.equal False
-            , test "reverse token range field not invalid if validation error is reverse range empty" <|
-                \() ->
-                    isReverseTokenRangeFieldInvalid { emptyEditDetails | validationError = EmptyRange ReverseTokenRangeField }
-                        |> Expect.equal True
-            , test "reverse token range field not invalid if validation error is another range empty" <|
-                \() ->
-                    isReverseTokenRangeFieldInvalid { emptyEditDetails | validationError = EmptyRange SwapTokenRangeField2 }
-                        |> Expect.equal False
-            , test "reverse token range field invalid if validation error is reverse range off end of tokens" <|
-                \() ->
-                    isReverseTokenRangeFieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) ReverseTokenRangeField }
-                        |> Expect.equal True
-            , test "reverse token range field not invalid if validation error is another range off end of tokens" <|
-                \() ->
-                    isReverseTokenRangeFieldInvalid { emptyEditDetails | validationError = RangeOffEndOfTokens 50 (Range 60 70) InsertTokenRangeField }
-                        |> Expect.equal False
-            , test "reverse token range field not invalid if validation error is token ranges overlap" <|
-                \() ->
-                    isReverseTokenRangeFieldInvalid { emptyEditDetails | validationError = SwapTokenRangesOverlap }
-                        |> Expect.equal False
-            , test "reverse token range field invalid if validation error is reversing a single token only" <|
-                \() ->
-                    isReverseTokenRangeFieldInvalid { emptyEditDetails | validationError = ReverseTokenRangeSingleToken }
-                        |> Expect.equal True
+                    runFieldValidationTest isReverseTokenRangeFieldInvalid ReverseTokenRangeField [ "fieldHasInvalidRange", "fieldHasEmptyRange", "fieldHasRangeOffEndOfTokens", "reverseSingleTokenOnly" ]
             ]
         , describe "tryApplyTokenOperationToBarcodeScannerData tests"
             [ describe "general tests"
