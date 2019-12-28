@@ -1,17 +1,23 @@
 module StopwatchOperationsTests exposing (suite)
 
 import DataEntry exposing (IntegerEntry, emptyEntry, floatEntryFromFloat, integerEntryFromInt)
-import Expect
+import Expect exposing (Expectation)
 import StopwatchOperations
     exposing
         ( DistanceType(..)
         , OffsetDetails
+        , OffsetType(..)
         , StopwatchField(..)
         , StopwatchOperation(..)
         , StopwatchOperationChangeType(..)
         , StopwatchOperationEditDetails
         , StopwatchOperationValidationError(..)
         , emptyEditDetails
+        , isActualDistanceFieldInvalid
+        , isAddOffsetFieldInvalid
+        , isExpectedDistanceFieldInvalid
+        , isScaleFactorFieldInvalid
+        , isSubtractOffsetFieldInvalid
         , updateEditDetails
         , validateEditDetails
         )
@@ -25,6 +31,31 @@ editDetailsForDistanceBasedScaleFactorTest expectedDistanceEntry actualDistanceE
         , expectedDistance = expectedDistanceEntry
         , actualDistance = actualDistanceEntry
     }
+
+
+allValidationErrors : List ( String, StopwatchOperationValidationError )
+allValidationErrors =
+    [ ( "noError", NoValidationError )
+    , ( "operationNotSelected", StopwatchOperationNotSelected )
+    , ( "invalidAddOffset", InvalidOffset AddOffset )
+    , ( "invalidSubtractOffset", InvalidOffset SubtractOffset )
+    , ( "noStopwatchesToAddOffsetTo", NoStopwatchesToApplyOffsetTo AddOffset )
+    , ( "noStopwatchesToSubtractOffsetFrom", NoStopwatchesToApplyOffsetTo SubtractOffset )
+    , ( "subtractOffsetTooLarge", SubtractOffsetTooLarge 1 2 )
+    , ( "invalidScaleFactor", InvalidScaleFactor )
+    , ( "scaleFactorOne", ScaleFactorOne )
+    , ( "invalidExpectedDistance", InvalidDistance ExpectedDistance )
+    , ( "invalidActualDistance", InvalidDistance ActualDistance )
+    , ( "actualDistanceEqualsExpectedDistance", ActualDistanceEqualsExpectedDistance )
+    ]
+
+
+runFieldValidationTest : (StopwatchOperationEditDetails -> Bool) -> List String -> Expectation
+runFieldValidationTest validationFunction expectedFields =
+    allValidationErrors
+        |> List.filter (\( name, error ) -> validationFunction { emptyEditDetails | validationError = error })
+        |> List.map Tuple.first
+        |> Expect.equal expectedFields
 
 
 suite : Test
@@ -41,19 +72,19 @@ suite =
                 [ test "validateEditDetails with an invalid offset to add is not valid" <|
                     \() ->
                         validateEditDetails 1000 { emptyEditDetails | operation = AddStopwatchTimeOffset, addOffsetDetails = OffsetDetails emptyEntry True True }
-                            |> Expect.equal (InvalidOffset AddOffsetField)
+                            |> Expect.equal (InvalidOffset AddOffset)
                 , test "validateEditDetails with a zero offset to add is not valid" <|
                     \() ->
                         validateEditDetails 1000 { emptyEditDetails | operation = AddStopwatchTimeOffset, addOffsetDetails = OffsetDetails (integerEntryFromInt 0) True True }
-                            |> Expect.equal (InvalidOffset AddOffsetField)
+                            |> Expect.equal (InvalidOffset AddOffset)
                 , test "validateEditDetails with a negative offset to add is not valid" <|
                     \() ->
                         validateEditDetails 1000 { emptyEditDetails | operation = AddStopwatchTimeOffset, addOffsetDetails = OffsetDetails (integerEntryFromInt -60) True True }
-                            |> Expect.equal (InvalidOffset AddOffsetField)
+                            |> Expect.equal (InvalidOffset AddOffset)
                 , test "validateEditDetails with a offset to add to no stopwatches is not valid" <|
                     \() ->
                         validateEditDetails 1000 { emptyEditDetails | operation = AddStopwatchTimeOffset, addOffsetDetails = OffsetDetails (integerEntryFromInt 60) False False }
-                            |> Expect.equal (NoStopwatchesToApplyOffsetTo AddOffsetField)
+                            |> Expect.equal (NoStopwatchesToApplyOffsetTo AddOffset)
                 , test "validateEditDetails with a offset to add to stopwatch 1 only is valid" <|
                     \() ->
                         validateEditDetails 1000 { emptyEditDetails | operation = AddStopwatchTimeOffset, addOffsetDetails = OffsetDetails (integerEntryFromInt 60) True False }
@@ -71,19 +102,19 @@ suite =
                 [ test "validateEditDetails with an invalid offset to subtract is not valid" <|
                     \() ->
                         validateEditDetails 1000 { emptyEditDetails | operation = SubtractStopwatchTimeOffset, subtractOffsetDetails = OffsetDetails emptyEntry True True }
-                            |> Expect.equal (InvalidOffset SubtractOffsetField)
+                            |> Expect.equal (InvalidOffset SubtractOffset)
                 , test "validateEditDetails with a zero offset to subtract is not valid" <|
                     \() ->
                         validateEditDetails 1000 { emptyEditDetails | operation = SubtractStopwatchTimeOffset, subtractOffsetDetails = OffsetDetails (integerEntryFromInt 0) True True }
-                            |> Expect.equal (InvalidOffset SubtractOffsetField)
+                            |> Expect.equal (InvalidOffset SubtractOffset)
                 , test "validateEditDetails with a negative offset to subtract is not valid" <|
                     \() ->
                         validateEditDetails 1000 { emptyEditDetails | operation = SubtractStopwatchTimeOffset, subtractOffsetDetails = OffsetDetails (integerEntryFromInt -60) True True }
-                            |> Expect.equal (InvalidOffset SubtractOffsetField)
+                            |> Expect.equal (InvalidOffset SubtractOffset)
                 , test "validateEditDetails with a offset to subtract from no stopwatches is not valid" <|
                     \() ->
                         validateEditDetails 1000 { emptyEditDetails | operation = SubtractStopwatchTimeOffset, subtractOffsetDetails = OffsetDetails (integerEntryFromInt 60) False False }
-                            |> Expect.equal (NoStopwatchesToApplyOffsetTo SubtractOffsetField)
+                            |> Expect.equal (NoStopwatchesToApplyOffsetTo SubtractOffset)
                 , test "validateEditDetails with a offset to subtract from stopwatch 1 only is valid" <|
                     \() ->
                         validateEditDetails 1000 { emptyEditDetails | operation = SubtractStopwatchTimeOffset, subtractOffsetDetails = OffsetDetails (integerEntryFromInt 60) True False }
@@ -183,5 +214,22 @@ suite =
                 \() ->
                     updateEditDetails (StopwatchFieldEdited ActualDistanceField "4875") emptyEditDetails
                         |> Expect.equal { emptyEditDetails | actualDistance = integerEntryFromInt 4875 }
+            ]
+        , describe "Field validation function tests"
+            [ test "isAddOffsetFieldInvalid reports correct errors" <|
+                \() ->
+                    runFieldValidationTest isAddOffsetFieldInvalid [ "invalidAddOffset", "noStopwatchesToAddOffsetTo" ]
+            , test "isSubtractOffsetFieldInvalid reports correct errors" <|
+                \() ->
+                    runFieldValidationTest isSubtractOffsetFieldInvalid [ "invalidSubtractOffset", "noStopwatchesToSubtractOffsetFrom", "subtractOffsetTooLarge" ]
+            , test "isScaleFactorFieldInvalid reports correct errors" <|
+                \() ->
+                    runFieldValidationTest isScaleFactorFieldInvalid [ "invalidScaleFactor", "scaleFactorOne" ]
+            , test "isExpectedDistanceFieldInvalid reports correct errors" <|
+                \() ->
+                    runFieldValidationTest isExpectedDistanceFieldInvalid [ "invalidExpectedDistance", "actualDistanceEqualsExpectedDistance" ]
+            , test "isActualDistanceFieldInvalid reports correct errors" <|
+                \() ->
+                    runFieldValidationTest isActualDistanceFieldInvalid [ "invalidActualDistance", "actualDistanceEqualsExpectedDistance" ]
             ]
         ]

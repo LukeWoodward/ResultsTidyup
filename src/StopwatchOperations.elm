@@ -1,6 +1,7 @@
 module StopwatchOperations exposing
     ( DistanceType(..)
     , OffsetDetails
+    , OffsetType(..)
     , StopwatchField(..)
     , StopwatchOperation(..)
     , StopwatchOperationChangeType(..)
@@ -8,6 +9,11 @@ module StopwatchOperations exposing
     , StopwatchOperationValidationError(..)
     , StopwatchesToModify(..)
     , emptyEditDetails
+    , isActualDistanceFieldInvalid
+    , isAddOffsetFieldInvalid
+    , isExpectedDistanceFieldInvalid
+    , isScaleFactorFieldInvalid
+    , isSubtractOffsetFieldInvalid
     , updateEditDetails
     , validateEditDetails
     )
@@ -45,16 +51,6 @@ type alias OffsetDetails =
     }
 
 
-type alias StopwatchOperationEditDetails =
-    { operation : StopwatchOperation
-    , addOffsetDetails : OffsetDetails
-    , subtractOffsetDetails : OffsetDetails
-    , manualScaleFactor : FloatEntry
-    , expectedDistance : IntegerEntry
-    , actualDistance : IntegerEntry
-    }
-
-
 type DistanceType
     = ActualDistance
     | ExpectedDistance
@@ -68,16 +64,32 @@ type StopwatchField
     | ExpectedDistanceManualField
 
 
+type OffsetType
+    = AddOffset
+    | SubtractOffset
+
+
 type StopwatchOperationValidationError
     = NoValidationError
     | StopwatchOperationNotSelected
-    | InvalidOffset StopwatchField
-    | NoStopwatchesToApplyOffsetTo StopwatchField
+    | InvalidOffset OffsetType
+    | NoStopwatchesToApplyOffsetTo OffsetType
     | SubtractOffsetTooLarge Int Int
     | InvalidScaleFactor
     | ScaleFactorOne
     | InvalidDistance DistanceType
     | ActualDistanceEqualsExpectedDistance
+
+
+type alias StopwatchOperationEditDetails =
+    { operation : StopwatchOperation
+    , addOffsetDetails : OffsetDetails
+    , subtractOffsetDetails : OffsetDetails
+    , manualScaleFactor : FloatEntry
+    , expectedDistance : IntegerEntry
+    , actualDistance : IntegerEntry
+    , validationError : StopwatchOperationValidationError
+    }
 
 
 type StopwatchOperationChangeType
@@ -98,20 +110,21 @@ emptyEditDetails =
     , manualScaleFactor = emptyEntry
     , expectedDistance = emptyEntry
     , actualDistance = emptyEntry
+    , validationError = NoValidationError
     }
 
 
-timeOffsetValidation : StopwatchField -> OffsetDetails -> Maybe StopwatchOperationValidationError
-timeOffsetValidation field offsetDetails =
+timeOffsetValidation : StopwatchField -> OffsetType -> OffsetDetails -> Maybe StopwatchOperationValidationError
+timeOffsetValidation field offsetType offsetDetails =
     if isPositive offsetDetails.offset then
         if not offsetDetails.applyToStopwatch1 && not offsetDetails.applyToStopwatch2 then
-            Just (NoStopwatchesToApplyOffsetTo field)
+            Just (NoStopwatchesToApplyOffsetTo offsetType)
 
         else
             Nothing
 
     else
-        Just (InvalidOffset field)
+        Just (InvalidOffset offsetType)
 
 
 offsetToRemoveLessThanFastestTime : Int -> OffsetDetails -> Maybe StopwatchOperationValidationError
@@ -168,10 +181,10 @@ validateEditDetails fastestTime editDetails =
                     [ Just StopwatchOperationNotSelected ]
 
                 AddStopwatchTimeOffset ->
-                    [ timeOffsetValidation AddOffsetField editDetails.addOffsetDetails ]
+                    [ timeOffsetValidation AddOffsetField AddOffset editDetails.addOffsetDetails ]
 
                 SubtractStopwatchTimeOffset ->
-                    [ timeOffsetValidation SubtractOffsetField editDetails.subtractOffsetDetails
+                    [ timeOffsetValidation SubtractOffsetField SubtractOffset editDetails.subtractOffsetDetails
                     , offsetToRemoveLessThanFastestTime fastestTime editDetails.subtractOffsetDetails
                     ]
 
@@ -219,3 +232,68 @@ updateEditDetails change editDetails =
 
         StopwatchFieldEdited ActualDistanceField newValue ->
             { editDetails | actualDistance = integerEntryFromString newValue }
+
+
+isStopwatchFieldInvalid : StopwatchField -> StopwatchOperationEditDetails -> Bool
+isStopwatchFieldInvalid field editDetails =
+    case editDetails.validationError of
+        NoValidationError ->
+            False
+
+        StopwatchOperationNotSelected ->
+            False
+
+        InvalidOffset AddOffset ->
+            field == AddOffsetField
+
+        InvalidOffset SubtractOffset ->
+            field == SubtractOffsetField
+
+        NoStopwatchesToApplyOffsetTo AddOffset ->
+            field == AddOffsetField
+
+        NoStopwatchesToApplyOffsetTo SubtractOffset ->
+            field == SubtractOffsetField
+
+        SubtractOffsetTooLarge _ _ ->
+            field == SubtractOffsetField
+
+        InvalidScaleFactor ->
+            field == ScaleFactorField
+
+        ScaleFactorOne ->
+            field == ScaleFactorField
+
+        InvalidDistance ExpectedDistance ->
+            field == ExpectedDistanceManualField
+
+        InvalidDistance ActualDistance ->
+            field == ActualDistanceField
+
+        ActualDistanceEqualsExpectedDistance ->
+            field == ExpectedDistanceManualField || field == ActualDistanceField
+
+
+isAddOffsetFieldInvalid : StopwatchOperationEditDetails -> Bool
+isAddOffsetFieldInvalid editDetails =
+    isStopwatchFieldInvalid AddOffsetField editDetails
+
+
+isSubtractOffsetFieldInvalid : StopwatchOperationEditDetails -> Bool
+isSubtractOffsetFieldInvalid editDetails =
+    isStopwatchFieldInvalid SubtractOffsetField editDetails
+
+
+isScaleFactorFieldInvalid : StopwatchOperationEditDetails -> Bool
+isScaleFactorFieldInvalid editDetails =
+    isStopwatchFieldInvalid ScaleFactorField editDetails
+
+
+isExpectedDistanceFieldInvalid : StopwatchOperationEditDetails -> Bool
+isExpectedDistanceFieldInvalid editDetails =
+    isStopwatchFieldInvalid ExpectedDistanceManualField editDetails
+
+
+isActualDistanceFieldInvalid : StopwatchOperationEditDetails -> Bool
+isActualDistanceFieldInvalid editDetails =
+    isStopwatchFieldInvalid ActualDistanceField editDetails
