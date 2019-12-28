@@ -1,17 +1,27 @@
 module StopwatchOperations exposing
     ( DistanceType(..)
     , OffsetDetails
-    , ScaleFactorDetails
     , StopwatchField(..)
     , StopwatchOperation(..)
+    , StopwatchOperationChangeType(..)
     , StopwatchOperationEditDetails
     , StopwatchOperationValidationError(..)
     , StopwatchesToModify(..)
     , emptyEditDetails
+    , updateEditDetails
     , validateEditDetails
     )
 
-import DataEntry exposing (FloatEntry, IntegerEntry, emptyEntry, isPositive)
+import DataEntry
+    exposing
+        ( FloatEntry
+        , IntegerEntry
+        , emptyEntry
+        , floatEntryFromString
+        , integerEntryFromString
+        , integerEntryFromTime
+        , isPositive
+        )
 
 
 type StopwatchesToModify
@@ -28,11 +38,6 @@ type StopwatchOperation
     | ApplyDistanceBasedStopwatchScaleFactor
 
 
-type ScaleFactorType
-    = ScaleFactor
-    | DistanceBased
-
-
 type alias OffsetDetails =
     { offset : IntegerEntry
     , applyToStopwatch1 : Bool
@@ -40,18 +45,13 @@ type alias OffsetDetails =
     }
 
 
-type alias ScaleFactorDetails =
-    { manualScaleFactor : FloatEntry
-    , expectedDistance : IntegerEntry
-    , actualDistance : IntegerEntry
-    }
-
-
 type alias StopwatchOperationEditDetails =
     { operation : StopwatchOperation
     , addOffsetDetails : OffsetDetails
     , subtractOffsetDetails : OffsetDetails
-    , scaleFactorDetails : ScaleFactorDetails
+    , manualScaleFactor : FloatEntry
+    , expectedDistance : IntegerEntry
+    , actualDistance : IntegerEntry
     }
 
 
@@ -82,7 +82,6 @@ type StopwatchOperationValidationError
 
 type StopwatchOperationChangeType
     = ChangeOperation StopwatchOperation
-    | ChangeScaleFactorType ScaleFactorType
     | StopwatchFieldEdited StopwatchField String
 
 
@@ -96,7 +95,9 @@ emptyEditDetails =
     { operation = NoOperationSelected
     , addOffsetDetails = emptyOffset
     , subtractOffsetDetails = emptyOffset
-    , scaleFactorDetails = ScaleFactorDetails emptyEntry emptyEntry emptyEntry
+    , manualScaleFactor = emptyEntry
+    , expectedDistance = emptyEntry
+    , actualDistance = emptyEntry
     }
 
 
@@ -175,14 +176,46 @@ validateEditDetails fastestTime editDetails =
                     ]
 
                 ApplyStopwatchScaleFactor ->
-                    [ scaleFactorValidation editDetails.scaleFactorDetails.manualScaleFactor ]
+                    [ scaleFactorValidation editDetails.manualScaleFactor ]
 
                 ApplyDistanceBasedStopwatchScaleFactor ->
-                    [ distanceValidation ExpectedDistance editDetails.scaleFactorDetails.expectedDistance
-                    , distanceValidation ActualDistance editDetails.scaleFactorDetails.actualDistance
-                    , equalDistanceValidation editDetails.scaleFactorDetails.expectedDistance editDetails.scaleFactorDetails.actualDistance
+                    [ distanceValidation ExpectedDistance editDetails.expectedDistance
+                    , distanceValidation ActualDistance editDetails.actualDistance
+                    , equalDistanceValidation editDetails.expectedDistance editDetails.actualDistance
                     ]
     in
     List.filterMap identity allErrors
         |> List.head
         |> Maybe.withDefault NoValidationError
+
+
+updateEditDetails : StopwatchOperationChangeType -> StopwatchOperationEditDetails -> StopwatchOperationEditDetails
+updateEditDetails change editDetails =
+    case change of
+        ChangeOperation newOperation ->
+            { editDetails | operation = newOperation }
+
+        StopwatchFieldEdited AddOffsetField newValue ->
+            let
+                oldOffset : OffsetDetails
+                oldOffset =
+                    editDetails.addOffsetDetails
+            in
+            { editDetails | addOffsetDetails = { oldOffset | offset = integerEntryFromTime newValue } }
+
+        StopwatchFieldEdited SubtractOffsetField newValue ->
+            let
+                oldOffset : OffsetDetails
+                oldOffset =
+                    editDetails.subtractOffsetDetails
+            in
+            { editDetails | subtractOffsetDetails = { oldOffset | offset = integerEntryFromTime newValue } }
+
+        StopwatchFieldEdited ScaleFactorField newValue ->
+            { editDetails | manualScaleFactor = floatEntryFromString newValue }
+
+        StopwatchFieldEdited ExpectedDistanceManualField newValue ->
+            { editDetails | expectedDistance = integerEntryFromString newValue }
+
+        StopwatchFieldEdited ActualDistanceField newValue ->
+            { editDetails | actualDistance = integerEntryFromString newValue }

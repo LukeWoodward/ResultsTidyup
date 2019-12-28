@@ -6,12 +6,13 @@ import StopwatchOperations
     exposing
         ( DistanceType(..)
         , OffsetDetails
-        , ScaleFactorDetails
         , StopwatchField(..)
         , StopwatchOperation(..)
+        , StopwatchOperationChangeType(..)
         , StopwatchOperationEditDetails
         , StopwatchOperationValidationError(..)
         , emptyEditDetails
+        , updateEditDetails
         , validateEditDetails
         )
 import Test exposing (Test, describe, test)
@@ -19,7 +20,11 @@ import Test exposing (Test, describe, test)
 
 editDetailsForDistanceBasedScaleFactorTest : IntegerEntry -> IntegerEntry -> StopwatchOperationEditDetails
 editDetailsForDistanceBasedScaleFactorTest expectedDistanceEntry actualDistanceEntry =
-    { emptyEditDetails | operation = ApplyDistanceBasedStopwatchScaleFactor, scaleFactorDetails = ScaleFactorDetails emptyEntry expectedDistanceEntry actualDistanceEntry }
+    { emptyEditDetails
+        | operation = ApplyDistanceBasedStopwatchScaleFactor
+        , expectedDistance = expectedDistanceEntry
+        , actualDistance = actualDistanceEntry
+    }
 
 
 suite : Test
@@ -99,23 +104,23 @@ suite =
             , describe "validateEditDetails: applying a scale factor"
                 [ test "validateEditDetails with an invalid scale factor is not valid" <|
                     \() ->
-                        validateEditDetails 1000 { emptyEditDetails | operation = ApplyStopwatchScaleFactor, scaleFactorDetails = ScaleFactorDetails emptyEntry emptyEntry emptyEntry }
+                        validateEditDetails 1000 { emptyEditDetails | operation = ApplyStopwatchScaleFactor }
                             |> Expect.equal InvalidScaleFactor
                 , test "validateEditDetails with a negative scale factor is not valid" <|
                     \() ->
-                        validateEditDetails 1000 { emptyEditDetails | operation = ApplyStopwatchScaleFactor, scaleFactorDetails = ScaleFactorDetails (floatEntryFromFloat -1.0) emptyEntry emptyEntry }
+                        validateEditDetails 1000 { emptyEditDetails | operation = ApplyStopwatchScaleFactor, manualScaleFactor = floatEntryFromFloat -1.0 }
                             |> Expect.equal InvalidScaleFactor
                 , test "validateEditDetails with a scale factor of zero is not valid" <|
                     \() ->
-                        validateEditDetails 1000 { emptyEditDetails | operation = ApplyStopwatchScaleFactor, scaleFactorDetails = ScaleFactorDetails (floatEntryFromFloat 0.0) emptyEntry emptyEntry }
+                        validateEditDetails 1000 { emptyEditDetails | operation = ApplyStopwatchScaleFactor, manualScaleFactor = floatEntryFromFloat 0.0 }
                             |> Expect.equal InvalidScaleFactor
                 , test "validateEditDetails with a scale factor of one is not valid" <|
                     \() ->
-                        validateEditDetails 1000 { emptyEditDetails | operation = ApplyStopwatchScaleFactor, scaleFactorDetails = ScaleFactorDetails (floatEntryFromFloat 1.0) emptyEntry emptyEntry }
+                        validateEditDetails 1000 { emptyEditDetails | operation = ApplyStopwatchScaleFactor, manualScaleFactor = floatEntryFromFloat 1.0 }
                             |> Expect.equal ScaleFactorOne
                 , test "validateEditDetails with a scale factor to apply is valid" <|
                     \() ->
-                        validateEditDetails 1000 { emptyEditDetails | operation = ApplyStopwatchScaleFactor, scaleFactorDetails = ScaleFactorDetails (floatEntryFromFloat 1.042) emptyEntry emptyEntry }
+                        validateEditDetails 1000 { emptyEditDetails | operation = ApplyStopwatchScaleFactor, manualScaleFactor = floatEntryFromFloat 1.042 }
                             |> Expect.equal NoValidationError
                 ]
             , describe "validateEditDetails: applying a distance-based scale factor"
@@ -152,5 +157,31 @@ suite =
                         validateEditDetails 1000 (editDetailsForDistanceBasedScaleFactorTest (integerEntryFromInt 5000) (integerEntryFromInt 4600))
                             |> Expect.equal NoValidationError
                 ]
+            ]
+        , describe "updateEditDetails tests"
+            [ test "Can update an operation type" <|
+                \() ->
+                    updateEditDetails (ChangeOperation ApplyStopwatchScaleFactor) emptyEditDetails
+                        |> Expect.equal { emptyEditDetails | operation = ApplyStopwatchScaleFactor }
+            , test "Can update an offset to add" <|
+                \() ->
+                    updateEditDetails (StopwatchFieldEdited AddOffsetField "01:44") emptyEditDetails
+                        |> Expect.equal { emptyEditDetails | addOffsetDetails = OffsetDetails (IntegerEntry "01:44" (Just 104)) False False }
+            , test "Can update an offset to subtract" <|
+                \() ->
+                    updateEditDetails (StopwatchFieldEdited SubtractOffsetField "03:26") emptyEditDetails
+                        |> Expect.equal { emptyEditDetails | subtractOffsetDetails = OffsetDetails (IntegerEntry "03:26" (Just 206)) False False }
+            , test "Can update a scale factor" <|
+                \() ->
+                    updateEditDetails (StopwatchFieldEdited ScaleFactorField "0.974") emptyEditDetails
+                        |> Expect.equal { emptyEditDetails | manualScaleFactor = floatEntryFromFloat 0.974 }
+            , test "Can update an expected distance" <|
+                \() ->
+                    updateEditDetails (StopwatchFieldEdited ExpectedDistanceManualField "5000") emptyEditDetails
+                        |> Expect.equal { emptyEditDetails | expectedDistance = integerEntryFromInt 5000 }
+            , test "Can update an actual distance" <|
+                \() ->
+                    updateEditDetails (StopwatchFieldEdited ActualDistanceField "4875") emptyEditDetails
+                        |> Expect.equal { emptyEditDetails | actualDistance = integerEntryFromInt 4875 }
             ]
         ]
