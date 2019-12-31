@@ -1,7 +1,8 @@
 module StopwatchOperationsTests exposing (suite)
 
-import DataEntry exposing (IntegerEntry, emptyEntry, floatEntryFromFloat, integerEntryFromInt)
+import DataEntry exposing (IntegerEntry, emptyEntry, floatEntryFromFloat, integerEntryFromInt, integerEntryFromString)
 import Expect exposing (Expectation)
+import Stopwatch exposing (DoubleStopwatchData, Stopwatches(..), createMergedTable)
 import StopwatchOperations
     exposing
         ( DistanceType(..)
@@ -18,10 +19,12 @@ import StopwatchOperations
         , isExpectedDistanceFieldInvalid
         , isScaleFactorFieldInvalid
         , isSubtractOffsetFieldInvalid
+        , tryApplyOperationToStopwatchData
         , updateEditDetails
         , validateEditDetails
         )
 import Test exposing (Test, describe, test)
+import TestData exposing (doubleStopwatches)
 
 
 editDetailsForDistanceBasedScaleFactorTest : IntegerEntry -> IntegerEntry -> StopwatchOperationEditDetails
@@ -56,6 +59,52 @@ runFieldValidationTest validationFunction expectedFields =
         |> List.filter (\( name, error ) -> validationFunction { emptyEditDetails | validationError = error })
         |> List.map Tuple.first
         |> Expect.equal expectedFields
+
+
+getTimes : Stopwatches -> ( List Int, List Int )
+getTimes stopwatches =
+    case stopwatches of
+        None ->
+            ( [], [] )
+
+        Single _ times ->
+            ( times, [] )
+
+        Double doubleStopwatchData ->
+            ( doubleStopwatchData.times1, doubleStopwatchData.times2 )
+
+
+getAddOffsetEditDetails : Int -> Bool -> Bool -> StopwatchOperationEditDetails
+getAddOffsetEditDetails offset applyToStopwatch1 applyToStopwatch2 =
+    { emptyEditDetails
+        | operation = AddStopwatchTimeOffset
+        , addOffsetDetails = OffsetDetails (integerEntryFromInt offset) applyToStopwatch1 applyToStopwatch2
+    }
+
+
+getSubtractOffsetEditDetails : Int -> Bool -> Bool -> StopwatchOperationEditDetails
+getSubtractOffsetEditDetails offset applyToStopwatch1 applyToStopwatch2 =
+    { emptyEditDetails
+        | operation = SubtractStopwatchTimeOffset
+        , subtractOffsetDetails = OffsetDetails (integerEntryFromInt offset) applyToStopwatch1 applyToStopwatch2
+    }
+
+
+getApplyScaleFactorEditDetails : Float -> StopwatchOperationEditDetails
+getApplyScaleFactorEditDetails scaleFactor =
+    { emptyEditDetails
+        | operation = ApplyStopwatchScaleFactor
+        , manualScaleFactor = floatEntryFromFloat scaleFactor
+    }
+
+
+getApplyDistanceBasedScaleFactorEditDetails : Int -> Int -> StopwatchOperationEditDetails
+getApplyDistanceBasedScaleFactorEditDetails expectedDistance actualDistance =
+    { emptyEditDetails
+        | operation = ApplyDistanceBasedStopwatchScaleFactor
+        , expectedDistance = integerEntryFromInt expectedDistance
+        , actualDistance = integerEntryFromInt actualDistance
+    }
 
 
 suite : Test
@@ -231,5 +280,95 @@ suite =
             , test "isActualDistanceFieldInvalid reports correct errors" <|
                 \() ->
                     runFieldValidationTest isActualDistanceFieldInvalid [ "invalidActualDistance", "actualDistanceEqualsExpectedDistance" ]
+            ]
+        , describe "tryApplyOperationToStopwatchData tests"
+            [ test "Returns the validation error if a field is invalid" <|
+                \() ->
+                    let
+                        editDetails : StopwatchOperationEditDetails
+                        editDetails =
+                            { emptyEditDetails
+                                | operation = AddStopwatchTimeOffset
+                                , addOffsetDetails = OffsetDetails (integerEntryFromString "Not a valid number") True True
+                            }
+                    in
+                    tryApplyOperationToStopwatchData editDetails doubleStopwatches
+                        |> Expect.equal (Err (InvalidOffset AddOffset))
+            , test "Adds offset to both stopwatches" <|
+                \() ->
+                    tryApplyOperationToStopwatchData (getAddOffsetEditDetails 30 True True) doubleStopwatches
+                        |> Result.map getTimes
+                        |> Expect.equal (Ok ( [ 221, 494, 633, 776, 912, 1059 ], [ 221, 493, 776, 821, 912 ] ))
+            , test "Adds offset to stopwatch 1 only" <|
+                \() ->
+                    tryApplyOperationToStopwatchData (getAddOffsetEditDetails 30 True False) doubleStopwatches
+                        |> Result.map getTimes
+                        |> Expect.equal (Ok ( [ 221, 494, 633, 776, 912, 1059 ], [ 191, 463, 746, 791, 882 ] ))
+            , test "Adds offset to stopwatch 2 only" <|
+                \() ->
+                    tryApplyOperationToStopwatchData (getAddOffsetEditDetails 30 False True) doubleStopwatches
+                        |> Result.map getTimes
+                        |> Expect.equal (Ok ( [ 191, 464, 603, 746, 882, 1029 ], [ 221, 493, 776, 821, 912 ] ))
+            , test "Adds offset to single stopwatch" <|
+                \() ->
+                    tryApplyOperationToStopwatchData (getAddOffsetEditDetails 30 True True) (Single "stopwatch1.txt" [ 191, 464, 603, 746, 882, 1029 ])
+                        |> Expect.equal (Ok (Single "stopwatch1.txt" [ 221, 494, 633, 776, 912, 1059 ]))
+            , test "Adds offset to single stopwatch even if flag disabled" <|
+                \() ->
+                    tryApplyOperationToStopwatchData (getAddOffsetEditDetails 30 False True) (Single "stopwatch1.txt" [ 191, 464, 603, 746, 882, 1029 ])
+                        |> Expect.equal (Ok (Single "stopwatch1.txt" [ 221, 494, 633, 776, 912, 1059 ]))
+            , test "Adding offset to no stopwatches does nothing" <|
+                \() ->
+                    tryApplyOperationToStopwatchData (getAddOffsetEditDetails 30 True True) None
+                        |> Expect.equal (Ok None)
+            , test "Subtracts offset from both stopwatches" <|
+                \() ->
+                    tryApplyOperationToStopwatchData (getSubtractOffsetEditDetails 30 True True) doubleStopwatches
+                        |> Result.map getTimes
+                        |> Expect.equal (Ok ( [ 161, 434, 573, 716, 852, 999 ], [ 161, 433, 716, 761, 852 ] ))
+            , test "Subtracts offset from stopwatch 1 only" <|
+                \() ->
+                    tryApplyOperationToStopwatchData (getSubtractOffsetEditDetails 30 True False) doubleStopwatches
+                        |> Result.map getTimes
+                        |> Expect.equal (Ok ( [ 161, 434, 573, 716, 852, 999 ], [ 191, 463, 746, 791, 882 ] ))
+            , test "Subtracts offset from stopwatch 2 only" <|
+                \() ->
+                    tryApplyOperationToStopwatchData (getSubtractOffsetEditDetails 30 False True) doubleStopwatches
+                        |> Result.map getTimes
+                        |> Expect.equal (Ok ( [ 191, 464, 603, 746, 882, 1029 ], [ 161, 433, 716, 761, 852 ] ))
+            , test "Subtracts offset from single stopwatch" <|
+                \() ->
+                    tryApplyOperationToStopwatchData (getSubtractOffsetEditDetails 30 True True) (Single "stopwatch1.txt" [ 191, 464, 603, 746, 882, 1029 ])
+                        |> Expect.equal (Ok (Single "stopwatch1.txt" [ 161, 434, 573, 716, 852, 999 ]))
+            , test "Subtracts offset from single stopwatch even if flag disabled" <|
+                \() ->
+                    tryApplyOperationToStopwatchData (getSubtractOffsetEditDetails 30 False True) (Single "stopwatch1.txt" [ 191, 464, 603, 746, 882, 1029 ])
+                        |> Expect.equal (Ok (Single "stopwatch1.txt" [ 161, 434, 573, 716, 852, 999 ]))
+            , test "Applies a scale factor to two stopwatches" <|
+                \() ->
+                    tryApplyOperationToStopwatchData (getApplyScaleFactorEditDetails 1.37) doubleStopwatches
+                        |> Result.map getTimes
+                        |> Expect.equal (Ok ( [ 262, 636, 826, 1022, 1208, 1410 ], [ 262, 634, 1022, 1084, 1208 ] ))
+            , test "Applies a scale factor to a single stopwatch" <|
+                \() ->
+                    tryApplyOperationToStopwatchData (getApplyScaleFactorEditDetails 1.37) (Single "stopwatch1.txt" [ 191, 464, 603, 746, 882, 1029 ])
+                        |> Expect.equal (Ok (Single "stopwatch1.txt" [ 262, 636, 826, 1022, 1208, 1410 ]))
+            , test "Applies a scale factor to no stopwatches" <|
+                \() ->
+                    tryApplyOperationToStopwatchData (getApplyScaleFactorEditDetails 1.37) None
+                        |> Expect.equal (Ok None)
+            , test "Applies a distance-based scale factor to two stopwatches" <|
+                \() ->
+                    tryApplyOperationToStopwatchData (getApplyDistanceBasedScaleFactorEditDetails 5000 4600) doubleStopwatches
+                        |> Result.map getTimes
+                        |> Expect.equal (Ok ( [ 208, 504, 655, 811, 959, 1118 ], [ 208, 503, 811, 860, 959 ] ))
+            , test "Applies a distance-based scale factor to a single stopwatch" <|
+                \() ->
+                    tryApplyOperationToStopwatchData (getApplyDistanceBasedScaleFactorEditDetails 5000 4600) (Single "stopwatch1.txt" [ 191, 464, 603, 746, 882, 1029 ])
+                        |> Expect.equal (Ok (Single "stopwatch1.txt" [ 208, 504, 655, 811, 959, 1118 ]))
+            , test "Applies a distance-based scale factor to no stopwatches" <|
+                \() ->
+                    tryApplyOperationToStopwatchData (getApplyDistanceBasedScaleFactorEditDetails 5000 4600) None
+                        |> Expect.equal (Ok None)
             ]
         ]

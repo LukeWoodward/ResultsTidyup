@@ -14,6 +14,7 @@ module StopwatchOperations exposing
     , isExpectedDistanceFieldInvalid
     , isScaleFactorFieldInvalid
     , isSubtractOffsetFieldInvalid
+    , tryApplyOperationToStopwatchData
     , updateEditDetails
     , validateEditDetails
     )
@@ -28,6 +29,7 @@ import DataEntry
         , integerEntryFromTime
         , isPositive
         )
+import Stopwatch exposing (DoubleStopwatchData, Stopwatches(..), createMergedTable)
 
 
 type StopwatchesToModify
@@ -297,3 +299,127 @@ isExpectedDistanceFieldInvalid editDetails =
 isActualDistanceFieldInvalid : StopwatchOperationEditDetails -> Bool
 isActualDistanceFieldInvalid editDetails =
     isStopwatchFieldInvalid ActualDistanceField editDetails
+
+
+minimumWithZero : List Int -> Int
+minimumWithZero ints =
+    List.minimum ints
+        |> Maybe.withDefault 0
+
+
+getFastestTime : Stopwatches -> Int
+getFastestTime stopwatches =
+    case stopwatches of
+        None ->
+            0
+
+        Single _ times ->
+            minimumWithZero times
+
+        Double doubleStopwatchData ->
+            min (minimumWithZero doubleStopwatchData.times1) (minimumWithZero doubleStopwatchData.times2)
+
+
+applyStopwatchOffset : Int -> Bool -> Bool -> Stopwatches -> Stopwatches
+applyStopwatchOffset offset applyToStopwatch1 applyToStopwatch2 stopwatches =
+    case stopwatches of
+        None ->
+            stopwatches
+
+        Single filename times ->
+            Single filename (List.map ((+) offset) times)
+
+        Double doubleStopwatchData ->
+            let
+                newTimes1 : List Int
+                newTimes1 =
+                    if applyToStopwatch1 then
+                        List.map ((+) offset) doubleStopwatchData.times1
+
+                    else
+                        doubleStopwatchData.times1
+
+                newTimes2 : List Int
+                newTimes2 =
+                    if applyToStopwatch2 then
+                        List.map ((+) offset) doubleStopwatchData.times2
+
+                    else
+                        doubleStopwatchData.times2
+            in
+            recreateDoubleStopwatchData newTimes1 newTimes2 doubleStopwatchData
+
+
+recreateDoubleStopwatchData : List Int -> List Int -> DoubleStopwatchData -> Stopwatches
+recreateDoubleStopwatchData times1 times2 doubleStopwatchData =
+    createMergedTable times1 times2 doubleStopwatchData.filename1 doubleStopwatchData.filename2
+
+
+applyScaleFactor : Float -> Stopwatches -> Stopwatches
+applyScaleFactor scaleFactor stopwatches =
+    let
+        applyFactor : Int -> Int
+        applyFactor time =
+            round (toFloat time * scaleFactor)
+    in
+    case stopwatches of
+        None ->
+            stopwatches
+
+        Single filename times ->
+            Single filename (List.map applyFactor times)
+
+        Double doubleStopwatchData ->
+            recreateDoubleStopwatchData (List.map applyFactor doubleStopwatchData.times1) (List.map applyFactor doubleStopwatchData.times2) doubleStopwatchData
+
+
+tryApplyOperationToStopwatchData : StopwatchOperationEditDetails -> Stopwatches -> Result StopwatchOperationValidationError Stopwatches
+tryApplyOperationToStopwatchData editDetails stopwatches =
+    let
+        validationError : StopwatchOperationValidationError
+        validationError =
+            validateEditDetails (getFastestTime stopwatches) editDetails
+    in
+    if validationError == NoValidationError then
+        case editDetails.operation of
+            NoOperationSelected ->
+                Ok stopwatches
+
+            AddStopwatchTimeOffset ->
+                case editDetails.addOffsetDetails.offset.parsedValue of
+                    Just offset ->
+                        applyStopwatchOffset offset editDetails.addOffsetDetails.applyToStopwatch1 editDetails.addOffsetDetails.applyToStopwatch2 stopwatches
+                            |> Ok
+
+                    Nothing ->
+                        Ok stopwatches
+
+            SubtractStopwatchTimeOffset ->
+                case editDetails.subtractOffsetDetails.offset.parsedValue of
+                    Just offset ->
+                        applyStopwatchOffset -offset editDetails.subtractOffsetDetails.applyToStopwatch1 editDetails.subtractOffsetDetails.applyToStopwatch2 stopwatches
+                            |> Ok
+
+                    Nothing ->
+                        Ok stopwatches
+
+            ApplyStopwatchScaleFactor ->
+                case editDetails.manualScaleFactor.parsedValue of
+                    Just scaleFactor ->
+                        applyScaleFactor scaleFactor stopwatches
+                            |> Ok
+
+                    Nothing ->
+                        Ok stopwatches
+
+            ApplyDistanceBasedStopwatchScaleFactor ->
+                case ( editDetails.expectedDistance.parsedValue, editDetails.actualDistance.parsedValue ) of
+                    ( Just expectedDistance, Just actualDistance ) ->
+                        applyScaleFactor (toFloat expectedDistance / toFloat actualDistance) stopwatches
+                            |> Ok
+
+                    _ ->
+                        Ok stopwatches
+
+    else
+        Err validationError
