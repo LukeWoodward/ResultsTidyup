@@ -96,9 +96,7 @@ expectedParsedSampleStopwatchData =
 
 singleStopwatch : Stopwatches
 singleStopwatch =
-    case expectedParsedSampleStopwatchData of
-        StopwatchData times ->
-            Single "stopwatch1.txt" times
+    Single "stopwatch1.txt" parsedStopwatchTimes1
 
 
 defaultMatchSummary : StopwatchMatchSummary
