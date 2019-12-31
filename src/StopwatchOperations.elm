@@ -116,10 +116,23 @@ emptyEditDetails =
     }
 
 
-timeOffsetValidation : StopwatchField -> OffsetType -> OffsetDetails -> Maybe StopwatchOperationValidationError
-timeOffsetValidation field offsetType offsetDetails =
+isDoubleStopwatchData : Stopwatches -> Bool
+isDoubleStopwatchData stopwatches =
+    case stopwatches of
+        None ->
+            False
+
+        Single _ _ ->
+            False
+
+        Double _ ->
+            True
+
+
+timeOffsetValidation : StopwatchField -> OffsetType -> Stopwatches -> OffsetDetails -> Maybe StopwatchOperationValidationError
+timeOffsetValidation field offsetType stopwatches offsetDetails =
     if isPositive offsetDetails.offset then
-        if not offsetDetails.applyToStopwatch1 && not offsetDetails.applyToStopwatch2 then
+        if isDoubleStopwatchData stopwatches && not offsetDetails.applyToStopwatch1 && not offsetDetails.applyToStopwatch2 then
             Just (NoStopwatchesToApplyOffsetTo offsetType)
 
         else
@@ -129,10 +142,15 @@ timeOffsetValidation field offsetType offsetDetails =
         Just (InvalidOffset offsetType)
 
 
-offsetToRemoveLessThanFastestTime : Int -> OffsetDetails -> Maybe StopwatchOperationValidationError
-offsetToRemoveLessThanFastestTime fastestTime offsetDetails =
+offsetToRemoveLessThanFastestTime : Stopwatches -> OffsetDetails -> Maybe StopwatchOperationValidationError
+offsetToRemoveLessThanFastestTime stopwatches offsetDetails =
     case offsetDetails.offset.parsedValue of
         Just someOffset ->
+            let
+                fastestTime : Int
+                fastestTime =
+                    getFastestTime stopwatches
+            in
             if someOffset > fastestTime then
                 Just (SubtractOffsetTooLarge fastestTime someOffset)
 
@@ -173,8 +191,8 @@ equalDistanceValidation expectedEntry actualEntry =
         Nothing
 
 
-validateEditDetails : Int -> StopwatchOperationEditDetails -> StopwatchOperationValidationError
-validateEditDetails fastestTime editDetails =
+validateEditDetails : Stopwatches -> StopwatchOperationEditDetails -> StopwatchOperationValidationError
+validateEditDetails stopwatches editDetails =
     let
         allErrors : List (Maybe StopwatchOperationValidationError)
         allErrors =
@@ -183,11 +201,11 @@ validateEditDetails fastestTime editDetails =
                     [ Just StopwatchOperationNotSelected ]
 
                 AddStopwatchTimeOffset ->
-                    [ timeOffsetValidation AddOffsetField AddOffset editDetails.addOffsetDetails ]
+                    [ timeOffsetValidation AddOffsetField AddOffset stopwatches editDetails.addOffsetDetails ]
 
                 SubtractStopwatchTimeOffset ->
-                    [ timeOffsetValidation SubtractOffsetField SubtractOffset editDetails.subtractOffsetDetails
-                    , offsetToRemoveLessThanFastestTime fastestTime editDetails.subtractOffsetDetails
+                    [ timeOffsetValidation SubtractOffsetField SubtractOffset stopwatches editDetails.subtractOffsetDetails
+                    , offsetToRemoveLessThanFastestTime stopwatches editDetails.subtractOffsetDetails
                     ]
 
                 ApplyStopwatchScaleFactor ->
@@ -378,7 +396,7 @@ tryApplyOperationToStopwatchData editDetails stopwatches =
     let
         validationError : StopwatchOperationValidationError
         validationError =
-            validateEditDetails (getFastestTime stopwatches) editDetails
+            validateEditDetails stopwatches editDetails
     in
     if validationError == NoValidationError then
         case editDetails.operation of
