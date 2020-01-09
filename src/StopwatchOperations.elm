@@ -29,7 +29,7 @@ import DataEntry
         , integerEntryFromTime
         , isPositive
         )
-import Stopwatch exposing (DoubleStopwatchData, Stopwatches(..), createMergedTable)
+import Stopwatch exposing (DoubleStopwatchData, Stopwatches(..), WhichStopwatch(..), createMergedTable)
 
 
 type StopwatchesToModify
@@ -97,6 +97,7 @@ type alias StopwatchOperationEditDetails =
 type StopwatchOperationChangeType
     = ChangeOperation StopwatchOperation
     | StopwatchFieldEdited StopwatchField String
+    | StopwatchCheckboxChanged OffsetType WhichStopwatch Bool
 
 
 emptyOffset : OffsetDetails
@@ -224,34 +225,53 @@ validateEditDetails stopwatches editDetails =
 
 updateEditDetails : StopwatchOperationChangeType -> StopwatchOperationEditDetails -> StopwatchOperationEditDetails
 updateEditDetails change editDetails =
-    case change of
-        ChangeOperation newOperation ->
-            { editDetails | operation = newOperation }
+    let
+        oldAddOffsetDetails : OffsetDetails
+        oldAddOffsetDetails =
+            editDetails.addOffsetDetails
 
-        StopwatchFieldEdited AddOffsetField newValue ->
-            let
-                oldOffset : OffsetDetails
-                oldOffset =
-                    editDetails.addOffsetDetails
-            in
-            { editDetails | addOffsetDetails = { oldOffset | offset = integerEntryFromTime newValue } }
+        oldSubtractOffsetDetails : OffsetDetails
+        oldSubtractOffsetDetails =
+            editDetails.subtractOffsetDetails
 
-        StopwatchFieldEdited SubtractOffsetField newValue ->
-            let
-                oldOffset : OffsetDetails
-                oldOffset =
-                    editDetails.subtractOffsetDetails
-            in
-            { editDetails | subtractOffsetDetails = { oldOffset | offset = integerEntryFromTime newValue } }
+        updatedDetails : StopwatchOperationEditDetails
+        updatedDetails =
+            case change of
+                ChangeOperation newOperation ->
+                    { editDetails | operation = newOperation }
 
-        StopwatchFieldEdited ScaleFactorField newValue ->
-            { editDetails | manualScaleFactor = floatEntryFromString newValue }
+                StopwatchFieldEdited AddOffsetField newValue ->
+                    { editDetails | addOffsetDetails = { oldAddOffsetDetails | offset = integerEntryFromTime newValue } }
 
-        StopwatchFieldEdited ExpectedDistanceManualField newValue ->
-            { editDetails | expectedDistance = integerEntryFromString newValue }
+                StopwatchFieldEdited SubtractOffsetField newValue ->
+                    { editDetails | subtractOffsetDetails = { oldSubtractOffsetDetails | offset = integerEntryFromTime newValue } }
 
-        StopwatchFieldEdited ActualDistanceField newValue ->
-            { editDetails | actualDistance = integerEntryFromString newValue }
+                StopwatchFieldEdited ScaleFactorField newValue ->
+                    { editDetails | manualScaleFactor = floatEntryFromString newValue }
+
+                StopwatchFieldEdited ExpectedDistanceManualField newValue ->
+                    { editDetails | expectedDistance = integerEntryFromString newValue }
+
+                StopwatchFieldEdited ActualDistanceField newValue ->
+                    { editDetails | actualDistance = integerEntryFromString newValue }
+
+                StopwatchCheckboxChanged AddOffset stopwatch newValue ->
+                    case stopwatch of
+                        StopwatchOne ->
+                            { editDetails | addOffsetDetails = { oldAddOffsetDetails | applyToStopwatch1 = newValue } }
+
+                        StopwatchTwo ->
+                            { editDetails | addOffsetDetails = { oldAddOffsetDetails | applyToStopwatch2 = newValue } }
+
+                StopwatchCheckboxChanged SubtractOffset stopwatch newValue ->
+                    case stopwatch of
+                        StopwatchOne ->
+                            { editDetails | subtractOffsetDetails = { oldSubtractOffsetDetails | applyToStopwatch1 = newValue } }
+
+                        StopwatchTwo ->
+                            { editDetails | subtractOffsetDetails = { oldSubtractOffsetDetails | applyToStopwatch2 = newValue } }
+    in
+    { updatedDetails | validationError = NoValidationError }
 
 
 isStopwatchFieldInvalid : StopwatchField -> StopwatchOperationEditDetails -> Bool

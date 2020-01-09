@@ -2,7 +2,7 @@ module StopwatchOperationsTests exposing (suite)
 
 import DataEntry exposing (IntegerEntry, emptyEntry, floatEntryFromFloat, integerEntryFromInt, integerEntryFromString)
 import Expect exposing (Expectation)
-import Stopwatch exposing (DoubleStopwatchData, Stopwatches(..), createMergedTable)
+import Stopwatch exposing (DoubleStopwatchData, Stopwatches(..), WhichStopwatch(..), createMergedTable)
 import StopwatchOperations
     exposing
         ( DistanceType(..)
@@ -275,6 +275,42 @@ suite =
                 \() ->
                     updateEditDetails (StopwatchFieldEdited ActualDistanceField "4875") emptyEditDetails
                         |> Expect.equal { emptyEditDetails | actualDistance = integerEntryFromInt 4875 }
+            , test "Can check the apply-to-stopwatch-1 flag for the add offset" <|
+                \() ->
+                    updateEditDetails (StopwatchCheckboxChanged AddOffset StopwatchOne True) emptyEditDetails
+                        |> Expect.equal { emptyEditDetails | addOffsetDetails = OffsetDetails emptyEntry True False }
+            , test "Can clear the apply-to-stopwatch-1 flag for the add offset" <|
+                \() ->
+                    { emptyEditDetails | addOffsetDetails = OffsetDetails emptyEntry True False }
+                        |> updateEditDetails (StopwatchCheckboxChanged AddOffset StopwatchOne False)
+                        |> Expect.equal emptyEditDetails
+            , test "Can check the apply-to-stopwatch-2 flag for the add offset" <|
+                \() ->
+                    updateEditDetails (StopwatchCheckboxChanged AddOffset StopwatchTwo True) emptyEditDetails
+                        |> Expect.equal { emptyEditDetails | addOffsetDetails = OffsetDetails emptyEntry False True }
+            , test "Can clear the apply-to-stopwatch-2 flag for the add offset" <|
+                \() ->
+                    { emptyEditDetails | addOffsetDetails = OffsetDetails emptyEntry False True }
+                        |> updateEditDetails (StopwatchCheckboxChanged AddOffset StopwatchTwo False)
+                        |> Expect.equal emptyEditDetails
+            , test "Can check the apply-to-stopwatch-1 flag for the subtract offset" <|
+                \() ->
+                    updateEditDetails (StopwatchCheckboxChanged SubtractOffset StopwatchOne True) emptyEditDetails
+                        |> Expect.equal { emptyEditDetails | subtractOffsetDetails = OffsetDetails emptyEntry True False }
+            , test "Can clear the apply-to-stopwatch-1 flag for the subtract offset" <|
+                \() ->
+                    { emptyEditDetails | subtractOffsetDetails = OffsetDetails emptyEntry True False }
+                        |> updateEditDetails (StopwatchCheckboxChanged SubtractOffset StopwatchOne False)
+                        |> Expect.equal emptyEditDetails
+            , test "Can check the apply-to-stopwatch-2 flag for the subtract offset" <|
+                \() ->
+                    updateEditDetails (StopwatchCheckboxChanged SubtractOffset StopwatchTwo True) emptyEditDetails
+                        |> Expect.equal { emptyEditDetails | subtractOffsetDetails = OffsetDetails emptyEntry False True }
+            , test "Can clear the apply-to-stopwatch-2 flag for the subtract offset" <|
+                \() ->
+                    { emptyEditDetails | subtractOffsetDetails = OffsetDetails emptyEntry False True }
+                        |> updateEditDetails (StopwatchCheckboxChanged SubtractOffset StopwatchTwo False)
+                        |> Expect.equal emptyEditDetails
             ]
         , describe "Field validation function tests"
             [ test "isAddOffsetFieldInvalid reports correct errors" <|
