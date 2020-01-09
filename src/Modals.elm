@@ -1,12 +1,12 @@
 module Modals exposing (showModalDialog)
 
-import BarcodeScannerEditModal exposing (barcodeScannerDialogTitle, barcodeScannerEditButtons, editBarcodeScannerRowModalBody)
+import BarcodeScannerEditModal exposing (barcodeScannerDialogSizer, barcodeScannerDialogTitle, barcodeScannerEditButtons, editBarcodeScannerRowModalBody)
 import Bootstrap.Modal as Modal
 import Html exposing (Html, div, text)
 import Model exposing (DialogDetails(..), Model)
 import Msg exposing (Msg(..))
-import StopwatchOperationsModal exposing (stopwatchOperationsButtons, stopwatchOperationsDialogTitle, stopwatchOperationsModalBody)
-import TokenOperationsModal exposing (tokenOperationsButtons, tokenOperationsDialogTitle, tokenOperationsModalBody)
+import StopwatchOperationsModal exposing (stopwatchOperationsButtons, stopwatchOperationsDialogSizer, stopwatchOperationsDialogTitle, stopwatchOperationsModalBody)
+import TokenOperationsModal exposing (tokenOperationsButtons, tokenOperationsDialogSizer, tokenOperationsDialogTitle, tokenOperationsModalBody)
 
 
 dialogVisibility : DialogDetails -> Modal.Visibility
@@ -71,13 +71,16 @@ showModalDialog model =
         sizer : Modal.Config Msg -> Modal.Config Msg
         sizer =
             case model.dialogDetails of
+                BarcodeScannerRowEditDialog _ ->
+                    barcodeScannerDialogSizer
+
                 TokenOperationsDialog _ ->
-                    Modal.large
+                    tokenOperationsDialogSizer
 
                 StopwatchOperationsDialog _ ->
-                    Modal.large
+                    stopwatchOperationsDialogSizer
 
-                _ ->
+                NoDialog ->
                     identity
     in
     Modal.config CloseModal

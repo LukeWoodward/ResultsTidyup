@@ -1,4 +1,4 @@
-module StopwatchOperationsModal exposing (stopwatchOperationsButtons, stopwatchOperationsDialogTitle, stopwatchOperationsModalBody)
+module StopwatchOperationsModal exposing (stopwatchOperationsButtons, stopwatchOperationsDialogSizer, stopwatchOperationsDialogTitle, stopwatchOperationsModalBody)
 
 import Bootstrap.Button as Button
 import Bootstrap.Form as Form
@@ -8,6 +8,7 @@ import Bootstrap.Form.Radio as Radio
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
+import Bootstrap.Modal as Modal
 import DataEntry exposing (Entry)
 import Html exposing (Html, div, label, text)
 import Html.Attributes exposing (class, for)
@@ -265,3 +266,8 @@ stopwatchOperationsButtons editDetails =
                 ]
                 [ text "Close" ]
            ]
+
+
+stopwatchOperationsDialogSizer : Modal.Config Msg -> Modal.Config Msg
+stopwatchOperationsDialogSizer =
+    Modal.large

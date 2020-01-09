@@ -1,4 +1,11 @@
-module BarcodeScannerEditModal exposing (athleteInputId, athleteRadioButtonId, barcodeScannerDialogTitle, barcodeScannerEditButtons, editBarcodeScannerRowModalBody)
+module BarcodeScannerEditModal exposing
+    ( athleteInputId
+    , athleteRadioButtonId
+    , barcodeScannerDialogSizer
+    , barcodeScannerDialogTitle
+    , barcodeScannerEditButtons
+    , editBarcodeScannerRowModalBody
+    )
 
 import BarcodeScanner exposing (LineContents(..))
 import BarcodeScannerEditing
@@ -18,6 +25,7 @@ import Bootstrap.Form.Radio as Radio
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
+import Bootstrap.Modal as Modal
 import Html exposing (Html, b, div, text)
 import Html.Attributes exposing (class, type_)
 import Html.Events exposing (onClick)
@@ -246,3 +254,8 @@ barcodeScannerEditButtons barcodeScannerRowEditDetails =
         ]
         [ text "Close" ]
     ]
+
+
+barcodeScannerDialogSizer : Modal.Config Msg -> Modal.Config Msg
+barcodeScannerDialogSizer =
+    identity
