@@ -47,6 +47,7 @@ import Stopwatch
         , toggleRowInTable
         , underlineTable
         )
+import StopwatchOperations exposing (StopwatchOperationEditDetails, tryApplyOperationToStopwatchData)
 import Task exposing (Task)
 import Time exposing (Posix, Zone)
 import TokenOperations exposing (TokenOperationEditDetails, TokenOperationValidationError(..), tryApplyTokenOperationToBarcodeScannerData)
@@ -351,6 +352,22 @@ tryUpdateRowFromBarcodeScannerEditModal rowEditDetails model =
             { model | dialogDetails = BarcodeScannerRowEditDialog { rowEditDetails | validationError = Just validationError } }
 
 
+tryApplyStopwatchOperation : StopwatchOperationEditDetails -> Model -> Model
+tryApplyStopwatchOperation stopwatchOperationEditDetails model =
+    case tryApplyOperationToStopwatchData stopwatchOperationEditDetails model.stopwatches of
+        Ok updatedStopwatches ->
+            identifyProblemsIn
+                { model
+                    | stopwatches = updatedStopwatches
+                    , dialogDetails = NoDialog
+                }
+
+        Err validationError ->
+            { model
+                | dialogDetails = StopwatchOperationsDialog { stopwatchOperationEditDetails | validationError = validationError }
+            }
+
+
 tryApplyTokenOperation : TokenOperationEditDetails -> Model -> Model
 tryApplyTokenOperation tokenOperationEditDetails model =
     case tryApplyTokenOperationToBarcodeScannerData tokenOperationEditDetails model.barcodeScannerData of
@@ -526,6 +543,28 @@ update msg model =
             , NoCommand
             )
 
+        ShowStopwatchOperationsModal ->
+            ( { model | dialogDetails = StopwatchOperationsDialog StopwatchOperations.emptyEditDetails }
+            , NoCommand
+            )
+
+        StopwatchOperationEdit editChange ->
+            let
+                newEditDetails : DialogDetails
+                newEditDetails =
+                    case model.dialogDetails of
+                        StopwatchOperationsDialog editDetails ->
+                            StopwatchOperations.updateEditDetails editChange editDetails
+                                |> StopwatchOperationsDialog
+
+                        _ ->
+                            model.dialogDetails
+            in
+            ( { model | dialogDetails = newEditDetails }, NoCommand )
+
+        ApplyStopwatchOperation editDetails ->
+            ( tryApplyStopwatchOperation editDetails model, NoCommand )
+
         ShowTokenOperationsModal ->
             ( { model | dialogDetails = TokenOperationsDialog TokenOperations.emptyEditDetails }
             , NoCommand
@@ -573,6 +612,9 @@ update msg model =
 
                     else
                         ( model, NoCommand )
+
+                StopwatchOperationsDialog stopwatchOperationEditDetails ->
+                    ( tryApplyStopwatchOperation stopwatchOperationEditDetails model, NoCommand )
 
                 TokenOperationsDialog tokenOperationEditDetails ->
                     ( tryApplyTokenOperation tokenOperationEditDetails model, NoCommand )

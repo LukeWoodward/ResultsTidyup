@@ -8,6 +8,7 @@ import File exposing (File)
 import FileHandling exposing (InteropFile)
 import ProblemFixing exposing (ProblemFix)
 import Stopwatch exposing (WhichStopwatch(..))
+import StopwatchOperations exposing (StopwatchOperationChangeType, StopwatchOperationEditDetails)
 import Time exposing (Posix, Zone)
 import TokenOperations exposing (TokenOperationChangeType(..), TokenOperationEditDetails)
 
@@ -51,6 +52,9 @@ type Msg
     | BarcodeScannerEdit BarcodeScannerEditDetails
     | UpdateRowFromBarcodeScannerEditModal BarcodeScannerRowEditDetails
     | DeleteRowFromBarcodeScannerEditModal BarcodeScannerRowEditLocation
+    | ShowStopwatchOperationsModal
+    | StopwatchOperationEdit StopwatchOperationChangeType
+    | ApplyStopwatchOperation StopwatchOperationEditDetails
     | ShowTokenOperationsModal
     | TokenOperationEdit TokenOperationChangeType
     | ApplyTokenOperation TokenOperationEditDetails

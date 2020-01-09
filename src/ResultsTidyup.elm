@@ -213,6 +213,12 @@ actionsPanelView model =
             [ text "Upload files..." ]
         , Button.button
             [ Button.primary
+            , Button.onClick ShowStopwatchOperationsModal
+            , Button.disabled (model.stopwatches == None)
+            ]
+            [ text "Stopwatch operations..." ]
+        , Button.button
+            [ Button.primary
             , Button.onClick ShowTokenOperationsModal
             , Button.disabled (BarcodeScanner.isEmpty model.barcodeScannerData)
             ]

@@ -5,6 +5,7 @@ import Bootstrap.Modal as Modal
 import Html exposing (Html, div, text)
 import Model exposing (DialogDetails(..), Model)
 import Msg exposing (Msg(..))
+import StopwatchOperationsModal exposing (stopwatchOperationsButtons, stopwatchOperationsDialogTitle, stopwatchOperationsModalBody)
 import TokenOperationsModal exposing (tokenOperationsButtons, tokenOperationsDialogTitle, tokenOperationsModalBody)
 
 
@@ -26,6 +27,9 @@ dialogTitle dialogDetails =
         TokenOperationsDialog tokenOperationEditDetails ->
             tokenOperationsDialogTitle
 
+        StopwatchOperationsDialog stopwatchOperationEditDetails ->
+            stopwatchOperationsDialogTitle
+
         NoDialog ->
             ""
 
@@ -38,6 +42,9 @@ dialogBody dialogDetails =
 
         TokenOperationsDialog tokenOperationEditDetails ->
             tokenOperationsModalBody tokenOperationEditDetails
+
+        StopwatchOperationsDialog stopwatchOperationEditDetails ->
+            stopwatchOperationsModalBody stopwatchOperationEditDetails
 
         NoDialog ->
             div [] []
@@ -55,6 +62,9 @@ showModalDialog model =
                 TokenOperationsDialog tokenOperationEditDetails ->
                     tokenOperationsButtons tokenOperationEditDetails
 
+                StopwatchOperationsDialog stopwatchOperationEditDetails ->
+                    stopwatchOperationsButtons stopwatchOperationEditDetails
+
                 NoDialog ->
                     []
 
@@ -62,6 +72,9 @@ showModalDialog model =
         sizer =
             case model.dialogDetails of
                 TokenOperationsDialog _ ->
+                    Modal.large
+
+                StopwatchOperationsDialog _ ->
                     Modal.large
 
                 _ ->

@@ -15,6 +15,7 @@ import EventDateAndTime exposing (EventDateAndTime)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import Problems exposing (Problems)
 import Stopwatch exposing (Stopwatches(..))
+import StopwatchOperations exposing (StopwatchOperationEditDetails)
 import Time exposing (Posix)
 import TokenOperations exposing (TokenOperationEditDetails)
 
@@ -34,6 +35,7 @@ emptyNumberCheckerManualEntryRow =
 type DialogDetails
     = NoDialog
     | BarcodeScannerRowEditDialog BarcodeScannerRowEditDetails
+    | StopwatchOperationsDialog StopwatchOperationEditDetails
     | TokenOperationsDialog TokenOperationEditDetails
 
 

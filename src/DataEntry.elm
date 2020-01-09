@@ -1,5 +1,6 @@
 module DataEntry exposing
     ( DateEntry
+    , Entry
     , FloatEntry
     , IntegerEntry
     , Range
