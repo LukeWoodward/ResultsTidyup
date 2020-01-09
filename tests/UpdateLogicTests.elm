@@ -78,11 +78,6 @@ expectNumberCheckerEntries expectedNumberCheckerEntries ( model, _ ) =
     Expect.equal expectedNumberCheckerEntries model.numberCheckerEntries
 
 
-expectLastHeight : Maybe Int -> ( Model, Command ) -> Expectation
-expectLastHeight expectedLastHeight ( model, _ ) =
-    Expect.equal expectedLastHeight model.lastHeight
-
-
 expectHighlightedNumberCheckerId : Maybe Int -> ( Model, Command ) -> Expectation
 expectHighlightedNumberCheckerId expectedHighlightedNumberCheckerId ( model, _ ) =
     Expect.equal expectedHighlightedNumberCheckerId model.highlightedNumberCheckerId
@@ -113,7 +108,6 @@ type Assertion
     | Stopwatches
     | LastError
     | NumberCheckerEntries
-    | LastHeight
     | HighlightedNumberCheckerId
     | BarcodeScannerDataAssertion
     | Problems
@@ -146,11 +140,6 @@ defaultAssertionsExcept exceptions =
 
               else
                 Just (expectNumberCheckerEntries [])
-            , if List.member LastHeight exceptions then
-                Nothing
-
-              else
-                Just (expectLastHeight Nothing)
             , if List.member HighlightedNumberCheckerId exceptions then
                 Nothing
 
@@ -375,7 +364,6 @@ suite =
                         , eventDateAndTime = { parsedEventDateOnly | time = IntegerEntry "09:00" (Just (9 * 60)) }
                         , stopwatches = doubleStopwatches
                         , lastErrors = [ FileError "TEST_ERROR" "Some test error message" "somefile.txt" ]
-                        , lastHeight = Just 700
                         , highlightedNumberCheckerId = Just 2
                         , numberCheckerEntries = [ AnnotatedNumberCheckerEntry 2 2 0 2 0 2 0 2 ]
                         , numberCheckerManualEntryRow = NumberCheckerManualEntryRow (IntegerEntry "2" (Just 2)) (IntegerEntry "2" (Just 2)) (IntegerEntry "2" (Just 2))
@@ -484,15 +472,6 @@ suite =
                             (expectCommand (DownloadFile stopwatchFileMimeType (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedStopwatchData2))
                                 :: expectStopwatches doubleStopwatches
                                 :: defaultAssertionsExcept [ Stopwatches, Command ]
-                            )
-            ]
-        , describe "Container height changed tests"
-            [ test "Can update the container height" <|
-                \() ->
-                    update (ContainerHeightChanged 567) initModel
-                        |> Expect.all
-                            (expectLastHeight (Just 567)
-                                :: defaultAssertionsExcept [ LastHeight ]
                             )
             ]
         , describe "Mouse enter number-checker row tests"

@@ -29,7 +29,6 @@ type Msg
     | ClearAllData
     | GetCurrentDateForDownloadFile DownloadOperation
     | DownloadMergedStopwatchData Zone Posix
-    | ContainerHeightChanged Int
     | MouseEnterNumberCheckerRow Int
     | MouseLeaveNumberCheckerRow Int
     | DeleteNumberCheckerRow Int

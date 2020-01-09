@@ -477,8 +477,8 @@ mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData row =
                 ]
 
 
-stopwatchesView : Stopwatches -> BarcodeScannerData -> Maybe Int -> Maybe Int -> Html Msg
-stopwatchesView stopwatches barcodeScannerData lastHeight highlightedNumberCheckerId =
+stopwatchesView : Stopwatches -> BarcodeScannerData -> Maybe Int -> Html Msg
+stopwatchesView stopwatches barcodeScannerData highlightedNumberCheckerId =
     div
         []
         [ h3 [] [ text "Stopwatches" ]

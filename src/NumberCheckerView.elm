@@ -214,8 +214,8 @@ numberCheckerTable entries manualEntryRow =
         }
 
 
-numberCheckerView : List AnnotatedNumberCheckerEntry -> NumberCheckerManualEntryRow -> Maybe Int -> Html Msg
-numberCheckerView entries manualEntryRow lastHeight =
+numberCheckerView : List AnnotatedNumberCheckerEntry -> NumberCheckerManualEntryRow -> Html Msg
+numberCheckerView entries manualEntryRow =
     div
         []
         [ h3 [] [ text "Number checker" ]

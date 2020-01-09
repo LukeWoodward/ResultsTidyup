@@ -219,7 +219,6 @@ clearAllData model =
         | stopwatches = None
         , lastErrors = []
         , numberCheckerEntries = []
-        , lastHeight = Nothing
         , highlightedNumberCheckerId = Nothing
         , barcodeScannerData = BarcodeScanner.empty
         , problems = noProblems
@@ -417,9 +416,6 @@ update msg model =
 
         DownloadMergedStopwatchData zone time ->
             ( model, createMergedStopwatchDataFile zone time model )
-
-        ContainerHeightChanged newHeight ->
-            ( { model | lastHeight = Just newHeight }, NoCommand )
 
         MouseEnterNumberCheckerRow highlightRow ->
             ( { model | highlightedNumberCheckerId = Just highlightRow }, NoCommand )

@@ -29,7 +29,7 @@ import Modals exposing (showModalDialog)
 import Model exposing (Model, initModel)
 import Msg exposing (Msg(..))
 import NumberCheckerView exposing (numberCheckerView)
-import Ports exposing (filesDropped, getInitialHeight, heightUpdated, recordEventStartTime)
+import Ports exposing (filesDropped, recordEventStartTime)
 import Problems
 import ProblemsView exposing (problemsView)
 import Stopwatch exposing (Stopwatches(..))
@@ -72,16 +72,13 @@ init { startTime, isBeta } =
         | isBeta = isBeta
         , eventDateAndTime = initialEventDateAndTime
       }
-    , getInitialHeight ()
+    , Cmd.none
     )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch
-        [ filesDropped FilesDropped
-        , heightUpdated ContainerHeightChanged
-        ]
+    Sub.batch [ filesDropped FilesDropped ]
 
 
 errorView : FileError -> Html a
@@ -100,16 +97,6 @@ errorsView errors =
             (span [ class "close", onClick ClearErrors ] [ text "×" ]
                 :: List.map errorView errors
             )
-
-
-getHeightAttribute : Maybe Int -> List (Html.Attribute a)
-getHeightAttribute lastHeight =
-    case lastHeight of
-        Just someHeight ->
-            [ style "height" (String.fromInt someHeight ++ "px") ]
-
-        Nothing ->
-            []
 
 
 focus : ElementToFocus -> Cmd Msg
@@ -251,7 +238,7 @@ view model =
         , Grid.row []
             [ Grid.col [ Col.xs6 ]
                 [ eventDateAndTimeView model.eventDateAndTime
-                , stopwatchesView model.stopwatches model.barcodeScannerData model.lastHeight model.highlightedNumberCheckerId
+                , stopwatchesView model.stopwatches model.barcodeScannerData model.highlightedNumberCheckerId
                 ]
             , Grid.col [ Col.xs6 ]
                 [ actionsPanelView model
@@ -266,7 +253,7 @@ view model =
                         , Tab.item
                             { id = "numberCheckerTab"
                             , link = Tab.link [] [ text "Number checker" ]
-                            , pane = Tab.pane [] [ numberCheckerView model.numberCheckerEntries model.numberCheckerManualEntryRow model.lastHeight ]
+                            , pane = Tab.pane [] [ numberCheckerView model.numberCheckerEntries model.numberCheckerManualEntryRow ]
                             }
                         ]
                     |> Tab.view model.secondTab

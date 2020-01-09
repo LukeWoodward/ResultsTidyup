@@ -44,7 +44,6 @@ type alias Model =
     , stopwatches : Stopwatches
     , lastErrors : List FileError
     , numberCheckerEntries : List AnnotatedNumberCheckerEntry
-    , lastHeight : Maybe Int
     , highlightedNumberCheckerId : Maybe Int
     , barcodeScannerData : BarcodeScannerData
     , problems : Problems
@@ -62,7 +61,6 @@ initModel =
     , stopwatches = None
     , lastErrors = []
     , numberCheckerEntries = []
-    , lastHeight = Nothing
     , highlightedNumberCheckerId = Nothing
     , barcodeScannerData = BarcodeScanner.empty
     , problems = Problems.noProblems

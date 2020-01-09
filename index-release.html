@@ -33,38 +33,9 @@ var app = Elm.ResultsTidyup.init({
     flags: { startTime: startTime, isBeta: true }
 });
 
-app.ports.getInitialHeight.subscribe(function () {
-    handleResize();
-});
-
 app.ports.recordEventStartTime.subscribe(function (time) {
     window.localStorage.setItem("eventStartTime", time);
 });
-
-var currentResizeTimeout = null;
-
-var RESIZE_DELAY_MS = 100;
-
-function handleResize() {
-    var body = $("body");
-    var vertMargin = body.outerHeight(true) - body.height();
-    var containerHeight = $(window).height() - vertMargin;
-    var headerHeight = $("#header").outerHeight(true);
-
-    body.height(containerHeight);
-    app.ports.heightUpdated.send(Math.floor(containerHeight - headerHeight));
-    currentResizeTimeout = null;
-}
-
-function handleWindowResize() {
-    if (currentResizeTimeout !== null) {
-        clearTimeout(this.currentResizeTimeout);
-    }
-
-    this.currentResizeTimeout = setTimeout(function() { handleResize(); }, RESIZE_DELAY_MS);
-};
-
-$(window).resize(handleWindowResize);
 
 var allFilesDropped = [];
 
