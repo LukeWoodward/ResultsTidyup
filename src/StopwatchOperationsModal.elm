@@ -4,13 +4,14 @@ import Bootstrap.Button as Button
 import Bootstrap.Form as Form
 import Bootstrap.Form.Checkbox as Checkbox
 import Bootstrap.Form.Input as Input
+import Bootstrap.Form.InputGroup as InputGroup
 import Bootstrap.Form.Radio as Radio
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
 import Bootstrap.Modal as Modal
-import DataEntry exposing (Entry)
-import Html exposing (Html, div, label, text)
+import DataEntry exposing (Entry, IntegerEntry)
+import Html exposing (Html, div, hr, label, text)
 import Html.Attributes exposing (class, for)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg(..))
@@ -57,9 +58,9 @@ sizedRadioButton size elementId operation labelText editDetails =
         ]
 
 
-checkboxRowIndent : Grid.Column Msg
-checkboxRowIndent =
-    Grid.col [ Col.xs1 ] []
+checkBoxRowApplyToLabel : Grid.Column Msg
+checkBoxRowApplyToLabel =
+    Grid.col [ Col.xs2, Col.offsetXs1 ] [ text "Apply to:" ]
 
 
 applyToStopwatchCheckbox : String -> OffsetType -> WhichStopwatch -> StopwatchOperationEditDetails -> Grid.Column Msg
@@ -112,8 +113,33 @@ applyToStopwatchCheckbox elementId offsetType stopwatch editDetails =
         ]
 
 
+inputTextFieldOptions : (StopwatchOperationEditDetails -> Entry a) -> StopwatchField -> StopwatchOperation -> (StopwatchOperationEditDetails -> Bool) -> StopwatchOperationEditDetails -> List (Input.Option Msg)
+inputTextFieldOptions rangeEntryGetter field option validator editDetails =
+    let
+        dangerAttributes : List (Input.Option Msg)
+        dangerAttributes =
+            if validator editDetails then
+                [ Input.danger ]
+
+            else
+                []
+    in
+    [ Input.value (rangeEntryGetter editDetails).enteredValue
+    , Input.onInput (StopwatchOperationEdit << StopwatchFieldEdited field)
+    , Input.disabled (editDetails.operation /= option)
+    ]
+        ++ dangerAttributes
+
+
 inputTextField : (StopwatchOperationEditDetails -> Entry a) -> StopwatchField -> StopwatchOperation -> (StopwatchOperationEditDetails -> Bool) -> StopwatchOperationEditDetails -> Grid.Column Msg
 inputTextField rangeEntryGetter field option validator editDetails =
+    Grid.col
+        [ Col.xs2 ]
+        [ Input.text (inputTextFieldOptions rangeEntryGetter field option validator editDetails) ]
+
+
+distanceField : (StopwatchOperationEditDetails -> IntegerEntry) -> StopwatchField -> (StopwatchOperationEditDetails -> Bool) -> StopwatchOperationEditDetails -> Grid.Column Msg
+distanceField rangeEntryGetter field validator editDetails =
     let
         dangerAttributes : List (Input.Option Msg)
         dangerAttributes =
@@ -124,13 +150,11 @@ inputTextField rangeEntryGetter field option validator editDetails =
                 []
     in
     Grid.col [ Col.xs2 ]
-        [ Input.text
-            ([ Input.value (rangeEntryGetter editDetails).enteredValue
-             , Input.onInput (StopwatchOperationEdit << StopwatchFieldEdited field)
-             , Input.disabled (editDetails.operation /= option)
-             ]
-                ++ dangerAttributes
-            )
+        [ InputGroup.config
+            (InputGroup.text (inputTextFieldOptions rangeEntryGetter field ApplyDistanceBasedStopwatchScaleFactor validator editDetails))
+            |> InputGroup.successors
+                [ InputGroup.span [] [ text "m" ] ]
+            |> InputGroup.view
         ]
 
 
@@ -188,32 +212,34 @@ stopwatchOperationsModalBody editDetails =
             , inputTextField (.addOffsetDetails >> .offset) AddOffsetField AddStopwatchTimeOffset isAddOffsetFieldInvalid editDetails
             ]
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
-            [ checkboxRowIndent
+            [ checkBoxRowApplyToLabel
             , applyToStopwatchCheckbox "applyAddOffsetToStopwatch1Checkbox" AddOffset StopwatchOne editDetails
             , applyToStopwatchCheckbox "applyAddOffsetToStopwatch2Checkbox" AddOffset StopwatchTwo editDetails
             ]
+        , hr [] []
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
             [ radioButton "subtractOffsetRadioButton" SubtractStopwatchTimeOffset "Subtract offset from all times" editDetails
             , inputTextField (.subtractOffsetDetails >> .offset) SubtractOffsetField SubtractStopwatchTimeOffset isSubtractOffsetFieldInvalid editDetails
             ]
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
-            [ checkboxRowIndent
+            [ checkBoxRowApplyToLabel
             , applyToStopwatchCheckbox "applySubtractOffsetToStopwatch1Checkbox" SubtractOffset StopwatchOne editDetails
             , applyToStopwatchCheckbox "applySubtractOffsetToStopwatch2Checkbox" SubtractOffset StopwatchTwo editDetails
             ]
+        , hr [] []
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
-            [ radioButton "applyScaleFactorRadioButton" ApplyStopwatchScaleFactor "Apply scale factor to all times" editDetails
+            [ radioButton "applyScaleFactorRadioButton" ApplyStopwatchScaleFactor "Apply scale factor to all times:" editDetails
             , inputTextField .manualScaleFactor ScaleFactorField ApplyStopwatchScaleFactor isScaleFactorFieldInvalid editDetails
             ]
+        , hr [] []
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
-            [ sizedRadioButton Col.xs6 "applyDistanceBasedScaleFactorRadioButton" ApplyDistanceBasedStopwatchScaleFactor "Apply distance-based scale factor to all times" editDetails
+            [ sizedRadioButton Col.xs6 "applyDistanceBasedScaleFactorRadioButton" ApplyDistanceBasedStopwatchScaleFactor "Apply distance-based scale factor to all times:" editDetails
             ]
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
-            [ checkboxRowIndent
-            , Grid.col [ Col.xs3 ] [ text "Expected distance" ]
-            , inputTextField .expectedDistance ExpectedDistanceManualField ApplyDistanceBasedStopwatchScaleFactor isExpectedDistanceFieldInvalid editDetails
+            [ Grid.col [ Col.xs3, Col.offsetXs1 ] [ text "Expected distance" ]
+            , distanceField .expectedDistance ExpectedDistanceManualField isExpectedDistanceFieldInvalid editDetails
             , Grid.col [ Col.xs3 ] [ text "Actual distance" ]
-            , inputTextField .actualDistance ActualDistanceField ApplyDistanceBasedStopwatchScaleFactor isActualDistanceFieldInvalid editDetails
+            , distanceField .actualDistance ActualDistanceField isActualDistanceFieldInvalid editDetails
             ]
         , validationErrorRow editDetails.validationError
         ]
