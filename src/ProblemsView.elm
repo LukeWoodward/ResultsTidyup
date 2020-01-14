@@ -21,7 +21,7 @@ import Problems
         , Problems
         )
 import Stopwatch exposing (WhichStopwatch(..))
-import ViewCommon exposing (smallButton)
+import ViewCommon exposing (athleteLink, smallButton)
 
 
 warningAlert : List (Html Msg) -> Html Msg
@@ -118,7 +118,8 @@ generateButton problemFix buttonLabel =
 athleteAndPositionRow : (AthleteAndPositionPair -> ProblemFix) -> String -> AthleteAndPositionPair -> Html Msg
 athleteAndPositionRow problemFixGenerator buttonLabel pair =
     li []
-        [ text (pair.athlete ++ " and " ++ String.fromInt pair.position ++ " ")
+        [ athleteLink pair.athlete
+        , text (" and " ++ String.fromInt pair.position ++ " ")
         , generateButton (problemFixGenerator pair) buttonLabel
         ]
 
@@ -137,7 +138,9 @@ athletesInSamePositionMultipleTimesView athleteAndPositionPairs =
     case athleteAndPositionPairs of
         [ pair ] ->
             warningAlert
-                [ text ("Athlete " ++ pair.athlete ++ " has been scanned with finish token " ++ String.fromInt pair.position ++ " more than once. ")
+                [ text "Athlete "
+                , athleteLink pair.athlete
+                , text (" has been scanned with finish token " ++ String.fromInt pair.position ++ " more than once. ")
                 , generateButton (problemFixGenerator pair) buttonLabel
                 ]
 
@@ -162,10 +165,10 @@ athletesWithAndWithoutPositionView athleteAndPositionPairs =
     case athleteAndPositionPairs of
         [ pair ] ->
             warningAlert
-                [ text
-                    ("Athlete "
-                        ++ pair.athlete
-                        ++ " has been scanned with finish token "
+                [ text "Athlete "
+                , athleteLink pair.athlete
+                , text
+                    (" has been scanned with finish token "
                         ++ String.fromInt pair.position
                         ++ " and also without a finish token. "
                     )
@@ -347,12 +350,18 @@ athletesWithMultiplePositionsView athletesWithMultiplePositions =
 
         rowGenerator : AthleteWithMultiplePositionsProblem -> Html Msg
         rowGenerator athleteWithMultiplePositions =
-            li [] [ text (athleteWithMultiplePositions.athlete ++ " and " ++ commaSeparate athleteWithMultiplePositions.positions) ]
+            li []
+                [ athleteLink athleteWithMultiplePositions.athlete
+                , text (" and " ++ commaSeparate athleteWithMultiplePositions.positions)
+                ]
     in
     case athletesWithMultiplePositions of
         [ singleAthlete ] ->
             dangerAlert
-                [ text ("Athlete barcode " ++ singleAthlete.athlete ++ " has been scanned with more than one finish token: " ++ commaSeparate singleAthlete.positions ++ ".") ]
+                [ text "Athlete barcode "
+                , athleteLink singleAthlete.athlete
+                , text (" has been scanned with more than one finish token: " ++ commaSeparate singleAthlete.positions ++ ".")
+                ]
 
         _ ->
             dangerAlert
@@ -403,7 +412,7 @@ athletesMissingPositionView athletes =
         _ ->
             dangerAlert
                 [ text "The following athletes have been scanned without finish tokens: "
-                , span [] (List.map text athletes |> List.intersperse (text ", "))
+                , span [] (List.map athleteLink athletes |> List.intersperse (text ", "))
                 , text "."
                 ]
 

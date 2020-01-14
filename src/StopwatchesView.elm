@@ -7,18 +7,13 @@ import Bootstrap.Tab as Tab
 import Bootstrap.Table as Table
 import Commands
 import Dict exposing (Dict)
-import Html exposing (Html, a, br, button, div, h3, input, label, small, text)
-import Html.Attributes exposing (checked, class, for, href, id, rel, target, title, type_)
+import Html exposing (Html, br, button, div, h3, input, label, small, text)
+import Html.Attributes exposing (checked, class, for, id, title, type_)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg(..))
 import Stopwatch exposing (MergeEntry(..), MergedTableRow, StopwatchMatchSummary, Stopwatches(..), WhichStopwatch(..))
 import TimeHandling exposing (formatTime)
-import ViewCommon exposing (intCell, plainCell, smallButton)
-
-
-urlResultsPrefix : String
-urlResultsPrefix =
-    "http://www.parkrun.org.uk/results/athleteresultshistory/?athleteNumber="
+import ViewCommon exposing (athleteLink, intCell, plainCell, smallButton)
 
 
 tableOptions : List (Table.TableOption a)
@@ -51,6 +46,11 @@ type alias TableHeaderWithButtons =
     }
 
 
+athleteItem : AthleteAndTimePair -> Html a
+athleteItem athleteAndTimePair =
+    div [] [ athleteLink athleteAndTimePair.athlete ]
+
+
 barcodeScannerCell : BarcodeScannerData -> Int -> Maybe Int -> Maybe Int -> Table.Cell a
 barcodeScannerCell barcodeScannerData position numberCheckerId highlightedNumberCheckerId =
     case Dict.get position barcodeScannerData.scannedBarcodes of
@@ -76,23 +76,6 @@ timeCell className time numberCheckerId highlightedNumberCheckerId =
 emptyBarcodeScannerCell : Maybe Int -> Maybe Int -> Table.Cell a
 emptyBarcodeScannerCell maybeNumberCheckerId highlightedNumberCheckerId =
     Table.td (numberCheckerUnderlineAttributes (Just "no-scanned-athlete") maybeNumberCheckerId highlightedNumberCheckerId) [ text "−" ]
-
-
-athleteItem : AthleteAndTimePair -> Html a
-athleteItem athleteAndTimePair =
-    let
-        athlete =
-            athleteAndTimePair.athlete
-    in
-    div
-        []
-        [ a
-            [ rel "nofollow"
-            , href (urlResultsPrefix ++ String.dropLeft 1 athlete)
-            , target "_blank"
-            ]
-            [ text athlete ]
-        ]
 
 
 emptyNumberCell : Table.Cell a

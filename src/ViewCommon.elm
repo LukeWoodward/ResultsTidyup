@@ -1,10 +1,15 @@
-module ViewCommon exposing (intCell, plainCell, smallButton, tableHeaders)
+module ViewCommon exposing (athleteLink, intCell, plainCell, smallButton, tableHeaders)
 
 import Bootstrap.Button as Button
 import Bootstrap.Table as Table
-import Html exposing (Html, text)
-import Html.Attributes exposing (class)
+import Html exposing (Html, a, text)
+import Html.Attributes exposing (class, href, rel, target)
 import Msg exposing (Msg)
+
+
+urlResultsPrefix : String
+urlResultsPrefix =
+    "http://www.parkrun.org.uk/results/athleteresultshistory/?athleteNumber="
 
 
 plainCell : String -> Table.Cell a
@@ -35,3 +40,16 @@ smallButton msg attributes contents =
         , Button.onClick msg
         ]
         [ text contents ]
+
+
+{-| Returns an HTML link that links to the athlete's full result history.
+The athlete ID is assumed to contain the leading 'A'.
+-}
+athleteLink : String -> Html a
+athleteLink athleteId =
+    a
+        [ rel "nofollow"
+        , href (urlResultsPrefix ++ String.dropLeft 1 athleteId)
+        , target "_blank"
+        ]
+        [ text athleteId ]
