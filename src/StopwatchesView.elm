@@ -8,7 +8,7 @@ import Bootstrap.Table as Table
 import Commands
 import Dict exposing (Dict)
 import Html exposing (Html, a, br, button, div, h3, input, label, small, text)
-import Html.Attributes exposing (checked, class, for, href, id, rel, target, type_)
+import Html.Attributes exposing (checked, class, for, href, id, rel, target, title, type_)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg(..))
 import Stopwatch exposing (MergeEntry(..), MergedTableRow, StopwatchMatchSummary, Stopwatches(..), WhichStopwatch(..))
@@ -46,6 +46,7 @@ type alias TableHeaderButton =
 
 type alias TableHeaderWithButtons =
     { headerText : String
+    , headerTooltip : String
     , buttonData : List TableHeaderButton
     }
 
@@ -132,7 +133,7 @@ checkboxCell time index included numberCheckerId highlightedNumberCheckerId =
 
 
 tableHeaderWithButtons : TableHeaderWithButtons -> Table.Cell Msg
-tableHeaderWithButtons { headerText, buttonData } =
+tableHeaderWithButtons { headerText, headerTooltip, buttonData } =
     let
         textElement : Html Msg
         textElement =
@@ -144,7 +145,9 @@ tableHeaderWithButtons { headerText, buttonData } =
                 |> List.intersperse (br [] [])
     in
     Table.th
-        [ Table.cellAttr (class "stopwatch-header") ]
+        [ Table.cellAttr (class "stopwatch-header")
+        , Table.cellAttr (title headerTooltip)
+        ]
         elements
 
 
@@ -303,20 +306,20 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                     { options = tableOptions
                     , thead =
                         tableHeadersWithButtons
-                            [ TableHeaderWithButtons "Position" []
-                            , TableHeaderWithButtons "Athletes" []
+                            [ TableHeaderWithButtons "Position" "" []
+                            , TableHeaderWithButtons "Athletes" "" []
                             ]
                     , tbody = noStopwatchTableBody barcodeScannerData
                     }
 
-        Single _ stopwatchTimes ->
+        Single filename stopwatchTimes ->
             Table.table
                 { options = tableOptions
                 , thead =
                     tableHeadersWithButtons
-                        [ TableHeaderWithButtons "Position" []
-                        , TableHeaderWithButtons "Stopwatch 1" [ downloadStopwatchButton StopwatchOne, deleteStopwatchButton StopwatchOne ]
-                        , TableHeaderWithButtons "Athletes" []
+                        [ TableHeaderWithButtons "Position" "" []
+                        , TableHeaderWithButtons "Stopwatch 1" filename [ downloadStopwatchButton StopwatchOne, deleteStopwatchButton StopwatchOne ]
+                        , TableHeaderWithButtons "Athletes" "" []
                         ]
                 , tbody = singleStopwatchTableBody stopwatchTimes barcodeScannerData
                 }
@@ -326,10 +329,10 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                 { options = tableOptions
                 , thead =
                     tableHeadersWithButtons
-                        [ TableHeaderWithButtons "Position" []
-                        , TableHeaderWithButtons "Stopwatch 1" [ downloadStopwatchButton StopwatchOne, deleteStopwatchButton StopwatchOne ]
-                        , TableHeaderWithButtons "Stopwatch 2" [ downloadStopwatchButton StopwatchTwo, deleteStopwatchButton StopwatchTwo ]
-                        , TableHeaderWithButtons "Athletes" []
+                        [ TableHeaderWithButtons "Position" "" []
+                        , TableHeaderWithButtons "Stopwatch 1" doubleStopwatchData.filename1 [ downloadStopwatchButton StopwatchOne, deleteStopwatchButton StopwatchOne ]
+                        , TableHeaderWithButtons "Stopwatch 2" doubleStopwatchData.filename2 [ downloadStopwatchButton StopwatchTwo, deleteStopwatchButton StopwatchTwo ]
+                        , TableHeaderWithButtons "Athletes" "" []
                         ]
                 , tbody = mergedTableBody highlightedNumberCheckerId barcodeScannerData doubleStopwatchData.mergedTableRows
                 }
