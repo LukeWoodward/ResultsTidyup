@@ -26,6 +26,7 @@ import Problems
         , BarcodeScannerClockDifferences(..)
         , BarcodesScannedBeforeEventStartProblem
         , InconsistentBarcodeScannerDatesProblem
+        , PositionAndTime
         , PositionOffEndOfTimesProblem
         , PositionWithMultipleAthletesProblem
         , Problems
@@ -34,7 +35,7 @@ import Problems
         )
 import Stopwatch exposing (MergeEntry(..), MergedTableRow, StopwatchMatchSummary, Stopwatches(..), WhichStopwatch(..), noUnderlines)
 import Test exposing (Test, describe, test)
-import TestData exposing (createBarcodeScannerDataFromFiles, ordinaryFileLine, toPosix)
+import TestData exposing (createBarcodeScannerDataFromFiles, doubleStopwatches, ordinaryFileLine, toPosix)
 
 
 emptyEventDateAndTime : EventDateAndTime
@@ -67,6 +68,33 @@ wrapMergeEntriesInTable entries =
             MergedTableRow index (Just (index + 1)) entry True noUnderlines
     in
     List.indexedMap wrapRow entries
+
+
+doubleStopwatchesForTimeLookupTests : Stopwatches
+doubleStopwatchesForTimeLookupTests =
+    let
+        expectedEntries : List MergedTableRow
+        expectedEntries =
+            [ { index = 0, rowNumber = Just 1, entry = ExactMatch 191, included = True, underlines = noUnderlines }
+            , { index = 1, rowNumber = Just 2, entry = NotNearMatch 469 463, included = True, underlines = noUnderlines }
+            , { index = 2, rowNumber = Nothing, entry = OneWatchOnly StopwatchOne 603, included = False, underlines = noUnderlines }
+            , { index = 3, rowNumber = Just 3, entry = ExactMatch 746, included = True, underlines = noUnderlines }
+            , { index = 4, rowNumber = Nothing, entry = OneWatchOnly StopwatchTwo 791, included = False, underlines = noUnderlines }
+            , { index = 5, rowNumber = Just 4, entry = ExactMatch 882, included = True, underlines = noUnderlines }
+            ]
+
+        expectedMatchSummary : StopwatchMatchSummary
+        expectedMatchSummary =
+            { exactMatches = 3, nearMatches = 0, notNearMatches = 1, stopwatch1Only = 1, stopwatch2Only = 1 }
+    in
+    Double
+        { times1 = [ 191, 469, 603, 746, 882 ]
+        , times2 = [ 191, 463, 746, 791, 882 ]
+        , filename1 = "stopwatch1.txt"
+        , filename2 = "stopwatch2.txt"
+        , mergedTableRows = expectedEntries
+        , matchSummary = expectedMatchSummary
+        }
 
 
 suite : Test
@@ -136,14 +164,98 @@ suite =
                         None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A123456" ] ) ]) [] [])
                         emptyEventDateAndTime
-                        |> Expect.equal { noProblems | athletesWithMultiplePositions = [ AthleteWithMultiplePositionsProblem "A123456" [ 12, 19 ] ] }
+                        |> Expect.equal
+                            { noProblems
+                                | athletesWithMultiplePositions =
+                                    [ AthleteWithMultiplePositionsProblem "A123456" [ PositionAndTime 12 Nothing, PositionAndTime 19 Nothing ]
+                                    ]
+                            }
+            , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from single stopwatch data" <|
+                \() ->
+                    identifyProblems
+                        (Single "stopwatch1.txt" [ 604, 775, 802, 993, 1011, 1143, 1197 ])
+                        (createBarcodeScannerData (Dict.fromList [ ( 3, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 6, [ "A123456" ] ) ]) [] [])
+                        emptyEventDateAndTime
+                        |> Expect.equal
+                            { noProblems
+                                | athletesWithMultiplePositions =
+                                    [ AthleteWithMultiplePositionsProblem "A123456" [ PositionAndTime 3 (Just 802), PositionAndTime 6 (Just 1143) ]
+                                    ]
+                            }
+            , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from single stopwatch data, ignoring time off the end" <|
+                \() ->
+                    identifyProblems
+                        (Single "stopwatch1.txt" [ 604, 775, 802, 993, 1011 ])
+                        (createBarcodeScannerData (Dict.fromList [ ( 3, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 6, [ "A123456" ] ) ]) [] [])
+                        emptyEventDateAndTime
+                        |> Expect.equal
+                            { noProblems
+                                | athletesWithMultiplePositions =
+                                    [ AthleteWithMultiplePositionsProblem "A123456" [ PositionAndTime 3 (Just 802), PositionAndTime 6 Nothing ]
+                                    ]
+                                , positionOffEndOfTimes = Just (PositionOffEndOfTimesProblem 5 6)
+                            }
+            , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from double stopwatch data, hitting exact match and near match" <|
+                \() ->
+                    identifyProblems
+                        doubleStopwatches
+                        (createBarcodeScannerData (Dict.fromList [ ( 1, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 2, [ "A123456" ] ) ]) [] [])
+                        emptyEventDateAndTime
+                        |> Expect.equal
+                            { noProblems
+                                | athletesWithMultiplePositions =
+                                    [ AthleteWithMultiplePositionsProblem "A123456" [ PositionAndTime 1 (Just 191), PositionAndTime 2 (Just 463) ]
+                                    ]
+                            }
+            , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from double stopwatch data, hitting times only on one of the stopwatches" <|
+                \() ->
+                    identifyProblems
+                        doubleStopwatches
+                        (createBarcodeScannerData (Dict.fromList [ ( 3, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 5, [ "A123456" ] ) ]) [] [])
+                        emptyEventDateAndTime
+                        |> Expect.equal
+                            { noProblems
+                                | athletesWithMultiplePositions =
+                                    [ AthleteWithMultiplePositionsProblem "A123456" [ PositionAndTime 3 (Just 603), PositionAndTime 5 (Just 791) ]
+                                    ]
+                            }
+            , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from double stopwatch data, hitting a not-near match and skipping over ignored times" <|
+                \() ->
+                    identifyProblems
+                        doubleStopwatchesForTimeLookupTests
+                        (createBarcodeScannerData (Dict.fromList [ ( 2, [ "A123456" ] ), ( 3, [ "A252525" ] ), ( 4, [ "A123456" ] ) ]) [] [])
+                        emptyEventDateAndTime
+                        |> Expect.equal
+                            { noProblems
+                                | athletesWithMultiplePositions =
+                                    [ AthleteWithMultiplePositionsProblem "A123456" [ PositionAndTime 2 (Just 463), PositionAndTime 4 (Just 882) ]
+                                    ]
+                            }
+            , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from double stopwatch data, ignoring time off the end" <|
+                \() ->
+                    identifyProblems
+                        doubleStopwatches
+                        (createBarcodeScannerData (Dict.fromList [ ( 1, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 8, [ "A123456" ] ) ]) [] [])
+                        emptyEventDateAndTime
+                        |> Expect.equal
+                            { noProblems
+                                | athletesWithMultiplePositions =
+                                    [ AthleteWithMultiplePositionsProblem "A123456" [ PositionAndTime 1 (Just 191), PositionAndTime 8 Nothing ]
+                                    ]
+                                , positionOffEndOfTimes = Just (PositionOffEndOfTimesProblem 7 8)
+                            }
             , test "identifyProblems returns a problem for an athlete with three repeated positions" <|
                 \() ->
                     identifyProblems
                         None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A123456" ] ), ( 19, [ "A123456" ] ) ]) [] [])
                         emptyEventDateAndTime
-                        |> Expect.equal { noProblems | athletesWithMultiplePositions = [ AthleteWithMultiplePositionsProblem "A123456" [ 12, 16, 19 ] ] }
+                        |> Expect.equal
+                            { noProblems
+                                | athletesWithMultiplePositions =
+                                    [ AthleteWithMultiplePositionsProblem "A123456" [ PositionAndTime 12 Nothing, PositionAndTime 16 Nothing, PositionAndTime 19 Nothing ]
+                                    ]
+                            }
             , test "identifyProblems returns a problem for an athlete with three positions, two of which are the same" <|
                 \() ->
                     identifyProblems
@@ -153,7 +265,9 @@ suite =
                         |> Expect.equal
                             { noProblems
                                 | athletesInSamePositionMultipleTimes = [ AthleteAndPositionPair "A123456" 16 ]
-                                , athletesWithMultiplePositions = [ AthleteWithMultiplePositionsProblem "A123456" [ 12, 16 ] ]
+                                , athletesWithMultiplePositions =
+                                    [ AthleteWithMultiplePositionsProblem "A123456" [ PositionAndTime 12 Nothing, PositionAndTime 16 Nothing ]
+                                    ]
                             }
             , test "identifyProblems returns two problems for two athletes with repeated positions" <|
                 \() ->
@@ -164,8 +278,8 @@ suite =
                         |> Expect.equal
                             { noProblems
                                 | athletesWithMultiplePositions =
-                                    [ AthleteWithMultiplePositionsProblem "A123456" [ 12, 19 ]
-                                    , AthleteWithMultiplePositionsProblem "A252525" [ 16, 25 ]
+                                    [ AthleteWithMultiplePositionsProblem "A123456" [ PositionAndTime 12 Nothing, PositionAndTime 19 Nothing ]
+                                    , AthleteWithMultiplePositionsProblem "A252525" [ PositionAndTime 16 Nothing, PositionAndTime 25 Nothing ]
                                     ]
                             }
             , test "identifyProblems returns a problem for a position with two athletes" <|

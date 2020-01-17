@@ -16,11 +16,13 @@ import Problems
         , BarcodesScannedBeforeEventStartProblem
         , BarcodesScannedTheWrongWayAroundProblem
         , InconsistentBarcodeScannerDatesProblem
+        , PositionAndTime
         , PositionOffEndOfTimesProblem
         , PositionWithMultipleAthletesProblem
         , Problems
         )
 import Stopwatch exposing (WhichStopwatch(..))
+import TimeHandling exposing (formatTime)
 import ViewCommon exposing (athleteLink, smallButton)
 
 
@@ -341,18 +343,33 @@ inconsistentBarcodeScannerDatesView inconsistentBarcodeScannerDatesProblem =
         ]
 
 
+positionAndTimeToString : PositionAndTime -> String
+positionAndTimeToString { position, time } =
+    let
+        suffix : String
+        suffix =
+            case time of
+                Just someTime ->
+                    " (" ++ formatTime someTime ++ ")"
+
+                Nothing ->
+                    ""
+    in
+    String.fromInt position ++ suffix
+
+
 athletesWithMultiplePositionsView : List AthleteWithMultiplePositionsProblem -> Html Msg
 athletesWithMultiplePositionsView athletesWithMultiplePositions =
     let
-        commaSeparate : List Int -> String
-        commaSeparate numbers =
-            String.join ", " (List.map String.fromInt numbers)
+        commaSeparate : List PositionAndTime -> String
+        commaSeparate positionsAndTimes =
+            String.join ", " (List.map positionAndTimeToString positionsAndTimes)
 
         rowGenerator : AthleteWithMultiplePositionsProblem -> Html Msg
         rowGenerator athleteWithMultiplePositions =
             li []
                 [ athleteLink athleteWithMultiplePositions.athlete
-                , text (" and " ++ commaSeparate athleteWithMultiplePositions.positions)
+                , text (" and " ++ commaSeparate athleteWithMultiplePositions.positionsAndTimes)
                 ]
     in
     case athletesWithMultiplePositions of
@@ -360,7 +377,7 @@ athletesWithMultiplePositionsView athletesWithMultiplePositions =
             dangerAlert
                 [ text "Athlete barcode "
                 , athleteLink singleAthlete.athlete
-                , text (" has been scanned with more than one finish token: " ++ commaSeparate singleAthlete.positions ++ ".")
+                , text (" has been scanned with more than one finish token: " ++ commaSeparate singleAthlete.positionsAndTimes ++ ".")
                 ]
 
         _ ->

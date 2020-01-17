@@ -7,6 +7,7 @@ module Problems exposing
     , BarcodesScannedBeforeEventStartProblem
     , BarcodesScannedTheWrongWayAroundProblem
     , InconsistentBarcodeScannerDatesProblem
+    , PositionAndTime
     , PositionOffEndOfTimesProblem
     , PositionWithMultipleAthletesProblem
     , Problems
@@ -14,6 +15,7 @@ module Problems exposing
     , noProblems
     )
 
+import Array exposing (Array)
 import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, BarcodeScannerFileLine, DeletionStatus(..), LineContents(..), MisScannedItem, UnrecognisedLine)
 import DateHandling exposing (dateTimeStringToPosix, posixToDateString)
 import Dict exposing (Dict)
@@ -67,9 +69,15 @@ type alias InconsistentBarcodeScannerDatesProblem =
     }
 
 
+type alias PositionAndTime =
+    { position : Int
+    , time : Maybe Int
+    }
+
+
 type alias AthleteWithMultiplePositionsProblem =
     { athlete : String
-    , positions : List Int
+    , positionsAndTimes : List PositionAndTime
     }
 
 
@@ -214,8 +222,8 @@ identifyInconsistentBarcodeScannerDates barcodeScannerData =
     Maybe.map (\( first, second ) -> InconsistentBarcodeScannerDatesProblem first second) (hasDifferentValues maxScanDates)
 
 
-identifyAthletesWithMultiplePositions : Dict String (List Int) -> List AthleteWithMultiplePositionsProblem
-identifyAthletesWithMultiplePositions athleteToPositionsDict =
+identifyAthletesWithMultiplePositions : Array Int -> Dict String (List Int) -> List AthleteWithMultiplePositionsProblem
+identifyAthletesWithMultiplePositions times athleteToPositionsDict =
     let
         identifier : ( String, List Int ) -> Maybe AthleteWithMultiplePositionsProblem
         identifier ( athlete, positions ) =
@@ -223,9 +231,13 @@ identifyAthletesWithMultiplePositions athleteToPositionsDict =
                 dedupedPositions : List Int
                 dedupedPositions =
                     deduplicate positions
+
+                lookupTime : Int -> PositionAndTime
+                lookupTime position =
+                    PositionAndTime position (Array.get position times)
             in
             if List.length dedupedPositions > 1 then
-                Just (AthleteWithMultiplePositionsProblem athlete dedupedPositions)
+                Just (AthleteWithMultiplePositionsProblem athlete (List.map lookupTime dedupedPositions))
 
             else
                 Nothing
@@ -608,6 +620,43 @@ replaceZeroOffset offset =
         offset
 
 
+mergeEntryToTime : MergeEntry -> Int
+mergeEntryToTime entry =
+    case entry of
+        ExactMatch time ->
+            time
+
+        NearMatch time1 time2 ->
+            min time1 time2
+
+        NotNearMatch time1 time2 ->
+            min time1 time2
+
+        OneWatchOnly _ time ->
+            time
+
+
+timesListToArray : List Int -> Array Int
+timesListToArray times =
+    Array.fromList (0 :: times)
+
+
+getTimes : Stopwatches -> Array Int
+getTimes stopwatches =
+    case stopwatches of
+        None ->
+            Array.empty
+
+        Single _ times ->
+            timesListToArray times
+
+        Double doubleStopwatchData ->
+            doubleStopwatchData.mergedTableRows
+                |> List.filter .included
+                |> List.map (.entry >> mergeEntryToTime)
+                |> timesListToArray
+
+
 identifyProblems : Stopwatches -> BarcodeScannerData -> EventDateAndTime -> Problems
 identifyProblems stopwatches barcodeScannerData eventDateAndTime =
     let
@@ -638,6 +687,10 @@ identifyProblems stopwatches barcodeScannerData eventDateAndTime =
         eventStartTimeAsString : String
         eventStartTimeAsString =
             eventDateAndTime.date.enteredValue ++ " " ++ eventDateAndTime.time.enteredValue
+
+        times : Array Int
+        times =
+            getTimes stopwatches
     in
     { barcodeScannerClockDifferences = identifyBarcodeScannerClocksBeingOut barcodeScannerData eventStartDateTimeMillis
     , barcodesScannedBeforeEventStart = Maybe.andThen (identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString) eventStartDateTimeMillis
@@ -647,7 +700,7 @@ identifyProblems stopwatches barcodeScannerData eventDateAndTime =
     , barcodesScannedTheWrongWayAround = identifyBarcodesScannedTheWrongWayAround barcodeScannerData
     , stopwatchTimeOffset = replaceZeroOffset (getStopwatchTimeOffset stopwatches)
     , inconsistentBarcodeScannerDates = identifyInconsistentBarcodeScannerDates barcodeScannerData
-    , athletesWithMultiplePositions = identifyAthletesWithMultiplePositions athleteToPositionsDict
+    , athletesWithMultiplePositions = identifyAthletesWithMultiplePositions times athleteToPositionsDict
     , positionsWithMultipleAthletes = identifyPositionsWithMultipleAthletes positionToAthletesDict
     , identicalStopwatchTimes = identifyIdenticalStopwatches stopwatches
     , positionOffEndOfTimes = identifyPositionsOffEndOfTimes stopwatches positionToAthletesDict
