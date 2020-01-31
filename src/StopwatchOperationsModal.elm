@@ -26,6 +26,7 @@ import StopwatchOperations
         , StopwatchOperationChangeType(..)
         , StopwatchOperationEditDetails
         , StopwatchOperationValidationError(..)
+        , StopwatchesToApplyTo(..)
         , isActualDistanceFieldInvalid
         , isAddOffsetFieldInvalid
         , isExpectedDistanceFieldInvalid
@@ -204,6 +205,20 @@ validationErrorRow validationError =
     div [ class "validation-error" ] [ text (validationErrorToString validationError) ]
 
 
+applyToStopwatchCheckboxesRow : OffsetType -> String -> StopwatchOperationEditDetails -> Html Msg
+applyToStopwatchCheckboxesRow offsetType offsetTypeAsString editDetails =
+    case editDetails.stopwatchesToApplyTo of
+        OneStopwatch ->
+            text ""
+
+        TwoStopwatches ->
+            Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
+                [ checkBoxRowApplyToLabel
+                , applyToStopwatchCheckbox ("apply" ++ offsetTypeAsString ++ "OffsetToStopwatch1Checkbox") offsetType StopwatchOne editDetails
+                , applyToStopwatchCheckbox ("apply" ++ offsetTypeAsString ++ "OffsetToStopwatch2Checkbox") offsetType StopwatchTwo editDetails
+                ]
+
+
 stopwatchOperationsModalBody : StopwatchOperationEditDetails -> Html Msg
 stopwatchOperationsModalBody editDetails =
     div []
@@ -211,21 +226,13 @@ stopwatchOperationsModalBody editDetails =
             [ radioButton "addOffsetRadioButton" AddStopwatchTimeOffset "Add offset to all times" editDetails
             , inputTextField (.addOffsetDetails >> .offset) AddOffsetField AddStopwatchTimeOffset isAddOffsetFieldInvalid editDetails
             ]
-        , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
-            [ checkBoxRowApplyToLabel
-            , applyToStopwatchCheckbox "applyAddOffsetToStopwatch1Checkbox" AddOffset StopwatchOne editDetails
-            , applyToStopwatchCheckbox "applyAddOffsetToStopwatch2Checkbox" AddOffset StopwatchTwo editDetails
-            ]
+        , applyToStopwatchCheckboxesRow AddOffset "Add" editDetails
         , hr [] []
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
             [ radioButton "subtractOffsetRadioButton" SubtractStopwatchTimeOffset "Subtract offset from all times" editDetails
             , inputTextField (.subtractOffsetDetails >> .offset) SubtractOffsetField SubtractStopwatchTimeOffset isSubtractOffsetFieldInvalid editDetails
             ]
-        , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
-            [ checkBoxRowApplyToLabel
-            , applyToStopwatchCheckbox "applySubtractOffsetToStopwatch1Checkbox" SubtractOffset StopwatchOne editDetails
-            , applyToStopwatchCheckbox "applySubtractOffsetToStopwatch2Checkbox" SubtractOffset StopwatchTwo editDetails
-            ]
+        , applyToStopwatchCheckboxesRow SubtractOffset "Subtract" editDetails
         , hr [] []
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
             [ radioButton "applyScaleFactorRadioButton" ApplyStopwatchScaleFactor "Apply scale factor to all times:" editDetails

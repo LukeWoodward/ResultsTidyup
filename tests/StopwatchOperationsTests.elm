@@ -13,7 +13,9 @@ import StopwatchOperations
         , StopwatchOperationChangeType(..)
         , StopwatchOperationEditDetails
         , StopwatchOperationValidationError(..)
-        , emptyEditDetails
+        , StopwatchesToApplyTo(..)
+        , emptyEditDetailsFor
+        , emptyEditDetailsFromStopwatches
         , isActualDistanceFieldInvalid
         , isAddOffsetFieldInvalid
         , isExpectedDistanceFieldInvalid
@@ -25,6 +27,11 @@ import StopwatchOperations
         )
 import Test exposing (Test, describe, test)
 import TestData exposing (doubleStopwatches, singleStopwatch)
+
+
+emptyEditDetails : StopwatchOperationEditDetails
+emptyEditDetails =
+    emptyEditDetailsFor TwoStopwatches
 
 
 editDetailsForDistanceBasedScaleFactorTest : IntegerEntry -> IntegerEntry -> StopwatchOperationEditDetails
@@ -110,7 +117,19 @@ getApplyDistanceBasedScaleFactorEditDetails expectedDistance actualDistance =
 suite : Test
 suite =
     describe "StopwatchOperationsTests tests"
-        [ describe "validateEditDetails tests"
+        [ describe "emptyEditDetailsFromStopwatches tests"
+            [ test "emptyEditDetailsFromStopwatches for single stopwatch data creates empty object with OneStopwatch" <|
+                \() ->
+                    emptyEditDetailsFromStopwatches singleStopwatch
+                        |> .stopwatchesToApplyTo
+                        |> Expect.equal OneStopwatch
+            , test "emptyEditDetailsFromStopwatches for double stopwatch data creates empty object with TwoStopwatches" <|
+                \() ->
+                    emptyEditDetailsFromStopwatches doubleStopwatches
+                        |> .stopwatchesToApplyTo
+                        |> Expect.equal TwoStopwatches
+            ]
+        , describe "validateEditDetails tests"
             [ describe "validateEditDetails: no operation selected"
                 [ test "validateEditDetails when no operation selected is not valid" <|
                     \() ->

@@ -540,7 +540,7 @@ update msg model =
             )
 
         ShowStopwatchOperationsModal ->
-            ( { model | dialogDetails = StopwatchOperationsDialog StopwatchOperations.emptyEditDetails }
+            ( { model | dialogDetails = StopwatchOperationsDialog (StopwatchOperations.emptyEditDetailsFromStopwatches model.stopwatches) }
             , NoCommand
             )
 

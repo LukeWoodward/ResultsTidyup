@@ -7,8 +7,10 @@ module StopwatchOperations exposing
     , StopwatchOperationChangeType(..)
     , StopwatchOperationEditDetails
     , StopwatchOperationValidationError(..)
+    , StopwatchesToApplyTo(..)
     , StopwatchesToModify(..)
-    , emptyEditDetails
+    , emptyEditDetailsFor
+    , emptyEditDetailsFromStopwatches
     , isActualDistanceFieldInvalid
     , isAddOffsetFieldInvalid
     , isExpectedDistanceFieldInvalid
@@ -71,6 +73,11 @@ type OffsetType
     | SubtractOffset
 
 
+type StopwatchesToApplyTo
+    = OneStopwatch
+    | TwoStopwatches
+
+
 type StopwatchOperationValidationError
     = NoValidationError
     | StopwatchOperationNotSelected
@@ -85,6 +92,7 @@ type StopwatchOperationValidationError
 
 type alias StopwatchOperationEditDetails =
     { operation : StopwatchOperation
+    , stopwatchesToApplyTo : StopwatchesToApplyTo
     , addOffsetDetails : OffsetDetails
     , subtractOffsetDetails : OffsetDetails
     , manualScaleFactor : FloatEntry
@@ -105,9 +113,10 @@ emptyOffset =
     OffsetDetails emptyEntry False False
 
 
-emptyEditDetails : StopwatchOperationEditDetails
-emptyEditDetails =
+emptyEditDetailsFor : StopwatchesToApplyTo -> StopwatchOperationEditDetails
+emptyEditDetailsFor stopwatchesToApplyTo =
     { operation = NoOperationSelected
+    , stopwatchesToApplyTo = stopwatchesToApplyTo
     , addOffsetDetails = emptyOffset
     , subtractOffsetDetails = emptyOffset
     , manualScaleFactor = emptyEntry
@@ -115,6 +124,24 @@ emptyEditDetails =
     , actualDistance = emptyEntry
     , validationError = NoValidationError
     }
+
+
+emptyEditDetailsFromStopwatches : Stopwatches -> StopwatchOperationEditDetails
+emptyEditDetailsFromStopwatches stopwatches =
+    let
+        stopwatchesToApplyTo : StopwatchesToApplyTo
+        stopwatchesToApplyTo =
+            case stopwatches of
+                None ->
+                    OneStopwatch
+
+                Single _ _ ->
+                    OneStopwatch
+
+                Double _ ->
+                    TwoStopwatches
+    in
+    emptyEditDetailsFor stopwatchesToApplyTo
 
 
 isDoubleStopwatchData : Stopwatches -> Bool
