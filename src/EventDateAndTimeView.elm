@@ -26,7 +26,7 @@ eventDateAndTimeView eventDateAndTime =
     let
         dateInputClass : String
         dateInputClass =
-            if eventDateAndTime.date.enteredValue /= "" && eventDateAndTime.time.parsedValue == Nothing then
+            if eventDateAndTime.date.enteredValue /= "" && eventDateAndTime.date.parsedValue == Nothing then
                 "date-error form-control"
 
             else
@@ -55,7 +55,7 @@ eventDateAndTimeView eventDateAndTime =
                     , id "eventDateBox"
                     , class dateInputClass
                     , onInput EventDateChanged
-                    , value eventDateAndTime.time.enteredValue
+                    , value eventDateAndTime.date.enteredValue
                     ]
                     []
                 ]
