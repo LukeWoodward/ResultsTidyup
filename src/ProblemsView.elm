@@ -424,7 +424,10 @@ athletesMissingPositionView athletes =
     case athletes of
         [ singleAthlete ] ->
             dangerAlert
-                [ text ("Athlete barcode " ++ singleAthlete ++ " was scanned without a finish token.") ]
+                [ text "Athlete barcode "
+                , athleteLink singleAthlete
+                , text " was scanned without a finish token."
+                ]
 
         _ ->
             dangerAlert
