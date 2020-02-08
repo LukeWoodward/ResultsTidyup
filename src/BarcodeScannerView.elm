@@ -19,7 +19,7 @@ import Html.Attributes exposing (class, colspan, rowspan, title)
 import Html.Events exposing (onClick, onDoubleClick)
 import Model exposing (Model)
 import Msg exposing (Msg(..))
-import ViewCommon exposing (smallButton, tableHeaders)
+import ViewCommon exposing (athleteLink, smallButton, tableHeaders)
 
 
 maybeIntToString : Maybe Int -> String
@@ -54,11 +54,21 @@ deletionReasonToString reason =
             "You deleted this line"
 
 
-barcodeScannerContents : LineContents -> List (Table.Cell Msg)
-barcodeScannerContents contents =
+barcodeScannerContents : LineContents -> DeletionStatus -> List (Table.Cell Msg)
+barcodeScannerContents contents deletionStatus =
     case contents of
         Ordinary athlete position ->
-            [ Table.td [] [ text athlete ]
+            let
+                athleteContents : Html Msg
+                athleteContents =
+                    case deletionStatus of
+                        NotDeleted ->
+                            athleteLink athlete
+
+                        Deleted _ ->
+                            text athlete
+            in
+            [ Table.td [] [ athleteContents ]
             , Table.td [] [ text (maybeIntToString position) ]
             ]
 
@@ -102,7 +112,7 @@ barcodeScannerViewRow fileName line =
     Table.tr
         (List.map Table.rowAttr rowAttributes)
         ([ Table.td [] [ text (String.fromInt line.lineNumber) ] ]
-            ++ barcodeScannerContents line.contents
+            ++ barcodeScannerContents line.contents line.deletionStatus
             ++ [ Table.td [] [ text line.scanDateTime ] ]
         )
 
