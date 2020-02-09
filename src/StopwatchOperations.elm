@@ -480,7 +480,7 @@ tryApplyOperationToStopwatchData editDetails stopwatches =
             ApplyDistanceBasedStopwatchScaleFactor ->
                 case ( editDetails.expectedDistance.parsedValue, editDetails.actualDistance.parsedValue ) of
                     ( Just expectedDistance, Just actualDistance ) ->
-                        applyScaleFactor (toFloat expectedDistance / toFloat actualDistance) stopwatches
+                        applyScaleFactor ((toFloat expectedDistance / toFloat actualDistance) ^ 1.06) stopwatches
                             |> Ok
 
                     _ ->

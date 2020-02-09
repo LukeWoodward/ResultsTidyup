@@ -424,15 +424,17 @@ suite =
                 \() ->
                     tryApplyOperationToStopwatchData (getApplyScaleFactorEditDetails 1.37) None
                         |> Expect.equal (Ok None)
+
+            -- Scale factor for the next two tests is (5000/4600)^1.06, ~ 1.0924
             , test "Applies a distance-based scale factor to two stopwatches" <|
                 \() ->
                     tryApplyOperationToStopwatchData (getApplyDistanceBasedScaleFactorEditDetails 5000 4600) doubleStopwatches
                         |> Result.map getTimes
-                        |> Expect.equal (Ok ( [ 208, 504, 655, 811, 959, 1118 ], [ 208, 503, 811, 860, 959 ] ))
+                        |> Expect.equal (Ok ( [ 209, 507, 659, 815, 964, 1124 ], [ 209, 506, 815, 864, 964 ] ))
             , test "Applies a distance-based scale factor to a single stopwatch" <|
                 \() ->
                     tryApplyOperationToStopwatchData (getApplyDistanceBasedScaleFactorEditDetails 5000 4600) (Single "stopwatch1.txt" [ 191, 464, 603, 746, 882, 1029 ])
-                        |> Expect.equal (Ok (Single "stopwatch1.txt" [ 208, 504, 655, 811, 959, 1118 ]))
+                        |> Expect.equal (Ok (Single "stopwatch1.txt" [ 209, 507, 659, 815, 964, 1124 ]))
             , test "Applies a distance-based scale factor to no stopwatches" <|
                 \() ->
                     tryApplyOperationToStopwatchData (getApplyDistanceBasedScaleFactorEditDetails 5000 4600) None
