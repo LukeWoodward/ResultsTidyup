@@ -277,6 +277,11 @@ mergedTableBody highlightedNumberCheckerId barcodeScannerData mergedTable =
     Table.tbody [] (rowsWithStopwatches ++ additionalRows)
 
 
+stopwatchButtons : WhichStopwatch -> List TableHeaderButton
+stopwatchButtons whichStopwatch =
+    [ downloadStopwatchButton whichStopwatch, removeStopwatchButton whichStopwatch ]
+
+
 stopwatchTable : Stopwatches -> BarcodeScannerData -> Maybe Int -> Html Msg
 stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
     case stopwatches of
@@ -301,7 +306,7 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                 , thead =
                     tableHeadersWithButtons
                         [ TableHeaderWithButtons "Position" "" []
-                        , TableHeaderWithButtons "Stopwatch 1" filename [ downloadStopwatchButton StopwatchOne, removeStopwatchButton StopwatchOne ]
+                        , TableHeaderWithButtons "Stopwatch 1" filename (stopwatchButtons StopwatchOne)
                         , TableHeaderWithButtons "Athletes" "" []
                         ]
                 , tbody = singleStopwatchTableBody stopwatchTimes barcodeScannerData
@@ -313,8 +318,8 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                 , thead =
                     tableHeadersWithButtons
                         [ TableHeaderWithButtons "Position" "" []
-                        , TableHeaderWithButtons "Stopwatch 1" doubleStopwatchData.filename1 [ downloadStopwatchButton StopwatchOne, removeStopwatchButton StopwatchOne ]
-                        , TableHeaderWithButtons "Stopwatch 2" doubleStopwatchData.filename2 [ downloadStopwatchButton StopwatchTwo, removeStopwatchButton StopwatchTwo ]
+                        , TableHeaderWithButtons "Stopwatch 1" doubleStopwatchData.filename1 (stopwatchButtons StopwatchOne)
+                        , TableHeaderWithButtons "Stopwatch 2" doubleStopwatchData.filename2 (stopwatchButtons StopwatchTwo)
                         , TableHeaderWithButtons "Athletes" "" []
                         ]
                 , tbody = mergedTableBody highlightedNumberCheckerId barcodeScannerData doubleStopwatchData.mergedTableRows
