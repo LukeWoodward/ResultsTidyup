@@ -142,14 +142,14 @@ tableHeadersWithButtons headerTexts =
 downloadStopwatchButton : WhichStopwatch -> TableHeaderButton
 downloadStopwatchButton which =
     { change = GetCurrentDateForDownloadFile (Commands.DownloadSingleStopwatch which)
-    , buttonText = "Download "
+    , buttonText = "Download"
     }
 
 
-deleteStopwatchButton : WhichStopwatch -> TableHeaderButton
-deleteStopwatchButton which =
-    { change = DeleteStopwatch which
-    , buttonText = "Delete "
+removeStopwatchButton : WhichStopwatch -> TableHeaderButton
+removeStopwatchButton which =
+    { change = RemoveStopwatch which
+    , buttonText = "Remove"
     }
 
 
@@ -301,7 +301,7 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                 , thead =
                     tableHeadersWithButtons
                         [ TableHeaderWithButtons "Position" "" []
-                        , TableHeaderWithButtons "Stopwatch 1" filename [ downloadStopwatchButton StopwatchOne, deleteStopwatchButton StopwatchOne ]
+                        , TableHeaderWithButtons "Stopwatch 1" filename [ downloadStopwatchButton StopwatchOne, removeStopwatchButton StopwatchOne ]
                         , TableHeaderWithButtons "Athletes" "" []
                         ]
                 , tbody = singleStopwatchTableBody stopwatchTimes barcodeScannerData
@@ -313,8 +313,8 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                 , thead =
                     tableHeadersWithButtons
                         [ TableHeaderWithButtons "Position" "" []
-                        , TableHeaderWithButtons "Stopwatch 1" doubleStopwatchData.filename1 [ downloadStopwatchButton StopwatchOne, deleteStopwatchButton StopwatchOne ]
-                        , TableHeaderWithButtons "Stopwatch 2" doubleStopwatchData.filename2 [ downloadStopwatchButton StopwatchTwo, deleteStopwatchButton StopwatchTwo ]
+                        , TableHeaderWithButtons "Stopwatch 1" doubleStopwatchData.filename1 [ downloadStopwatchButton StopwatchOne, removeStopwatchButton StopwatchOne ]
+                        , TableHeaderWithButtons "Stopwatch 2" doubleStopwatchData.filename2 [ downloadStopwatchButton StopwatchTwo, removeStopwatchButton StopwatchTwo ]
                         , TableHeaderWithButtons "Athletes" "" []
                         ]
                 , tbody = mergedTableBody highlightedNumberCheckerId barcodeScannerData doubleStopwatchData.mergedTableRows

@@ -294,21 +294,21 @@ suite =
         , describe "Delete Stopwatch tests"
             [ test "Deleting stopwatch 1 when none to delete does nothing" <|
                 \() ->
-                    update (DeleteStopwatch StopwatchOne) initModel
+                    update (RemoveStopwatch StopwatchOne) initModel
                         |> Expect.all defaultAssertions
             , test "Deleting stopwatch 2 when none to delete does nothing" <|
                 \() ->
-                    update (DeleteStopwatch StopwatchTwo) initModel
+                    update (RemoveStopwatch StopwatchTwo) initModel
                         |> Expect.all defaultAssertions
             , test "Deleting stopwatch 1 when one to delete deletes that stopwatch" <|
                 \() ->
                     { initModel | stopwatches = singleStopwatch }
-                        |> update (DeleteStopwatch StopwatchOne)
+                        |> update (RemoveStopwatch StopwatchOne)
                         |> Expect.all defaultAssertions
             , test "Deleting stopwatch 2 when one to delete does nothing" <|
                 \() ->
                     { initModel | stopwatches = singleStopwatch }
-                        |> update (DeleteStopwatch StopwatchTwo)
+                        |> update (RemoveStopwatch StopwatchTwo)
                         |> Expect.all
                             (expectStopwatches singleStopwatch
                                 :: defaultAssertionsExcept [ Stopwatches ]
@@ -316,7 +316,7 @@ suite =
             , test "Deleting stopwatch 1 when two to delete deletes stopwatch 1" <|
                 \() ->
                     { initModel | stopwatches = doubleStopwatches }
-                        |> update (DeleteStopwatch StopwatchOne)
+                        |> update (RemoveStopwatch StopwatchOne)
                         |> Expect.all
                             (expectStopwatches (Single "stopwatch2.txt" parsedStopwatchTimes2)
                                 :: defaultAssertionsExcept [ Stopwatches ]
@@ -324,7 +324,7 @@ suite =
             , test "Deleting stopwatch 2 when two to delete deletes stopwatch 2" <|
                 \() ->
                     { initModel | stopwatches = doubleStopwatches }
-                        |> update (DeleteStopwatch StopwatchTwo)
+                        |> update (RemoveStopwatch StopwatchTwo)
                         |> Expect.all
                             (expectStopwatches singleStopwatch
                                 :: defaultAssertionsExcept [ Stopwatches ]
@@ -733,44 +733,44 @@ suite =
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
                             )
             ]
-        , describe "DeleteBarcodeScannerFile tests"
-            [ test "DeleteBarcodeScannerFile does nothing for empty data" <|
+        , describe "RemoveBarcodeScannerFile tests"
+            [ test "RemoveBarcodeScannerFile does nothing for empty data" <|
                 \() ->
-                    update (DeleteBarcodeScannerFile "1.txt") initModel
+                    update (RemoveBarcodeScannerFile "1.txt") initModel
                         |> Expect.all defaultAssertions
-            , test "DeleteBarcodeScannerFile deletes single file" <|
+            , test "RemoveBarcodeScannerFile deletes single file" <|
                 \() ->
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1 ] }
-                        |> update (DeleteBarcodeScannerFile "1.txt")
+                        |> update (RemoveBarcodeScannerFile "1.txt")
                         |> Expect.all defaultAssertions
-            , test "DeleteBarcodeScannerFile deletes file at first index of three" <|
+            , test "RemoveBarcodeScannerFile deletes file at first index of three" <|
                 \() ->
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
-                        |> update (DeleteBarcodeScannerFile "1.txt")
+                        |> update (RemoveBarcodeScannerFile "1.txt")
                         |> Expect.all
                             (expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 2, 3 ])
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
                             )
-            , test "DeleteBarcodeScannerFile deletes file at middle index of three" <|
+            , test "RemoveBarcodeScannerFile deletes file at middle index of three" <|
                 \() ->
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
-                        |> update (DeleteBarcodeScannerFile "2.txt")
+                        |> update (RemoveBarcodeScannerFile "2.txt")
                         |> Expect.all
                             (expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 3 ])
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
                             )
-            , test "DeleteBarcodeScannerFile deletes file at last index of three" <|
+            , test "RemoveBarcodeScannerFile deletes file at last index of three" <|
                 \() ->
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
-                        |> update (DeleteBarcodeScannerFile "3.txt")
+                        |> update (RemoveBarcodeScannerFile "3.txt")
                         |> Expect.all
                             (expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2 ])
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
                             )
-            , test "DeleteBarcodeScannerFile does nothing with non-existent filename" <|
+            , test "RemoveBarcodeScannerFile does nothing with non-existent filename" <|
                 \() ->
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
-                        |> update (DeleteBarcodeScannerFile "nonexistent.txt")
+                        |> update (RemoveBarcodeScannerFile "nonexistent.txt")
                         |> Expect.all
                             (expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2, 3 ])
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]

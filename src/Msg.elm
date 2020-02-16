@@ -24,7 +24,7 @@ type Msg
     | FilesDropped (List InteropFile)
     | ToggleTableRow Int
     | DownloadStopwatch WhichStopwatch Zone Posix
-    | DeleteStopwatch WhichStopwatch
+    | RemoveStopwatch WhichStopwatch
     | FlipStopwatches
     | ClearAllData
     | GetCurrentDateForDownloadFile DownloadOperation
@@ -45,7 +45,7 @@ type Msg
     | ClearErrors
     | DownloadBarcodeScannerFile String Zone Posix
     | DownloadAllBarcodeScannerData Zone Posix
-    | DeleteBarcodeScannerFile String
+    | RemoveBarcodeScannerFile String
     | IgnoreProblem Int
     | ShowBarcodeScannerEditModal BarcodeScannerRowEditLocation LineContents Bool
     | BarcodeScannerEdit BarcodeScannerEditDetails

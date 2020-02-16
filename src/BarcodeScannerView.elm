@@ -123,7 +123,7 @@ barcodeScannerView file =
         [ div
             [ class "barcode-scanner-buttons" ]
             [ smallButton (GetCurrentDateForDownloadFile (Commands.DownloadBarcodeScannerFile file.name)) [] "Download"
-            , smallButton (DeleteBarcodeScannerFile file.name) [] "Delete"
+            , smallButton (RemoveBarcodeScannerFile file.name) [] "Remove"
             ]
         , Table.table
             { options = [ Table.bordered, Table.small, Table.hover, Table.attr (class "barcode-scanner-table") ]

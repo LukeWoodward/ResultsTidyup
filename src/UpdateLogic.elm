@@ -152,8 +152,8 @@ createSingleStopwatchDataFile whichStopwatch zone time model =
             NoCommand
 
 
-deleteStopwatch : WhichStopwatch -> Model -> Model
-deleteStopwatch which model =
+removeStopwatch : WhichStopwatch -> Model -> Model
+removeStopwatch which model =
     case ( model.stopwatches, which ) of
         ( None, _ ) ->
             model
@@ -313,8 +313,8 @@ createAllBarcodeScannerData files zone time =
     DownloadFile barcodeScannerFileMimeType (InteropFile downloadFileName downloadFileContents)
 
 
-deleteBarcodeScannerFileWithName : String -> Model -> Model
-deleteBarcodeScannerFileWithName fileName model =
+removeBarcodeScannerFileWithName : String -> Model -> Model
+removeBarcodeScannerFileWithName fileName model =
     let
         barcodeScannerData : BarcodeScannerData
         barcodeScannerData =
@@ -402,8 +402,8 @@ update msg model =
         DownloadStopwatch which zone time ->
             ( model, createSingleStopwatchDataFile which zone time model )
 
-        DeleteStopwatch which ->
-            ( deleteStopwatch which model, NoCommand )
+        RemoveStopwatch which ->
+            ( removeStopwatch which model, NoCommand )
 
         FlipStopwatches ->
             ( flipStopwatches model, NoCommand )
@@ -498,8 +498,8 @@ update msg model =
         DownloadAllBarcodeScannerData zone time ->
             ( model, createAllBarcodeScannerData model.barcodeScannerData.files zone time )
 
-        DeleteBarcodeScannerFile fileName ->
-            ( deleteBarcodeScannerFileWithName fileName model, NoCommand )
+        RemoveBarcodeScannerFile fileName ->
+            ( removeBarcodeScannerFileWithName fileName model, NoCommand )
 
         IgnoreProblem problemIndex ->
             -- TODO
