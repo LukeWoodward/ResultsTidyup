@@ -538,9 +538,14 @@ findEndOfWrongWayAroundSection startLineNumber prevFinishToken lines =
                         -- Hit a mis-scan: abandon the search.
                         Nothing
 
-                    Ordinary "" _ ->
-                        -- Another position-only record.  Abandon the search.
+                    Ordinary "" Nothing ->
+                        -- Completely blank record?  Not expecting this: abandon the search.
                         Nothing
+
+                    Ordinary "" (Just thisFinishToken) ->
+                        -- Another position-only record.  Assume that an athlete barcode has failed
+                        -- to scan and keep going.
+                        findEndOfWrongWayAroundSection startLineNumber thisFinishToken rest
 
                     Ordinary athlete Nothing ->
                         -- Athlete-only record.  Stop things here.

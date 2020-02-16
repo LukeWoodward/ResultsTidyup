@@ -11,6 +11,7 @@ module TestData exposing
     , flippedDoubleStopwatches
     , invalidBarcodeScannerData
     , invalidNumberCheckerData
+    , misScanFileLine
     , ordinaryFileLine
     , parsedBarcodeScannerData1
     , parsedBarcodeScannerData1And2
@@ -107,6 +108,11 @@ defaultMatchSummary =
 ordinaryFileLine : Int -> String -> Maybe Int -> String -> BarcodeScannerFileLine
 ordinaryFileLine lineNumber athlete finishToken scanTime =
     BarcodeScannerFileLine lineNumber (Ordinary athlete finishToken) scanTime NotDeleted
+
+
+misScanFileLine : Int -> String -> String -> BarcodeScannerFileLine
+misScanFileLine lineNumber misScannedText scanTime =
+    BarcodeScannerFileLine lineNumber (MisScan misScannedText) scanTime NotDeleted
 
 
 toPosix : String -> Maybe Posix
