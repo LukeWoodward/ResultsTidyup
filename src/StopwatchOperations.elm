@@ -412,10 +412,10 @@ applyStopwatchOffset offset applyToStopwatch1 applyToStopwatch2 stopwatches =
                     else
                         doubleStopwatchData.times2
             in
-            recreateDoubleStopwatchData newTimes1 newTimes2 doubleStopwatchData
+            Double (recreateDoubleStopwatchData newTimes1 newTimes2 doubleStopwatchData)
 
 
-recreateDoubleStopwatchData : List Int -> List Int -> DoubleStopwatchData -> Stopwatches
+recreateDoubleStopwatchData : List Int -> List Int -> DoubleStopwatchData -> DoubleStopwatchData
 recreateDoubleStopwatchData times1 times2 doubleStopwatchData =
     createMergedTable times1 times2 doubleStopwatchData.filename1 doubleStopwatchData.filename2
 
@@ -435,7 +435,7 @@ applyScaleFactor scaleFactor stopwatches =
             Single filename (List.map applyFactor times)
 
         Double doubleStopwatchData ->
-            recreateDoubleStopwatchData (List.map applyFactor doubleStopwatchData.times1) (List.map applyFactor doubleStopwatchData.times2) doubleStopwatchData
+            Double (recreateDoubleStopwatchData (List.map applyFactor doubleStopwatchData.times1) (List.map applyFactor doubleStopwatchData.times2) doubleStopwatchData)
 
 
 tryApplyOperationToStopwatchData : StopwatchOperationEditDetails -> Stopwatches -> Result StopwatchOperationValidationError Stopwatches

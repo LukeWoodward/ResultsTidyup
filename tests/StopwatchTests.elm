@@ -299,7 +299,7 @@ suite =
             [ test "Creating a merged table from an empty list generates empty data" <|
                 \() ->
                     createMergedTable [] [] "empty1.txt" "empty2.txt"
-                        |> Expect.equal (Double (DoubleStopwatchData [] [] "empty1.txt" "empty2.txt" [] (StopwatchMatchSummary 0 0 0 0 0)))
+                        |> Expect.equal (DoubleStopwatchData [] [] "empty1.txt" "empty2.txt" [] (StopwatchMatchSummary 0 0 0 0 0))
             , test "Creating a merged table from a list of identical times" <|
                 \() ->
                     let
@@ -313,7 +313,7 @@ suite =
                                 |> generateInitialTable
                     in
                     createMergedTable times times "identical1.txt" "identical2.txt"
-                        |> Expect.equal (Double (DoubleStopwatchData times times "identical1.txt" "identical2.txt" mergedTable (StopwatchMatchSummary 3 0 0 0 0)))
+                        |> Expect.equal (DoubleStopwatchData times times "identical1.txt" "identical2.txt" mergedTable (StopwatchMatchSummary 3 0 0 0 0))
             , test "Creating a merged table from a pair of lists of times with a near match" <|
                 \() ->
                     let
@@ -331,7 +331,7 @@ suite =
                                 |> generateInitialTable
                     in
                     createMergedTable times1 times2 "nearmatch1.txt" "nearmatch2.txt"
-                        |> Expect.equal (Double (DoubleStopwatchData times1 times2 "nearmatch1.txt" "nearmatch2.txt" mergedTable (StopwatchMatchSummary 2 1 0 0 0)))
+                        |> Expect.equal (DoubleStopwatchData times1 times2 "nearmatch1.txt" "nearmatch2.txt" mergedTable (StopwatchMatchSummary 2 1 0 0 0))
             , test "Creating a merged table from a pair of lists of times with a not-near match" <|
                 \() ->
                     let
@@ -349,7 +349,7 @@ suite =
                                 |> generateInitialTable
                     in
                     createMergedTable times1 times2 "notnearmatch1.txt" "notnearmatch2.txt"
-                        |> Expect.equal (Double (DoubleStopwatchData times1 times2 "notnearmatch1.txt" "notnearmatch2.txt" mergedTable (StopwatchMatchSummary 2 0 1 0 0)))
+                        |> Expect.equal (DoubleStopwatchData times1 times2 "notnearmatch1.txt" "notnearmatch2.txt" mergedTable (StopwatchMatchSummary 2 0 1 0 0))
             , test "Creating a merged table from a pair of lists of times with a time only on the first watch" <|
                 \() ->
                     let
@@ -367,7 +367,7 @@ suite =
                                 |> generateInitialTable
                     in
                     createMergedTable times1 times2 "watch1only1.txt" "watch1only2.txt"
-                        |> Expect.equal (Double (DoubleStopwatchData times1 times2 "watch1only1.txt" "watch1only2.txt" mergedTable (StopwatchMatchSummary 2 0 0 1 0)))
+                        |> Expect.equal (DoubleStopwatchData times1 times2 "watch1only1.txt" "watch1only2.txt" mergedTable (StopwatchMatchSummary 2 0 0 1 0))
             , test "Creating a merged table from a pair of lists of times with a time only on the second watch" <|
                 \() ->
                     let
@@ -385,7 +385,7 @@ suite =
                                 |> generateInitialTable
                     in
                     createMergedTable times1 times2 "watch2only1.txt" "watch2only2.txt"
-                        |> Expect.equal (Double (DoubleStopwatchData times1 times2 "watch2only1.txt" "watch2only2.txt" mergedTable (StopwatchMatchSummary 2 0 0 0 1)))
+                        |> Expect.equal (DoubleStopwatchData times1 times2 "watch2only1.txt" "watch2only2.txt" mergedTable (StopwatchMatchSummary 2 0 0 0 1))
             ]
         , describe "outputMergedTable tests"
             [ test "outputMergedTable of an empty list of stopwatch times is empty" <|

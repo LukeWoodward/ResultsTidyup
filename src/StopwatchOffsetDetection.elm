@@ -1,8 +1,8 @@
-module StopwatchOffsetDetection exposing (findMostCommonNumber, getStopwatchTimeOffset)
+module StopwatchOffsetDetection exposing (findPossibleOffsets, getStopwatchTimeOffset)
 
 import Array exposing (Array)
 import Dict exposing (Dict)
-import Stopwatch exposing (DoubleStopwatchData, Stopwatches(..))
+import Stopwatch exposing (DoubleStopwatchData, Stopwatches(..), createMergedTable)
 
 
 stopwatchTimeOffsetRange : Int
@@ -28,53 +28,26 @@ offsetCountThresholdRatio =
     0.5
 
 
-type alias MostCommonStatus =
-    { entries : Dict Int Int
-    , mostFrequent : Maybe Int
-    , mostFrequentCount : Int
-    }
-
-
-addNextNumber : Int -> MostCommonStatus -> MostCommonStatus
-addNextNumber number mostCommonStatus =
+addNextNumber : Int -> Dict Int Int -> Dict Int Int
+addNextNumber number entries =
     let
-        oldValue : Int
-        oldValue =
-            Dict.get number mostCommonStatus.entries
-                |> Maybe.withDefault 0
-
-        newValue : Int
-        newValue =
-            oldValue + 1
-
-        newEntries : Dict Int Int
-        newEntries =
-            Dict.insert number newValue mostCommonStatus.entries
+        updater : Maybe Int -> Maybe Int
+        updater oldValue =
+            Maybe.withDefault 0 oldValue
+                |> (+) 1
+                |> Just
     in
-    if newValue > mostCommonStatus.mostFrequentCount then
-        { entries = newEntries, mostFrequent = Just number, mostFrequentCount = newValue }
-
-    else
-        { mostCommonStatus | entries = newEntries }
+    Dict.update number updater entries
 
 
-{-| Finds the most common number in a list, provided that that number occurs
-at least a specified minimum number of times. Returns Nothing if the source
-list is empty or doesn't contain any number repeated at least as many times
-as the minimum.
+{-| Find possible stopwatch time offsets. These are all of those that occur
+at least the given number of times within the given list.
 -}
-findMostCommonNumber : Int -> List Int -> Maybe Int
-findMostCommonNumber minCountRequired numbers =
-    let
-        mostCommonStatus : MostCommonStatus
-        mostCommonStatus =
-            List.foldr addNextNumber (MostCommonStatus Dict.empty Nothing 0) numbers
-    in
-    if mostCommonStatus.mostFrequentCount >= minCountRequired then
-        mostCommonStatus.mostFrequent
-
-    else
-        Nothing
+findPossibleOffsets : Int -> List Int -> List Int
+findPossibleOffsets minCountRequired numbers =
+    List.foldr addNextNumber Dict.empty numbers
+        |> Dict.filter (\_ count -> count >= minCountRequired)
+        |> Dict.keys
 
 
 scale : Int -> Int -> Int -> Int
@@ -82,13 +55,13 @@ scale index1 length1 length2 =
     round (toFloat index1 * (toFloat length2 - 1) / (toFloat length1 - 1) + 0.5)
 
 
-getStopwatchTimeOffsetInDoubleStopwatchData : DoubleStopwatchData -> Maybe Int
-getStopwatchTimeOffsetInDoubleStopwatchData doubleStopwatchData =
+getPossibleStopwatchTimeOffsetsInDoubleStopwatchData : DoubleStopwatchData -> List Int
+getPossibleStopwatchTimeOffsetsInDoubleStopwatchData doubleStopwatchData =
     {- The implementation of this is somewhat basic: we compare corresponding
        times that are within a given number of positions away from each other.
        Adjustments are made if the stopwatches don't have the same number of
-       times recorded.  The most common difference between pairs of times
-       is then taken as the estimated offset.
+       times recorded.  All differences between pairs of times that occur
+       enough times are then returned.
     -}
     let
         times1Array : Array Int
@@ -151,14 +124,37 @@ getStopwatchTimeOffsetInDoubleStopwatchData doubleStopwatchData =
         minOffsetCountRequired =
             round (toFloat (length1 + length2) * 0.5 * offsetCountThresholdRatio)
     in
-    findMostCommonNumber minOffsetCountRequired timeDifferences
+    findPossibleOffsets minOffsetCountRequired timeDifferences
+
+
+getBestStopwatchTimeOffsetInDoubleStopwatchData : DoubleStopwatchData -> Maybe Int
+getBestStopwatchTimeOffsetInDoubleStopwatchData doubleStopwatchData =
+    let
+        possibleOffsets : List Int
+        possibleOffsets =
+            getPossibleStopwatchTimeOffsetsInDoubleStopwatchData doubleStopwatchData
+
+        getMergedTableResult : Int -> Int
+        getMergedTableResult offset =
+            createMergedTable doubleStopwatchData.times1 (List.map ((+) offset) doubleStopwatchData.times2) "dummy-filename1" "fummy-filename2"
+                |> .matchSummary
+                |> .exactMatches
+
+        allMergeResults : List ( Int, Int )
+        allMergeResults =
+            List.map (\offset -> ( offset, getMergedTableResult offset )) possibleOffsets
+    in
+    List.sortBy Tuple.second allMergeResults
+        |> List.reverse
+        |> List.head
+        |> Maybe.map Tuple.first
 
 
 getStopwatchTimeOffset : Stopwatches -> Maybe Int
 getStopwatchTimeOffset stopwatches =
     case stopwatches of
         Double doubleStopwatchData ->
-            getStopwatchTimeOffsetInDoubleStopwatchData doubleStopwatchData
+            getBestStopwatchTimeOffsetInDoubleStopwatchData doubleStopwatchData
 
         Single _ _ ->
             Nothing

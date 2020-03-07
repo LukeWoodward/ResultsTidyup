@@ -355,7 +355,7 @@ fixProblem problemFix model =
                                 StopwatchTwo ->
                                     { doubleStopwatchData | times2 = List.map (\time -> time + offset) doubleStopwatchData.times2 }
                     in
-                    createMergedTable adjustedStopwatches.times1 adjustedStopwatches.times2 adjustedStopwatches.filename1 adjustedStopwatches.filename2
+                    Double (createMergedTable adjustedStopwatches.times1 adjustedStopwatches.times2 adjustedStopwatches.filename1 adjustedStopwatches.filename2)
 
                 _ ->
                     -- Not two stopwatches or some other problem-fix.

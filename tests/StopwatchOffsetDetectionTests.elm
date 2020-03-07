@@ -3,7 +3,7 @@ module StopwatchOffsetDetectionTests exposing (suite)
 import Errors exposing (expectError)
 import Expect
 import Stopwatch exposing (DoubleStopwatchData, MergeEntry(..), MergedTableRow, Stopwatches(..), noUnderlines)
-import StopwatchOffsetDetection exposing (findMostCommonNumber, getStopwatchTimeOffset)
+import StopwatchOffsetDetection exposing (findPossibleOffsets, getStopwatchTimeOffset)
 import Test exposing (Test, describe, test)
 import TestData exposing (defaultMatchSummary)
 
@@ -11,34 +11,28 @@ import TestData exposing (defaultMatchSummary)
 suite : Test
 suite =
     describe "Stopwatch offset detection tests"
-        [ describe "findMostCommonNumber tests"
-            [ test "findMostCommonNumber returns Nothing for an empty list" <|
+        [ describe "findPossibleOffsets tests"
+            [ test "findPossibleOffsets returns an empty list for an empty list" <|
                 \() ->
-                    findMostCommonNumber 3 []
-                        |> Expect.equal Nothing
-            , test "findMostCommonNumber returns Nothing for a singleton list" <|
+                    findPossibleOffsets 3 []
+                        |> Expect.equal []
+            , test "findPossibleOffsets returns an empty list for a singleton list" <|
                 \() ->
-                    findMostCommonNumber 3 [ 37 ]
-                        |> Expect.equal Nothing
-            , test "findMostCommonNumber returns Nothing for a list where no number is repeated" <|
+                    findPossibleOffsets 3 [ 37 ]
+                        |> Expect.equal []
+            , test "findPossibleOffsets returns an empty list for a list where no number is repeated" <|
                 \() ->
-                    findMostCommonNumber 3 [ 37, 89, 46, 25, -47, 1, 13, 0, -52, -5 ]
-                        |> Expect.equal Nothing
-            , test "findMostCommonNumber returns Nothing for a list where no number appears more than twice" <|
+                    findPossibleOffsets 3 [ 37, 89, 46, 25, -47, 1, 13, 0, -52, -5 ]
+                        |> Expect.equal []
+            , test "findPossibleOffsets returns an empty list for a list where no number appears more than twice" <|
                 \() ->
-                    findMostCommonNumber 3 [ 37, -2, -47, 25, -47, 89, 37, 0, -52, -5 ]
-                        |> Expect.equal Nothing
-            , test "findMostCommonNumber returns the most common value in a multiple-entry list if it occurs at least three times" <|
+                    findPossibleOffsets 3 [ 37, -2, -47, 25, -47, 89, 37, 0, -52, -5 ]
+                        |> Expect.equal []
+            , test "findPossibleOffsets returns the values in a multiple-entry list that occur at least three times" <|
                 \() ->
-                    findMostCommonNumber 3 [ 37, 89, 46, 37, 88, 89, 37, 37, 42, 89, 37 ]
-                        |> Expect.equal (Just 37)
-            , test "findMostCommonNumber returns one of the most common values in a multiple-entry list with more than one most-common value that occur at least three times" <|
-                \() ->
-                    let
-                        mostCommonNumber =
-                            findMostCommonNumber 3 [ 37, 89, 46, 37, 88, 89, 37, 42, 89, 37 ]
-                    in
-                    Expect.true "Result should be Just 37 or Just 89" (mostCommonNumber == Just 37 || mostCommonNumber == Just 89)
+                    findPossibleOffsets 3 [ 37, 89, 46, 37, 88, 89, 37, 37, 42, 89, 37 ]
+                        |> List.sort
+                        |> Expect.equal [ 37, 89 ]
             ]
         , describe "getStopwatchTimeOffset tests"
             [ test "getStopwatchTimeOffset returns Nothing for no stopwatches" <|

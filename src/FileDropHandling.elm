@@ -50,10 +50,10 @@ handleStopwatchFileDrop fileName fileText model =
 
                             Single existingFilename firstStopwatch ->
                                 if fileName < existingFilename then
-                                    createMergedTable newStopwatch firstStopwatch fileName existingFilename
+                                    Double (createMergedTable newStopwatch firstStopwatch fileName existingFilename)
 
                                 else
-                                    createMergedTable firstStopwatch newStopwatch existingFilename fileName
+                                    Double (createMergedTable firstStopwatch newStopwatch existingFilename fileName)
 
                             Double _ ->
                                 model.stopwatches

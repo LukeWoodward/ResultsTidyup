@@ -499,7 +499,7 @@ outputMergedTable mergedRows =
         |> String.join crlf
 
 
-createMergedTable : List Int -> List Int -> String -> String -> Stopwatches
+createMergedTable : List Int -> List Int -> String -> String -> DoubleStopwatchData
 createMergedTable times1 times2 filename1 filename2 =
     let
         mergedDetails : List MergeEntry
@@ -514,14 +514,13 @@ createMergedTable times1 times2 filename1 filename2 =
         matchSummary =
             generateMatchSummary mergedTable
     in
-    Double
-        { times1 = times1
-        , times2 = times2
-        , filename1 = filename1
-        , filename2 = filename2
-        , mergedTableRows = mergedTable
-        , matchSummary = matchSummary
-        }
+    { times1 = times1
+    , times2 = times2
+    , filename1 = filename1
+    , filename2 = filename2
+    , mergedTableRows = mergedTable
+    , matchSummary = matchSummary
+    }
 
 
 isHeadInRange : List Int -> Int -> Int -> Bool
