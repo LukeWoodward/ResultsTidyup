@@ -148,7 +148,7 @@ athletesInSamePositionMultipleTimesView athleteAndPositionPairs =
 
         _ ->
             warningAlert
-                [ text "The following athletes have been scanned multiple times with same finish token more than once:"
+                [ text "The following athlete barcodes have been scanned multiple times with same finish token more than once:"
                 , ul [] (List.map (athleteAndPositionRow problemFixGenerator buttonLabel) athleteAndPositionPairs)
                 ]
 
@@ -179,7 +179,7 @@ athletesWithAndWithoutPositionView athleteAndPositionPairs =
 
         _ ->
             warningAlert
-                [ text "The following athletes have been scanned multiple times with a finish token and without a finish token:"
+                [ text "The following athlete barcodes have been scanned multiple times with a finish token and without a finish token:"
                 , ul [] (List.map (athleteAndPositionRow problemFixGenerator buttonLabel) athleteAndPositionPairs)
                 ]
 
@@ -273,7 +273,7 @@ barcodesScannedTheWrongWayAroundView barcodesScannedTheWrongWayAround =
 
         _ ->
             warningAlert
-                [ text "The following ranges of barcodes have been scanned the wrong way around:"
+                [ text "The following ranges of barcodes may have been scanned the wrong way around:"
                 , ul [] (List.map generateRow barcodesScannedTheWrongWayAround)
                 ]
 
@@ -382,7 +382,7 @@ athletesWithMultiplePositionsView athletesWithMultiplePositions =
 
         _ ->
             dangerAlert
-                [ text "The following athletes have been scanned with more than one finish token:"
+                [ text "The following athlete barcodes have been scanned with more than one finish token:"
                 , ul [] (List.map rowGenerator athletesWithMultiplePositions)
                 ]
 
@@ -431,7 +431,7 @@ athletesMissingPositionView athletes =
 
         _ ->
             dangerAlert
-                [ text "The following athletes have been scanned without finish tokens: "
+                [ text "The following athlete barcodes have been scanned without finish tokens: "
                 , span [] (List.map athleteLink athletes |> List.intersperse (text ", "))
                 , text "."
                 ]
