@@ -26,6 +26,7 @@ import TokenOperations
         , isSwapTokenRange1FieldInvalid
         , isSwapTokenRange2FieldInvalid
         )
+import ViewCommon exposing (normalButton, outlineButton)
 
 
 tokenOperationsDialogTitle : String
@@ -201,23 +202,12 @@ tokenOperationsButtons tokenOperationEditDetails =
         processButtons =
             case processButtonText of
                 Just buttonText ->
-                    [ Button.button
-                        [ Button.primary
-                        , Button.onClick (ApplyTokenOperation tokenOperationEditDetails)
-                        ]
-                        [ text buttonText ]
-                    ]
+                    [ normalButton (ApplyTokenOperation tokenOperationEditDetails) [] buttonText ]
 
                 Nothing ->
                     []
     in
-    processButtons
-        ++ [ Button.button
-                [ Button.outlinePrimary
-                , Button.attrs [ onClick CloseModal ]
-                ]
-                [ text "Close" ]
-           ]
+    processButtons ++ [ outlineButton CloseModal [] "Close" ]
 
 
 tokenOperationsDialogSizer : Modal.Config Msg -> Modal.Config Msg

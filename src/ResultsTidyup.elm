@@ -31,13 +31,13 @@ import Msg exposing (Msg(..))
 import NumberCheckerView exposing (numberCheckerView)
 import Ports exposing (filesDropped, recordEventStartTime)
 import Problems
-import ProblemsView exposing (problemsView)
 import Stopwatch exposing (Stopwatches(..))
 import StopwatchesView exposing (stopwatchesView)
 import Task exposing (Task)
 import Time
 import TimeHandling exposing (formatHoursAndMinutes)
 import UpdateLogic exposing (update)
+import ViewCommon exposing (normalButton)
 
 
 type alias FlagsRecord =
@@ -195,24 +195,8 @@ actionsPanelView : Model -> Html Msg
 actionsPanelView model =
     div
         [ id "actionsPanelContainer" ]
-        [ Button.button
-            [ Button.primary, Button.onClick OpenUploadFileDialog ]
-            [ text "Upload files..." ]
-        , Button.button
-            [ Button.primary
-            , Button.onClick ShowStopwatchOperationsModal
-            , Button.disabled (model.stopwatches == None)
-            ]
-            [ text "Stopwatch operations..." ]
-        , Button.button
-            [ Button.primary
-            , Button.onClick ShowTokenOperationsModal
-            , Button.disabled (BarcodeScanner.isEmpty model.barcodeScannerData)
-            ]
-            [ text "Token operations..." ]
-        , Button.button
-            [ Button.primary, Button.onClick ClearAllData ]
-            [ text "Clear all data" ]
+        [ normalButton OpenUploadFileDialog [] "Upload files..."
+        , normalButton ClearAllData [] "Clear everything"
         ]
 
 
@@ -226,38 +210,55 @@ view model =
 
             else
                 text ""
+
+        stopwatchesItem : Html Msg
+        stopwatchesItem =
+            if model.stopwatches == None then
+                div [] []
+
+            else
+                stopwatchesView model.stopwatches model.barcodeScannerData model.problems model.highlightedNumberCheckerId
+
+        scannersItem : Html Msg
+        scannersItem =
+            if BarcodeScanner.isEmpty model.barcodeScannerData then
+                div [] []
+
+            else
+                barcodeScannersView model
+
+        noFilesUploaded : Html Msg
+        noFilesUploaded =
+            if model.stopwatches == None && BarcodeScanner.isEmpty model.barcodeScannerData then
+                Alert.simpleInfo [ class "no-files-uploaded" ] [ text "No files have been uploaded.  Get started by uploading some stopwatch or scanner files." ]
+
+            else
+                text ""
     in
     div
         [ on "keyup" keyDecoder ]
-        [ div
-            [ class "clearfix" ]
-            [ h1 [ id "header" ] [ text "Results Tidyup" ]
-            , badge
-            ]
-        , errorsView model.lastErrors
-        , Grid.row []
+        [ Grid.row []
             [ Grid.col [ Col.xs6 ]
-                [ eventDateAndTimeView model.eventDateAndTime
-                , stopwatchesView model.stopwatches model.barcodeScannerData model.highlightedNumberCheckerId
+                [ div
+                    [ class "clearfix" ]
+                    [ h1 [ id "header" ] [ text "Results Tidyup" ]
+                    , badge
+                    ]
+                , actionsPanelView model
+                , errorsView model.lastErrors
                 ]
             , Grid.col [ Col.xs6 ]
-                [ actionsPanelView model
-                , problemsView model.problems
-                , Tab.config ChangeSecondTab
-                    |> Tab.items
-                        [ Tab.item
-                            { id = "barcodeScannersTab"
-                            , link = Tab.link [] [ text "Barcode scanners" ]
-                            , pane = Tab.pane [] [ barcodeScannersView model ]
-                            }
-                        , Tab.item
-                            { id = "numberCheckerTab"
-                            , link = Tab.link [] [ text "Number checker" ]
-                            , pane = Tab.pane [] [ numberCheckerView model.numberCheckerEntries model.numberCheckerManualEntryRow ]
-                            }
-                        ]
-                    |> Tab.view model.secondTab
+                [ if BarcodeScanner.isEmpty model.barcodeScannerData then
+                    div [] []
+
+                  else
+                    eventDateAndTimeView model.eventDateAndTime
                 ]
             ]
+        , Grid.row []
+            ([ stopwatchesItem, scannersItem ]
+                |> List.map (\element -> Grid.col [ Col.xs6 ] [ element ])
+            )
+        , noFilesUploaded
         , showModalDialog model
         ]

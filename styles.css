@@ -162,11 +162,11 @@ tr.deleted-barcode-scanner-row {
     font-style: italic;
 }
 
-.no-barcode-scanner-files {
+.no-files-uploaded {
     margin-top: 10px;
 }
 
-div.barcode-scanner-buttons {
+div.barcode-scanner-buttons, div.stopwatch-header-buttons {
     float: right;
 }
 
@@ -214,4 +214,8 @@ div.token-operation-help-text {
 
 .alert.warning-condensed {
     padding: .375rem 0.625rem;
+}
+
+div.problems-container {
+    padding-top: 15px;
 }

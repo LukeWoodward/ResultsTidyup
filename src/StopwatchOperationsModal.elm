@@ -35,6 +35,7 @@ import StopwatchOperations
         , validateEditDetails
         )
 import TimeHandling exposing (formatTime)
+import ViewCommon exposing (normalButton, outlineButton)
 
 
 stopwatchOperationsDialogTitle : String
@@ -282,23 +283,12 @@ stopwatchOperationsButtons editDetails =
         processButtons =
             case processButtonText of
                 Just buttonText ->
-                    [ Button.button
-                        [ Button.primary
-                        , Button.onClick (ApplyStopwatchOperation editDetails)
-                        ]
-                        [ text buttonText ]
-                    ]
+                    [ normalButton (ApplyStopwatchOperation editDetails) [] buttonText ]
 
                 Nothing ->
                     []
     in
-    processButtons
-        ++ [ Button.button
-                [ Button.outlinePrimary
-                , Button.attrs [ onClick CloseModal ]
-                ]
-                [ text "Close" ]
-           ]
+    processButtons ++ [ outlineButton CloseModal [] "Close" ]
 
 
 stopwatchOperationsDialogSizer : Modal.Config Msg -> Modal.Config Msg

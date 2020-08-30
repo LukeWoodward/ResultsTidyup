@@ -9,17 +9,17 @@ import BarcodeScanner
         , LineContents(..)
         )
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditLocation)
-import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button
 import Bootstrap.Tab as Tab
 import Bootstrap.Table as Table
 import Commands
-import Html exposing (Attribute, Html, button, div, h4, small, span, text)
+import Html exposing (Attribute, Html, button, div, h3, small, span, text)
 import Html.Attributes exposing (class, colspan, rowspan, title)
 import Html.Events exposing (onClick, onDoubleClick)
 import Model exposing (Model)
 import Msg exposing (Msg(..))
-import ViewCommon exposing (athleteLink, smallButton, tableHeaders)
+import ProblemsView exposing (scannerProblemsView)
+import ViewCommon exposing (athleteLink, normalButton, smallButton, tableHeaders)
 
 
 maybeIntToString : Maybe Int -> String
@@ -184,30 +184,32 @@ barcodeScannerTabView index file =
 
 barcodeScannersView : Model -> Html Msg
 barcodeScannersView model =
-    if List.isEmpty model.barcodeScannerData.files then
-        Alert.simpleInfo [ class "no-barcode-scanner-files" ] [ text "No barcode scanner files have been loaded" ]
+    let
+        showTokenOperationsButton : Html Msg
+        showTokenOperationsButton =
+            normalButton
+                ShowTokenOperationsModal
+                []
+                "Token operations..."
 
-    else
-        let
-            additionalHeaderContent : List (Html Msg)
-            additionalHeaderContent =
-                if List.length model.barcodeScannerData.files == 1 then
-                    []
+        buttons : List (Html Msg)
+        buttons =
+            if List.length model.barcodeScannerData.files == 1 then
+                [ showTokenOperationsButton ]
 
-                else
-                    [ div
-                        [ class "barcode-scanner-buttons" ]
-                        [ smallButton
-                            (GetCurrentDateForDownloadFile Commands.DownloadAllBarcodeScannerData)
-                            [ title "Downloads a file containing all barcode data from all scanners" ]
-                            "Download all scanned barcodes"
-                        ]
-                    ]
-        in
-        div []
-            [ h4 []
-                (text "Barcode scanner files" :: additionalHeaderContent)
-            , Tab.config ChangeBarcodeScannerTab
-                |> Tab.items (List.indexedMap barcodeScannerTabView model.barcodeScannerData.files)
-                |> Tab.view model.barcodeScannerTab
-            ]
+            else
+                [ showTokenOperationsButton
+                , normalButton
+                    (GetCurrentDateForDownloadFile Commands.DownloadAllBarcodeScannerData)
+                    [ title "Downloads a file containing all barcode data from all scanners" ]
+                    "Download all scanned barcodes"
+                ]
+    in
+    div []
+        [ h3 []
+            (text "Scanners" :: [ div [ class "barcode-scanner-buttons" ] buttons ])
+        , scannerProblemsView model.problems
+        , Tab.config ChangeBarcodeScannerTab
+            |> Tab.items (List.indexedMap barcodeScannerTabView model.barcodeScannerData.files)
+            |> Tab.view model.barcodeScannerTab
+        ]

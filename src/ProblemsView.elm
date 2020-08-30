@@ -1,4 +1,4 @@
-module ProblemsView exposing (problemsView)
+module ProblemsView exposing (scannerProblemsView, stopwatchProblemsView)
 
 import Bootstrap.Alert as Alert
 import Html exposing (Html, button, div, h4, li, span, text, ul)
@@ -514,14 +514,26 @@ identicalStopwatchTimesView identicalStopwatchTimes =
         Nothing
 
 
-problemsView : Problems -> Html Msg
-problemsView problems =
+stopwatchProblemsView : Problems -> Html Msg
+stopwatchProblemsView problems =
+    let
+        problemViewSections : List (Maybe (Html Msg))
+        problemViewSections =
+            [ Maybe.andThen stopwatchTimeOffsetView problems.stopwatchTimeOffset
+            , Maybe.map positionOffEndOfTimesView problems.positionOffEndOfTimes
+            , identicalStopwatchTimesView problems.identicalStopwatchTimes
+            ]
+    in
+    div [ class "problems-container" ] (List.filterMap identity problemViewSections)
+
+
+scannerProblemsView : Problems -> Html Msg
+scannerProblemsView problems =
     let
         problemViewSections : List (Maybe (Html Msg))
         problemViewSections =
             [ barcodeScannerClockDifferencesView problems.barcodeScannerClockDifferences
             , Maybe.map barcodesScannedBeforeEventStartProblemView problems.barcodesScannedBeforeEventStart
-            , Maybe.andThen stopwatchTimeOffsetView problems.stopwatchTimeOffset
             , hideIfEmpty athletesInSamePositionMultipleTimesView problems.athletesInSamePositionMultipleTimes
             , hideIfEmpty athletesWithAndWithoutPositionView problems.athletesWithAndWithoutPosition
             , hideIfEmpty positionsWithAndWithoutAthleteView problems.positionsWithAndWithoutAthlete
@@ -534,7 +546,6 @@ problemsView problems =
             , hideIfEmpty positionsMissingAthleteView problems.positionsMissingAthlete
             , hideIfEmpty misScannedItemsView problems.misScans
             , hideIfEmpty unrecognisedBarcodeScannerLinesView problems.unrecognisedBarcodeScannerLines
-            , identicalStopwatchTimesView problems.identicalStopwatchTimes
             ]
     in
-    div [] (List.filterMap identity problemViewSections)
+    div [ class "problems-container" ] (List.filterMap identity problemViewSections)

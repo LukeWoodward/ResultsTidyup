@@ -1,4 +1,4 @@
-module ViewCommon exposing (athleteLink, intCell, plainCell, smallButton, tableHeaders)
+module ViewCommon exposing (athleteLink, intCell, normalButton, outlineButton, plainCell, smallButton, tableHeaders)
 
 import Bootstrap.Button as Button
 import Bootstrap.Table as Table
@@ -30,6 +30,24 @@ tableHeader headerText =
 tableHeaders : List String -> Table.THead a
 tableHeaders headerTexts =
     Table.simpleThead (List.map tableHeader headerTexts)
+
+
+normalButton : Msg -> List (Html.Attribute Msg) -> String -> Html Msg
+normalButton msg attributes contents =
+    Button.button
+        [ Button.primary
+        , Button.onClick msg
+        ]
+        [ text contents ]
+
+
+outlineButton : Msg -> List (Html.Attribute Msg) -> String -> Html Msg
+outlineButton msg attributes contents =
+    Button.button
+        [ Button.outlinePrimary
+        , Button.onClick msg
+        ]
+        [ text contents ]
 
 
 smallButton : Msg -> List (Html.Attribute Msg) -> String -> Html Msg

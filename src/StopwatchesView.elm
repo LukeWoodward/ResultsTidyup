@@ -1,7 +1,6 @@
 module StopwatchesView exposing (stopwatchesView)
 
-import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, isEmpty, maxFinishToken)
-import Bootstrap.Alert as Alert
+import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, maxFinishToken)
 import Bootstrap.Button as Button
 import Bootstrap.Tab as Tab
 import Bootstrap.Table as Table
@@ -11,9 +10,11 @@ import Html exposing (Html, br, button, div, h3, input, label, small, text)
 import Html.Attributes exposing (checked, class, for, id, title, type_)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg(..))
+import Problems exposing (Problems)
+import ProblemsView exposing (stopwatchProblemsView)
 import Stopwatch exposing (MergeEntry(..), MergedTableRow, StopwatchMatchSummary, Stopwatches(..), WhichStopwatch(..))
 import TimeHandling exposing (formatTime)
-import ViewCommon exposing (athleteLink, intCell, plainCell, smallButton)
+import ViewCommon exposing (athleteLink, intCell, normalButton, plainCell, smallButton)
 
 
 tableOptions : List (Table.TableOption a)
@@ -153,29 +154,6 @@ removeStopwatchButton which =
     }
 
 
-stopwatchInfoMessage : Stopwatches -> Html a
-stopwatchInfoMessage stopwatches =
-    let
-        message : Maybe String
-        message =
-            case stopwatches of
-                None ->
-                    Just "No stopwatch files have been loaded"
-
-                Single _ _ ->
-                    Nothing
-
-                Double _ ->
-                    Nothing
-    in
-    case message of
-        Just messageText ->
-            Alert.simpleInfo [] [ text messageText ]
-
-        Nothing ->
-            text ""
-
-
 numberCheckerUnderlineClass : Int -> Maybe Int -> String
 numberCheckerUnderlineClass numberCheckerId highlightedNumberCheckerId =
     let
@@ -284,9 +262,18 @@ stopwatchButtons whichStopwatch =
 
 stopwatchTable : Stopwatches -> BarcodeScannerData -> Maybe Int -> Html Msg
 stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
+    let
+        appendAthletesHeader : List TableHeaderWithButtons -> List TableHeaderWithButtons
+        appendAthletesHeader headers =
+            if BarcodeScanner.isEmpty barcodeScannerData then
+                headers
+
+            else
+                headers ++ [ TableHeaderWithButtons "Athletes" "" [] ]
+    in
     case stopwatches of
         None ->
-            if isEmpty barcodeScannerData then
+            if BarcodeScanner.isEmpty barcodeScannerData then
                 text ""
 
             else
@@ -294,9 +281,7 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                     { options = tableOptions
                     , thead =
                         tableHeadersWithButtons
-                            [ TableHeaderWithButtons "Position" "" []
-                            , TableHeaderWithButtons "Athletes" "" []
-                            ]
+                            (appendAthletesHeader [ TableHeaderWithButtons "Position" "" [] ])
                     , tbody = noStopwatchTableBody barcodeScannerData
                     }
 
@@ -305,10 +290,11 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                 { options = tableOptions
                 , thead =
                     tableHeadersWithButtons
-                        [ TableHeaderWithButtons "Position" "" []
-                        , TableHeaderWithButtons "Stopwatch 1" filename (stopwatchButtons StopwatchOne)
-                        , TableHeaderWithButtons "Athletes" "" []
-                        ]
+                        (appendAthletesHeader
+                            [ TableHeaderWithButtons "Position" "" []
+                            , TableHeaderWithButtons "Stopwatch 1" filename (stopwatchButtons StopwatchOne)
+                            ]
+                        )
                 , tbody = singleStopwatchTableBody stopwatchTimes barcodeScannerData
                 }
 
@@ -317,11 +303,12 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                 { options = tableOptions
                 , thead =
                     tableHeadersWithButtons
-                        [ TableHeaderWithButtons "Position" "" []
-                        , TableHeaderWithButtons "Stopwatch 1" doubleStopwatchData.filename1 (stopwatchButtons StopwatchOne)
-                        , TableHeaderWithButtons "Stopwatch 2" doubleStopwatchData.filename2 (stopwatchButtons StopwatchTwo)
-                        , TableHeaderWithButtons "Athletes" "" []
-                        ]
+                        (appendAthletesHeader
+                            [ TableHeaderWithButtons "Position" "" []
+                            , TableHeaderWithButtons "Stopwatch 1" doubleStopwatchData.filename1 (stopwatchButtons StopwatchOne)
+                            , TableHeaderWithButtons "Stopwatch 2" doubleStopwatchData.filename2 (stopwatchButtons StopwatchTwo)
+                            ]
+                        )
                 , tbody = mergedTableBody highlightedNumberCheckerId barcodeScannerData doubleStopwatchData.mergedTableRows
                 }
 
@@ -336,11 +323,7 @@ stopwatchButtonsContent stopwatches =
             []
 
         Double _ ->
-            [ twoLineButton FlipStopwatches "Flip" "stopwatches"
-            , br [] []
-            , br [] []
-            , twoLineButton (GetCurrentDateForDownloadFile Commands.DownloadMergedStopwatches) "Download" "merged times"
-            ]
+            [ twoLineButton (GetCurrentDateForDownloadFile Commands.DownloadMergedStopwatches) "Download" "merged times" ]
 
 
 matchSummaryViewRow : Int -> String -> Maybe (Html Msg)
@@ -391,13 +374,24 @@ stopwatchMatchSummaryView stopwatches =
                 (List.filterMap identity rows)
 
 
-stopwatchRow : BarcodeScannerData -> Int -> Int -> Table.Row a
+stopwatchRow : BarcodeScannerData -> Int -> Int -> Table.Row Msg
 stopwatchRow barcodeScannerData index time =
-    Table.tr []
-        [ intCell (index + 1)
-        , plainCell (formatTime time)
-        , barcodeScannerCell barcodeScannerData (index + 1) Nothing Nothing
-        ]
+    let
+        firstTwoCells : List (Table.Cell Msg)
+        firstTwoCells =
+            [ intCell (index + 1)
+            , plainCell (formatTime time)
+            ]
+
+        rowCells : List (Table.Cell Msg)
+        rowCells =
+            if BarcodeScanner.isEmpty barcodeScannerData then
+                firstTwoCells
+
+            else
+                firstTwoCells ++ [ barcodeScannerCell barcodeScannerData (index + 1) Nothing Nothing ]
+    in
+    Table.tr [] rowCells
 
 
 mergedStopwatchRow : Maybe Int -> BarcodeScannerData -> MergedTableRow -> Table.Row Msg
@@ -420,60 +414,69 @@ mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData row =
 
                 Nothing ->
                     emptyBarcodeScannerCell Nothing Nothing
+
+        appendScannerCell : List (Table.Cell Msg) -> List (Table.Cell Msg)
+        appendScannerCell cells =
+            if BarcodeScanner.isEmpty barcodeScannerData then
+                cells
+
+            else
+                cells ++ [ thisBarcodeScannerCell ]
+
+        generateTwoTimeRow : String -> Int -> Int -> Table.Row Msg
+        generateTwoTimeRow className time1 time2 =
+            let
+                firstThreeCells : List (Table.Cell Msg)
+                firstThreeCells =
+                    [ indexCell
+                    , timeCell className time1 row.underlines.stopwatch1 highlightedNumberCheckerId
+                    , timeCell className time2 row.underlines.stopwatch2 highlightedNumberCheckerId
+                    ]
+            in
+            Table.tr [] (appendScannerCell firstThreeCells)
     in
     case row.entry of
         ExactMatch time ->
-            Table.tr
-                []
-                [ indexCell
-                , timeCell "exact-match" time row.underlines.stopwatch1 highlightedNumberCheckerId
-                , timeCell "exact-match" time row.underlines.stopwatch2 highlightedNumberCheckerId
-                , thisBarcodeScannerCell
-                ]
+            generateTwoTimeRow "exact-match" time time
 
         NearMatch time1 time2 ->
-            Table.tr
-                []
-                [ indexCell
-                , timeCell "near-match" time1 row.underlines.stopwatch1 highlightedNumberCheckerId
-                , timeCell "near-match" time2 row.underlines.stopwatch2 highlightedNumberCheckerId
-                , thisBarcodeScannerCell
-                ]
+            generateTwoTimeRow "near-match" time1 time2
 
         NotNearMatch time1 time2 ->
-            Table.tr
-                []
-                [ indexCell
-                , timeCell "not-near-match" time1 row.underlines.stopwatch1 highlightedNumberCheckerId
-                , timeCell "not-near-match" time2 row.underlines.stopwatch2 highlightedNumberCheckerId
-                , thisBarcodeScannerCell
-                ]
+            generateTwoTimeRow "not-near-match" time1 time2
 
         OneWatchOnly StopwatchOne time1 ->
             Table.tr
                 []
-                [ indexCell
-                , checkboxCell time1 row.index row.included row.underlines.stopwatch1 highlightedNumberCheckerId
-                , plainCell ""
-                , thisBarcodeScannerCell
-                ]
+                (appendScannerCell
+                    [ indexCell
+                    , checkboxCell time1 row.index row.included row.underlines.stopwatch1 highlightedNumberCheckerId
+                    , plainCell ""
+                    ]
+                )
 
         OneWatchOnly StopwatchTwo time2 ->
             Table.tr
                 []
-                [ indexCell
-                , plainCell ""
-                , checkboxCell time2 row.index row.included row.underlines.stopwatch2 highlightedNumberCheckerId
-                , thisBarcodeScannerCell
-                ]
+                (appendScannerCell
+                    [ indexCell
+                    , plainCell ""
+                    , checkboxCell time2 row.index row.included row.underlines.stopwatch2 highlightedNumberCheckerId
+                    ]
+                )
 
 
-stopwatchesView : Stopwatches -> BarcodeScannerData -> Maybe Int -> Html Msg
-stopwatchesView stopwatches barcodeScannerData highlightedNumberCheckerId =
+stopwatchesView : Stopwatches -> BarcodeScannerData -> Problems -> Maybe Int -> Html Msg
+stopwatchesView stopwatches barcodeScannerData problems highlightedNumberCheckerId =
+    let
+        buttons : List (Html Msg)
+        buttons =
+            [ normalButton ShowStopwatchOperationsModal [] "Stopwatch operations..." ]
+    in
     div
         []
-        [ h3 [] [ text "Stopwatches" ]
-        , stopwatchInfoMessage stopwatches
+        [ h3 [] (text "Stopwatches" :: [ div [ class "stopwatch-header-buttons" ] buttons ])
+        , stopwatchProblemsView problems
         , stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId
         , div
             []

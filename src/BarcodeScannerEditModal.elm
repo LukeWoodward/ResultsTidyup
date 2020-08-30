@@ -30,6 +30,7 @@ import Html exposing (Html, b, div, text)
 import Html.Attributes exposing (class, type_)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg(..))
+import ViewCommon exposing (outlineButton)
 
 
 athleteInputId : String
@@ -207,13 +208,13 @@ barcodeScannerDialogTitle rowEditDetails =
 barcodeScannerEditButtons : BarcodeScannerRowEditDetails -> List (Html Msg)
 barcodeScannerEditButtons barcodeScannerRowEditDetails =
     let
-        updateButtonAttrs : List (Html.Attribute Msg)
-        updateButtonAttrs =
+        updateButtonMsg : Msg
+        updateButtonMsg =
             if barcodeScannerRowEditDetails.validationError == Nothing then
-                [ onClick (UpdateRowFromBarcodeScannerEditModal barcodeScannerRowEditDetails) ]
+                UpdateRowFromBarcodeScannerEditModal barcodeScannerRowEditDetails
 
             else
-                []
+                NoOp
 
         deleteButtonAttrs : List (Html.Attribute Msg)
         deleteButtonAttrs =
@@ -243,16 +244,8 @@ barcodeScannerEditButtons barcodeScannerRowEditDetails =
                 "Update row"
     in
     [ deleteButton
-    , Button.button
-        [ Button.outlinePrimary
-        , Button.attrs updateButtonAttrs
-        ]
-        [ text updateButtonText ]
-    , Button.button
-        [ Button.outlinePrimary
-        , Button.attrs [ onClick CloseModal ]
-        ]
-        [ text "Close" ]
+    , outlineButton updateButtonMsg [] updateButtonText
+    , outlineButton CloseModal [] "Close"
     ]
 
 
