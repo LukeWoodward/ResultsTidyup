@@ -22,18 +22,6 @@ tableOptions =
     [ Table.small, Table.bordered, Table.attr (class "stopwatch-times") ]
 
 
-twoLineButton : Msg -> String -> String -> Html Msg
-twoLineButton msg firstLine secondLine =
-    Button.button
-        [ Button.primary
-        , Button.onClick msg
-        ]
-        [ text firstLine
-        , br [] []
-        , small [] [ text secondLine ]
-        ]
-
-
 type alias TableHeaderButton =
     { change : Msg
     , buttonText : String
@@ -313,19 +301,6 @@ stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId =
                 }
 
 
-stopwatchButtonsContent : Stopwatches -> List (Html Msg)
-stopwatchButtonsContent stopwatches =
-    case stopwatches of
-        None ->
-            []
-
-        Single _ _ ->
-            []
-
-        Double _ ->
-            [ twoLineButton (GetCurrentDateForDownloadFile Commands.DownloadMergedStopwatches) "Download" "merged times" ]
-
-
 matchSummaryViewRow : Int -> String -> Maybe (Html Msg)
 matchSummaryViewRow count label =
     if count == 0 then
@@ -469,18 +444,30 @@ mergedStopwatchRow highlightedNumberCheckerId barcodeScannerData row =
 stopwatchesView : Stopwatches -> BarcodeScannerData -> Problems -> Maybe Int -> Html Msg
 stopwatchesView stopwatches barcodeScannerData problems highlightedNumberCheckerId =
     let
+        stopwatchOperationsButton : Html Msg
+        stopwatchOperationsButton =
+            normalButton ShowStopwatchOperationsModal [] "Stopwatch operations..."
+
         buttons : List (Html Msg)
         buttons =
-            [ normalButton ShowStopwatchOperationsModal [] "Stopwatch operations..." ]
+            case stopwatches of
+                None ->
+                    []
+
+                Single _ _ ->
+                    [ stopwatchOperationsButton ]
+
+                Double _ ->
+                    [ stopwatchOperationsButton
+                    , normalButton (GetCurrentDateForDownloadFile Commands.DownloadMergedStopwatches) [] "Download merged times"
+                    ]
     in
     div
         []
-        [ h3 [] (text "Stopwatches" :: [ div [ class "stopwatch-header-buttons" ] buttons ])
+        [ h3 [] (text "Stopwatches" :: [ div [ class "stopwatch-buttons" ] buttons ])
         , stopwatchProblemsView problems
         , stopwatchTable stopwatches barcodeScannerData highlightedNumberCheckerId
         , div
             []
-            [ div [ class "stopwatch-buttons" ] (stopwatchButtonsContent stopwatches)
-            , stopwatchMatchSummaryView stopwatches
-            ]
+            [ stopwatchMatchSummaryView stopwatches ]
         ]

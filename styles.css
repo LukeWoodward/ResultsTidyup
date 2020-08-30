@@ -56,11 +56,6 @@ table.table.stopwatch-times > tbody > tr > td > label {
     margin-bottom: 0;
 }
 
-div.stopwatch-buttons {
-    padding: 0 15px 0 15px;
-    float: left;
-}
-
 td.empty-cell {
     color: #dddddd;
 }
@@ -166,11 +161,11 @@ tr.deleted-barcode-scanner-row {
     margin-top: 10px;
 }
 
-div.barcode-scanner-buttons, div.stopwatch-header-buttons {
+div.barcode-scanner-buttons, div.stopwatch-buttons {
     float: right;
 }
 
-div.barcode-scanner-buttons button {
+div.barcode-scanner-buttons button, div.stopwatch-buttons button {
     margin-left: 15px;
 }
 
