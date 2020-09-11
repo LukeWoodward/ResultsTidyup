@@ -31,8 +31,8 @@ import NumberCheckerEditing
         , handleNumberCheckerFieldChange
         , modifyNumberCheckerRows
         )
-import ProblemFixing exposing (fixProblem)
-import Problems exposing (Problems, identifyProblems, noProblems)
+import ProblemFixing exposing (fixProblem, ignoreProblem)
+import Problems exposing (Problems, identifyProblems, noIgnoredProblems, noProblems)
 import Set exposing (Set)
 import Stopwatch
     exposing
@@ -95,7 +95,7 @@ identifyProblemsIn model =
     let
         newProblems : Problems
         newProblems =
-            identifyProblems model.stopwatches model.barcodeScannerData model.eventDateAndTime
+            identifyProblems model.stopwatches model.barcodeScannerData model.eventDateAndTime model.ignoredProblems
     in
     { model | problems = newProblems }
 
@@ -222,6 +222,7 @@ clearAllData model =
         , highlightedNumberCheckerId = Nothing
         , barcodeScannerData = BarcodeScanner.empty
         , problems = noProblems
+        , ignoredProblems = noIgnoredProblems
         , eventDateAndTime = EventDateAndTime emptyEntry model.eventDateAndTime.time
         , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
         , barcodeScannerTab = Tab.initialState
@@ -482,6 +483,9 @@ update msg model =
                 |> reunderlineStopwatchTable
             , NoCommand
             )
+
+        IgnoreProblem problemIgnorance ->
+            ( identifyProblemsIn { model | ignoredProblems = ignoreProblem problemIgnorance model.ignoredProblems }, NoCommand )
 
         ChangeSecondTab newSecondTab ->
             ( { model | secondTab = newSecondTab }, NoCommand )

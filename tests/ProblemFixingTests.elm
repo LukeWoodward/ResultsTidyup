@@ -17,8 +17,8 @@ import BarcodeScannerTests exposing (createBarcodeScannerData)
 import Dict
 import Expect exposing (Expectation)
 import Model exposing (Model, NumberCheckerManualEntryRow, emptyNumberCheckerManualEntryRow, initModel)
-import ProblemFixing exposing (ProblemFix(..), fixProblem)
-import Problems exposing (BarcodeScannerClockDifferenceType(..))
+import ProblemFixing exposing (ProblemFix(..), ProblemIgnorance(..), fixProblem, ignoreProblem)
+import Problems exposing (BarcodeScannerClockDifferenceType(..), IgnoredProblems, noIgnoredProblems)
 import Stopwatch exposing (Stopwatches, WhichStopwatch(..))
 import Test exposing (Test, describe, test)
 import TestData exposing (createBarcodeScannerDataFromFiles, defaultDateTime, doubleStopwatches, ordinaryFileLine, stopwatchesForAdjusting, toPosix)
@@ -788,5 +788,20 @@ suite =
                             }
                     in
                     Expect.equal expectedModel actualModel
+            ]
+        , describe "ignoreProblem tests"
+            [ test "Ignoring stopwatch time offsets marks the stopwatch offsets as ignored" <|
+                \() ->
+                    ignoreProblem IgnoreStopwatchTimeOffsets noIgnoredProblems
+                        |> Expect.equal { noIgnoredProblems | ignoreStopwatchTimeOffsets = True }
+            , test "Ignoring stopwatch time offsets when already ignored does nothing" <|
+                \() ->
+                    let
+                        ignoredProblems : IgnoredProblems
+                        ignoredProblems =
+                            { noIgnoredProblems | ignoreStopwatchTimeOffsets = True }
+                    in
+                    ignoreProblem IgnoreStopwatchTimeOffsets ignoredProblems
+                        |> Expect.equal ignoredProblems
             ]
         ]

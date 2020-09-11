@@ -6,12 +6,14 @@ module Problems exposing
     , BarcodeScannerClockDifferences(..)
     , BarcodesScannedBeforeEventStartProblem
     , BarcodesScannedTheWrongWayAroundProblem
+    , IgnoredProblems
     , InconsistentBarcodeScannerDatesProblem
     , PositionAndTime
     , PositionOffEndOfTimesProblem
     , PositionWithMultipleAthletesProblem
     , Problems
     , identifyProblems
+    , noIgnoredProblems
     , noProblems
     )
 
@@ -136,6 +138,15 @@ noProblems =
     , stopwatchesInconsistentWithNumberChecker = False
     , stopwatchesAndFinishTokensInconsistentWithNumberChecker = False
     }
+
+
+type alias IgnoredProblems =
+    { ignoreStopwatchTimeOffsets : Bool }
+
+
+noIgnoredProblems : IgnoredProblems
+noIgnoredProblems =
+    { ignoreStopwatchTimeOffsets = False }
 
 
 flattenItem : ( Int, List String ) -> List ( Int, String )
@@ -662,8 +673,8 @@ getTimes stopwatches =
                 |> timesListToArray
 
 
-identifyProblems : Stopwatches -> BarcodeScannerData -> EventDateAndTime -> Problems
-identifyProblems stopwatches barcodeScannerData eventDateAndTime =
+identifyProblems : Stopwatches -> BarcodeScannerData -> EventDateAndTime -> IgnoredProblems -> Problems
+identifyProblems stopwatches barcodeScannerData eventDateAndTime ignoredProblems =
     let
         positionToAthletesDict : Dict Int (List String)
         positionToAthletesDict =
@@ -703,7 +714,12 @@ identifyProblems stopwatches barcodeScannerData eventDateAndTime =
     , athletesWithAndWithoutPosition = identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly
     , positionsWithAndWithoutAthlete = identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly
     , barcodesScannedTheWrongWayAround = identifyBarcodesScannedTheWrongWayAround barcodeScannerData
-    , stopwatchTimeOffset = replaceZeroOffset (getStopwatchTimeOffset stopwatches)
+    , stopwatchTimeOffset =
+        if ignoredProblems.ignoreStopwatchTimeOffsets then
+            Nothing
+
+        else
+            replaceZeroOffset (getStopwatchTimeOffset stopwatches)
     , inconsistentBarcodeScannerDates = identifyInconsistentBarcodeScannerDates barcodeScannerData
     , athletesWithMultiplePositions = identifyAthletesWithMultiplePositions times athleteToPositionsDict
     , positionsWithMultipleAthletes = identifyPositionsWithMultipleAthletes positionToAthletesDict

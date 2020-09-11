@@ -6,7 +6,7 @@ import Bootstrap.Tab as Tab
 import Commands exposing (DownloadOperation)
 import File exposing (File)
 import FileHandling exposing (InteropFile)
-import ProblemFixing exposing (ProblemFix)
+import ProblemFixing exposing (ProblemFix, ProblemIgnorance)
 import Stopwatch exposing (WhichStopwatch(..))
 import StopwatchOperations exposing (StopwatchOperationChangeType, StopwatchOperationEditDetails)
 import Time exposing (Posix, Zone)
@@ -40,6 +40,7 @@ type Msg
     | IncrementNumberCheckerRowActualCount Int
     | DecrementNumberCheckerRowActualCount Int
     | FixProblem ProblemFix
+    | IgnoreProblem ProblemIgnorance
     | ChangeSecondTab Tab.State
     | ChangeBarcodeScannerTab Tab.State
     | ClearErrors

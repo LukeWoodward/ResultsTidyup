@@ -13,7 +13,7 @@ import DataEntry exposing (IntegerEntry, emptyEntry)
 import Error exposing (FileError)
 import EventDateAndTime exposing (EventDateAndTime)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
-import Problems exposing (Problems)
+import Problems exposing (IgnoredProblems, Problems)
 import Stopwatch exposing (Stopwatches(..))
 import StopwatchOperations exposing (StopwatchOperationEditDetails)
 import Time exposing (Posix)
@@ -47,6 +47,7 @@ type alias Model =
     , highlightedNumberCheckerId : Maybe Int
     , barcodeScannerData : BarcodeScannerData
     , problems : Problems
+    , ignoredProblems : IgnoredProblems
     , eventDateAndTime : EventDateAndTime
     , numberCheckerManualEntryRow : NumberCheckerManualEntryRow
     , secondTab : Tab.State
@@ -64,6 +65,7 @@ initModel =
     , highlightedNumberCheckerId = Nothing
     , barcodeScannerData = BarcodeScanner.empty
     , problems = Problems.noProblems
+    , ignoredProblems = Problems.noIgnoredProblems
     , eventDateAndTime = EventDateAndTime emptyEntry emptyEntry
     , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
     , secondTab = Tab.initialState

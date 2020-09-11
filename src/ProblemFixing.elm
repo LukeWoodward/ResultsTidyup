@@ -1,4 +1,4 @@
-module ProblemFixing exposing (ProblemFix(..), fixProblem)
+module ProblemFixing exposing (ProblemFix(..), ProblemIgnorance(..), fixProblem, ignoreProblem)
 
 import BarcodeScanner
     exposing
@@ -14,7 +14,7 @@ import BarcodeScanner
         )
 import DateHandling exposing (dateTimeStringToPosix, posixToDateTimeString)
 import Model exposing (Model)
-import Problems exposing (BarcodeScannerClockDifference, BarcodeScannerClockDifferenceType(..))
+import Problems exposing (BarcodeScannerClockDifference, BarcodeScannerClockDifferenceType(..), IgnoredProblems)
 import Stopwatch exposing (DoubleStopwatchData, Stopwatches(..), WhichStopwatch(..), createMergedTable)
 import Time exposing (Posix)
 
@@ -362,3 +362,14 @@ fixProblem problemFix model =
                     oldStopwatches
     in
     { model | barcodeScannerData = newBarcodeScannerData, stopwatches = newStopwatches }
+
+
+type ProblemIgnorance
+    = IgnoreStopwatchTimeOffsets
+
+
+ignoreProblem : ProblemIgnorance -> IgnoredProblems -> IgnoredProblems
+ignoreProblem ignorance ignoredProblems =
+    case ignorance of
+        IgnoreStopwatchTimeOffsets ->
+            { ignoredProblems | ignoreStopwatchTimeOffsets = True }

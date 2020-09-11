@@ -30,8 +30,8 @@ import Model
         )
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
-import ProblemFixing exposing (ProblemFix(..))
-import Problems exposing (AthleteAndPositionPair, Problems, noProblems)
+import ProblemFixing exposing (ProblemFix(..), ProblemIgnorance(..))
+import Problems exposing (AthleteAndPositionPair, IgnoredProblems, Problems, noIgnoredProblems, noProblems)
 import Stopwatch exposing (Stopwatch(..), Stopwatches(..), WhichStopwatch(..))
 import Test exposing (Test, describe, test)
 import TestData exposing (..)
@@ -103,6 +103,11 @@ expectNumberCheckerManualEntryRow expectedManualEntryRow ( model, _ ) =
     Expect.equal expectedManualEntryRow model.numberCheckerManualEntryRow
 
 
+expectIgnoredProblems : IgnoredProblems -> ( Model, Command ) -> Expectation
+expectIgnoredProblems ignoredProblems ( model, _ ) =
+    Expect.equal ignoredProblems model.ignoredProblems
+
+
 type Assertion
     = Command
     | Stopwatches
@@ -113,6 +118,7 @@ type Assertion
     | Problems
     | EventDateAndTimeAssertion
     | NumberCheckerManualEntryRowAssertion
+    | IgnoredProblemsAssertion
 
 
 defaultAssertionsExcept : List Assertion -> List (( Model, Command ) -> Expectation)
@@ -165,6 +171,11 @@ defaultAssertionsExcept exceptions =
 
               else
                 Just (expectNumberCheckerManualEntryRow emptyNumberCheckerManualEntryRow)
+            , if List.member IgnoredProblemsAssertion exceptions then
+                Nothing
+
+              else
+                Just (expectIgnoredProblems noIgnoredProblems)
             ]
     in
     List.filterMap identity allMaybeAssertions
@@ -372,6 +383,8 @@ suite =
                                 | positionsWithAndWithoutAthlete = [ AthleteAndPositionPair "A123" 5 ]
                                 , misScans = [ "something" ]
                             }
+                        , ignoredProblems =
+                            { noIgnoredProblems | ignoreStopwatchTimeOffsets = True }
                     }
                         |> update ClearAllData
                         |> Expect.all
@@ -683,6 +696,24 @@ suite =
                                         | positionsWithAndWithoutAthlete = [ AthleteAndPositionPair "A1" 14, AthleteAndPositionPair "A2" 18, AthleteAndPositionPair "A4" 44 ]
                                     }
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems ]
+                            )
+            ]
+        , describe "Ignoring problems tests"
+            [ test "Can ignore stopwatch-offsets problem" <|
+                \() ->
+                    let
+                        expectedIgnoredProblems : IgnoredProblems
+                        expectedIgnoredProblems =
+                            { noIgnoredProblems | ignoreStopwatchTimeOffsets = True }
+
+                        initialModel : Model
+                        initialModel =
+                            { initModel | problems = { noProblems | stopwatchTimeOffset = Just 5 } }
+                    in
+                    update (IgnoreProblem IgnoreStopwatchTimeOffsets) initialModel
+                        |> Expect.all
+                            (expectIgnoredProblems expectedIgnoredProblems
+                                :: defaultAssertionsExcept [ IgnoredProblemsAssertion ]
                             )
             ]
         , describe "ClearErrors tests"

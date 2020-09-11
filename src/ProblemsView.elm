@@ -5,7 +5,7 @@ import Html exposing (Html, button, div, h4, li, span, text, ul)
 import Html.Attributes exposing (class, type_)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg)
-import ProblemFixing exposing (ProblemFix(..))
+import ProblemFixing exposing (ProblemFix(..), ProblemIgnorance(..))
 import Problems
     exposing
         ( AthleteAndPositionPair
@@ -326,6 +326,8 @@ stopwatchTimeOffsetView offset =
             , smallButton (Msg.FixProblem (AdjustStopwatch StopwatchOne -offset)) [] stopwatch1AdjustText
             , text " "
             , smallButton (Msg.FixProblem (AdjustStopwatch StopwatchTwo offset)) [] stopwatch2AdjustText
+            , text " "
+            , smallButton (Msg.IgnoreProblem IgnoreStopwatchTimeOffsets) [] "Ignore stopwatch time offset"
             ]
             |> Just
 
