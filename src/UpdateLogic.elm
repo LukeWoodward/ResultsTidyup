@@ -501,10 +501,6 @@ update msg model =
         RemoveBarcodeScannerFile fileName ->
             ( removeBarcodeScannerFileWithName fileName model, NoCommand )
 
-        IgnoreProblem problemIndex ->
-            -- TODO
-            ( model, NoCommand )
-
         ShowBarcodeScannerEditModal location contents isDeleted ->
             ( { model
                 | dialogDetails =

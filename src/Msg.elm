@@ -46,7 +46,6 @@ type Msg
     | DownloadBarcodeScannerFile String Zone Posix
     | DownloadAllBarcodeScannerData Zone Posix
     | RemoveBarcodeScannerFile String
-    | IgnoreProblem Int
     | ShowBarcodeScannerEditModal BarcodeScannerRowEditLocation LineContents Bool
     | BarcodeScannerEdit BarcodeScannerEditDetails
     | UpdateRowFromBarcodeScannerEditModal BarcodeScannerRowEditDetails
