@@ -158,6 +158,11 @@ defaultMaxNearMatchDistance =
     1
 
 
+defaultMaxNotNearMatchDistance : Int
+defaultMaxNotNearMatchDistance =
+    25
+
+
 createInitialTableRow : Int -> MergeEntry -> MergedTableRow
 createInitialTableRow index entry =
     MergedTableRow index (Just (index + 1)) entry True noUnderlines
@@ -504,7 +509,7 @@ createMergedTable times1 times2 filename1 filename2 =
     let
         mergedDetails : List MergeEntry
         mergedDetails =
-            merge defaultMaxNearMatchDistance times1 times2
+            merge defaultMaxNearMatchDistance defaultMaxNotNearMatchDistance times1 times2
 
         mergedTable : List MergedTableRow
         mergedTable =
@@ -533,74 +538,32 @@ isHeadInRange list rangeMin rangeMax =
             False
 
 
-addNotNearMatches : List MergeEntry -> List MergeEntry
-addNotNearMatches entries =
-    let
-        entriesWithHeadMerged : List MergeEntry
-        entriesWithHeadMerged =
-            case entries of
-                (OneWatchOnly StopwatchOne time1) :: (OneWatchOnly StopwatchTwo time2) :: entry3 :: rest ->
-                    if not (isSingleTimeEntry entry3) then
-                        NotNearMatch time1 time2 :: entry3 :: rest
+addNotNearMatches : Int -> List MergeEntry -> List MergeEntry
+addNotNearMatches maxNotNearMatchDistance entries =
+    case entries of
+        [] ->
+            []
 
-                    else
-                        entries
+        (OneWatchOnly StopwatchOne time1) :: (OneWatchOnly StopwatchTwo time2) :: rest ->
+            if abs (time1 - time2) <= maxNotNearMatchDistance then
+                NotNearMatch time1 time2 :: addNotNearMatches maxNotNearMatchDistance rest
 
-                (OneWatchOnly StopwatchTwo time2) :: (OneWatchOnly StopwatchOne time1) :: entry3 :: rest ->
-                    if not (isSingleTimeEntry entry3) then
-                        NotNearMatch time1 time2 :: entry3 :: rest
+            else
+                OneWatchOnly StopwatchOne time1 :: addNotNearMatches maxNotNearMatchDistance (OneWatchOnly StopwatchTwo time2 :: rest)
 
-                    else
-                        entries
+        (OneWatchOnly StopwatchTwo time2) :: (OneWatchOnly StopwatchOne time1) :: rest ->
+            if abs (time1 - time2) <= maxNotNearMatchDistance then
+                NotNearMatch time1 time2 :: addNotNearMatches maxNotNearMatchDistance rest
 
-                _ ->
-                    entries
+            else
+                OneWatchOnly StopwatchTwo time2 :: addNotNearMatches maxNotNearMatchDistance (OneWatchOnly StopwatchOne time1 :: rest)
 
-        createNotNearMatchesInRest : List MergeEntry -> List MergeEntry
-        createNotNearMatchesInRest mergeEntries =
-            case mergeEntries of
-                [] ->
-                    []
-
-                entry1 :: rest ->
-                    if isSingleTimeEntry entry1 then
-                        entry1 :: createNotNearMatchesInRest rest
-
-                    else
-                        let
-                            tail : List MergeEntry
-                            tail =
-                                case rest of
-                                    (OneWatchOnly StopwatchOne time1) :: (OneWatchOnly StopwatchTwo time2) :: [] ->
-                                        NotNearMatch time1 time2 :: []
-
-                                    (OneWatchOnly StopwatchOne time1) :: (OneWatchOnly StopwatchTwo time2) :: entry4 :: restAfterMismatch ->
-                                        if isSingleTimeEntry entry4 then
-                                            createNotNearMatchesInRest rest
-
-                                        else
-                                            NotNearMatch time1 time2 :: createNotNearMatchesInRest (entry4 :: restAfterMismatch)
-
-                                    (OneWatchOnly StopwatchTwo time2) :: (OneWatchOnly StopwatchOne time1) :: [] ->
-                                        NotNearMatch time1 time2 :: []
-
-                                    (OneWatchOnly StopwatchTwo time2) :: (OneWatchOnly StopwatchOne time1) :: entry4 :: restAfterMismatch ->
-                                        if isSingleTimeEntry entry4 then
-                                            createNotNearMatchesInRest rest
-
-                                        else
-                                            NotNearMatch time1 time2 :: createNotNearMatchesInRest (entry4 :: restAfterMismatch)
-
-                                    _ ->
-                                        createNotNearMatchesInRest rest
-                        in
-                        entry1 :: tail
-    in
-    createNotNearMatchesInRest entriesWithHeadMerged
+        first :: rest ->
+            first :: addNotNearMatches maxNotNearMatchDistance rest
 
 
-merge : Int -> List Int -> List Int -> List MergeEntry
-merge maxNearMatchDistance times1 times2 =
+merge : Int -> Int -> List Int -> List Int -> List MergeEntry
+merge maxNearMatchDistance maxNotNearMatchDistance times1 times2 =
     let
         createTimes : List Int -> List Int -> List MergeEntry
         createTimes sortedTimes1 sortedTimes2 =
@@ -650,4 +613,4 @@ merge maxNearMatchDistance times1 times2 =
                         OneWatchOnly StopwatchTwo first2 :: createTimes sortedTimes1 rest2
     in
     createTimes (List.sort times1) (List.sort times2)
-        |> addNotNearMatches
+        |> addNotNearMatches maxNotNearMatchDistance

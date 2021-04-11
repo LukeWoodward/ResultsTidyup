@@ -194,27 +194,27 @@ suite =
         , describe "merge tests"
             [ test "merging two empty lists returns empty list" <|
                 \() ->
-                    merge 1 [] []
+                    merge 1 10 [] []
                         |> Expect.equal []
             , test "merging two singleton lists returns singleton list" <|
                 \() ->
-                    merge 1 [ 5 ] [ 5 ]
+                    merge 1 10 [ 5 ] [ 5 ]
                         |> Expect.equal [ ExactMatch 5 ]
             , test "merging two lists with the same repeated result returns correct repeated result" <|
                 \() ->
-                    merge 1 [ 5, 5, 5 ] [ 5, 5, 5 ]
+                    merge 1 10 [ 5, 5, 5 ] [ 5, 5, 5 ]
                         |> Expect.equal [ ExactMatch 5, ExactMatch 5, ExactMatch 5 ]
             , test "merging two lists with the same repeated result with first longer than second returns correct result" <|
                 \() ->
-                    merge 1 [ 5, 5, 5 ] [ 5, 5 ]
+                    merge 1 10 [ 5, 5, 5 ] [ 5, 5 ]
                         |> Expect.equal [ ExactMatch 5, ExactMatch 5, OneWatchOnly StopwatchOne 5 ]
             , test "merging two lists with the same repeated result with first shorter than second returns correct result" <|
                 \() ->
-                    merge 1 [ 5, 5 ] [ 5, 5, 5 ]
+                    merge 1 10 [ 5, 5 ] [ 5, 5, 5 ]
                         |> Expect.equal [ ExactMatch 5, ExactMatch 5, OneWatchOnly StopwatchTwo 5 ]
             , test "merging two lists with no common numbers returns correct result" <|
                 \() ->
-                    merge 1 [ 10, 30, 50 ] [ 20, 40, 60 ]
+                    merge 1 5 [ 10, 30, 50 ] [ 20, 40, 60 ]
                         |> Expect.equal
                             [ OneWatchOnly StopwatchOne 10
                             , OneWatchOnly StopwatchTwo 20
@@ -225,7 +225,7 @@ suite =
                             ]
             , test "merging two lists with no common numbers returns correct result 2" <|
                 \() ->
-                    merge 1 [ 20, 40, 60 ] [ 10, 30, 50 ]
+                    merge 1 5 [ 20, 40, 60 ] [ 10, 30, 50 ]
                         |> Expect.equal
                             [ OneWatchOnly StopwatchTwo 10
                             , OneWatchOnly StopwatchOne 20
@@ -236,63 +236,63 @@ suite =
                             ]
             , test "merging two lists with near-matches returns expected result" <|
                 \() ->
-                    merge 1 [ 10, 30, 50 ] [ 10, 31, 50 ]
+                    merge 1 10 [ 10, 30, 50 ] [ 10, 31, 50 ]
                         |> Expect.equal [ ExactMatch 10, NearMatch 30 31, ExactMatch 50 ]
             , test "merging two lists with a near-match and a nearer match returns expected result 1" <|
                 \() ->
-                    merge 2 [ 10, 29, 30, 50 ] [ 10, 31, 50 ]
+                    merge 2 10 [ 10, 29, 30, 50 ] [ 10, 31, 50 ]
                         |> Expect.equal [ ExactMatch 10, OneWatchOnly StopwatchOne 29, NearMatch 30 31, ExactMatch 50 ]
             , test "merging two lists with a near-match and a nearer match returns expected result 2" <|
                 \() ->
-                    merge 2 [ 10, 31, 50 ] [ 10, 29, 30, 50 ]
+                    merge 2 10 [ 10, 31, 50 ] [ 10, 29, 30, 50 ]
                         |> Expect.equal [ ExactMatch 10, OneWatchOnly StopwatchTwo 29, NearMatch 31 30, ExactMatch 50 ]
             , test "merging two lists with a near-match and a nearer match returns expected result 3" <|
                 \() ->
-                    merge 2 [ 10, 32, 33, 50 ] [ 10, 31, 50 ]
+                    merge 2 10 [ 10, 32, 33, 50 ] [ 10, 31, 50 ]
                         |> Expect.equal [ ExactMatch 10, NearMatch 32 31, OneWatchOnly StopwatchOne 33, ExactMatch 50 ]
             , test "merging two lists with a near-match and a nearer match returns expected result 4" <|
                 \() ->
-                    merge 2 [ 10, 31, 50 ] [ 10, 32, 33, 50 ]
+                    merge 2 10 [ 10, 31, 50 ] [ 10, 32, 33, 50 ]
                         |> Expect.equal [ ExactMatch 10, NearMatch 31 32, OneWatchOnly StopwatchTwo 33, ExactMatch 50 ]
             , test "merging two lists with a not-near-match at the start returns expected result" <|
                 \() ->
-                    merge 2 [ 8, 30, 50 ] [ 14, 30, 50 ]
+                    merge 2 10 [ 8, 30, 50 ] [ 14, 30, 50 ]
                         |> Expect.equal [ NotNearMatch 8 14, ExactMatch 30, ExactMatch 50 ]
             , test "merging two lists with a not-near-match at the start the other way around returns expected result" <|
                 \() ->
-                    merge 2 [ 14, 30, 50 ] [ 8, 30, 50 ]
+                    merge 2 10 [ 14, 30, 50 ] [ 8, 30, 50 ]
                         |> Expect.equal [ NotNearMatch 14 8, ExactMatch 30, ExactMatch 50 ]
             , test "merging two lists with a not-near-match in the middle returns expected result" <|
                 \() ->
-                    merge 2 [ 10, 28, 50 ] [ 10, 34, 50 ]
+                    merge 2 10 [ 10, 28, 50 ] [ 10, 34, 50 ]
                         |> Expect.equal [ ExactMatch 10, NotNearMatch 28 34, ExactMatch 50 ]
             , test "merging two lists with a not-near-match in the middle the other way around returns expected result" <|
                 \() ->
-                    merge 2 [ 10, 34, 50 ] [ 10, 28, 50 ]
+                    merge 2 10 [ 10, 34, 50 ] [ 10, 28, 50 ]
                         |> Expect.equal [ ExactMatch 10, NotNearMatch 34 28, ExactMatch 50 ]
             , test "merging two lists with a not-near-match at the end returns expected result" <|
                 \() ->
-                    merge 2 [ 10, 30, 48 ] [ 10, 30, 54 ]
+                    merge 2 10 [ 10, 30, 48 ] [ 10, 30, 54 ]
                         |> Expect.equal [ ExactMatch 10, ExactMatch 30, NotNearMatch 48 54 ]
             , test "merging two lists with a not-near-match at the end the other way around returns expected result" <|
                 \() ->
-                    merge 2 [ 10, 30, 54 ] [ 10, 30, 48 ]
+                    merge 2 10 [ 10, 30, 54 ] [ 10, 30, 48 ]
                         |> Expect.equal [ ExactMatch 10, ExactMatch 30, NotNearMatch 54 48 ]
             , test "merging two lists with times on alternating stopwatches returns expected result 1" <|
                 \() ->
-                    merge 2 [ 10, 30, 48, 61 ] [ 10, 30, 54 ]
+                    merge 2 5 [ 10, 30, 48, 61 ] [ 10, 30, 54 ]
                         |> Expect.equal [ ExactMatch 10, ExactMatch 30, OneWatchOnly StopwatchOne 48, OneWatchOnly StopwatchTwo 54, OneWatchOnly StopwatchOne 61 ]
             , test "merging two lists with times on alternating stopwatches returns expected result 2" <|
                 \() ->
-                    merge 2 [ 10, 30, 54 ] [ 10, 30, 48, 61 ]
+                    merge 2 5 [ 10, 30, 54 ] [ 10, 30, 48, 61 ]
                         |> Expect.equal [ ExactMatch 10, ExactMatch 30, OneWatchOnly StopwatchTwo 48, OneWatchOnly StopwatchOne 54, OneWatchOnly StopwatchTwo 61 ]
             , test "merging two lists with a near-match and followed by an exact match returns expected result" <|
                 \() ->
-                    merge 2 [ 118, 127, 127 ] [ 118, 126, 127 ]
+                    merge 2 10 [ 118, 127, 127 ] [ 118, 126, 127 ]
                         |> Expect.equal [ ExactMatch 118, NearMatch 127 126, ExactMatch 127 ]
             , test "merging two lists with a near-match and followed by an exact match returns expected result 2" <|
                 \() ->
-                    merge 2 [ 118, 126, 127 ] [ 118, 127, 127 ]
+                    merge 2 10 [ 118, 126, 127 ] [ 118, 127, 127 ]
                         |> Expect.equal [ ExactMatch 118, NearMatch 126 127, ExactMatch 127 ]
             ]
         , describe "createMergedTable tests"
@@ -309,7 +309,7 @@ suite =
 
                         mergedTable : List MergedTableRow
                         mergedTable =
-                            merge 1 times times
+                            merge 1 10 times times
                                 |> generateInitialTable
                     in
                     createMergedTable times times "identical1.txt" "identical2.txt"
@@ -327,7 +327,7 @@ suite =
 
                         mergedTable : List MergedTableRow
                         mergedTable =
-                            merge 1 times1 times2
+                            merge 1 10 times1 times2
                                 |> generateInitialTable
                     in
                     createMergedTable times1 times2 "nearmatch1.txt" "nearmatch2.txt"
@@ -345,7 +345,7 @@ suite =
 
                         mergedTable : List MergedTableRow
                         mergedTable =
-                            merge 1 times1 times2
+                            merge 1 10 times1 times2
                                 |> generateInitialTable
                     in
                     createMergedTable times1 times2 "notnearmatch1.txt" "notnearmatch2.txt"
@@ -363,7 +363,7 @@ suite =
 
                         mergedTable : List MergedTableRow
                         mergedTable =
-                            merge 1 times1 times2
+                            merge 1 10 times1 times2
                                 |> generateInitialTable
                     in
                     createMergedTable times1 times2 "watch1only1.txt" "watch1only2.txt"
@@ -381,7 +381,7 @@ suite =
 
                         mergedTable : List MergedTableRow
                         mergedTable =
-                            merge 1 times1 times2
+                            merge 1 10 times1 times2
                                 |> generateInitialTable
                     in
                     createMergedTable times1 times2 "watch2only1.txt" "watch2only2.txt"
