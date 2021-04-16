@@ -36,6 +36,7 @@ normalButton : Msg -> List (Html.Attribute Msg) -> String -> Html Msg
 normalButton msg attributes contents =
     Button.button
         [ Button.primary
+        , Button.attrs attributes
         , Button.onClick msg
         ]
         [ text contents ]
@@ -45,6 +46,7 @@ outlineButton : Msg -> List (Html.Attribute Msg) -> String -> Html Msg
 outlineButton msg attributes contents =
     Button.button
         [ Button.outlinePrimary
+        , Button.attrs attributes
         , Button.onClick msg
         ]
         [ text contents ]
