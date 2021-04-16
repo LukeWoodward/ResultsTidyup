@@ -60,4 +60,6 @@ type Msg
     | ReturnKeyPressed
     | CloseModal
     | OpenUploadFileDialog
+    | OpenPasteFileDialog
+    | PastedFileChanged String
     | FilesUploaded File (List File)

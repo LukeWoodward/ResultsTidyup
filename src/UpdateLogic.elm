@@ -31,6 +31,7 @@ import NumberCheckerEditing
         , handleNumberCheckerFieldChange
         , modifyNumberCheckerRows
         )
+import PastedFile exposing (PastedFileDetails, interpretPastedFile)
 import ProblemFixing exposing (fixProblem, ignoreProblem)
 import Problems exposing (Problems, identifyProblems, noIgnoredProblems, noProblems)
 import Set exposing (Set)
@@ -589,6 +590,16 @@ update msg model =
         OpenUploadFileDialog ->
             ( model, SelectFileForUpload )
 
+        OpenPasteFileDialog ->
+            ( { model | dialogDetails = PasteFileDialog PastedFile.empty }
+            , FocusElement PasteFileDialogTextArea
+            )
+
+        PastedFileChanged newContents ->
+            ( { model | dialogDetails = PasteFileDialog (PastedFileDetails newContents (interpretPastedFile newContents)) }
+            , NoCommand
+            )
+
         FilesUploaded firstFile otherFiles ->
             let
                 allFiles : List File
@@ -614,3 +625,7 @@ update msg model =
 
                 TokenOperationsDialog tokenOperationEditDetails ->
                     ( tryApplyTokenOperation tokenOperationEditDetails model, NoCommand )
+
+                PasteFileDialog pastedFileDetails ->
+                    -- TODOO
+                    ( model, NoCommand )

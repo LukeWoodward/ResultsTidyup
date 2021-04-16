@@ -13,6 +13,7 @@ import DataEntry exposing (IntegerEntry, emptyEntry)
 import Error exposing (FileError)
 import EventDateAndTime exposing (EventDateAndTime)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
+import PastedFile exposing (PastedFileDetails)
 import Problems exposing (IgnoredProblems, Problems)
 import Stopwatch exposing (Stopwatches(..))
 import StopwatchOperations exposing (StopwatchOperationEditDetails)
@@ -37,6 +38,7 @@ type DialogDetails
     | BarcodeScannerRowEditDialog BarcodeScannerRowEditDetails
     | StopwatchOperationsDialog StopwatchOperationEditDetails
     | TokenOperationsDialog TokenOperationEditDetails
+    | PasteFileDialog PastedFileDetails
 
 
 type alias Model =

@@ -214,3 +214,8 @@ div.token-operation-help-text {
 div.problems-container {
     padding-top: 15px;
 }
+
+textarea#pasteFileDialogTextArea {
+    width: 100%;
+    min-height: 300px;
+}

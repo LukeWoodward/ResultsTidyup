@@ -10,6 +10,7 @@ type ElementToFocus
     = NumberCheckerManualEntryRowFirstCell
     | BarcodeScannerEditingAthleteInput
     | BarcodeScannerEditingAthleteRadioButton
+    | PasteFileDialogTextArea
 
 
 type DownloadOperation

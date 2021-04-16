@@ -29,6 +29,7 @@ import Modals exposing (showModalDialog)
 import Model exposing (Model, initModel)
 import Msg exposing (Msg(..))
 import NumberCheckerView exposing (numberCheckerView)
+import PasteFileModal
 import Ports exposing (filesDropped, recordEventStartTime)
 import Problems
 import Stopwatch exposing (Stopwatches(..))
@@ -113,6 +114,9 @@ focus elementToFocus =
 
                 BarcodeScannerEditingAthleteRadioButton ->
                     BarcodeScannerEditModal.athleteRadioButtonId
+
+                PasteFileDialogTextArea ->
+                    PasteFileModal.pasteFileDialogTextAreaId
     in
     Task.attempt (\_ -> NoOp) (Browser.Dom.focus elementId)
 
@@ -196,6 +200,7 @@ actionsPanelView model =
     div
         [ id "actionsPanelContainer" ]
         [ normalButton OpenUploadFileDialog [] "Upload files..."
+        , normalButton OpenPasteFileDialog [] "Paste..."
         , normalButton ClearAllData [] "Clear everything"
         ]
 

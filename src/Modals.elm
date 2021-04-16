@@ -5,6 +5,7 @@ import Bootstrap.Modal as Modal
 import Html exposing (Html, div, text)
 import Model exposing (DialogDetails(..), Model)
 import Msg exposing (Msg(..))
+import PasteFileModal exposing (pasteFileButtons, pasteFileDialogSizer, pasteFileDialogTitle, pasteFileModalBody)
 import StopwatchOperationsModal exposing (stopwatchOperationsButtons, stopwatchOperationsDialogSizer, stopwatchOperationsDialogTitle, stopwatchOperationsModalBody)
 import TokenOperationsModal exposing (tokenOperationsButtons, tokenOperationsDialogSizer, tokenOperationsDialogTitle, tokenOperationsModalBody)
 
@@ -30,6 +31,9 @@ dialogTitle dialogDetails =
         StopwatchOperationsDialog stopwatchOperationEditDetails ->
             stopwatchOperationsDialogTitle
 
+        PasteFileDialog _ ->
+            pasteFileDialogTitle
+
         NoDialog ->
             ""
 
@@ -45,6 +49,9 @@ dialogBody dialogDetails =
 
         StopwatchOperationsDialog stopwatchOperationEditDetails ->
             stopwatchOperationsModalBody stopwatchOperationEditDetails
+
+        PasteFileDialog pastedFileDetails ->
+            pasteFileModalBody pastedFileDetails
 
         NoDialog ->
             div [] []
@@ -65,6 +72,9 @@ showModalDialog model =
                 StopwatchOperationsDialog stopwatchOperationEditDetails ->
                     stopwatchOperationsButtons stopwatchOperationEditDetails
 
+                PasteFileDialog pastedFileDetails ->
+                    pasteFileButtons pastedFileDetails
+
                 NoDialog ->
                     []
 
@@ -79,6 +89,9 @@ showModalDialog model =
 
                 StopwatchOperationsDialog _ ->
                     stopwatchOperationsDialogSizer
+
+                PasteFileDialog _ ->
+                    pasteFileDialogSizer
 
                 NoDialog ->
                     identity

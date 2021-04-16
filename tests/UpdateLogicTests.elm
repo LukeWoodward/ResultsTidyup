@@ -30,6 +30,7 @@ import Model
         )
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
+import PastedFileTests exposing (stopwatchFileContents)
 import ProblemFixing exposing (ProblemFix(..), ProblemIgnorance(..))
 import Problems exposing (AthleteAndPositionPair, IgnoredProblems, Problems, noIgnoredProblems, noProblems)
 import Stopwatch exposing (Stopwatch(..), Stopwatches(..), WhichStopwatch(..))
@@ -885,6 +886,21 @@ suite =
                             (expectCommand SelectFileForUpload
                                 :: defaultAssertionsExcept [ Command ]
                             )
+            ]
+        , describe "OpenPasteFileDialog tests"
+            [ test "Can open the paste file dialog" <|
+                \() ->
+                    update OpenPasteFileDialog initModel
+                        |> Expect.all
+                            (expectCommand (FocusElement PasteFileDialogTextArea)
+                                :: defaultAssertionsExcept [ Command ]
+                            )
+            ]
+        , describe "PastedFileChanged tests"
+            [ test "Can update the text" <|
+                \() ->
+                    update (PastedFileChanged stopwatchFileContents) initModel
+                        |> Expect.all defaultAssertions
             ]
         , describe "ReturnKeyPressed tests"
             [ test "Pressing Return when no dialog opened does nothing." <|
