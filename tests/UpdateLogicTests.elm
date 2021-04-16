@@ -30,6 +30,7 @@ import Model
         )
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
+import PastedFile exposing (PastedFileDetails, PastedFileInterpretation(..))
 import PastedFileTests exposing (stopwatchFileContents)
 import ProblemFixing exposing (ProblemFix(..), ProblemIgnorance(..))
 import Problems exposing (AthleteAndPositionPair, IgnoredProblems, Problems, noIgnoredProblems, noProblems)
@@ -109,6 +110,11 @@ expectIgnoredProblems ignoredProblems ( model, _ ) =
     Expect.equal ignoredProblems model.ignoredProblems
 
 
+expectDialogDetails : DialogDetails -> ( Model, Command ) -> Expectation
+expectDialogDetails dialogDetails ( model, _ ) =
+    Expect.equal dialogDetails model.dialogDetails
+
+
 type Assertion
     = Command
     | Stopwatches
@@ -120,6 +126,7 @@ type Assertion
     | EventDateAndTimeAssertion
     | NumberCheckerManualEntryRowAssertion
     | IgnoredProblemsAssertion
+    | DialogDetailsAssertion
 
 
 defaultAssertionsExcept : List Assertion -> List (( Model, Command ) -> Expectation)
@@ -177,6 +184,11 @@ defaultAssertionsExcept exceptions =
 
               else
                 Just (expectIgnoredProblems noIgnoredProblems)
+            , if List.member DialogDetailsAssertion exceptions then
+                Nothing
+
+              else
+                Just (expectDialogDetails NoDialog)
             ]
     in
     List.filterMap identity allMaybeAssertions
@@ -893,14 +905,23 @@ suite =
                     update OpenPasteFileDialog initModel
                         |> Expect.all
                             (expectCommand (FocusElement PasteFileDialogTextArea)
-                                :: defaultAssertionsExcept [ Command ]
+                                :: expectDialogDetails (PasteFileDialog PastedFile.empty)
+                                :: defaultAssertionsExcept [ Command, DialogDetailsAssertion ]
                             )
             ]
         , describe "PastedFileChanged tests"
             [ test "Can update the text" <|
                 \() ->
+                    let
+                        expectedPastedFile : PastedFileDetails
+                        expectedPastedFile =
+                            PastedFileDetails stopwatchFileContents (StopwatchFilePasted 3)
+                    in
                     update (PastedFileChanged stopwatchFileContents) initModel
-                        |> Expect.all defaultAssertions
+                        |> Expect.all
+                            (expectDialogDetails (PasteFileDialog expectedPastedFile)
+                                :: defaultAssertionsExcept [ DialogDetailsAssertion ]
+                            )
             ]
         , describe "ReturnKeyPressed tests"
             [ test "Pressing Return when no dialog opened does nothing." <|
