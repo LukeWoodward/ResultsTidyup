@@ -24,9 +24,15 @@ timeParser =
             [ succeed Just
                 |. symbol ":"
                 |= digitsRange 1 2
-                |. end
-            , map (\_ -> Nothing) end
+            , succeed Nothing
             ]
+        |. oneOf
+            [ succeed ()
+                |. symbol "."
+                |. digitsRange 1 5
+            , succeed ()
+            ]
+        |. end
 
 
 intMatches : List (Maybe String) -> List (Maybe Int)

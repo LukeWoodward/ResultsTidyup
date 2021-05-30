@@ -21,6 +21,7 @@ module TestData exposing
     , parsedNumberCheckerData
     , parsedStopwatchTimes2
     , recentTime
+    , sampleDownloadedStopwatchData
     , sampleNumberCheckerData
     , sampleNumberCheckerDataDecremented
     , sampleNumberCheckerDataIncremented
@@ -83,6 +84,18 @@ sampleStopwatchData =
         ++ "5,01/01/2001 00:14:42,00:14:42\n"
         ++ "6,01/01/2001 00:17:09,00:17:09\n"
         ++ "ENDOFEVENT,01/01/2001 00:19:23\n"
+
+
+sampleDownloadedStopwatchData : String
+sampleDownloadedStopwatchData =
+    "I, CP765, 47\n"
+        ++ "S, 001, SPLIT\n"
+        ++ "T,1,1,00:03:11.000\n"
+        ++ "T,2,1,00:07:44.000\n"
+        ++ "T,3,1,00:10:03.000\n"
+        ++ "T,4,1,00:12:26.000\n"
+        ++ "T,5,1,00:14:42.000\n"
+        ++ "T,6,1,00:17:09.000\n"
 
 
 parsedStopwatchTimes1 : List Int

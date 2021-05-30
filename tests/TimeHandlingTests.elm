@@ -19,6 +19,14 @@ suite =
                 \() ->
                     parseTime "04:17"
                         |> Expect.equal (Ok (4 * 60 + 17))
+            , test "parseTime of a valid time with fractional seconds is successful, ignoring fractional seconds" <|
+                \() ->
+                    parseTime "00:04:17.492"
+                        |> Expect.equal (Ok (4 * 60 + 17))
+            , test "parseTime of a string without hours but with fractional sections is successful, ignoring fractional seconds" <|
+                \() ->
+                    parseTime "04:17.516"
+                        |> Expect.equal (Ok (4 * 60 + 17))
             , test "parseTime of a string with single-digit minutes field is valid" <|
                 \() ->
                     parseTime "4:17"
@@ -47,6 +55,14 @@ suite =
                 \() ->
                     parseTime "00:05:60"
                         |> expectError "SECONDS_TOO_LARGE"
+            , test "parseTime of a time with trailing nonsense is not valid" <|
+                \() ->
+                    parseTime "00:04:17abc"
+                        |> expectError "UNRECOGNISED_TIME"
+            , test "parseTime of a time with fractional seconds and trailing nonsense is not valid" <|
+                \() ->
+                    parseTime "00:04:17.446abc"
+                        |> expectError "UNRECOGNISED_TIME"
             ]
         , describe "parseHoursAndMinutes tests"
             [ test "parseHoursAndMinutes of a valid time is successful" <|

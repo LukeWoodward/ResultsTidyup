@@ -62,6 +62,10 @@ suite =
                     \() ->
                         handleFilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ] initModel
                             |> Expect.equal { initModel | stopwatches = singleStopwatch }
+                , test "Can upload a single downloaded stopwatch data file" <|
+                    \() ->
+                        handleFilesDropped [ InteropFile "stopwatch1.txt" sampleDownloadedStopwatchData ] initModel
+                            |> Expect.equal { initModel | stopwatches = singleStopwatch }
                 , test "Cannot upload a single invalid stopwatch data file" <|
                     \() ->
                         runTestWithSingleError initModel "stopwatch1.txt" (String.replace "00" "XX" sampleStopwatchData) "UNRECOGNISED_TIME"

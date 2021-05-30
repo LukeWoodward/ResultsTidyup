@@ -168,7 +168,7 @@ handleNumberCheckerFileDrop fileName fileText model =
 
 handleFileDropped : InteropFile -> Model -> Model
 handleFileDropped { fileName, fileText } model =
-    if String.startsWith "STARTOFEVENT" fileText then
+    if String.startsWith "STARTOFEVENT" fileText || String.startsWith "I, CP" fileText then
         handleStopwatchFileDrop fileName fileText model
 
     else if isPossibleNumberCheckerFile fileText then

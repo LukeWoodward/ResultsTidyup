@@ -101,6 +101,8 @@ ignorableLinePrefixes =
     [ "STARTOFEVENT"
     , "0,"
     , "ENDOFEVENT"
+    , "I, CP"
+    , "S, 001"
     ]
 
 
@@ -119,6 +121,9 @@ readLine line =
     in
     case parts of
         [ _, _, time ] ->
+            parseTime time
+
+        [ "T", _, _, time ] ->
             parseTime time
 
         _ ->

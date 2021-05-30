@@ -5,7 +5,7 @@ import Expect
 import FileHandling exposing (crlf)
 import Stopwatch exposing (..)
 import Test exposing (Test, describe, test)
-import TestData exposing (expectedParsedSampleStopwatchData, sampleStopwatchData)
+import TestData exposing (expectedParsedSampleStopwatchData, sampleDownloadedStopwatchData, sampleStopwatchData)
 
 
 entry1 : MergeEntry
@@ -56,9 +56,17 @@ suite =
                 \() ->
                     readStopwatchData "1,01/01/2001 04:17,04:17"
                         |> Expect.equal (Ok (StopwatchData [ 4 * 60 + 17 ]))
+            , test "readStopwatchData of a valid single-line string downloaded from WebFMS is valid" <|
+                \() ->
+                    readStopwatchData "T,14,1,04:17"
+                        |> Expect.equal (Ok (StopwatchData [ 4 * 60 + 17 ]))
             , test "readStopwatchData of a valid multi-line string is a valid list of results" <|
                 \() ->
                     readStopwatchData sampleStopwatchData
+                        |> Expect.equal (Ok expectedParsedSampleStopwatchData)
+            , test "readStopwatchData of a valid downloaded multi-line string is a valid list of results" <|
+                \() ->
+                    readStopwatchData sampleDownloadedStopwatchData
                         |> Expect.equal (Ok expectedParsedSampleStopwatchData)
             , test "readStopwatchData of a valid multi-line string with CRLF line-endings is a valid list of results" <|
                 \() ->
