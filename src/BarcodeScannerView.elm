@@ -122,7 +122,7 @@ barcodeScannerView file =
     div []
         [ div
             [ class "barcode-scanner-buttons" ]
-            [ smallButton (GetCurrentDateForDownloadFile (Commands.DownloadBarcodeScannerFile file.name)) [] "Download"
+            [ smallButton (RequestCurrentDateAndTime (Commands.DownloadBarcodeScannerFile file.name)) [] "Download"
             , smallButton (RemoveBarcodeScannerFile file.name) [] "Remove"
             ]
         , Table.table
@@ -200,7 +200,7 @@ barcodeScannersView model =
             else
                 [ showTokenOperationsButton
                 , normalButton
-                    (GetCurrentDateForDownloadFile Commands.DownloadAllBarcodeScannerData)
+                    (RequestCurrentDateAndTime Commands.DownloadAllBarcodeScannerData)
                     [ title "Downloads a file containing all barcode data from all scanners" ]
                     "Download all scanned barcodes"
                 ]

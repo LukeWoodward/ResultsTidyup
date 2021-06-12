@@ -121,7 +121,7 @@ focus elementToFocus =
     Task.attempt (\_ -> NoOp) (Browser.Dom.focus elementId)
 
 
-getDownloadOperation : Commands.DownloadOperation -> (Time.Zone -> Time.Posix -> Msg)
+getDownloadOperation : Commands.CurrentDateAndTimeOperation -> (Time.Zone -> Time.Posix -> Msg)
 getDownloadOperation downloadOperation =
     case downloadOperation of
         Commands.DownloadSingleStopwatch which ->
@@ -135,6 +135,9 @@ getDownloadOperation downloadOperation =
 
         Commands.DownloadBarcodeScannerFile filename ->
             DownloadBarcodeScannerFile filename
+
+        Commands.UploadPastedFile contents ->
+            PastedFileUploaded contents
 
 
 mapCommand : Command -> Cmd Msg

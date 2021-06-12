@@ -19,6 +19,7 @@ module TestData exposing
     , parsedEventDateOnly
     , parsedInvalidBarcodeScannerData
     , parsedNumberCheckerData
+    , parsedStopwatchTimes1
     , parsedStopwatchTimes2
     , recentTime
     , sampleDownloadedStopwatchData

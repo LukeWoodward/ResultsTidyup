@@ -3,7 +3,7 @@ module Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import BarcodeScanner exposing (LineContents)
 import BarcodeScannerEditing exposing (BarcodeScannerEditDetails, BarcodeScannerRowEditDetails, BarcodeScannerRowEditLocation)
 import Bootstrap.Tab as Tab
-import Commands exposing (DownloadOperation)
+import Commands exposing (CurrentDateAndTimeOperation)
 import File exposing (File)
 import FileHandling exposing (InteropFile)
 import ProblemFixing exposing (ProblemFix, ProblemIgnorance)
@@ -27,7 +27,7 @@ type Msg
     | RemoveStopwatch WhichStopwatch
     | FlipStopwatches
     | ClearAllData
-    | GetCurrentDateForDownloadFile DownloadOperation
+    | RequestCurrentDateAndTime CurrentDateAndTimeOperation
     | DownloadMergedStopwatchData Zone Posix
     | MouseEnterNumberCheckerRow Int
     | MouseLeaveNumberCheckerRow Int
@@ -62,4 +62,5 @@ type Msg
     | OpenUploadFileDialog
     | OpenPasteFileDialog
     | PastedFileChanged String
+    | PastedFileUploaded String Zone Posix
     | FilesUploaded File (List File)

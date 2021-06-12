@@ -130,7 +130,7 @@ tableHeadersWithButtons headerTexts =
 
 downloadStopwatchButton : WhichStopwatch -> TableHeaderButton
 downloadStopwatchButton which =
-    { change = GetCurrentDateForDownloadFile (Commands.DownloadSingleStopwatch which)
+    { change = RequestCurrentDateAndTime (Commands.DownloadSingleStopwatch which)
     , buttonText = "Download"
     }
 
@@ -459,7 +459,7 @@ stopwatchesView stopwatches barcodeScannerData problems highlightedNumberChecker
 
                 Double _ ->
                     [ stopwatchOperationsButton
-                    , normalButton (GetCurrentDateForDownloadFile Commands.DownloadMergedStopwatches) [] "Download merged times"
+                    , normalButton (RequestCurrentDateAndTime Commands.DownloadMergedStopwatches) [] "Download merged times"
                     ]
     in
     div

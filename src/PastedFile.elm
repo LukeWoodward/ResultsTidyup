@@ -33,7 +33,7 @@ interpretPastedFile contents =
     if trimmedContents == "" then
         NoFilePasted
 
-    else if String.startsWith "STARTOFEVENT" trimmedContents then
+    else if String.startsWith "STARTOFEVENT" trimmedContents || String.startsWith "I, CP" trimmedContents then
         case readStopwatchData trimmedContents of
             Ok (StopwatchData times) ->
                 StopwatchFilePasted (List.length times)

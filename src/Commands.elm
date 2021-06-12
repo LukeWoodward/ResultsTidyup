@@ -1,4 +1,4 @@
-module Commands exposing (Command(..), DownloadOperation(..), ElementToFocus(..))
+module Commands exposing (Command(..), CurrentDateAndTimeOperation(..), ElementToFocus(..))
 
 import File exposing (File)
 import FileHandling exposing (InteropFile)
@@ -13,16 +13,17 @@ type ElementToFocus
     | PasteFileDialogTextArea
 
 
-type DownloadOperation
+type CurrentDateAndTimeOperation
     = DownloadSingleStopwatch WhichStopwatch
     | DownloadMergedStopwatches
     | DownloadBarcodeScannerFile String
     | DownloadAllBarcodeScannerData
+    | UploadPastedFile String
 
 
 type Command
     = NoCommand
-    | GetCurrentDateAndTime DownloadOperation
+    | GetCurrentDateAndTime CurrentDateAndTimeOperation
     | DownloadFile String InteropFile
     | FocusElement ElementToFocus
     | SaveEventStartTime Int

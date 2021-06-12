@@ -7,6 +7,7 @@ module PasteFileModal exposing
     )
 
 import Bootstrap.Modal as Modal
+import Commands exposing (CurrentDateAndTimeOperation(..))
 import Html exposing (Html, div, p, text, textarea)
 import Html.Attributes exposing (disabled, id, placeholder)
 import Html.Events exposing (onInput)
@@ -81,7 +82,7 @@ pasteFileButtons pastedFileDetails =
                 UnrecognisedFilePasted ->
                     [ disabled True ]
     in
-    [ normalButton CloseModal uploadButtonAttributes "Upload"
+    [ normalButton (RequestCurrentDateAndTime (UploadPastedFile pastedFileDetails.pastedText)) uploadButtonAttributes "Upload"
     , outlineButton CloseModal [] "Close"
     ]
 

@@ -1,6 +1,6 @@
 module DateHandlingTests exposing (suite)
 
-import DateHandling exposing (dateTimeStringToPosix, generateDownloadFilenameDatePart, posixToDateString, posixToDateTimeString)
+import DateHandling exposing (dateTimeStringToPosix, generateFilenameDatePart, posixToDateString, posixToDateTimeString)
 import Errors exposing (expectError)
 import Expect
 import Test exposing (Test, describe, test)
@@ -10,10 +10,10 @@ import Time
 suite : Test
 suite =
     describe "DateHandling tests"
-        [ describe "generateDownloadFilenameDatePart tests"
-            [ test "Can generate a download filename part" <|
+        [ describe "generateFilenameDatePart tests"
+            [ test "Can generate a filename part" <|
                 \() ->
-                    generateDownloadFilenameDatePart Time.utc (Time.millisToPosix 1500000000000)
+                    generateFilenameDatePart Time.utc (Time.millisToPosix 1500000000000)
                         |> Expect.equal "14072017024000"
             ]
         , describe "dateTimeStringToPosix tests"

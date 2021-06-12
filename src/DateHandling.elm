@@ -1,4 +1,4 @@
-module DateHandling exposing (dateTimeStringToPosix, generateDownloadFilenameDatePart, posixToDateString, posixToDateTimeString)
+module DateHandling exposing (dateTimeStringToPosix, generateFilenameDatePart, posixToDateString, posixToDateTimeString)
 
 import Iso8601
 import Parser exposing ((|.), (|=), DeadEnd, Parser, end, keyword, oneOf, run, spaces, symbol)
@@ -56,8 +56,8 @@ getMonthNumber zone time =
             12
 
 
-generateDownloadFilenameDatePart : Zone -> Posix -> String
-generateDownloadFilenameDatePart zone time =
+generateFilenameDatePart : Zone -> Posix -> String
+generateFilenameDatePart zone time =
     [ Time.toDay zone time
     , getMonthNumber zone time
     , Time.toYear zone time

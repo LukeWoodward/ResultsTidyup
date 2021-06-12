@@ -13,7 +13,7 @@ import BarcodeScanner
         )
 import BarcodeScannerEditing exposing (BarcodeScannerFieldBeingEdited(..), BarcodeScannerRowEditDetails, BarcodeScannerRowEditLocation)
 import BarcodeScannerTests exposing (createBarcodeScannerData)
-import Commands exposing (Command(..), DownloadOperation, ElementToFocus(..))
+import Commands exposing (Command(..), CurrentDateAndTimeOperation, ElementToFocus(..))
 import DataEntry exposing (DateEntry, IntegerEntry, emptyEntry)
 import Dict exposing (Dict)
 import Error exposing (FileError)
@@ -405,10 +405,10 @@ suite =
                                 :: defaultAssertionsExcept [ EventDateAndTimeAssertion ]
                             )
             ]
-        , describe "Get current date for download file tests"
-            [ test "Getting current date issues a command and returns the same model" <|
+        , describe "Request current date and time tests"
+            [ test "Requesting current date and time issues a command and returns the same model" <|
                 \() ->
-                    update (GetCurrentDateForDownloadFile Commands.DownloadMergedStopwatches) initModel
+                    update (RequestCurrentDateAndTime Commands.DownloadMergedStopwatches) initModel
                         |> Expect.all
                             (expectCommand (GetCurrentDateAndTime Commands.DownloadMergedStopwatches)
                                 :: defaultAssertionsExcept [ Command ]
@@ -921,6 +921,15 @@ suite =
                         |> Expect.all
                             (expectDialogDetails (PasteFileDialog expectedPastedFile)
                                 :: defaultAssertionsExcept [ DialogDetailsAssertion ]
+                            )
+            ]
+        , describe "PastedFileUploaded tests"
+            [ test "Can upload the pasted file" <|
+                \() ->
+                    update (PastedFileUploaded sampleStopwatchData Time.utc recentTime) initModel
+                        |> Expect.all
+                            (expectStopwatches (Single "pasted_file_14072017024000.txt" parsedStopwatchTimes1)
+                                :: defaultAssertionsExcept [ Stopwatches ]
                             )
             ]
         , describe "ReturnKeyPressed tests"

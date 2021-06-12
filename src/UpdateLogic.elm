@@ -13,7 +13,7 @@ import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, BarcodeScan
 import Bootstrap.Tab as Tab
 import Commands exposing (Command(..), ElementToFocus(..))
 import DataEntry exposing (emptyEntry)
-import DateHandling exposing (generateDownloadFilenameDatePart)
+import DateHandling exposing (generateFilenameDatePart)
 import Dict
 import EventDateAndTime exposing (EventDateAndTime)
 import EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeChange)
@@ -236,7 +236,7 @@ createStopwatchFileForDownload zone time fileContents =
     let
         fileName : String
         fileName =
-            "results_tidyup_timer_" ++ generateDownloadFilenameDatePart zone time ++ ".txt"
+            "results_tidyup_timer_" ++ generateFilenameDatePart zone time ++ ".txt"
     in
     InteropFile fileName fileContents
 
@@ -292,7 +292,7 @@ createSingleBarcodeScannerData fileName files zone time =
 
                 downloadFileName : String
                 downloadFileName =
-                    "results_tidyup_barcode_" ++ generateDownloadFilenameDatePart zone time ++ ".txt"
+                    "results_tidyup_barcode_" ++ generateFilenameDatePart zone time ++ ".txt"
             in
             DownloadFile barcodeScannerFileMimeType (InteropFile downloadFileName downloadFileContents)
 
@@ -310,7 +310,7 @@ createAllBarcodeScannerData files zone time =
 
         downloadFileName : String
         downloadFileName =
-            "results_tidyup_barcode_" ++ generateDownloadFilenameDatePart zone time ++ ".txt"
+            "results_tidyup_barcode_" ++ generateFilenameDatePart zone time ++ ".txt"
     in
     DownloadFile barcodeScannerFileMimeType (InteropFile downloadFileName downloadFileContents)
 
@@ -413,7 +413,7 @@ update msg model =
         ClearAllData ->
             ( clearAllData model, NoCommand )
 
-        GetCurrentDateForDownloadFile operation ->
+        RequestCurrentDateAndTime operation ->
             ( model, GetCurrentDateAndTime operation )
 
         DownloadMergedStopwatchData zone time ->
@@ -597,6 +597,18 @@ update msg model =
 
         PastedFileChanged newContents ->
             ( { model | dialogDetails = PasteFileDialog (PastedFileDetails newContents (interpretPastedFile newContents)) }
+            , NoCommand
+            )
+
+        PastedFileUploaded contents zone time ->
+            let
+                fileName : String
+                fileName =
+                    "pasted_file_" ++ generateFilenameDatePart zone time ++ ".txt"
+            in
+            ( handleFilesDropped [ InteropFile fileName contents ] { model | dialogDetails = NoDialog }
+                |> identifyProblemsIn
+                |> reunderlineStopwatchTable
             , NoCommand
             )
 
