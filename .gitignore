@@ -5,3 +5,4 @@
 /release
 /results-tidyup.min.js
 /.coverage
+/jquery-*.js
