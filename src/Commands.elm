@@ -2,8 +2,8 @@ module Commands exposing (Command(..), CurrentDateAndTimeOperation(..), ElementT
 
 import File exposing (File)
 import FileHandling exposing (InteropFile)
-import Stopwatch exposing (WhichStopwatch)
 import Time exposing (Posix, Zone)
+import Timer exposing (WhichTimer)
 
 
 type ElementToFocus
@@ -14,8 +14,8 @@ type ElementToFocus
 
 
 type CurrentDateAndTimeOperation
-    = DownloadSingleStopwatch WhichStopwatch
-    | DownloadMergedStopwatches
+    = DownloadSingleTimer WhichTimer
+    | DownloadMergedTimers
     | DownloadBarcodeScannerFile String
     | DownloadAllBarcodeScannerData
     | UploadPastedFile String

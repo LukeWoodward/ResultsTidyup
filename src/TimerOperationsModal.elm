@@ -1,4 +1,4 @@
-module StopwatchOperationsModal exposing (stopwatchOperationsButtons, stopwatchOperationsDialogSizer, stopwatchOperationsDialogTitle, stopwatchOperationsModalBody)
+module TimerOperationsModal exposing (timerOperationsButtons, timerOperationsDialogSizer, timerOperationsDialogTitle, timerOperationsModalBody)
 
 import Bootstrap.Button as Button
 import Bootstrap.Form as Form
@@ -15,18 +15,19 @@ import Html exposing (Html, div, hr, label, text)
 import Html.Attributes exposing (class, for)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg(..))
-import Stopwatch exposing (WhichStopwatch(..))
-import StopwatchOperations
+import TimeHandling exposing (formatTime)
+import Timer exposing (WhichTimer(..))
+import TimerOperations
     exposing
         ( DistanceType(..)
         , OffsetDetails
         , OffsetType(..)
-        , StopwatchField(..)
-        , StopwatchOperation(..)
-        , StopwatchOperationChangeType(..)
-        , StopwatchOperationEditDetails
-        , StopwatchOperationValidationError(..)
-        , StopwatchesToApplyTo(..)
+        , TimerField(..)
+        , TimerOperation(..)
+        , TimerOperationChangeType(..)
+        , TimerOperationEditDetails
+        , TimerOperationValidationError(..)
+        , TimersToApplyTo(..)
         , isActualDistanceFieldInvalid
         , isAddOffsetFieldInvalid
         , isExpectedDistanceFieldInvalid
@@ -34,27 +35,26 @@ import StopwatchOperations
         , isSubtractOffsetFieldInvalid
         , validateEditDetails
         )
-import TimeHandling exposing (formatTime)
 import ViewCommon exposing (normalButton, outlineButton)
 
 
-stopwatchOperationsDialogTitle : String
-stopwatchOperationsDialogTitle =
-    "Stopwatch operations"
+timerOperationsDialogTitle : String
+timerOperationsDialogTitle =
+    "Timer operations"
 
 
-radioButton : String -> StopwatchOperation -> String -> StopwatchOperationEditDetails -> Grid.Column Msg
+radioButton : String -> TimerOperation -> String -> TimerOperationEditDetails -> Grid.Column Msg
 radioButton elementId operation labelText editDetails =
     sizedRadioButton Col.xs4 elementId operation labelText editDetails
 
 
-sizedRadioButton : Col.Option Msg -> String -> StopwatchOperation -> String -> StopwatchOperationEditDetails -> Grid.Column Msg
+sizedRadioButton : Col.Option Msg -> String -> TimerOperation -> String -> TimerOperationEditDetails -> Grid.Column Msg
 sizedRadioButton size elementId operation labelText editDetails =
     Grid.col [ size ]
         [ Radio.radio
             [ Radio.id elementId
             , Radio.checked (editDetails.operation == operation)
-            , Radio.onClick (StopwatchOperationEdit (ChangeOperation operation))
+            , Radio.onClick (TimerOperationEdit (ChangeOperation operation))
             ]
             labelText
         ]
@@ -65,8 +65,8 @@ checkBoxRowApplyToLabel =
     Grid.col [ Col.xs2, Col.offsetXs1 ] [ text "Apply to:" ]
 
 
-applyToStopwatchCheckbox : String -> OffsetType -> WhichStopwatch -> StopwatchOperationEditDetails -> Grid.Column Msg
-applyToStopwatchCheckbox elementId offsetType stopwatch editDetails =
+applyToTimerCheckbox : String -> OffsetType -> WhichTimer -> TimerOperationEditDetails -> Grid.Column Msg
+applyToTimerCheckbox elementId offsetType timer editDetails =
     let
         offset : OffsetDetails
         offset =
@@ -79,43 +79,43 @@ applyToStopwatchCheckbox elementId offsetType stopwatch editDetails =
 
         currentValue : Bool
         currentValue =
-            case stopwatch of
-                StopwatchOne ->
-                    offset.applyToStopwatch1
+            case timer of
+                TimerOne ->
+                    offset.applyToTimer1
 
-                StopwatchTwo ->
-                    offset.applyToStopwatch2
+                TimerTwo ->
+                    offset.applyToTimer2
 
         labelText : String
         labelText =
-            case stopwatch of
-                StopwatchOne ->
-                    "Stopwatch 1"
+            case timer of
+                TimerOne ->
+                    "Timer 1"
 
-                StopwatchTwo ->
-                    "Stopwatch 2"
+                TimerTwo ->
+                    "Timer 2"
 
-        matchingOperation : StopwatchOperation
+        matchingOperation : TimerOperation
         matchingOperation =
             case offsetType of
                 AddOffset ->
-                    AddStopwatchTimeOffset
+                    AddTimerTimeOffset
 
                 SubtractOffset ->
-                    SubtractStopwatchTimeOffset
+                    SubtractTimerTimeOffset
     in
     Grid.col [ Col.xs3 ]
         [ Checkbox.checkbox
             [ Checkbox.id elementId
             , Checkbox.checked currentValue
-            , Checkbox.onCheck (StopwatchOperationEdit << StopwatchCheckboxChanged offsetType stopwatch)
+            , Checkbox.onCheck (TimerOperationEdit << TimerCheckboxChanged offsetType timer)
             , Checkbox.disabled (editDetails.operation /= matchingOperation)
             ]
             labelText
         ]
 
 
-inputTextFieldOptions : (StopwatchOperationEditDetails -> Entry a) -> StopwatchField -> StopwatchOperation -> (StopwatchOperationEditDetails -> Bool) -> StopwatchOperationEditDetails -> List (Input.Option Msg)
+inputTextFieldOptions : (TimerOperationEditDetails -> Entry a) -> TimerField -> TimerOperation -> (TimerOperationEditDetails -> Bool) -> TimerOperationEditDetails -> List (Input.Option Msg)
 inputTextFieldOptions rangeEntryGetter field option validator editDetails =
     let
         dangerAttributes : List (Input.Option Msg)
@@ -127,20 +127,20 @@ inputTextFieldOptions rangeEntryGetter field option validator editDetails =
                 []
     in
     [ Input.value (rangeEntryGetter editDetails).enteredValue
-    , Input.onInput (StopwatchOperationEdit << StopwatchFieldEdited field)
+    , Input.onInput (TimerOperationEdit << TimerFieldEdited field)
     , Input.disabled (editDetails.operation /= option)
     ]
         ++ dangerAttributes
 
 
-inputTextField : (StopwatchOperationEditDetails -> Entry a) -> StopwatchField -> StopwatchOperation -> (StopwatchOperationEditDetails -> Bool) -> StopwatchOperationEditDetails -> Grid.Column Msg
+inputTextField : (TimerOperationEditDetails -> Entry a) -> TimerField -> TimerOperation -> (TimerOperationEditDetails -> Bool) -> TimerOperationEditDetails -> Grid.Column Msg
 inputTextField rangeEntryGetter field option validator editDetails =
     Grid.col
         [ Col.xs2 ]
         [ Input.text (inputTextFieldOptions rangeEntryGetter field option validator editDetails) ]
 
 
-distanceField : (StopwatchOperationEditDetails -> IntegerEntry) -> StopwatchField -> (StopwatchOperationEditDetails -> Bool) -> StopwatchOperationEditDetails -> Grid.Column Msg
+distanceField : (TimerOperationEditDetails -> IntegerEntry) -> TimerField -> (TimerOperationEditDetails -> Bool) -> TimerOperationEditDetails -> Grid.Column Msg
 distanceField rangeEntryGetter field validator editDetails =
     let
         dangerAttributes : List (Input.Option Msg)
@@ -153,7 +153,7 @@ distanceField rangeEntryGetter field validator editDetails =
     in
     Grid.col [ Col.xs2 ]
         [ InputGroup.config
-            (InputGroup.text (inputTextFieldOptions rangeEntryGetter field ApplyDistanceBasedStopwatchScaleFactor validator editDetails))
+            (InputGroup.text (inputTextFieldOptions rangeEntryGetter field ApplyDistanceBasedTimerScaleFactor validator editDetails))
             |> InputGroup.successors
                 [ InputGroup.span [] [ text "m" ] ]
             |> InputGroup.view
@@ -170,20 +170,20 @@ distanceTypeToString distanceType =
             "actual distance"
 
 
-validationErrorToString : StopwatchOperationValidationError -> String
+validationErrorToString : TimerOperationValidationError -> String
 validationErrorToString validationError =
     case validationError of
         NoValidationError ->
             ""
 
-        StopwatchOperationNotSelected ->
-            "Please select a stopwatch operation"
+        TimerOperationNotSelected ->
+            "Please select a timer operation"
 
         InvalidOffset _ ->
             "The offset entered is not valid.  Please enter a valid offset in minutes and seconds, e.g 02:17"
 
-        NoStopwatchesToApplyOffsetTo _ ->
-            "No stopwatches have been selected to apply the offset to.  Please select one or both stopwatches"
+        NoTimersToApplyOffsetTo _ ->
+            "No timers have been selected to apply the offset to.  Please select one or both timers"
 
         SubtractOffsetTooLarge fastestTime offset ->
             "It is not possible to subtract an offset of " ++ formatTime offset ++ " from the times because the fastest time is " ++ formatTime fastestTime
@@ -201,47 +201,47 @@ validationErrorToString validationError =
             "The actual distance and expected distance are equal.  Please enter two different distances"
 
 
-validationErrorRow : StopwatchOperationValidationError -> Html Msg
+validationErrorRow : TimerOperationValidationError -> Html Msg
 validationErrorRow validationError =
     div [ class "validation-error" ] [ text (validationErrorToString validationError) ]
 
 
-applyToStopwatchCheckboxesRow : OffsetType -> String -> StopwatchOperationEditDetails -> Html Msg
-applyToStopwatchCheckboxesRow offsetType offsetTypeAsString editDetails =
-    case editDetails.stopwatchesToApplyTo of
-        OneStopwatch ->
+applyToTimerCheckboxesRow : OffsetType -> String -> TimerOperationEditDetails -> Html Msg
+applyToTimerCheckboxesRow offsetType offsetTypeAsString editDetails =
+    case editDetails.timersToApplyTo of
+        OneTimer ->
             text ""
 
-        TwoStopwatches ->
+        TwoTimers ->
             Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
                 [ checkBoxRowApplyToLabel
-                , applyToStopwatchCheckbox ("apply" ++ offsetTypeAsString ++ "OffsetToStopwatch1Checkbox") offsetType StopwatchOne editDetails
-                , applyToStopwatchCheckbox ("apply" ++ offsetTypeAsString ++ "OffsetToStopwatch2Checkbox") offsetType StopwatchTwo editDetails
+                , applyToTimerCheckbox ("apply" ++ offsetTypeAsString ++ "OffsetToTimer1Checkbox") offsetType TimerOne editDetails
+                , applyToTimerCheckbox ("apply" ++ offsetTypeAsString ++ "OffsetToTimer2Checkbox") offsetType TimerTwo editDetails
                 ]
 
 
-stopwatchOperationsModalBody : StopwatchOperationEditDetails -> Html Msg
-stopwatchOperationsModalBody editDetails =
+timerOperationsModalBody : TimerOperationEditDetails -> Html Msg
+timerOperationsModalBody editDetails =
     div []
         [ Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
-            [ radioButton "addOffsetRadioButton" AddStopwatchTimeOffset "Add offset to all times" editDetails
-            , inputTextField (.addOffsetDetails >> .offset) AddOffsetField AddStopwatchTimeOffset isAddOffsetFieldInvalid editDetails
+            [ radioButton "addOffsetRadioButton" AddTimerTimeOffset "Add offset to all times" editDetails
+            , inputTextField (.addOffsetDetails >> .offset) AddOffsetField AddTimerTimeOffset isAddOffsetFieldInvalid editDetails
             ]
-        , applyToStopwatchCheckboxesRow AddOffset "Add" editDetails
+        , applyToTimerCheckboxesRow AddOffset "Add" editDetails
         , hr [] []
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
-            [ radioButton "subtractOffsetRadioButton" SubtractStopwatchTimeOffset "Subtract offset from all times" editDetails
-            , inputTextField (.subtractOffsetDetails >> .offset) SubtractOffsetField SubtractStopwatchTimeOffset isSubtractOffsetFieldInvalid editDetails
+            [ radioButton "subtractOffsetRadioButton" SubtractTimerTimeOffset "Subtract offset from all times" editDetails
+            , inputTextField (.subtractOffsetDetails >> .offset) SubtractOffsetField SubtractTimerTimeOffset isSubtractOffsetFieldInvalid editDetails
             ]
-        , applyToStopwatchCheckboxesRow SubtractOffset "Subtract" editDetails
+        , applyToTimerCheckboxesRow SubtractOffset "Subtract" editDetails
         , hr [] []
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
-            [ radioButton "applyScaleFactorRadioButton" ApplyStopwatchScaleFactor "Apply scale factor to all times:" editDetails
-            , inputTextField .manualScaleFactor ScaleFactorField ApplyStopwatchScaleFactor isScaleFactorFieldInvalid editDetails
+            [ radioButton "applyScaleFactorRadioButton" ApplyTimerScaleFactor "Apply scale factor to all times:" editDetails
+            , inputTextField .manualScaleFactor ScaleFactorField ApplyTimerScaleFactor isScaleFactorFieldInvalid editDetails
             ]
         , hr [] []
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
-            [ sizedRadioButton Col.xs6 "applyDistanceBasedScaleFactorRadioButton" ApplyDistanceBasedStopwatchScaleFactor "Apply distance-based scale factor to all times:" editDetails
+            [ sizedRadioButton Col.xs6 "applyDistanceBasedScaleFactorRadioButton" ApplyDistanceBasedTimerScaleFactor "Apply distance-based scale factor to all times:" editDetails
             ]
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
             [ Grid.col [ Col.xs3, Col.offsetXs1 ] [ text "Expected distance" ]
@@ -253,37 +253,37 @@ stopwatchOperationsModalBody editDetails =
         ]
 
 
-processStopwatchOperationsButtonText : StopwatchOperationEditDetails -> Maybe String
-processStopwatchOperationsButtonText editDetails =
+processTimerOperationsButtonText : TimerOperationEditDetails -> Maybe String
+processTimerOperationsButtonText editDetails =
     case editDetails.operation of
         NoOperationSelected ->
             Nothing
 
-        AddStopwatchTimeOffset ->
+        AddTimerTimeOffset ->
             Just "Add offset"
 
-        SubtractStopwatchTimeOffset ->
+        SubtractTimerTimeOffset ->
             Just "Subtract offset"
 
-        ApplyStopwatchScaleFactor ->
+        ApplyTimerScaleFactor ->
             Just "Apply scale factor"
 
-        ApplyDistanceBasedStopwatchScaleFactor ->
+        ApplyDistanceBasedTimerScaleFactor ->
             Just "Apply scale factor"
 
 
-stopwatchOperationsButtons : StopwatchOperationEditDetails -> List (Html Msg)
-stopwatchOperationsButtons editDetails =
+timerOperationsButtons : TimerOperationEditDetails -> List (Html Msg)
+timerOperationsButtons editDetails =
     let
         processButtonText : Maybe String
         processButtonText =
-            processStopwatchOperationsButtonText editDetails
+            processTimerOperationsButtonText editDetails
 
         processButtons : List (Html Msg)
         processButtons =
             case processButtonText of
                 Just buttonText ->
-                    [ normalButton (ApplyStopwatchOperation editDetails) [] buttonText ]
+                    [ normalButton (ApplyTimerOperation editDetails) [] buttonText ]
 
                 Nothing ->
                     []
@@ -291,6 +291,6 @@ stopwatchOperationsButtons editDetails =
     processButtons ++ [ outlineButton CloseModal [] "Close" ]
 
 
-stopwatchOperationsDialogSizer : Modal.Config Msg -> Modal.Config Msg
-stopwatchOperationsDialogSizer =
+timerOperationsDialogSizer : Modal.Config Msg -> Modal.Config Msg
+timerOperationsDialogSizer =
     Modal.large

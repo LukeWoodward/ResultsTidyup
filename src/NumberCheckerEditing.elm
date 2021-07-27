@@ -18,12 +18,12 @@ addNumberCheckerRow model =
         manualEntryRow =
             model.numberCheckerManualEntryRow
     in
-    case ( manualEntryRow.stopwatch1.parsedValue, manualEntryRow.stopwatch2.parsedValue, manualEntryRow.finishTokens.parsedValue ) of
-        ( Just stopwatch1, Just stopwatch2, Just finishTokens ) ->
+    case ( manualEntryRow.timer1.parsedValue, manualEntryRow.timer2.parsedValue, manualEntryRow.finishTokens.parsedValue ) of
+        ( Just timer1, Just timer2, Just finishTokens ) ->
             let
                 newNumberCheckerEntries : List AnnotatedNumberCheckerEntry
                 newNumberCheckerEntries =
-                    addAndAnnotate (NumberCheckerEntry stopwatch1 stopwatch2 finishTokens) model.numberCheckerEntries
+                    addAndAnnotate (NumberCheckerEntry timer1 timer2 finishTokens) model.numberCheckerEntries
             in
             ( { model
                 | numberCheckerEntries = newNumberCheckerEntries
@@ -54,8 +54,8 @@ editNumberCheckerRow entryNumber model =
             { modelWithEntryDeleted
                 | numberCheckerManualEntryRow =
                     NumberCheckerManualEntryRow
-                        (integerEntryFromInt entry.stopwatch1)
-                        (integerEntryFromInt entry.stopwatch2)
+                        (integerEntryFromInt entry.timer1)
+                        (integerEntryFromInt entry.timer2)
                         (integerEntryFromInt entry.finishTokens)
             }
 
@@ -99,11 +99,11 @@ handleNumberCheckerFieldChange fieldChange newValue model =
         newNumberCheckerManualEntryRow : NumberCheckerManualEntryRow
         newNumberCheckerManualEntryRow =
             case fieldChange of
-                Stopwatch1 ->
-                    { oldNumberCheckerRow | stopwatch1 = newEntry }
+                Timer1 ->
+                    { oldNumberCheckerRow | timer1 = newEntry }
 
-                Stopwatch2 ->
-                    { oldNumberCheckerRow | stopwatch2 = newEntry }
+                Timer2 ->
+                    { oldNumberCheckerRow | timer2 = newEntry }
 
                 FinishTokens ->
                     { oldNumberCheckerRow | finishTokens = newEntry }

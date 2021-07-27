@@ -1,18 +1,18 @@
-module StopwatchOffsetDetection exposing (findPossibleOffsets, getStopwatchTimeOffset)
+module TimerOffsetDetection exposing (findPossibleOffsets, getTimerTimeOffset)
 
 import Array exposing (Array)
 import Dict exposing (Dict)
-import Stopwatch exposing (DoubleStopwatchData, Stopwatches(..), createMergedTable)
+import Timer exposing (DoubleTimerData, Timers(..), createMergedTable)
 
 
-stopwatchTimeOffsetRange : Int
-stopwatchTimeOffsetRange =
+timerTimeOffsetRange : Int
+timerTimeOffsetRange =
     10
 
 
 {-| The minimum number of times a offset needs to appear in order for it to
 be considered as a possible offset, as a proportion of the average number of
-times on the two stopwatches.
+times on the two timers.
 
 This is used to help prevent spurious offsets being detected among unrelated
 timer files, such as two files from two different events. In this situation
@@ -40,7 +40,7 @@ addNextNumber number entries =
     Dict.update number updater entries
 
 
-{-| Find possible stopwatch time offsets. These are all of those that occur
+{-| Find possible timer time offsets. These are all of those that occur
 at least the given number of times within the given list.
 -}
 findPossibleOffsets : Int -> List Int -> List Int
@@ -55,22 +55,22 @@ scale index1 length1 length2 =
     round (toFloat index1 * (toFloat length2 - 1) / (toFloat length1 - 1) + 0.5)
 
 
-getPossibleStopwatchTimeOffsetsInDoubleStopwatchData : DoubleStopwatchData -> List Int
-getPossibleStopwatchTimeOffsetsInDoubleStopwatchData doubleStopwatchData =
+getPossibleTimerTimeOffsetsInDoubleTimerData : DoubleTimerData -> List Int
+getPossibleTimerTimeOffsetsInDoubleTimerData doubleTimerData =
     {- The implementation of this is somewhat basic: we compare corresponding
        times that are within a given number of positions away from each other.
-       Adjustments are made if the stopwatches don't have the same number of
+       Adjustments are made if the timers don't have the same number of
        times recorded.  All differences between pairs of times that occur
        enough times are then returned.
     -}
     let
         times1Array : Array Int
         times1Array =
-            Array.fromList doubleStopwatchData.times1
+            Array.fromList doubleTimerData.times1
 
         times2Array : Array Int
         times2Array =
-            Array.fromList doubleStopwatchData.times2
+            Array.fromList doubleTimerData.times2
 
         length1 : Int
         length1 =
@@ -96,7 +96,7 @@ getPossibleStopwatchTimeOffsetsInDoubleStopwatchData doubleStopwatchData =
 
         surround : ( Int, Int ) -> List ( Int, Int )
         surround ( ix1, ix2 ) =
-            List.map (\offset -> ( ix1, ix2 + offset )) (List.range -stopwatchTimeOffsetRange stopwatchTimeOffsetRange)
+            List.map (\offset -> ( ix1, ix2 + offset )) (List.range -timerTimeOffsetRange timerTimeOffsetRange)
 
         allIndexes : List ( Int, Int )
         allIndexes =
@@ -127,16 +127,16 @@ getPossibleStopwatchTimeOffsetsInDoubleStopwatchData doubleStopwatchData =
     findPossibleOffsets minOffsetCountRequired timeDifferences
 
 
-getBestStopwatchTimeOffsetInDoubleStopwatchData : DoubleStopwatchData -> Maybe Int
-getBestStopwatchTimeOffsetInDoubleStopwatchData doubleStopwatchData =
+getBestTimerTimeOffsetInDoubleTimerData : DoubleTimerData -> Maybe Int
+getBestTimerTimeOffsetInDoubleTimerData doubleTimerData =
     let
         possibleOffsets : List Int
         possibleOffsets =
-            getPossibleStopwatchTimeOffsetsInDoubleStopwatchData doubleStopwatchData
+            getPossibleTimerTimeOffsetsInDoubleTimerData doubleTimerData
 
         getMergedTableResult : Int -> Int
         getMergedTableResult offset =
-            createMergedTable doubleStopwatchData.times1 (List.map ((+) offset) doubleStopwatchData.times2) "dummy-filename1" "fummy-filename2"
+            createMergedTable doubleTimerData.times1 (List.map ((+) offset) doubleTimerData.times2) "dummy-filename1" "fummy-filename2"
                 |> .matchSummary
                 |> .exactMatches
 
@@ -150,11 +150,11 @@ getBestStopwatchTimeOffsetInDoubleStopwatchData doubleStopwatchData =
         |> Maybe.map Tuple.first
 
 
-getStopwatchTimeOffset : Stopwatches -> Maybe Int
-getStopwatchTimeOffset stopwatches =
-    case stopwatches of
-        Double doubleStopwatchData ->
-            getBestStopwatchTimeOffsetInDoubleStopwatchData doubleStopwatchData
+getTimerTimeOffset : Timers -> Maybe Int
+getTimerTimeOffset timers =
+    case timers of
+        Double doubleTimerData ->
+            getBestTimerTimeOffsetInDoubleTimerData doubleTimerData
 
         Single _ _ ->
             Nothing

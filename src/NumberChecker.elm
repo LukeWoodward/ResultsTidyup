@@ -8,15 +8,15 @@ import Result.Extra
 {-| Type alias for a row of number-checker data read from a file.
 -}
 type alias NumberCheckerEntry =
-    { stopwatch1 : Int
-    , stopwatch2 : Int
+    { timer1 : Int
+    , timer2 : Int
     , finishTokens : Int
     }
 
 
 type alias NumberCheckerEntryWithActual =
-    { stopwatch1 : Int
-    , stopwatch2 : Int
+    { timer1 : Int
+    , timer2 : Int
     , finishTokens : Int
     , actual : Int
     }
@@ -26,10 +26,10 @@ type alias NumberCheckerEntryWithActual =
 -}
 type alias AnnotatedNumberCheckerEntry =
     { entryNumber : Int
-    , stopwatch1 : Int
-    , stopwatch1Delta : Int
-    , stopwatch2 : Int
-    , stopwatch2Delta : Int
+    , timer1 : Int
+    , timer1Delta : Int
+    , timer2 : Int
+    , timer2Delta : Int
     , finishTokens : Int
     , finishTokensDelta : Int
     , actual : Int
@@ -111,36 +111,36 @@ parseNumberCheckerFile fileText =
 
 removeDeltas : AnnotatedNumberCheckerEntry -> NumberCheckerEntryWithActual
 removeDeltas entry =
-    NumberCheckerEntryWithActual entry.stopwatch1 entry.stopwatch2 entry.finishTokens entry.actual
+    NumberCheckerEntryWithActual entry.timer1 entry.timer2 entry.finishTokens entry.actual
 
 
 addActualNumber : NumberCheckerEntry -> Int -> NumberCheckerEntryWithActual
-addActualNumber { stopwatch1, stopwatch2, finishTokens } actual =
-    NumberCheckerEntryWithActual stopwatch1 stopwatch2 finishTokens actual
+addActualNumber { timer1, timer2, finishTokens } actual =
+    NumberCheckerEntryWithActual timer1 timer2 finishTokens actual
 
 
 getActualNumberFromPrevious : NumberCheckerEntry -> NumberCheckerEntryWithActual -> NumberCheckerEntryWithActual
 getActualNumberFromPrevious thisEntry previousEntry =
     let
-        stopwatch1Diff : Int
-        stopwatch1Diff =
-            thisEntry.stopwatch1 - previousEntry.stopwatch1
+        timer1Diff : Int
+        timer1Diff =
+            thisEntry.timer1 - previousEntry.timer1
 
-        stopwatch2Diff : Int
-        stopwatch2Diff =
-            thisEntry.stopwatch2 - previousEntry.stopwatch2
+        timer2Diff : Int
+        timer2Diff =
+            thisEntry.timer2 - previousEntry.timer2
 
         finishTokensDiff : Int
         finishTokensDiff =
             thisEntry.finishTokens - previousEntry.finishTokens
     in
-    if stopwatch1Diff == stopwatch2Diff && stopwatch1Diff == finishTokensDiff then
+    if timer1Diff == timer2Diff && timer1Diff == finishTokensDiff then
         -- Most common case: all agree
-        addActualNumber thisEntry (previousEntry.actual + stopwatch1Diff)
+        addActualNumber thisEntry (previousEntry.actual + timer1Diff)
 
-    else if stopwatch1Diff == stopwatch2Diff then
+    else if timer1Diff == timer2Diff then
         -- Finish tokens looks to be off...
-        addActualNumber thisEntry (previousEntry.actual + stopwatch1Diff)
+        addActualNumber thisEntry (previousEntry.actual + timer1Diff)
 
     else
         -- Anything else: take finish tokens to be authoritative
@@ -190,10 +190,10 @@ calculateDeltasInternal previousRowNumber previousEntry entries =
                 firstAnnotatedEntry : AnnotatedNumberCheckerEntry
                 firstAnnotatedEntry =
                     { entryNumber = thisRowNumber
-                    , stopwatch1 = firstEntry.stopwatch1
-                    , stopwatch1Delta = (firstEntry.stopwatch1 - previousEntry.stopwatch1) - actualDiff
-                    , stopwatch2 = firstEntry.stopwatch2
-                    , stopwatch2Delta = (firstEntry.stopwatch2 - previousEntry.stopwatch2) - actualDiff
+                    , timer1 = firstEntry.timer1
+                    , timer1Delta = (firstEntry.timer1 - previousEntry.timer1) - actualDiff
+                    , timer2 = firstEntry.timer2
+                    , timer2Delta = (firstEntry.timer2 - previousEntry.timer2) - actualDiff
                     , finishTokens = firstEntry.finishTokens
                     , finishTokensDelta = (firstEntry.finishTokens - previousEntry.finishTokens) - actualDiff
                     , actual = firstEntry.actual

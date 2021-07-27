@@ -10,55 +10,55 @@ import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, 
 import Parser exposing ((|.), Parser, chompIf, chompWhile, end, int, run, symbol)
 import Regex exposing (Regex)
 import Result.Extra
-import Stopwatch exposing (Stopwatch(..), Stopwatches(..), createMergedTable, readStopwatchData)
+import Timer exposing (Timer(..), Timers(..), createMergedTable, readTimerData)
 
 
-hasFileAlreadyBeenUploaded : String -> Stopwatches -> Bool
-hasFileAlreadyBeenUploaded newFileName stopwatches =
-    case stopwatches of
+hasFileAlreadyBeenUploaded : String -> Timers -> Bool
+hasFileAlreadyBeenUploaded newFileName timers =
+    case timers of
         None ->
             False
 
         Single existingFilename _ ->
             newFileName == existingFilename
 
-        Double doubleStopwatchData ->
-            newFileName == doubleStopwatchData.filename1 || newFileName == doubleStopwatchData.filename2
+        Double doubleTimerData ->
+            newFileName == doubleTimerData.filename1 || newFileName == doubleTimerData.filename2
 
 
-handleStopwatchFileDrop : String -> String -> Model -> Model
-handleStopwatchFileDrop fileName fileText model =
-    case readStopwatchData fileText of
-        Ok (StopwatchData newStopwatch) ->
-            if hasFileAlreadyBeenUploaded fileName model.stopwatches then
+handleTimerFileDrop : String -> String -> Model -> Model
+handleTimerFileDrop fileName fileText model =
+    case readTimerData fileText of
+        Ok (TimerData newTimer) ->
+            if hasFileAlreadyBeenUploaded fileName model.timers then
                 { model
                     | lastErrors =
                         model.lastErrors
                             ++ [ FileError
-                                    "STOPWATCH_FILE_ALREADY_LOADED"
-                                    "That stopwatch data file has already been loaded"
+                                    "TIMER_FILE_ALREADY_LOADED"
+                                    "That timer data file has already been loaded"
                                     fileName
                                ]
                 }
 
             else
                 let
-                    newStopwatches =
-                        case model.stopwatches of
+                    newTimers =
+                        case model.timers of
                             None ->
-                                Single fileName newStopwatch
+                                Single fileName newTimer
 
-                            Single existingFilename firstStopwatch ->
+                            Single existingFilename firstTimer ->
                                 if fileName < existingFilename then
-                                    Double (createMergedTable newStopwatch firstStopwatch fileName existingFilename)
+                                    Double (createMergedTable newTimer firstTimer fileName existingFilename)
 
                                 else
-                                    Double (createMergedTable firstStopwatch newStopwatch existingFilename fileName)
+                                    Double (createMergedTable firstTimer newTimer existingFilename fileName)
 
                             Double _ ->
-                                model.stopwatches
+                                model.timers
                 in
-                { model | stopwatches = newStopwatches }
+                { model | timers = newTimers }
 
         Err error ->
             { model | lastErrors = model.lastErrors ++ [ mapError fileName error ] }
@@ -169,7 +169,7 @@ handleNumberCheckerFileDrop fileName fileText model =
 handleFileDropped : InteropFile -> Model -> Model
 handleFileDropped { fileName, fileText } model =
     if String.startsWith "STARTOFEVENT" fileText || String.startsWith "I, CP" fileText then
-        handleStopwatchFileDrop fileName fileText model
+        handleTimerFileDrop fileName fileText model
 
     else if isPossibleNumberCheckerFile fileText then
         handleNumberCheckerFileDrop fileName fileText model

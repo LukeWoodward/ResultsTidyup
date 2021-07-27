@@ -35,9 +35,9 @@ import Problems
         , noIgnoredProblems
         , noProblems
         )
-import Stopwatch exposing (MergeEntry(..), MergedTableRow, StopwatchMatchSummary, Stopwatches(..), WhichStopwatch(..), noUnderlines)
 import Test exposing (Test, describe, test)
-import TestData exposing (createBarcodeScannerDataFromFiles, doubleStopwatches, misScanFileLine, ordinaryFileLine, toPosix)
+import TestData exposing (createBarcodeScannerDataFromFiles, doubleTimers, misScanFileLine, ordinaryFileLine, toPosix)
+import Timer exposing (MergeEntry(..), MergedTableRow, TimerMatchSummary, Timers(..), WhichTimer(..), noUnderlines)
 
 
 emptyEventDateAndTime : EventDateAndTime
@@ -72,28 +72,28 @@ wrapMergeEntriesInTable entries =
     List.indexedMap wrapRow entries
 
 
-doubleStopwatchesForTimeLookupTests : Stopwatches
-doubleStopwatchesForTimeLookupTests =
+doubleTimersForTimeLookupTests : Timers
+doubleTimersForTimeLookupTests =
     let
         expectedEntries : List MergedTableRow
         expectedEntries =
             [ { index = 0, rowNumber = Just 1, entry = ExactMatch 191, included = True, underlines = noUnderlines }
             , { index = 1, rowNumber = Just 2, entry = NotNearMatch 469 463, included = True, underlines = noUnderlines }
-            , { index = 2, rowNumber = Nothing, entry = OneWatchOnly StopwatchOne 603, included = False, underlines = noUnderlines }
+            , { index = 2, rowNumber = Nothing, entry = OneWatchOnly TimerOne 603, included = False, underlines = noUnderlines }
             , { index = 3, rowNumber = Just 3, entry = ExactMatch 746, included = True, underlines = noUnderlines }
-            , { index = 4, rowNumber = Nothing, entry = OneWatchOnly StopwatchTwo 791, included = False, underlines = noUnderlines }
+            , { index = 4, rowNumber = Nothing, entry = OneWatchOnly TimerTwo 791, included = False, underlines = noUnderlines }
             , { index = 5, rowNumber = Just 4, entry = ExactMatch 882, included = True, underlines = noUnderlines }
             ]
 
-        expectedMatchSummary : StopwatchMatchSummary
+        expectedMatchSummary : TimerMatchSummary
         expectedMatchSummary =
-            { exactMatches = 3, nearMatches = 0, notNearMatches = 1, stopwatch1Only = 1, stopwatch2Only = 1 }
+            { exactMatches = 3, nearMatches = 0, notNearMatches = 1, timer1Only = 1, timer2Only = 1 }
     in
     Double
         { times1 = [ 191, 469, 603, 746, 882 ]
         , times2 = [ 191, 463, 746, 791, 882 ]
-        , filename1 = "stopwatch1.txt"
-        , filename2 = "stopwatch2.txt"
+        , filename1 = "timer1.txt"
+        , filename2 = "timer2.txt"
         , mergedTableRows = expectedEntries
         , matchSummary = expectedMatchSummary
         }
@@ -176,10 +176,10 @@ suite =
                                     [ AthleteWithMultiplePositionsProblem "A123456" [ PositionAndTime 12 Nothing, PositionAndTime 19 Nothing ]
                                     ]
                             }
-            , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from single stopwatch data" <|
+            , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from single timer data" <|
                 \() ->
                     identifyProblems
-                        (Single "stopwatch1.txt" [ 604, 775, 802, 993, 1011, 1143, 1197 ])
+                        (Single "timer1.txt" [ 604, 775, 802, 993, 1011, 1143, 1197 ])
                         (createBarcodeScannerData (Dict.fromList [ ( 3, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 6, [ "A123456" ] ) ]) [] [])
                         emptyEventDateAndTime
                         noIgnoredProblems
@@ -189,10 +189,10 @@ suite =
                                     [ AthleteWithMultiplePositionsProblem "A123456" [ PositionAndTime 3 (Just 802), PositionAndTime 6 (Just 1143) ]
                                     ]
                             }
-            , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from single stopwatch data, ignoring time off the end" <|
+            , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from single timer data, ignoring time off the end" <|
                 \() ->
                     identifyProblems
-                        (Single "stopwatch1.txt" [ 604, 775, 802, 993, 1011 ])
+                        (Single "timer1.txt" [ 604, 775, 802, 993, 1011 ])
                         (createBarcodeScannerData (Dict.fromList [ ( 3, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 6, [ "A123456" ] ) ]) [] [])
                         emptyEventDateAndTime
                         noIgnoredProblems
@@ -203,10 +203,10 @@ suite =
                                     ]
                                 , positionOffEndOfTimes = Just (PositionOffEndOfTimesProblem 5 6)
                             }
-            , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from double stopwatch data, hitting exact match and near match" <|
+            , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from double timer data, hitting exact match and near match" <|
                 \() ->
                     identifyProblems
-                        doubleStopwatches
+                        doubleTimers
                         (createBarcodeScannerData (Dict.fromList [ ( 1, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 2, [ "A123456" ] ) ]) [] [])
                         emptyEventDateAndTime
                         noIgnoredProblems
@@ -216,10 +216,10 @@ suite =
                                     [ AthleteWithMultiplePositionsProblem "A123456" [ PositionAndTime 1 (Just 191), PositionAndTime 2 (Just 463) ]
                                     ]
                             }
-            , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from double stopwatch data, hitting times only on one of the stopwatches" <|
+            , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from double timer data, hitting times only on one of the timers" <|
                 \() ->
                     identifyProblems
-                        doubleStopwatches
+                        doubleTimers
                         (createBarcodeScannerData (Dict.fromList [ ( 3, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 5, [ "A123456" ] ) ]) [] [])
                         emptyEventDateAndTime
                         noIgnoredProblems
@@ -229,10 +229,10 @@ suite =
                                     [ AthleteWithMultiplePositionsProblem "A123456" [ PositionAndTime 3 (Just 603), PositionAndTime 5 (Just 791) ]
                                     ]
                             }
-            , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from double stopwatch data, hitting a not-near match and skipping over ignored times" <|
+            , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from double timer data, hitting a not-near match and skipping over ignored times" <|
                 \() ->
                     identifyProblems
-                        doubleStopwatchesForTimeLookupTests
+                        doubleTimersForTimeLookupTests
                         (createBarcodeScannerData (Dict.fromList [ ( 2, [ "A123456" ] ), ( 3, [ "A252525" ] ), ( 4, [ "A123456" ] ) ]) [] [])
                         emptyEventDateAndTime
                         noIgnoredProblems
@@ -242,10 +242,10 @@ suite =
                                     [ AthleteWithMultiplePositionsProblem "A123456" [ PositionAndTime 2 (Just 463), PositionAndTime 4 (Just 882) ]
                                     ]
                             }
-            , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from double stopwatch data, ignoring time off the end" <|
+            , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from double timer data, ignoring time off the end" <|
                 \() ->
                     identifyProblems
-                        doubleStopwatches
+                        doubleTimers
                         (createBarcodeScannerData (Dict.fromList [ ( 1, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 8, [ "A123456" ] ) ]) [] [])
                         emptyEventDateAndTime
                         noIgnoredProblems
@@ -804,85 +804,85 @@ suite =
                                         , { filename = "barcodes2.txt", differenceType = OneHourFast }
                                         ]
                             }
-            , test "identifyProblems returns a problem for stopwatches exactly in sync" <|
+            , test "identifyProblems returns a problem for timers exactly in sync" <|
                 \() ->
                     identifyProblems
                         (Double
                             { times1 = [ 1000, 1080, 1200 ]
                             , times2 = [ 1000, 1080, 1200 ]
-                            , filename1 = "stopwatches1.txt"
-                            , filename2 = "stopwatches2.txt"
+                            , filename1 = "timers1.txt"
+                            , filename2 = "timers2.txt"
                             , mergedTableRows = wrapMergeEntriesInTable [ ExactMatch 1000, ExactMatch 1100, ExactMatch 1200 ]
-                            , matchSummary = StopwatchMatchSummary 3 0 0 0 0
+                            , matchSummary = TimerMatchSummary 3 0 0 0 0
                             }
                         )
                         BarcodeScanner.empty
                         emptyEventDateAndTime
                         noIgnoredProblems
-                        |> Expect.equal { noProblems | identicalStopwatchTimes = True }
-            , test "identifyProblems returns no problems for stopwatches almost in sync" <|
+                        |> Expect.equal { noProblems | identicalTimerTimes = True }
+            , test "identifyProblems returns no problems for timers almost in sync" <|
                 \() ->
                     identifyProblems
                         (Double
                             { times1 = [ 1000, 1080, 1201 ]
                             , times2 = [ 1000, 1080, 1200 ]
-                            , filename1 = "stopwatches1.txt"
-                            , filename2 = "stopwatches2.txt"
+                            , filename1 = "timers1.txt"
+                            , filename2 = "timers2.txt"
                             , mergedTableRows = wrapMergeEntriesInTable [ ExactMatch 1000, ExactMatch 1100, NearMatch 1201 1200 ]
-                            , matchSummary = StopwatchMatchSummary 2 1 0 0 0
+                            , matchSummary = TimerMatchSummary 2 1 0 0 0
                             }
                         )
                         BarcodeScanner.empty
                         emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal noProblems
-            , test "identifyProblems returns a problem for stopwatches not in sync" <|
+            , test "identifyProblems returns a problem for timers not in sync" <|
                 \() ->
                     identifyProblems
                         (Double
                             { times1 = [ 1000, 1080, 1200 ]
                             , times2 = [ 1005, 1085, 1205 ]
-                            , filename1 = "stopwatches1.txt"
-                            , filename2 = "stopwatches2.txt"
+                            , filename1 = "timers1.txt"
+                            , filename2 = "timers2.txt"
                             , mergedTableRows =
                                 wrapMergeEntriesInTable
-                                    [ OneWatchOnly StopwatchOne 1000
-                                    , OneWatchOnly StopwatchTwo 1005
-                                    , OneWatchOnly StopwatchOne 1100
-                                    , OneWatchOnly StopwatchTwo 1105
-                                    , OneWatchOnly StopwatchOne 1200
-                                    , OneWatchOnly StopwatchTwo 1205
+                                    [ OneWatchOnly TimerOne 1000
+                                    , OneWatchOnly TimerTwo 1005
+                                    , OneWatchOnly TimerOne 1100
+                                    , OneWatchOnly TimerTwo 1105
+                                    , OneWatchOnly TimerOne 1200
+                                    , OneWatchOnly TimerTwo 1205
                                     ]
-                            , matchSummary = StopwatchMatchSummary 0 0 0 3 3
+                            , matchSummary = TimerMatchSummary 0 0 0 3 3
                             }
                         )
                         BarcodeScanner.empty
                         emptyEventDateAndTime
                         noIgnoredProblems
-                        |> Expect.equal { noProblems | stopwatchTimeOffset = Just -5 }
-            , test "identifyProblems returns no problems for stopwatches not in sync if problem ignored" <|
+                        |> Expect.equal { noProblems | timerTimeOffset = Just -5 }
+            , test "identifyProblems returns no problems for timers not in sync if problem ignored" <|
                 \() ->
                     identifyProblems
                         (Double
                             { times1 = [ 1000, 1080, 1200 ]
                             , times2 = [ 1005, 1085, 1205 ]
-                            , filename1 = "stopwatches1.txt"
-                            , filename2 = "stopwatches2.txt"
+                            , filename1 = "timers1.txt"
+                            , filename2 = "timers2.txt"
                             , mergedTableRows =
                                 wrapMergeEntriesInTable
-                                    [ OneWatchOnly StopwatchOne 1000
-                                    , OneWatchOnly StopwatchTwo 1005
-                                    , OneWatchOnly StopwatchOne 1100
-                                    , OneWatchOnly StopwatchTwo 1105
-                                    , OneWatchOnly StopwatchOne 1200
-                                    , OneWatchOnly StopwatchTwo 1205
+                                    [ OneWatchOnly TimerOne 1000
+                                    , OneWatchOnly TimerTwo 1005
+                                    , OneWatchOnly TimerOne 1100
+                                    , OneWatchOnly TimerTwo 1105
+                                    , OneWatchOnly TimerOne 1200
+                                    , OneWatchOnly TimerTwo 1205
                                     ]
-                            , matchSummary = StopwatchMatchSummary 0 0 0 3 3
+                            , matchSummary = TimerMatchSummary 0 0 0 3 3
                             }
                         )
                         BarcodeScanner.empty
                         emptyEventDateAndTime
-                        { noIgnoredProblems | ignoreStopwatchTimeOffsets = True }
+                        { noIgnoredProblems | ignoreTimerTimeOffsets = True }
                         |> Expect.equal noProblems
             ]
         ]

@@ -22,37 +22,37 @@ td.not-near-match, td.mismatch, tr.barcode-scanner-row-error, button.btn.nav-lin
     background-color: #ffcccc;
 }
 
-table.table.stopwatch-times {
+table.table.timer-times {
     float: left;
 }
 
-table.table.stopwatch-times, table.table.number-checker-table, table.table.barcode-scanner-table {
+table.table.timer-times, table.table.number-checker-table, table.table.barcode-scanner-table {
     width: auto;
 }
 
-table.table.stopwatch-times > tbody > tr > td, table.table.number-checker-table > tbody > tr > td {
+table.table.timer-times > tbody > tr > td, table.table.number-checker-table > tbody > tr > td {
     text-align: right;
 }
 
-table.table.stopwatch-times > tbody > tr > td.scanned-athlete,
-table.table.stopwatch-times > tbody > tr > td.no-scanned-athlete {
+table.table.timer-times > tbody > tr > td.scanned-athlete,
+table.table.timer-times > tbody > tr > td.no-scanned-athlete {
     text-align: left;
 }
 
-table.table.stopwatch-times > tbody > tr > td.no-scanned-athlete {
+table.table.timer-times > tbody > tr > td.no-scanned-athlete {
     color: #dddddd;
 }
 
-table.table.stopwatch-times > tbody > tr > td, table.table.barcode-scanner-table > tbody > tr > td {
+table.table.timer-times > tbody > tr > td, table.table.barcode-scanner-table > tbody > tr > td {
     padding-top: 1px;
     padding-bottom: 1px;
 }
 
-table.table.stopwatch-times > tbody > tr > td > input[type=checkbox] {
+table.table.timer-times > tbody > tr > td > input[type=checkbox] {
     margin: 0;
 }
 
-table.table.stopwatch-times > tbody > tr > td > label {
+table.table.timer-times > tbody > tr > td > label {
     margin-bottom: 0;
 }
 
@@ -80,16 +80,16 @@ td.nonzero-delta {
     font-weight: bold;
 }
 
-label.stopwatch-time-label {
+label.timer-time-label {
     font-weight: initial;
 }
 
-label.stopwatch-time-label.excluded {
+label.timer-time-label.excluded {
     text-decoration: line-through;
     color: #888888;
 }
 
-th.stopwatch-header {
+th.timer-header {
     text-align: center;
 }
 
@@ -161,11 +161,11 @@ tr.deleted-barcode-scanner-row {
     margin-top: 10px;
 }
 
-div.barcode-scanner-buttons, div.stopwatch-buttons {
+div.barcode-scanner-buttons, div.timer-buttons {
     float: right;
 }
 
-div.barcode-scanner-buttons button, div.stopwatch-buttons button {
+div.barcode-scanner-buttons button, div.timer-buttons button {
     margin-left: 15px;
 }
 
@@ -193,7 +193,7 @@ div#actionsPanelContainer button {
     margin-right: 10px;
 }
 
-div#stopwatchMatchSummaryView {
+div#timerMatchSummaryView {
     padding: 0 15px 0 15px;
     float: left;
 }

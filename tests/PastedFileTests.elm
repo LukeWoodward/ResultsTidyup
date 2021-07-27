@@ -1,4 +1,4 @@
-module PastedFileTests exposing (stopwatchFileContents, suite)
+module PastedFileTests exposing (suite, timerFileContents)
 
 import Errors exposing (expectError)
 import Expect
@@ -6,8 +6,8 @@ import PastedFile exposing (..)
 import Test exposing (Test, describe, test)
 
 
-stopwatchFileContents : String
-stopwatchFileContents =
+timerFileContents : String
+timerFileContents =
     "STARTOFEVENT,01/01/2001 00:00:00,test\n"
         ++ "0,01/01/2001 00:00:00\n"
         ++ "1,01/01/2001 00:19:22,00:19:22\n"
@@ -36,19 +36,19 @@ suite =
                 \() ->
                     interpretPastedFile "           \n     \t  \n    "
                         |> Expect.equal NoFilePasted
-            , test "interpretPastedFile of a stopwatch file is StopwatchFilePasted" <|
+            , test "interpretPastedFile of a timer file is TimerFilePasted" <|
                 \() ->
-                    interpretPastedFile stopwatchFileContents
-                        |> Expect.equal (StopwatchFilePasted 3)
-            , test "interpretPastedFile of a stopwatch file with leading and trailing whitespaces is StopwatchFilePasted" <|
+                    interpretPastedFile timerFileContents
+                        |> Expect.equal (TimerFilePasted 3)
+            , test "interpretPastedFile of a timer file with leading and trailing whitespaces is TimerFilePasted" <|
                 \() ->
-                    interpretPastedFile ("   \n   \t  " ++ stopwatchFileContents ++ "   \n  \t   ")
-                        |> Expect.equal (StopwatchFilePasted 3)
-            , test "interpretPastedFile of a barcode scanner file is StopwatchFilePasted" <|
+                    interpretPastedFile ("   \n   \t  " ++ timerFileContents ++ "   \n  \t   ")
+                        |> Expect.equal (TimerFilePasted 3)
+            , test "interpretPastedFile of a barcode scanner file is TimerFilePasted" <|
                 \() ->
                     interpretPastedFile barcodeScannerFileContents
                         |> Expect.equal (BarcodeScannerFilePasted 4)
-            , test "interpretPastedFile of a barcode scanner file with leading and trailing whitespaces is StopwatchFilePasted" <|
+            , test "interpretPastedFile of a barcode scanner file with leading and trailing whitespaces is TimerFilePasted" <|
                 \() ->
                     interpretPastedFile ("   \n   \t  " ++ barcodeScannerFileContents ++ "   \n  \t   ")
                         |> Expect.equal (BarcodeScannerFilePasted 4)

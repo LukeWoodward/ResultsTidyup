@@ -2,12 +2,12 @@ module PastedFile exposing (PastedFileDetails, PastedFileInterpretation(..), emp
 
 import BarcodeScanner exposing (readBarcodeScannerData)
 import Dict exposing (Dict)
-import Stopwatch exposing (Stopwatch(..), readStopwatchData)
+import Timer exposing (Timer(..), readTimerData)
 
 
 type PastedFileInterpretation
     = NoFilePasted
-    | StopwatchFilePasted Int
+    | TimerFilePasted Int
     | BarcodeScannerFilePasted Int
     | UnrecognisedFilePasted
 
@@ -34,9 +34,9 @@ interpretPastedFile contents =
         NoFilePasted
 
     else if String.startsWith "STARTOFEVENT" trimmedContents || String.startsWith "I, CP" trimmedContents then
-        case readStopwatchData trimmedContents of
-            Ok (StopwatchData times) ->
-                StopwatchFilePasted (List.length times)
+        case readTimerData trimmedContents of
+            Ok (TimerData times) ->
+                TimerFilePasted (List.length times)
 
             Err _ ->
                 UnrecognisedFilePasted

@@ -31,14 +31,14 @@ import Model
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import PastedFile exposing (PastedFileDetails, PastedFileInterpretation(..))
-import PastedFileTests exposing (stopwatchFileContents)
+import PastedFileTests exposing (timerFileContents)
 import ProblemFixing exposing (ProblemFix(..), ProblemIgnorance(..))
 import Problems exposing (AthleteAndPositionPair, IgnoredProblems, Problems, noIgnoredProblems, noProblems)
-import Stopwatch exposing (Stopwatch(..), Stopwatches(..), WhichStopwatch(..))
 import Test exposing (Test, describe, test)
 import TestData exposing (..)
 import Time
-import UpdateLogic exposing (barcodeScannerFileMimeType, stopwatchFileMimeType, update)
+import Timer exposing (Timer(..), Timers(..), WhichTimer(..))
+import UpdateLogic exposing (barcodeScannerFileMimeType, timerFileMimeType, update)
 
 
 expectNoCommand : ( Model, Command ) -> Expectation
@@ -51,9 +51,9 @@ expectCommand command ( _, cmd ) =
     Expect.equal command cmd
 
 
-expectStopwatches : Stopwatches -> ( Model, Command ) -> Expectation
-expectStopwatches expectedStopwatches ( model, _ ) =
-    Expect.equal expectedStopwatches model.stopwatches
+expectTimers : Timers -> ( Model, Command ) -> Expectation
+expectTimers expectedTimers ( model, _ ) =
+    Expect.equal expectedTimers model.timers
 
 
 expectLastError : String -> ( Model, Command ) -> Expectation
@@ -117,7 +117,7 @@ expectDialogDetails dialogDetails ( model, _ ) =
 
 type Assertion
     = Command
-    | Stopwatches
+    | Timers
     | LastError
     | NumberCheckerEntries
     | HighlightedNumberCheckerId
@@ -139,11 +139,11 @@ defaultAssertionsExcept exceptions =
 
               else
                 Just expectNoCommand
-            , if List.member Stopwatches exceptions then
+            , if List.member Timers exceptions then
                 Nothing
 
               else
-                Just (expectStopwatches None)
+                Just (expectTimers None)
             , if List.member LastError exceptions then
                 Nothing
 
@@ -199,11 +199,11 @@ defaultAssertions =
     defaultAssertionsExcept []
 
 
-singleStopwatch : Stopwatches
-singleStopwatch =
-    case expectedParsedSampleStopwatchData of
-        StopwatchData times ->
-            Single "stopwatch1.txt" times
+singleTimer : Timers
+singleTimer =
+    case expectedParsedSampleTimerData of
+        TimerData times ->
+            Single "timer1.txt" times
 
 
 createBarcodeScannerDataForRemovingUnassociatedFinishTokens : List Int -> Model
@@ -315,65 +315,65 @@ suite =
                                 )
                 ]
             ]
-        , describe "Delete Stopwatch tests"
-            [ test "Deleting stopwatch 1 when none to delete does nothing" <|
+        , describe "Delete Timer tests"
+            [ test "Deleting timer 1 when none to delete does nothing" <|
                 \() ->
-                    update (RemoveStopwatch StopwatchOne) initModel
+                    update (RemoveTimer TimerOne) initModel
                         |> Expect.all defaultAssertions
-            , test "Deleting stopwatch 2 when none to delete does nothing" <|
+            , test "Deleting timer 2 when none to delete does nothing" <|
                 \() ->
-                    update (RemoveStopwatch StopwatchTwo) initModel
+                    update (RemoveTimer TimerTwo) initModel
                         |> Expect.all defaultAssertions
-            , test "Deleting stopwatch 1 when one to delete deletes that stopwatch" <|
+            , test "Deleting timer 1 when one to delete deletes that timer" <|
                 \() ->
-                    { initModel | stopwatches = singleStopwatch }
-                        |> update (RemoveStopwatch StopwatchOne)
+                    { initModel | timers = singleTimer }
+                        |> update (RemoveTimer TimerOne)
                         |> Expect.all defaultAssertions
-            , test "Deleting stopwatch 2 when one to delete does nothing" <|
+            , test "Deleting timer 2 when one to delete does nothing" <|
                 \() ->
-                    { initModel | stopwatches = singleStopwatch }
-                        |> update (RemoveStopwatch StopwatchTwo)
+                    { initModel | timers = singleTimer }
+                        |> update (RemoveTimer TimerTwo)
                         |> Expect.all
-                            (expectStopwatches singleStopwatch
-                                :: defaultAssertionsExcept [ Stopwatches ]
+                            (expectTimers singleTimer
+                                :: defaultAssertionsExcept [ Timers ]
                             )
-            , test "Deleting stopwatch 1 when two to delete deletes stopwatch 1" <|
+            , test "Deleting timer 1 when two to delete deletes timer 1" <|
                 \() ->
-                    { initModel | stopwatches = doubleStopwatches }
-                        |> update (RemoveStopwatch StopwatchOne)
+                    { initModel | timers = doubleTimers }
+                        |> update (RemoveTimer TimerOne)
                         |> Expect.all
-                            (expectStopwatches (Single "stopwatch2.txt" parsedStopwatchTimes2)
-                                :: defaultAssertionsExcept [ Stopwatches ]
+                            (expectTimers (Single "timer2.txt" parsedTimerTimes2)
+                                :: defaultAssertionsExcept [ Timers ]
                             )
-            , test "Deleting stopwatch 2 when two to delete deletes stopwatch 2" <|
+            , test "Deleting timer 2 when two to delete deletes timer 2" <|
                 \() ->
-                    { initModel | stopwatches = doubleStopwatches }
-                        |> update (RemoveStopwatch StopwatchTwo)
+                    { initModel | timers = doubleTimers }
+                        |> update (RemoveTimer TimerTwo)
                         |> Expect.all
-                            (expectStopwatches singleStopwatch
-                                :: defaultAssertionsExcept [ Stopwatches ]
+                            (expectTimers singleTimer
+                                :: defaultAssertionsExcept [ Timers ]
                             )
             ]
-        , describe "Flip Stopwatch tests"
-            [ test "Flipping stopwatches when no stopwatches loaded does nothing" <|
+        , describe "Flip Timer tests"
+            [ test "Flipping timers when no timers loaded does nothing" <|
                 \() ->
-                    update FlipStopwatches initModel
+                    update FlipTimers initModel
                         |> Expect.all defaultAssertions
-            , test "Flipping stopwatches when one stopwatch loaded does nothing" <|
+            , test "Flipping timers when one timer loaded does nothing" <|
                 \() ->
-                    { initModel | stopwatches = singleStopwatch }
-                        |> update FlipStopwatches
+                    { initModel | timers = singleTimer }
+                        |> update FlipTimers
                         |> Expect.all
-                            (expectStopwatches singleStopwatch
-                                :: defaultAssertionsExcept [ Stopwatches ]
+                            (expectTimers singleTimer
+                                :: defaultAssertionsExcept [ Timers ]
                             )
-            , test "Flipping stopwatches when two stopwatches loaded flips both stopwatches" <|
+            , test "Flipping timers when two timers loaded flips both timers" <|
                 \() ->
-                    { initModel | stopwatches = doubleStopwatches }
-                        |> update FlipStopwatches
+                    { initModel | timers = doubleTimers }
+                        |> update FlipTimers
                         |> Expect.all
-                            (expectStopwatches flippedDoubleStopwatches
-                                :: defaultAssertionsExcept [ Stopwatches ]
+                            (expectTimers flippedDoubleTimers
+                                :: defaultAssertionsExcept [ Timers ]
                             )
             ]
         , describe "Clear All Data tests"
@@ -386,7 +386,7 @@ suite =
                     { initModel
                         | barcodeScannerData = createBarcodeScannerData (Dict.singleton 47 [ "A4580484" ]) [ "A123456" ] [ 11 ]
                         , eventDateAndTime = { parsedEventDateOnly | time = IntegerEntry "09:00" (Just (9 * 60)) }
-                        , stopwatches = doubleStopwatches
+                        , timers = doubleTimers
                         , lastErrors = [ FileError "TEST_ERROR" "Some test error message" "somefile.txt" ]
                         , highlightedNumberCheckerId = Just 2
                         , numberCheckerEntries = [ AnnotatedNumberCheckerEntry 2 2 0 2 0 2 0 2 ]
@@ -397,7 +397,7 @@ suite =
                                 , misScans = [ "something" ]
                             }
                         , ignoredProblems =
-                            { noIgnoredProblems | ignoreStopwatchTimeOffsets = True }
+                            { noIgnoredProblems | ignoreTimerTimeOffsets = True }
                     }
                         |> update ClearAllData
                         |> Expect.all
@@ -408,96 +408,96 @@ suite =
         , describe "Request current date and time tests"
             [ test "Requesting current date and time issues a command and returns the same model" <|
                 \() ->
-                    update (RequestCurrentDateAndTime Commands.DownloadMergedStopwatches) initModel
+                    update (RequestCurrentDateAndTime Commands.DownloadMergedTimers) initModel
                         |> Expect.all
-                            (expectCommand (GetCurrentDateAndTime Commands.DownloadMergedStopwatches)
+                            (expectCommand (GetCurrentDateAndTime Commands.DownloadMergedTimers)
                                 :: defaultAssertionsExcept [ Command ]
                             )
             ]
-        , describe "Download merged stopwatch data tests"
-            [ test "Does not download merged data for no stopwatches" <|
+        , describe "Download merged timer data tests"
+            [ test "Does not download merged data for no timers" <|
                 \() ->
                     initModel
-                        |> update (DownloadMergedStopwatchData Time.utc recentTime)
+                        |> update (DownloadMergedTimerData Time.utc recentTime)
                         |> Expect.all defaultAssertions
-            , test "Does not download merged data for one stopwatch" <|
+            , test "Does not download merged data for one timer" <|
                 \() ->
                     initModel
-                        |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
+                        |> update (FilesDropped [ InteropFile "timer1.txt" sampleTimerData ])
                         |> Tuple.first
-                        |> update (DownloadMergedStopwatchData Time.utc recentTime)
+                        |> update (DownloadMergedTimerData Time.utc recentTime)
                         |> Expect.all
-                            (expectStopwatches singleStopwatch
-                                :: defaultAssertionsExcept [ Stopwatches ]
+                            (expectTimers singleTimer
+                                :: defaultAssertionsExcept [ Timers ]
                             )
-            , test "Can download merged data for two stopwatches" <|
+            , test "Can download merged data for two timers" <|
                 \() ->
                     initModel
-                        |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
+                        |> update (FilesDropped [ InteropFile "timer1.txt" sampleTimerData ])
                         |> Tuple.first
-                        |> update (FilesDropped [ InteropFile "stopwatch2.txt" sampleStopwatchData2 ])
+                        |> update (FilesDropped [ InteropFile "timer2.txt" sampleTimerData2 ])
                         |> Tuple.first
-                        |> update (DownloadMergedStopwatchData Time.utc recentTime)
+                        |> update (DownloadMergedTimerData Time.utc recentTime)
                         |> Expect.all
-                            (expectCommand (DownloadFile stopwatchFileMimeType (InteropFile "results_tidyup_timer_14072017024000.txt" expectedMergedStopwatchFileContents))
-                                :: expectStopwatches doubleStopwatches
-                                :: defaultAssertionsExcept [ Stopwatches, Command ]
+                            (expectCommand (DownloadFile timerFileMimeType (InteropFile "results_tidyup_timer_14072017024000.txt" expectedMergedTimerFileContents))
+                                :: expectTimers doubleTimers
+                                :: defaultAssertionsExcept [ Timers, Command ]
                             )
             ]
-        , describe "Create single stopwatch file for download tests"
-            [ test "Cannot create a stopwatch file for stopwatch 1 when no stopwatches" <|
+        , describe "Create single timer file for download tests"
+            [ test "Cannot create a timer file for timer 1 when no timers" <|
                 \() ->
                     initModel
-                        |> update (DownloadStopwatch StopwatchOne Time.utc recentTime)
+                        |> update (DownloadTimer TimerOne Time.utc recentTime)
                         |> Expect.all defaultAssertions
-            , test "Cannot create a stopwatch file for stopwatch 2 when no stopwatches" <|
+            , test "Cannot create a timer file for timer 2 when no timers" <|
                 \() ->
                     initModel
-                        |> update (DownloadStopwatch StopwatchTwo Time.utc recentTime)
+                        |> update (DownloadTimer TimerTwo Time.utc recentTime)
                         |> Expect.all defaultAssertions
-            , test "Can create a stopwatch file for stopwatch 1 when single stopwatch" <|
+            , test "Can create a timer file for timer 1 when single timer" <|
                 \() ->
                     initModel
-                        |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
+                        |> update (FilesDropped [ InteropFile "timer1.txt" sampleTimerData ])
                         |> Tuple.first
-                        |> update (DownloadStopwatch StopwatchOne Time.utc recentTime)
+                        |> update (DownloadTimer TimerOne Time.utc recentTime)
                         |> Expect.all
-                            (expectCommand (DownloadFile stopwatchFileMimeType (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedStopwatchData1))
-                                :: expectStopwatches singleStopwatch
-                                :: defaultAssertionsExcept [ Stopwatches, Command ]
+                            (expectCommand (DownloadFile timerFileMimeType (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedTimerData1))
+                                :: expectTimers singleTimer
+                                :: defaultAssertionsExcept [ Timers, Command ]
                             )
-            , test "Cannot create a stopwatch file for stopwatch 2 when only one stopwatch" <|
+            , test "Cannot create a timer file for timer 2 when only one timer" <|
                 \() ->
                     initModel
-                        |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
+                        |> update (FilesDropped [ InteropFile "timer1.txt" sampleTimerData ])
                         |> Tuple.first
-                        |> update (DownloadStopwatch StopwatchTwo Time.utc recentTime)
-                        |> Expect.all (defaultAssertionsExcept [ Stopwatches ])
-            , test "Can create a stopwatch file for stopwatch 1 when two stopwatches uploaded" <|
+                        |> update (DownloadTimer TimerTwo Time.utc recentTime)
+                        |> Expect.all (defaultAssertionsExcept [ Timers ])
+            , test "Can create a timer file for timer 1 when two timers uploaded" <|
                 \() ->
                     initModel
-                        |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
+                        |> update (FilesDropped [ InteropFile "timer1.txt" sampleTimerData ])
                         |> Tuple.first
-                        |> update (FilesDropped [ InteropFile "stopwatch2.txt" sampleStopwatchData2 ])
+                        |> update (FilesDropped [ InteropFile "timer2.txt" sampleTimerData2 ])
                         |> Tuple.first
-                        |> update (DownloadStopwatch StopwatchOne Time.utc recentTime)
+                        |> update (DownloadTimer TimerOne Time.utc recentTime)
                         |> Expect.all
-                            (expectCommand (DownloadFile stopwatchFileMimeType (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedStopwatchData1))
-                                :: expectStopwatches doubleStopwatches
-                                :: defaultAssertionsExcept [ Stopwatches, Command ]
+                            (expectCommand (DownloadFile timerFileMimeType (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedTimerData1))
+                                :: expectTimers doubleTimers
+                                :: defaultAssertionsExcept [ Timers, Command ]
                             )
-            , test "Can create a stopwatch file for stopwatch 2 when two stopwatches uploaded" <|
+            , test "Can create a timer file for timer 2 when two timers uploaded" <|
                 \() ->
                     initModel
-                        |> update (FilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ])
+                        |> update (FilesDropped [ InteropFile "timer1.txt" sampleTimerData ])
                         |> Tuple.first
-                        |> update (FilesDropped [ InteropFile "stopwatch2.txt" sampleStopwatchData2 ])
+                        |> update (FilesDropped [ InteropFile "timer2.txt" sampleTimerData2 ])
                         |> Tuple.first
-                        |> update (DownloadStopwatch StopwatchTwo Time.utc recentTime)
+                        |> update (DownloadTimer TimerTwo Time.utc recentTime)
                         |> Expect.all
-                            (expectCommand (DownloadFile stopwatchFileMimeType (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedStopwatchData2))
-                                :: expectStopwatches doubleStopwatches
-                                :: defaultAssertionsExcept [ Stopwatches, Command ]
+                            (expectCommand (DownloadFile timerFileMimeType (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedTimerData2))
+                                :: expectTimers doubleTimers
+                                :: defaultAssertionsExcept [ Timers, Command ]
                             )
             ]
         , describe "Mouse enter number-checker row tests"
@@ -523,7 +523,7 @@ suite =
                             )
             ]
         , describe "Delete number checker row tests"
-            [ test "Can delete a number-checker row when no stopwatches loaded" <|
+            [ test "Can delete a number-checker row when no timers loaded" <|
                 \() ->
                     { initModel | numberCheckerEntries = sampleNumberCheckerData }
                         |> update (DeleteNumberCheckerRow 2)
@@ -559,16 +559,16 @@ suite =
                             )
             ]
         , describe "Number checker field changed tests"
-            [ test "Entering a valid value for stopwatch 1 sets the value" <|
+            [ test "Entering a valid value for timer 1 sets the value" <|
                 \() ->
-                    update (NumberCheckerFieldChanged Stopwatch1 "24") initModel
+                    update (NumberCheckerFieldChanged Timer1 "24") initModel
                         |> Expect.all
                             (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow (IntegerEntry "24" (Just 24)) emptyEntry emptyEntry)
                                 :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
                             )
-            , test "Entering a valid value for stopwatch 2 sets the value" <|
+            , test "Entering a valid value for timer 2 sets the value" <|
                 \() ->
-                    update (NumberCheckerFieldChanged Stopwatch2 "38") initModel
+                    update (NumberCheckerFieldChanged Timer2 "38") initModel
                         |> Expect.all
                             (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyEntry (IntegerEntry "38" (Just 38)) emptyEntry)
                                 :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
@@ -580,18 +580,18 @@ suite =
                             (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyEntry emptyEntry (IntegerEntry "17" (Just 17)))
                                 :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
                             )
-            , test "Entering a negative value for stopwatch 1 sets a blank value" <|
+            , test "Entering a negative value for timer 1 sets a blank value" <|
                 \() ->
                     { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow (IntegerEntry "24" (Just 24)) emptyEntry emptyEntry }
-                        |> update (NumberCheckerFieldChanged Stopwatch1 "-2")
+                        |> update (NumberCheckerFieldChanged Timer1 "-2")
                         |> Expect.all
                             (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow (IntegerEntry "-2" Nothing) emptyEntry emptyEntry)
                                 :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
                             )
-            , test "Entering a negative value for stopwatch 2 sets a blank value" <|
+            , test "Entering a negative value for timer 2 sets a blank value" <|
                 \() ->
                     { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow emptyEntry (IntegerEntry "38" (Just 38)) emptyEntry }
-                        |> update (NumberCheckerFieldChanged Stopwatch2 "-3")
+                        |> update (NumberCheckerFieldChanged Timer2 "-3")
                         |> Expect.all
                             (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyEntry (IntegerEntry "-3" Nothing) emptyEntry)
                                 :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
@@ -604,18 +604,18 @@ suite =
                             (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyEntry emptyEntry (IntegerEntry "-1" Nothing))
                                 :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
                             )
-            , test "Entering an invalid value for stopwatch 1 sets a blank value" <|
+            , test "Entering an invalid value for timer 1 sets a blank value" <|
                 \() ->
                     { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow (IntegerEntry "24" (Just 24)) emptyEntry emptyEntry }
-                        |> update (NumberCheckerFieldChanged Stopwatch1 "nonsense")
+                        |> update (NumberCheckerFieldChanged Timer1 "nonsense")
                         |> Expect.all
                             (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow (IntegerEntry "nonsense" Nothing) emptyEntry emptyEntry)
                                 :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
                             )
-            , test "Entering an invalid value for stopwatch 2 sets a blank value" <|
+            , test "Entering an invalid value for timer 2 sets a blank value" <|
                 \() ->
                     { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow emptyEntry (IntegerEntry "38" (Just 38)) emptyEntry }
-                        |> update (NumberCheckerFieldChanged Stopwatch2 "nonsense")
+                        |> update (NumberCheckerFieldChanged Timer2 "nonsense")
                         |> Expect.all
                             (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyEntry (IntegerEntry "nonsense" Nothing) emptyEntry)
                                 :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
@@ -639,10 +639,10 @@ suite =
                                 [ { entryNumber = 1
                                   , finishTokens = 12
                                   , finishTokensDelta = 0
-                                  , stopwatch1 = 12
-                                  , stopwatch1Delta = 0
-                                  , stopwatch2 = 12
-                                  , stopwatch2Delta = 0
+                                  , timer1 = 12
+                                  , timer1Delta = 0
+                                  , timer2 = 12
+                                  , timer2Delta = 0
                                   , actual = 12
                                   }
                                 ]
@@ -671,7 +671,7 @@ suite =
                             )
             ]
         , describe "Edit number checker row tests"
-            [ test "Can edit a number-checker row when no stopwatches loaded" <|
+            [ test "Can edit a number-checker row when no timers loaded" <|
                 \() ->
                     { initModel | numberCheckerEntries = sampleNumberCheckerData }
                         |> update (EditNumberCheckerRow 2)
@@ -712,18 +712,18 @@ suite =
                             )
             ]
         , describe "Ignoring problems tests"
-            [ test "Can ignore stopwatch-offsets problem" <|
+            [ test "Can ignore timer-offsets problem" <|
                 \() ->
                     let
                         expectedIgnoredProblems : IgnoredProblems
                         expectedIgnoredProblems =
-                            { noIgnoredProblems | ignoreStopwatchTimeOffsets = True }
+                            { noIgnoredProblems | ignoreTimerTimeOffsets = True }
 
                         initialModel : Model
                         initialModel =
-                            { initModel | problems = { noProblems | stopwatchTimeOffset = Just 5 } }
+                            { initModel | problems = { noProblems | timerTimeOffset = Just 5 } }
                     in
-                    update (IgnoreProblem IgnoreStopwatchTimeOffsets) initialModel
+                    update (IgnoreProblem IgnoreTimerTimeOffsets) initialModel
                         |> Expect.all
                             (expectIgnoredProblems expectedIgnoredProblems
                                 :: defaultAssertionsExcept [ IgnoredProblemsAssertion ]
@@ -915,9 +915,9 @@ suite =
                     let
                         expectedPastedFile : PastedFileDetails
                         expectedPastedFile =
-                            PastedFileDetails stopwatchFileContents (StopwatchFilePasted 3)
+                            PastedFileDetails timerFileContents (TimerFilePasted 3)
                     in
-                    update (PastedFileChanged stopwatchFileContents) initModel
+                    update (PastedFileChanged timerFileContents) initModel
                         |> Expect.all
                             (expectDialogDetails (PasteFileDialog expectedPastedFile)
                                 :: defaultAssertionsExcept [ DialogDetailsAssertion ]
@@ -926,10 +926,10 @@ suite =
         , describe "PastedFileUploaded tests"
             [ test "Can upload the pasted file" <|
                 \() ->
-                    update (PastedFileUploaded sampleStopwatchData Time.utc recentTime) initModel
+                    update (PastedFileUploaded sampleTimerData Time.utc recentTime) initModel
                         |> Expect.all
-                            (expectStopwatches (Single "pasted_file_14072017024000.txt" parsedStopwatchTimes1)
-                                :: defaultAssertionsExcept [ Stopwatches ]
+                            (expectTimers (Single "pasted_file_14072017024000.txt" parsedTimerTimes1)
+                                :: defaultAssertionsExcept [ Timers ]
                             )
             ]
         , describe "ReturnKeyPressed tests"
@@ -976,4 +976,4 @@ suite =
 
 
 
--- TODO: some tests with everything: stopwatches, barcodes and number-checker data.
+-- TODO: some tests with everything: timers, barcodes and number-checker data.

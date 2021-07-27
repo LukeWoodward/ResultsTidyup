@@ -41,8 +41,8 @@ formatInterpretation interpretation =
         NoFilePasted ->
             "No file pasted"
 
-        StopwatchFilePasted timeCount ->
-            "Stopwatch file with " ++ String.fromInt timeCount ++ " time" ++ pluralSuffix timeCount
+        TimerFilePasted timeCount ->
+            "Timer file with " ++ String.fromInt timeCount ++ " time" ++ pluralSuffix timeCount
 
         BarcodeScannerFilePasted scannedBarcodeCount ->
             "Barcode scanner file with " ++ String.fromInt scannedBarcodeCount ++ " scanned barcode" ++ pluralSuffix scannedBarcodeCount
@@ -70,7 +70,7 @@ pasteFileButtons pastedFileDetails =
         uploadButtonAttributes : List (Html.Attribute Msg)
         uploadButtonAttributes =
             case pastedFileDetails.interpretation of
-                StopwatchFilePasted _ ->
+                TimerFilePasted _ ->
                     []
 
                 BarcodeScannerFilePasted _ ->

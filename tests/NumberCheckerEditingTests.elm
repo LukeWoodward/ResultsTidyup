@@ -28,15 +28,15 @@ suite =
             [ test "Cannot enter a number-checker row with no valid entries" <|
                 \() ->
                     expectNoChangeForNumberCheckerManualEntryRow emptyNumberCheckerManualEntryRow
-            , test "Cannot enter a number-checker row with only a valid value for stopwatch 1" <|
+            , test "Cannot enter a number-checker row with only a valid value for timer 1" <|
                 \() ->
                     NumberCheckerManualEntryRow (IntegerEntry "24" (Just 24)) emptyEntry emptyEntry
                         |> expectNoChangeForNumberCheckerManualEntryRow
-            , test "Cannot enter a number-checker row with only a valid value for stopwatch 2" <|
+            , test "Cannot enter a number-checker row with only a valid value for timer 2" <|
                 \() ->
                     NumberCheckerManualEntryRow emptyEntry (IntegerEntry "38" (Just 38)) emptyEntry
                         |> expectNoChangeForNumberCheckerManualEntryRow
-            , test "Cannot enter a number-checker row with only a valid value for stopwatches 1 and 2" <|
+            , test "Cannot enter a number-checker row with only a valid value for timers 1 and 2" <|
                 \() ->
                     NumberCheckerManualEntryRow (IntegerEntry "24" (Just 24)) (IntegerEntry "38" (Just 38)) emptyEntry
                         |> expectNoChangeForNumberCheckerManualEntryRow
@@ -44,11 +44,11 @@ suite =
                 \() ->
                     NumberCheckerManualEntryRow emptyEntry emptyEntry (IntegerEntry "17" (Just 17))
                         |> expectNoChangeForNumberCheckerManualEntryRow
-            , test "Cannot enter a number-checker row with only a valid value for stopwatch 1 and finish tokens" <|
+            , test "Cannot enter a number-checker row with only a valid value for timer 1 and finish tokens" <|
                 \() ->
                     NumberCheckerManualEntryRow (IntegerEntry "24" (Just 24)) emptyEntry (IntegerEntry "17" (Just 17))
                         |> expectNoChangeForNumberCheckerManualEntryRow
-            , test "Cannot enter a number-checker row with only a valid value for stopwatch 2 and finish tokens" <|
+            , test "Cannot enter a number-checker row with only a valid value for timer 2 and finish tokens" <|
                 \() ->
                     NumberCheckerManualEntryRow emptyEntry (IntegerEntry "38" (Just 38)) (IntegerEntry "17" (Just 17))
                         |> expectNoChangeForNumberCheckerManualEntryRow
@@ -60,10 +60,10 @@ suite =
                             [ { entryNumber = 1
                               , finishTokens = 12
                               , finishTokensDelta = 0
-                              , stopwatch1 = 12
-                              , stopwatch1Delta = 0
-                              , stopwatch2 = 12
-                              , stopwatch2Delta = 0
+                              , timer1 = 12
+                              , timer1Delta = 0
+                              , timer2 = 12
+                              , timer2Delta = 0
                               , actual = 12
                               }
                             ]
@@ -92,7 +92,7 @@ suite =
                     initialModel
                         |> deleteNumberCheckerEntry 2
                         |> Expect.equal { initModel | numberCheckerEntries = sampleNumberCheckerDataWithSecondItemRemoved }
-            , test "Deleting a non-existent number-checker row has no effect when no stopwatches loaded" <|
+            , test "Deleting a non-existent number-checker row has no effect when no timers loaded" <|
                 \() ->
                     Expect.equal initialModel (deleteNumberCheckerEntry 7 initialModel)
             ]

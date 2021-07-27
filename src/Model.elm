@@ -15,15 +15,15 @@ import EventDateAndTime exposing (EventDateAndTime)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import PastedFile exposing (PastedFileDetails)
 import Problems exposing (IgnoredProblems, Problems)
-import Stopwatch exposing (Stopwatches(..))
-import StopwatchOperations exposing (StopwatchOperationEditDetails)
 import Time exposing (Posix)
+import Timer exposing (Timers(..))
+import TimerOperations exposing (TimerOperationEditDetails)
 import TokenOperations exposing (TokenOperationEditDetails)
 
 
 type alias NumberCheckerManualEntryRow =
-    { stopwatch1 : IntegerEntry
-    , stopwatch2 : IntegerEntry
+    { timer1 : IntegerEntry
+    , timer2 : IntegerEntry
     , finishTokens : IntegerEntry
     }
 
@@ -36,14 +36,14 @@ emptyNumberCheckerManualEntryRow =
 type DialogDetails
     = NoDialog
     | BarcodeScannerRowEditDialog BarcodeScannerRowEditDetails
-    | StopwatchOperationsDialog StopwatchOperationEditDetails
+    | TimerOperationsDialog TimerOperationEditDetails
     | TokenOperationsDialog TokenOperationEditDetails
     | PasteFileDialog PastedFileDetails
 
 
 type alias Model =
     { isBeta : Bool
-    , stopwatches : Stopwatches
+    , timers : Timers
     , lastErrors : List FileError
     , numberCheckerEntries : List AnnotatedNumberCheckerEntry
     , highlightedNumberCheckerId : Maybe Int
@@ -61,7 +61,7 @@ type alias Model =
 initModel : Model
 initModel =
     { isBeta = False
-    , stopwatches = None
+    , timers = None
     , lastErrors = []
     , numberCheckerEntries = []
     , highlightedNumberCheckerId = Nothing

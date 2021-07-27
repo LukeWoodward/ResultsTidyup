@@ -3,12 +3,12 @@ module TestData exposing
     , createNumberCheckerManualEntryRow
     , defaultDateTime
     , defaultMatchSummary
-    , doubleStopwatches
-    , expectedDownloadedStopwatchData1
-    , expectedDownloadedStopwatchData2
-    , expectedMergedStopwatchFileContents
-    , expectedParsedSampleStopwatchData
-    , flippedDoubleStopwatches
+    , doubleTimers
+    , expectedDownloadedTimerData1
+    , expectedDownloadedTimerData2
+    , expectedMergedTimerFileContents
+    , expectedParsedSampleTimerData
+    , flippedDoubleTimers
     , invalidBarcodeScannerData
     , invalidNumberCheckerData
     , misScanFileLine
@@ -19,18 +19,18 @@ module TestData exposing
     , parsedEventDateOnly
     , parsedInvalidBarcodeScannerData
     , parsedNumberCheckerData
-    , parsedStopwatchTimes1
-    , parsedStopwatchTimes2
+    , parsedTimerTimes1
+    , parsedTimerTimes2
     , recentTime
-    , sampleDownloadedStopwatchData
+    , sampleDownloadedTimerData
     , sampleNumberCheckerData
     , sampleNumberCheckerDataDecremented
     , sampleNumberCheckerDataIncremented
     , sampleNumberCheckerDataWithSecondItemRemoved
-    , sampleStopwatchData
-    , sampleStopwatchData2
-    , singleStopwatch
-    , stopwatchesForAdjusting
+    , sampleTimerData
+    , sampleTimerData2
+    , singleTimer
+    , timersForAdjusting
     , toPosix
     , validBarcodeScannerData1
     , validBarcodeScannerData2
@@ -56,17 +56,17 @@ import FileHandling exposing (crlf)
 import Iso8601
 import Model exposing (NumberCheckerManualEntryRow)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
-import Stopwatch
+import Time exposing (Posix)
+import Timer
     exposing
         ( MergeEntry(..)
         , MergedTableRow
-        , Stopwatch(..)
-        , StopwatchMatchSummary
-        , Stopwatches(..)
-        , WhichStopwatch(..)
+        , Timer(..)
+        , TimerMatchSummary
+        , Timers(..)
+        , WhichTimer(..)
         , noUnderlines
         )
-import Time exposing (Posix)
 
 
 defaultDateTime : Maybe Time.Posix
@@ -74,8 +74,8 @@ defaultDateTime =
     toPosix "2018-03-14T09:47:03.000Z"
 
 
-sampleStopwatchData : String
-sampleStopwatchData =
+sampleTimerData : String
+sampleTimerData =
     "STARTOFEVENT,01/01/2001 00:00:00,abcdefghij\n"
         ++ "0,01/01/2001 00:00:00\n"
         ++ "1,01/01/2001 00:03:11,00:03:11\n"
@@ -87,8 +87,8 @@ sampleStopwatchData =
         ++ "ENDOFEVENT,01/01/2001 00:19:23\n"
 
 
-sampleDownloadedStopwatchData : String
-sampleDownloadedStopwatchData =
+sampleDownloadedTimerData : String
+sampleDownloadedTimerData =
     "I, CP765, 47\n"
         ++ "S, 001, SPLIT\n"
         ++ "T,1,1,00:03:11.000\n"
@@ -99,24 +99,24 @@ sampleDownloadedStopwatchData =
         ++ "T,6,1,00:17:09.000\n"
 
 
-parsedStopwatchTimes1 : List Int
-parsedStopwatchTimes1 =
+parsedTimerTimes1 : List Int
+parsedTimerTimes1 =
     [ 3 * 60 + 11, 7 * 60 + 44, 10 * 60 + 3, 12 * 60 + 26, 14 * 60 + 42, 17 * 60 + 9 ]
 
 
-expectedParsedSampleStopwatchData : Stopwatch
-expectedParsedSampleStopwatchData =
-    StopwatchData parsedStopwatchTimes1
+expectedParsedSampleTimerData : Timer
+expectedParsedSampleTimerData =
+    TimerData parsedTimerTimes1
 
 
-singleStopwatch : Stopwatches
-singleStopwatch =
-    Single "stopwatch1.txt" parsedStopwatchTimes1
+singleTimer : Timers
+singleTimer =
+    Single "timer1.txt" parsedTimerTimes1
 
 
-defaultMatchSummary : StopwatchMatchSummary
+defaultMatchSummary : TimerMatchSummary
 defaultMatchSummary =
-    StopwatchMatchSummary 0 0 0 0 0
+    TimerMatchSummary 0 0 0 0 0
 
 
 ordinaryFileLine : Int -> String -> Maybe Int -> String -> BarcodeScannerFileLine
@@ -149,8 +149,8 @@ toPosix timeString =
             Nothing
 
 
-sampleStopwatchData2 : String
-sampleStopwatchData2 =
+sampleTimerData2 : String
+sampleTimerData2 =
     "STARTOFEVENT,01/01/2001 00:00:00,klmnopqrst\n"
         ++ "0,01/01/2001 00:00:00\n"
         ++ "1,01/01/2001 00:03:11,00:03:11\n"
@@ -161,74 +161,74 @@ sampleStopwatchData2 =
         ++ "ENDOFEVENT,01/01/2001 00:19:23\n"
 
 
-parsedStopwatchTimes2 : List Int
-parsedStopwatchTimes2 =
+parsedTimerTimes2 : List Int
+parsedTimerTimes2 =
     [ 3 * 60 + 11, 7 * 60 + 43, 12 * 60 + 26, 13 * 60 + 11, 14 * 60 + 42 ]
 
 
-doubleStopwatches : Stopwatches
-doubleStopwatches =
+doubleTimers : Timers
+doubleTimers =
     let
         expectedEntries : List MergedTableRow
         expectedEntries =
             [ { index = 0, rowNumber = Just 1, entry = ExactMatch 191, included = True, underlines = noUnderlines }
             , { index = 1, rowNumber = Just 2, entry = NearMatch 464 463, included = True, underlines = noUnderlines }
-            , { index = 2, rowNumber = Just 3, entry = OneWatchOnly StopwatchOne 603, included = True, underlines = noUnderlines }
+            , { index = 2, rowNumber = Just 3, entry = OneWatchOnly TimerOne 603, included = True, underlines = noUnderlines }
             , { index = 3, rowNumber = Just 4, entry = ExactMatch 746, included = True, underlines = noUnderlines }
-            , { index = 4, rowNumber = Just 5, entry = OneWatchOnly StopwatchTwo 791, included = True, underlines = noUnderlines }
+            , { index = 4, rowNumber = Just 5, entry = OneWatchOnly TimerTwo 791, included = True, underlines = noUnderlines }
             , { index = 5, rowNumber = Just 6, entry = ExactMatch 882, included = True, underlines = noUnderlines }
-            , { index = 6, rowNumber = Just 7, entry = OneWatchOnly StopwatchOne 1029, included = True, underlines = noUnderlines }
+            , { index = 6, rowNumber = Just 7, entry = OneWatchOnly TimerOne 1029, included = True, underlines = noUnderlines }
             ]
 
-        expectedMatchSummary : StopwatchMatchSummary
+        expectedMatchSummary : TimerMatchSummary
         expectedMatchSummary =
-            { exactMatches = 3, nearMatches = 1, notNearMatches = 0, stopwatch1Only = 2, stopwatch2Only = 1 }
+            { exactMatches = 3, nearMatches = 1, notNearMatches = 0, timer1Only = 2, timer2Only = 1 }
     in
     Double
-        { times1 = parsedStopwatchTimes1
-        , times2 = parsedStopwatchTimes2
-        , filename1 = "stopwatch1.txt"
-        , filename2 = "stopwatch2.txt"
+        { times1 = parsedTimerTimes1
+        , times2 = parsedTimerTimes2
+        , filename1 = "timer1.txt"
+        , filename2 = "timer2.txt"
         , mergedTableRows = expectedEntries
         , matchSummary = expectedMatchSummary
         }
 
 
-flippedDoubleStopwatches : Stopwatches
-flippedDoubleStopwatches =
+flippedDoubleTimers : Timers
+flippedDoubleTimers =
     let
         expectedEntries : List MergedTableRow
         expectedEntries =
             [ { index = 0, rowNumber = Just 1, entry = ExactMatch 191, included = True, underlines = noUnderlines }
             , { index = 1, rowNumber = Just 2, entry = NearMatch 463 464, included = True, underlines = noUnderlines }
-            , { index = 2, rowNumber = Just 3, entry = OneWatchOnly StopwatchTwo 603, included = True, underlines = noUnderlines }
+            , { index = 2, rowNumber = Just 3, entry = OneWatchOnly TimerTwo 603, included = True, underlines = noUnderlines }
             , { index = 3, rowNumber = Just 4, entry = ExactMatch 746, included = True, underlines = noUnderlines }
-            , { index = 4, rowNumber = Just 5, entry = OneWatchOnly StopwatchOne 791, included = True, underlines = noUnderlines }
+            , { index = 4, rowNumber = Just 5, entry = OneWatchOnly TimerOne 791, included = True, underlines = noUnderlines }
             , { index = 5, rowNumber = Just 6, entry = ExactMatch 882, included = True, underlines = noUnderlines }
-            , { index = 6, rowNumber = Just 7, entry = OneWatchOnly StopwatchTwo 1029, included = True, underlines = noUnderlines }
+            , { index = 6, rowNumber = Just 7, entry = OneWatchOnly TimerTwo 1029, included = True, underlines = noUnderlines }
             ]
 
-        expectedMatchSummary : StopwatchMatchSummary
+        expectedMatchSummary : TimerMatchSummary
         expectedMatchSummary =
-            { exactMatches = 3, nearMatches = 1, notNearMatches = 0, stopwatch1Only = 1, stopwatch2Only = 2 }
+            { exactMatches = 3, nearMatches = 1, notNearMatches = 0, timer1Only = 1, timer2Only = 2 }
     in
     Double
-        { times1 = parsedStopwatchTimes2
-        , times2 = parsedStopwatchTimes1
-        , filename1 = "stopwatch2.txt"
-        , filename2 = "stopwatch1.txt"
+        { times1 = parsedTimerTimes2
+        , times2 = parsedTimerTimes1
+        , filename1 = "timer2.txt"
+        , filename2 = "timer1.txt"
         , mergedTableRows = expectedEntries
         , matchSummary = expectedMatchSummary
         }
 
 
-stopwatchesForAdjusting : Int -> Int -> Stopwatches
-stopwatchesForAdjusting stopwatch1Offset stopwatch2Offset =
+timersForAdjusting : Int -> Int -> Timers
+timersForAdjusting timer1Offset timer2Offset =
     Double
-        { times1 = List.map (\t -> t + stopwatch1Offset) parsedStopwatchTimes1
-        , times2 = List.map (\t -> t + stopwatch2Offset) parsedStopwatchTimes2
-        , filename1 = "stopwatch1.txt"
-        , filename2 = "stopwatch2.txt"
+        { times1 = List.map (\t -> t + timer1Offset) parsedTimerTimes1
+        , times2 = List.map (\t -> t + timer2Offset) parsedTimerTimes2
+        , filename1 = "timer1.txt"
+        , filename2 = "timer2.txt"
         , mergedTableRows = []
         , matchSummary = defaultMatchSummary
         }
@@ -346,10 +346,10 @@ invalidNumberCheckerData =
 parsedNumberCheckerData : List AnnotatedNumberCheckerEntry
 parsedNumberCheckerData =
     [ { entryNumber = 1
-      , stopwatch1 = 5
-      , stopwatch1Delta = 0
-      , stopwatch2 = 4
-      , stopwatch2Delta = -1
+      , timer1 = 5
+      , timer1Delta = 0
+      , timer2 = 4
+      , timer2Delta = -1
       , finishTokens = 5
       , finishTokensDelta = 0
       , actual = 5
@@ -362,8 +362,8 @@ recentTime =
     Time.millisToPosix 1500000000000
 
 
-expectedMergedStopwatchFileContents : String
-expectedMergedStopwatchFileContents =
+expectedMergedTimerFileContents : String
+expectedMergedTimerFileContents =
     "STARTOFEVENT,01/01/2001 00:00:00,results_tidyup"
         ++ crlf
         ++ "0,01/01/2001 00:00:00"
@@ -385,8 +385,8 @@ expectedMergedStopwatchFileContents =
         ++ "ENDOFEVENT,01/01/2001 01:59:59"
 
 
-expectedDownloadedStopwatchData1 : String
-expectedDownloadedStopwatchData1 =
+expectedDownloadedTimerData1 : String
+expectedDownloadedTimerData1 =
     "STARTOFEVENT,01/01/2001 00:00:00,results_tidyup"
         ++ crlf
         ++ "0,01/01/2001 00:00:00"
@@ -406,8 +406,8 @@ expectedDownloadedStopwatchData1 =
         ++ "ENDOFEVENT,01/01/2001 01:59:59"
 
 
-expectedDownloadedStopwatchData2 : String
-expectedDownloadedStopwatchData2 =
+expectedDownloadedTimerData2 : String
+expectedDownloadedTimerData2 =
     "STARTOFEVENT,01/01/2001 00:00:00,results_tidyup"
         ++ crlf
         ++ "0,01/01/2001 00:00:00"
@@ -428,28 +428,28 @@ expectedDownloadedStopwatchData2 =
 sampleNumberCheckerData : List AnnotatedNumberCheckerEntry
 sampleNumberCheckerData =
     [ { entryNumber = 1
-      , stopwatch1 = 5
-      , stopwatch1Delta = 0
-      , stopwatch2 = 4
-      , stopwatch2Delta = -1
+      , timer1 = 5
+      , timer1Delta = 0
+      , timer2 = 4
+      , timer2Delta = -1
       , finishTokens = 5
       , finishTokensDelta = 0
       , actual = 5
       }
     , { entryNumber = 2
-      , stopwatch1 = 11
-      , stopwatch1Delta = 0
-      , stopwatch2 = 10
-      , stopwatch2Delta = 0
+      , timer1 = 11
+      , timer1Delta = 0
+      , timer2 = 10
+      , timer2Delta = 0
       , finishTokens = 11
       , finishTokensDelta = 0
       , actual = 11
       }
     , { entryNumber = 3
-      , stopwatch1 = 18
-      , stopwatch1Delta = 0
-      , stopwatch2 = 17
-      , stopwatch2Delta = 0
+      , timer1 = 18
+      , timer1Delta = 0
+      , timer2 = 17
+      , timer2Delta = 0
       , finishTokens = 17
       , finishTokensDelta = -1
       , actual = 18
@@ -460,28 +460,28 @@ sampleNumberCheckerData =
 sampleNumberCheckerDataIncremented : List AnnotatedNumberCheckerEntry
 sampleNumberCheckerDataIncremented =
     [ { entryNumber = 1
-      , stopwatch1 = 5
-      , stopwatch1Delta = 0
-      , stopwatch2 = 4
-      , stopwatch2Delta = -1
+      , timer1 = 5
+      , timer1Delta = 0
+      , timer2 = 4
+      , timer2Delta = -1
       , finishTokens = 5
       , finishTokensDelta = 0
       , actual = 5
       }
     , { entryNumber = 2
-      , stopwatch1 = 11
-      , stopwatch1Delta = -1
-      , stopwatch2 = 10
-      , stopwatch2Delta = -1
+      , timer1 = 11
+      , timer1Delta = -1
+      , timer2 = 10
+      , timer2Delta = -1
       , finishTokens = 11
       , finishTokensDelta = -1
       , actual = 12
       }
     , { entryNumber = 3
-      , stopwatch1 = 18
-      , stopwatch1Delta = 0
-      , stopwatch2 = 17
-      , stopwatch2Delta = 0
+      , timer1 = 18
+      , timer1Delta = 0
+      , timer2 = 17
+      , timer2Delta = 0
       , finishTokens = 17
       , finishTokensDelta = -1
       , actual = 19
@@ -492,28 +492,28 @@ sampleNumberCheckerDataIncremented =
 sampleNumberCheckerDataDecremented : List AnnotatedNumberCheckerEntry
 sampleNumberCheckerDataDecremented =
     [ { entryNumber = 1
-      , stopwatch1 = 5
-      , stopwatch1Delta = 0
-      , stopwatch2 = 4
-      , stopwatch2Delta = -1
+      , timer1 = 5
+      , timer1Delta = 0
+      , timer2 = 4
+      , timer2Delta = -1
       , finishTokens = 5
       , finishTokensDelta = 0
       , actual = 5
       }
     , { entryNumber = 2
-      , stopwatch1 = 11
-      , stopwatch1Delta = 1
-      , stopwatch2 = 10
-      , stopwatch2Delta = 1
+      , timer1 = 11
+      , timer1Delta = 1
+      , timer2 = 10
+      , timer2Delta = 1
       , finishTokens = 11
       , finishTokensDelta = 1
       , actual = 10
       }
     , { entryNumber = 3
-      , stopwatch1 = 18
-      , stopwatch1Delta = 0
-      , stopwatch2 = 17
-      , stopwatch2Delta = 0
+      , timer1 = 18
+      , timer1Delta = 0
+      , timer2 = 17
+      , timer2Delta = 0
       , finishTokens = 17
       , finishTokensDelta = -1
       , actual = 17
@@ -524,19 +524,19 @@ sampleNumberCheckerDataDecremented =
 sampleNumberCheckerDataWithSecondItemRemoved : List AnnotatedNumberCheckerEntry
 sampleNumberCheckerDataWithSecondItemRemoved =
     [ { entryNumber = 1
-      , stopwatch1 = 5
-      , stopwatch1Delta = 0
-      , stopwatch2 = 4
-      , stopwatch2Delta = -1
+      , timer1 = 5
+      , timer1Delta = 0
+      , timer2 = 4
+      , timer2Delta = -1
       , finishTokens = 5
       , finishTokensDelta = 0
       , actual = 5
       }
     , { entryNumber = 2
-      , stopwatch1 = 18
-      , stopwatch1Delta = 0
-      , stopwatch2 = 17
-      , stopwatch2Delta = 0
+      , timer1 = 18
+      , timer1Delta = 0
+      , timer2 = 17
+      , timer2Delta = 0
       , finishTokens = 17
       , finishTokensDelta = -1
       , actual = 18
@@ -545,8 +545,8 @@ sampleNumberCheckerDataWithSecondItemRemoved =
 
 
 createNumberCheckerManualEntryRow : Int -> Int -> Int -> NumberCheckerManualEntryRow
-createNumberCheckerManualEntryRow stopwatch1 stopwatch2 finishTokens =
-    NumberCheckerManualEntryRow (integerEntryFromInt stopwatch1) (integerEntryFromInt stopwatch2) (integerEntryFromInt finishTokens)
+createNumberCheckerManualEntryRow timer1 timer2 finishTokens =
+    NumberCheckerManualEntryRow (integerEntryFromInt timer1) (integerEntryFromInt timer2) (integerEntryFromInt finishTokens)
 
 
 createBarcodeScannerDataFromFiles : List BarcodeScannerFile -> BarcodeScannerData

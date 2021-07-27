@@ -1,4 +1,4 @@
-module ProblemsView exposing (scannerProblemsView, stopwatchProblemsView)
+module ProblemsView exposing (scannerProblemsView, timerProblemsView)
 
 import Bootstrap.Alert as Alert
 import Html exposing (Html, button, div, h4, li, span, text, ul)
@@ -21,8 +21,8 @@ import Problems
         , PositionWithMultipleAthletesProblem
         , Problems
         )
-import Stopwatch exposing (WhichStopwatch(..))
 import TimeHandling exposing (formatTime)
+import Timer exposing (WhichTimer(..))
 import ViewCommon exposing (athleteLink, smallButton)
 
 
@@ -278,8 +278,8 @@ barcodesScannedTheWrongWayAroundView barcodesScannedTheWrongWayAround =
                 ]
 
 
-stopwatchTimeOffsetView : Int -> Maybe (Html Msg)
-stopwatchTimeOffsetView offset =
+timerTimeOffsetView : Int -> Maybe (Html Msg)
+timerTimeOffsetView offset =
     if offset == 0 then
         Nothing
 
@@ -293,41 +293,41 @@ stopwatchTimeOffsetView offset =
                 else
                     String.fromInt (abs offset) ++ " seconds"
 
-            laterStopwatch : String
-            laterStopwatch =
+            laterTimer : String
+            laterTimer =
                 if offset < 0 then
-                    "stopwatch 1"
+                    "timer 1"
 
                 else
-                    "stopwatch 2"
+                    "timer 2"
 
-            stopwatch1AdjustText : String
-            stopwatch1AdjustText =
+            timer1AdjustText : String
+            timer1AdjustText =
                 if offset < 0 then
-                    "Stopwatch 1 is slow - add " ++ offsetDescription
+                    "Timer 1 is slow - add " ++ offsetDescription
 
                 else
-                    "Stopwatch 1 is fast - take off " ++ offsetDescription
+                    "Timer 1 is fast - take off " ++ offsetDescription
 
-            stopwatch2AdjustText : String
-            stopwatch2AdjustText =
+            timer2AdjustText : String
+            timer2AdjustText =
                 if offset < 0 then
-                    "Stopwatch 2 is fast - take off " ++ offsetDescription
+                    "Timer 2 is fast - take off " ++ offsetDescription
 
                 else
-                    "Stopwatch 2 is slow - add " ++ offsetDescription
+                    "Timer 2 is slow - add " ++ offsetDescription
         in
         warningAlert
             [ text "There seems to be a difference of "
             , text offsetDescription
-            , text " between the stopwatches, with "
-            , text laterStopwatch
+            , text " between the timers, with "
+            , text laterTimer
             , text " being the one started later."
-            , smallButton (Msg.FixProblem (AdjustStopwatch StopwatchOne -offset)) [] stopwatch1AdjustText
+            , smallButton (Msg.FixProblem (AdjustTimer TimerOne -offset)) [] timer1AdjustText
             , text " "
-            , smallButton (Msg.FixProblem (AdjustStopwatch StopwatchTwo offset)) [] stopwatch2AdjustText
+            , smallButton (Msg.FixProblem (AdjustTimer TimerTwo offset)) [] timer2AdjustText
             , text " "
-            , smallButton (Msg.IgnoreProblem IgnoreStopwatchTimeOffsets) [] "Ignore stopwatch time offset"
+            , smallButton (Msg.IgnoreProblem IgnoreTimerTimeOffsets) [] "Ignore timer time offset"
             ]
             |> Just
 
@@ -415,8 +415,8 @@ positionOffEndOfTimesView positionOffEndOfTimes =
             ("The highest finish token scanned was "
                 ++ String.fromInt positionOffEndOfTimes.maxPosition
                 ++ " but there are only "
-                ++ String.fromInt positionOffEndOfTimes.stopwatchTimeCount
-                ++ " times recorded on the stopwatch(es)"
+                ++ String.fromInt positionOffEndOfTimes.timerTimeCount
+                ++ " times recorded on the timer(es)"
             )
         ]
 
@@ -501,13 +501,13 @@ unrecognisedBarcodeScannerLinesView unrecognisedBarcodeScannerLines =
                 ]
 
 
-identicalStopwatchTimesView : Bool -> Maybe (Html Msg)
-identicalStopwatchTimesView identicalStopwatchTimes =
-    if identicalStopwatchTimes then
+identicalTimerTimesView : Bool -> Maybe (Html Msg)
+identicalTimerTimesView identicalTimerTimes =
+    if identicalTimerTimes then
         dangerAlert
             [ text
-                ("Both stopwatch files have identical times.  It is very unlikely in practice for two stopwatches to contain the same times.  "
-                    ++ "Please check you haven't downloaded times from the same stopwatch twice."
+                ("Both timer files have identical times.  It is very unlikely in practice for two timers to contain the same times.  "
+                    ++ "Please check you haven't downloaded times from the same timer twice."
                 )
             ]
             |> Just
@@ -516,14 +516,14 @@ identicalStopwatchTimesView identicalStopwatchTimes =
         Nothing
 
 
-stopwatchProblemsView : Problems -> Html Msg
-stopwatchProblemsView problems =
+timerProblemsView : Problems -> Html Msg
+timerProblemsView problems =
     let
         problemViewSections : List (Maybe (Html Msg))
         problemViewSections =
-            [ Maybe.andThen stopwatchTimeOffsetView problems.stopwatchTimeOffset
+            [ Maybe.andThen timerTimeOffsetView problems.timerTimeOffset
             , Maybe.map positionOffEndOfTimesView problems.positionOffEndOfTimes
-            , identicalStopwatchTimesView problems.identicalStopwatchTimes
+            , identicalTimerTimesView problems.identicalTimerTimes
             ]
     in
     div [ class "problems-container" ] (List.filterMap identity problemViewSections)

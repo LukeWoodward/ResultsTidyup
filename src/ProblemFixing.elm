@@ -15,8 +15,8 @@ import BarcodeScanner
 import DateHandling exposing (dateTimeStringToPosix, posixToDateTimeString)
 import Model exposing (Model)
 import Problems exposing (BarcodeScannerClockDifference, BarcodeScannerClockDifferenceType(..), IgnoredProblems)
-import Stopwatch exposing (DoubleStopwatchData, Stopwatches(..), WhichStopwatch(..), createMergedTable)
 import Time exposing (Posix)
+import Timer exposing (DoubleTimerData, Timers(..), WhichTimer(..), createMergedTable)
 
 
 type ProblemFix
@@ -24,7 +24,7 @@ type ProblemFix
     | RemoveUnassociatedAthlete String
     | RemoveDuplicateScans Int String
     | RemoveScansBeforeEventStart Int
-    | AdjustStopwatch WhichStopwatch Int
+    | AdjustTimer WhichTimer Int
     | SwapBarcodes String Int Int
     | CorrectBarcodeScannerClock BarcodeScannerClockDifference
     | CorrectAllBarcodeScannerClocks BarcodeScannerClockDifferenceType
@@ -321,7 +321,7 @@ fixProblem problemFix model =
                             | files = swapBarcodesAround fileName first last oldBarcodeScannerData.files
                         }
 
-                AdjustStopwatch whichStopwatch offset ->
+                AdjustTimer whichTimer offset ->
                     -- This problem-fix applies no change to the barcode-scanner data.
                     oldBarcodeScannerData
 
@@ -337,39 +337,39 @@ fixProblem problemFix model =
                             | files = List.map (correctBarcodeScannerClock differenceType) oldBarcodeScannerData.files
                         }
 
-        oldStopwatches : Stopwatches
-        oldStopwatches =
-            model.stopwatches
+        oldTimers : Timers
+        oldTimers =
+            model.timers
 
-        newStopwatches : Stopwatches
-        newStopwatches =
-            case ( oldStopwatches, problemFix ) of
-                ( Double doubleStopwatchData, AdjustStopwatch whichStopwatch offset ) ->
+        newTimers : Timers
+        newTimers =
+            case ( oldTimers, problemFix ) of
+                ( Double doubleTimerData, AdjustTimer whichTimer offset ) ->
                     let
-                        adjustedStopwatches : DoubleStopwatchData
-                        adjustedStopwatches =
-                            case whichStopwatch of
-                                StopwatchOne ->
-                                    { doubleStopwatchData | times1 = List.map (\time -> time + offset) doubleStopwatchData.times1 }
+                        adjustedTimers : DoubleTimerData
+                        adjustedTimers =
+                            case whichTimer of
+                                TimerOne ->
+                                    { doubleTimerData | times1 = List.map (\time -> time + offset) doubleTimerData.times1 }
 
-                                StopwatchTwo ->
-                                    { doubleStopwatchData | times2 = List.map (\time -> time + offset) doubleStopwatchData.times2 }
+                                TimerTwo ->
+                                    { doubleTimerData | times2 = List.map (\time -> time + offset) doubleTimerData.times2 }
                     in
-                    Double (createMergedTable adjustedStopwatches.times1 adjustedStopwatches.times2 adjustedStopwatches.filename1 adjustedStopwatches.filename2)
+                    Double (createMergedTable adjustedTimers.times1 adjustedTimers.times2 adjustedTimers.filename1 adjustedTimers.filename2)
 
                 _ ->
-                    -- Not two stopwatches or some other problem-fix.
-                    oldStopwatches
+                    -- Not two timers or some other problem-fix.
+                    oldTimers
     in
-    { model | barcodeScannerData = newBarcodeScannerData, stopwatches = newStopwatches }
+    { model | barcodeScannerData = newBarcodeScannerData, timers = newTimers }
 
 
 type ProblemIgnorance
-    = IgnoreStopwatchTimeOffsets
+    = IgnoreTimerTimeOffsets
 
 
 ignoreProblem : ProblemIgnorance -> IgnoredProblems -> IgnoredProblems
 ignoreProblem ignorance ignoredProblems =
     case ignorance of
-        IgnoreStopwatchTimeOffsets ->
-            { ignoredProblems | ignoreStopwatchTimeOffsets = True }
+        IgnoreTimerTimeOffsets ->
+            { ignoredProblems | ignoreTimerTimeOffsets = True }

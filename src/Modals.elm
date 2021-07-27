@@ -6,7 +6,7 @@ import Html exposing (Html, div, text)
 import Model exposing (DialogDetails(..), Model)
 import Msg exposing (Msg(..))
 import PasteFileModal exposing (pasteFileButtons, pasteFileDialogSizer, pasteFileDialogTitle, pasteFileModalBody)
-import StopwatchOperationsModal exposing (stopwatchOperationsButtons, stopwatchOperationsDialogSizer, stopwatchOperationsDialogTitle, stopwatchOperationsModalBody)
+import TimerOperationsModal exposing (timerOperationsButtons, timerOperationsDialogSizer, timerOperationsDialogTitle, timerOperationsModalBody)
 import TokenOperationsModal exposing (tokenOperationsButtons, tokenOperationsDialogSizer, tokenOperationsDialogTitle, tokenOperationsModalBody)
 
 
@@ -28,8 +28,8 @@ dialogTitle dialogDetails =
         TokenOperationsDialog tokenOperationEditDetails ->
             tokenOperationsDialogTitle
 
-        StopwatchOperationsDialog stopwatchOperationEditDetails ->
-            stopwatchOperationsDialogTitle
+        TimerOperationsDialog timerOperationEditDetails ->
+            timerOperationsDialogTitle
 
         PasteFileDialog _ ->
             pasteFileDialogTitle
@@ -47,8 +47,8 @@ dialogBody dialogDetails =
         TokenOperationsDialog tokenOperationEditDetails ->
             tokenOperationsModalBody tokenOperationEditDetails
 
-        StopwatchOperationsDialog stopwatchOperationEditDetails ->
-            stopwatchOperationsModalBody stopwatchOperationEditDetails
+        TimerOperationsDialog timerOperationEditDetails ->
+            timerOperationsModalBody timerOperationEditDetails
 
         PasteFileDialog pastedFileDetails ->
             pasteFileModalBody pastedFileDetails
@@ -69,8 +69,8 @@ showModalDialog model =
                 TokenOperationsDialog tokenOperationEditDetails ->
                     tokenOperationsButtons tokenOperationEditDetails
 
-                StopwatchOperationsDialog stopwatchOperationEditDetails ->
-                    stopwatchOperationsButtons stopwatchOperationEditDetails
+                TimerOperationsDialog timerOperationEditDetails ->
+                    timerOperationsButtons timerOperationEditDetails
 
                 PasteFileDialog pastedFileDetails ->
                     pasteFileButtons pastedFileDetails
@@ -87,8 +87,8 @@ showModalDialog model =
                 TokenOperationsDialog _ ->
                     tokenOperationsDialogSizer
 
-                StopwatchOperationsDialog _ ->
-                    stopwatchOperationsDialogSizer
+                TimerOperationsDialog _ ->
+                    timerOperationsDialogSizer
 
                 PasteFileDialog _ ->
                     pasteFileDialogSizer

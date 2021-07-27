@@ -1,4 +1,4 @@
-module UpdateLogic exposing (barcodeScannerFileMimeType, stopwatchFileMimeType, update)
+module UpdateLogic exposing (barcodeScannerFileMimeType, timerFileMimeType, update)
 
 import BarcodeScanner
     exposing
@@ -35,27 +35,27 @@ import PastedFile exposing (PastedFileDetails, interpretPastedFile)
 import ProblemFixing exposing (fixProblem, ignoreProblem)
 import Problems exposing (Problems, identifyProblems, noIgnoredProblems, noProblems)
 import Set exposing (Set)
-import Stopwatch
+import Task exposing (Task)
+import Time exposing (Posix, Zone)
+import Timer
     exposing
-        ( DoubleStopwatchData
+        ( DoubleTimerData
         , MergedTableRow
-        , Stopwatches(..)
-        , WhichStopwatch(..)
+        , Timers(..)
+        , WhichTimer(..)
         , flipMatchSummary
         , flipTable
         , outputMergedTable
-        , outputSingleStopwatchData
+        , outputSingleTimerData
         , toggleRowInTable
         , underlineTable
         )
-import StopwatchOperations exposing (StopwatchOperationEditDetails, tryApplyOperationToStopwatchData)
-import Task exposing (Task)
-import Time exposing (Posix, Zone)
+import TimerOperations exposing (TimerOperationEditDetails, tryApplyOperationToTimerData)
 import TokenOperations exposing (TokenOperationEditDetails, TokenOperationValidationError(..), tryApplyTokenOperationToBarcodeScannerData)
 
 
-stopwatchFileMimeType : String
-stopwatchFileMimeType =
+timerFileMimeType : String
+timerFileMimeType =
     "text/csv"
 
 
@@ -71,23 +71,23 @@ maxFileSize =
     1048576
 
 
-underlineStopwatches : Stopwatches -> List AnnotatedNumberCheckerEntry -> Stopwatches
-underlineStopwatches stopwatches numberCheckerEntries =
+underlineTimers : Timers -> List AnnotatedNumberCheckerEntry -> Timers
+underlineTimers timers numberCheckerEntries =
     if List.isEmpty numberCheckerEntries then
-        stopwatches
+        timers
 
     else
-        case stopwatches of
+        case timers of
             None ->
-                stopwatches
+                timers
 
             Single _ _ ->
-                stopwatches
+                timers
 
-            Double doubleStopwatchData ->
+            Double doubleTimerData ->
                 Double
-                    { doubleStopwatchData
-                        | mergedTableRows = underlineTable numberCheckerEntries doubleStopwatchData.mergedTableRows
+                    { doubleTimerData
+                        | mergedTableRows = underlineTable numberCheckerEntries doubleTimerData.mergedTableRows
                     }
 
 
@@ -96,128 +96,128 @@ identifyProblemsIn model =
     let
         newProblems : Problems
         newProblems =
-            identifyProblems model.stopwatches model.barcodeScannerData model.eventDateAndTime model.ignoredProblems
+            identifyProblems model.timers model.barcodeScannerData model.eventDateAndTime model.ignoredProblems
     in
     { model | problems = newProblems }
 
 
 toggleTableRow : Int -> Model -> Model
 toggleTableRow index model =
-    case model.stopwatches of
+    case model.timers of
         None ->
             model
 
         Single _ _ ->
             model
 
-        Double doubleStopwatchData ->
+        Double doubleTimerData ->
             let
                 newMergedTable : List MergedTableRow
                 newMergedTable =
-                    doubleStopwatchData.mergedTableRows
+                    doubleTimerData.mergedTableRows
                         |> toggleRowInTable index
                         |> underlineTable model.numberCheckerEntries
             in
             { model
-                | stopwatches = Double { doubleStopwatchData | mergedTableRows = newMergedTable }
+                | timers = Double { doubleTimerData | mergedTableRows = newMergedTable }
             }
 
 
-createSingleStopwatchDataFile : WhichStopwatch -> Zone -> Posix -> Model -> Command
-createSingleStopwatchDataFile whichStopwatch zone time model =
+createSingleTimerDataFile : WhichTimer -> Zone -> Posix -> Model -> Command
+createSingleTimerDataFile whichTimer zone time model =
     let
         downloadTextMaybe : Maybe String
         downloadTextMaybe =
-            case ( model.stopwatches, whichStopwatch ) of
+            case ( model.timers, whichTimer ) of
                 ( None, _ ) ->
                     Nothing
 
-                ( Single _ times, StopwatchOne ) ->
-                    Just (outputSingleStopwatchData times)
+                ( Single _ times, TimerOne ) ->
+                    Just (outputSingleTimerData times)
 
-                ( Single _ _, StopwatchTwo ) ->
+                ( Single _ _, TimerTwo ) ->
                     Nothing
 
-                ( Double doubleStopwatchData, StopwatchOne ) ->
-                    Just (outputSingleStopwatchData doubleStopwatchData.times1)
+                ( Double doubleTimerData, TimerOne ) ->
+                    Just (outputSingleTimerData doubleTimerData.times1)
 
-                ( Double doubleStopwatchData, StopwatchTwo ) ->
-                    Just (outputSingleStopwatchData doubleStopwatchData.times2)
+                ( Double doubleTimerData, TimerTwo ) ->
+                    Just (outputSingleTimerData doubleTimerData.times2)
     in
     case downloadTextMaybe of
         Just downloadText ->
-            createStopwatchFileForDownload zone time downloadText
-                |> DownloadFile stopwatchFileMimeType
+            createTimerFileForDownload zone time downloadText
+                |> DownloadFile timerFileMimeType
 
         Nothing ->
             NoCommand
 
 
-removeStopwatch : WhichStopwatch -> Model -> Model
-removeStopwatch which model =
-    case ( model.stopwatches, which ) of
+removeTimer : WhichTimer -> Model -> Model
+removeTimer which model =
+    case ( model.timers, which ) of
         ( None, _ ) ->
             model
 
-        ( Single _ _, StopwatchOne ) ->
-            identifyProblemsIn { model | stopwatches = None }
+        ( Single _ _, TimerOne ) ->
+            identifyProblemsIn { model | timers = None }
 
-        ( Single _ _, StopwatchTwo ) ->
+        ( Single _ _, TimerTwo ) ->
             model
 
-        ( Double doubleStopwatchData, StopwatchOne ) ->
+        ( Double doubleTimerData, TimerOne ) ->
             let
-                newStopwatches : Stopwatches
-                newStopwatches =
-                    Single doubleStopwatchData.filename2 doubleStopwatchData.times2
+                newTimers : Timers
+                newTimers =
+                    Single doubleTimerData.filename2 doubleTimerData.times2
             in
             identifyProblemsIn
-                { model | stopwatches = newStopwatches }
+                { model | timers = newTimers }
 
-        ( Double doubleStopwatchData, StopwatchTwo ) ->
+        ( Double doubleTimerData, TimerTwo ) ->
             let
-                newStopwatches : Stopwatches
-                newStopwatches =
-                    Single doubleStopwatchData.filename1 doubleStopwatchData.times1
+                newTimers : Timers
+                newTimers =
+                    Single doubleTimerData.filename1 doubleTimerData.times1
             in
             identifyProblemsIn
-                { model | stopwatches = newStopwatches }
+                { model | timers = newTimers }
 
 
-flipStopwatches : Model -> Model
-flipStopwatches model =
-    case model.stopwatches of
+flipTimers : Model -> Model
+flipTimers model =
+    case model.timers of
         None ->
             model
 
         Single _ _ ->
             model
 
-        Double oldDoubleStopwatchData ->
+        Double oldDoubleTimerData ->
             let
                 newMergedTableRows : List MergedTableRow
                 newMergedTableRows =
-                    oldDoubleStopwatchData.mergedTableRows
+                    oldDoubleTimerData.mergedTableRows
                         |> flipTable
                         |> underlineTable model.numberCheckerEntries
 
-                newDoubleStopwatchData : DoubleStopwatchData
-                newDoubleStopwatchData =
-                    { times1 = oldDoubleStopwatchData.times2
-                    , times2 = oldDoubleStopwatchData.times1
-                    , filename1 = oldDoubleStopwatchData.filename2
-                    , filename2 = oldDoubleStopwatchData.filename1
+                newDoubleTimerData : DoubleTimerData
+                newDoubleTimerData =
+                    { times1 = oldDoubleTimerData.times2
+                    , times2 = oldDoubleTimerData.times1
+                    , filename1 = oldDoubleTimerData.filename2
+                    , filename2 = oldDoubleTimerData.filename1
                     , mergedTableRows = newMergedTableRows
-                    , matchSummary = flipMatchSummary oldDoubleStopwatchData.matchSummary
+                    , matchSummary = flipMatchSummary oldDoubleTimerData.matchSummary
                     }
             in
-            { model | stopwatches = Double newDoubleStopwatchData }
+            { model | timers = Double newDoubleTimerData }
 
 
 clearAllData : Model -> Model
 clearAllData model =
     { model
-        | stopwatches = None
+        | timers = None
         , lastErrors = []
         , numberCheckerEntries = []
         , highlightedNumberCheckerId = Nothing
@@ -231,8 +231,8 @@ clearAllData model =
     }
 
 
-createStopwatchFileForDownload : Zone -> Posix -> String -> InteropFile
-createStopwatchFileForDownload zone time fileContents =
+createTimerFileForDownload : Zone -> Posix -> String -> InteropFile
+createTimerFileForDownload zone time fileContents =
     let
         fileName : String
         fileName =
@@ -241,31 +241,31 @@ createStopwatchFileForDownload zone time fileContents =
     InteropFile fileName fileContents
 
 
-createMergedStopwatchDataFile : Zone -> Posix -> Model -> Command
-createMergedStopwatchDataFile zone time model =
-    case model.stopwatches of
+createMergedTimerDataFile : Zone -> Posix -> Model -> Command
+createMergedTimerDataFile zone time model =
+    case model.timers of
         None ->
             NoCommand
 
         Single _ _ ->
             NoCommand
 
-        Double doubleStopwatchData ->
-            createStopwatchFileForDownload zone time (outputMergedTable doubleStopwatchData.mergedTableRows)
-                |> DownloadFile stopwatchFileMimeType
+        Double doubleTimerData ->
+            createTimerFileForDownload zone time (outputMergedTable doubleTimerData.mergedTableRows)
+                |> DownloadFile timerFileMimeType
 
 
-reunderlineStopwatchTable : Model -> Model
-reunderlineStopwatchTable model =
-    case model.stopwatches of
-        Double doubleStopwatchData ->
+reunderlineTimerTable : Model -> Model
+reunderlineTimerTable model =
+    case model.timers of
+        Double doubleTimerData ->
             let
                 newMergedTable : List MergedTableRow
                 newMergedTable =
-                    underlineTable model.numberCheckerEntries doubleStopwatchData.mergedTableRows
+                    underlineTable model.numberCheckerEntries doubleTimerData.mergedTableRows
             in
             { model
-                | stopwatches = Double { doubleStopwatchData | mergedTableRows = newMergedTable }
+                | timers = Double { doubleTimerData | mergedTableRows = newMergedTable }
             }
 
         Single _ _ ->
@@ -353,19 +353,19 @@ tryUpdateRowFromBarcodeScannerEditModal rowEditDetails model =
             { model | dialogDetails = BarcodeScannerRowEditDialog { rowEditDetails | validationError = Just validationError } }
 
 
-tryApplyStopwatchOperation : StopwatchOperationEditDetails -> Model -> Model
-tryApplyStopwatchOperation stopwatchOperationEditDetails model =
-    case tryApplyOperationToStopwatchData stopwatchOperationEditDetails model.stopwatches of
-        Ok updatedStopwatches ->
+tryApplyTimerOperation : TimerOperationEditDetails -> Model -> Model
+tryApplyTimerOperation timerOperationEditDetails model =
+    case tryApplyOperationToTimerData timerOperationEditDetails model.timers of
+        Ok updatedTimers ->
             identifyProblemsIn
                 { model
-                    | stopwatches = updatedStopwatches
+                    | timers = updatedTimers
                     , dialogDetails = NoDialog
                 }
 
         Err validationError ->
             { model
-                | dialogDetails = StopwatchOperationsDialog { stopwatchOperationEditDetails | validationError = validationError }
+                | dialogDetails = TimerOperationsDialog { timerOperationEditDetails | validationError = validationError }
             }
 
 
@@ -394,21 +394,21 @@ update msg model =
         FilesDropped files ->
             ( handleFilesDropped files model
                 |> identifyProblemsIn
-                |> reunderlineStopwatchTable
+                |> reunderlineTimerTable
             , NoCommand
             )
 
         ToggleTableRow index ->
             ( toggleTableRow index model |> identifyProblemsIn, NoCommand )
 
-        DownloadStopwatch which zone time ->
-            ( model, createSingleStopwatchDataFile which zone time model )
+        DownloadTimer which zone time ->
+            ( model, createSingleTimerDataFile which zone time model )
 
-        RemoveStopwatch which ->
-            ( removeStopwatch which model, NoCommand )
+        RemoveTimer which ->
+            ( removeTimer which model, NoCommand )
 
-        FlipStopwatches ->
-            ( flipStopwatches model, NoCommand )
+        FlipTimers ->
+            ( flipTimers model, NoCommand )
 
         ClearAllData ->
             ( clearAllData model, NoCommand )
@@ -416,8 +416,8 @@ update msg model =
         RequestCurrentDateAndTime operation ->
             ( model, GetCurrentDateAndTime operation )
 
-        DownloadMergedStopwatchData zone time ->
-            ( model, createMergedStopwatchDataFile zone time model )
+        DownloadMergedTimerData zone time ->
+            ( model, createMergedTimerDataFile zone time model )
 
         MouseEnterNumberCheckerRow highlightRow ->
             ( { model | highlightedNumberCheckerId = Just highlightRow }, NoCommand )
@@ -437,10 +437,10 @@ update msg model =
             ( newModel, NoCommand )
 
         EditNumberCheckerRow entryNumber ->
-            ( reunderlineStopwatchTable (editNumberCheckerRow entryNumber model), NoCommand )
+            ( reunderlineTimerTable (editNumberCheckerRow entryNumber model), NoCommand )
 
         DeleteNumberCheckerRow entryNumber ->
-            ( reunderlineStopwatchTable (deleteNumberCheckerEntry entryNumber model), NoCommand )
+            ( reunderlineTimerTable (deleteNumberCheckerEntry entryNumber model), NoCommand )
 
         EventDateChanged newEventDate ->
             ( identifyProblemsIn (handleEventDateChange newEventDate model), NoCommand )
@@ -470,18 +470,18 @@ update msg model =
                 command =
                     select issueFocusCommand (FocusElement NumberCheckerManualEntryRowFirstCell) NoCommand
             in
-            ( reunderlineStopwatchTable addedToModel, command )
+            ( reunderlineTimerTable addedToModel, command )
 
         IncrementNumberCheckerRowActualCount entryNumber ->
-            ( reunderlineStopwatchTable (modifyNumberCheckerRows 1 entryNumber model), NoCommand )
+            ( reunderlineTimerTable (modifyNumberCheckerRows 1 entryNumber model), NoCommand )
 
         DecrementNumberCheckerRowActualCount entryNumber ->
-            ( reunderlineStopwatchTable (modifyNumberCheckerRows -1 entryNumber model), NoCommand )
+            ( reunderlineTimerTable (modifyNumberCheckerRows -1 entryNumber model), NoCommand )
 
         FixProblem problemFix ->
             ( fixProblem problemFix model
                 |> identifyProblemsIn
-                |> reunderlineStopwatchTable
+                |> reunderlineTimerTable
             , NoCommand
             )
 
@@ -540,27 +540,27 @@ update msg model =
             , NoCommand
             )
 
-        ShowStopwatchOperationsModal ->
-            ( { model | dialogDetails = StopwatchOperationsDialog (StopwatchOperations.emptyEditDetailsFromStopwatches model.stopwatches) }
+        ShowTimerOperationsModal ->
+            ( { model | dialogDetails = TimerOperationsDialog (TimerOperations.emptyEditDetailsFromTimers model.timers) }
             , NoCommand
             )
 
-        StopwatchOperationEdit editChange ->
+        TimerOperationEdit editChange ->
             let
                 newEditDetails : DialogDetails
                 newEditDetails =
                     case model.dialogDetails of
-                        StopwatchOperationsDialog editDetails ->
-                            StopwatchOperations.updateEditDetails editChange editDetails
-                                |> StopwatchOperationsDialog
+                        TimerOperationsDialog editDetails ->
+                            TimerOperations.updateEditDetails editChange editDetails
+                                |> TimerOperationsDialog
 
                         _ ->
                             model.dialogDetails
             in
             ( { model | dialogDetails = newEditDetails }, NoCommand )
 
-        ApplyStopwatchOperation editDetails ->
-            ( tryApplyStopwatchOperation editDetails model, NoCommand )
+        ApplyTimerOperation editDetails ->
+            ( tryApplyTimerOperation editDetails model, NoCommand )
 
         ShowTokenOperationsModal ->
             ( { model | dialogDetails = TokenOperationsDialog TokenOperations.emptyEditDetails }
@@ -608,7 +608,7 @@ update msg model =
             in
             ( handleFilesDropped [ InteropFile fileName contents ] { model | dialogDetails = NoDialog }
                 |> identifyProblemsIn
-                |> reunderlineStopwatchTable
+                |> reunderlineTimerTable
             , NoCommand
             )
 
@@ -632,8 +632,8 @@ update msg model =
                     else
                         ( model, NoCommand )
 
-                StopwatchOperationsDialog stopwatchOperationEditDetails ->
-                    ( tryApplyStopwatchOperation stopwatchOperationEditDetails model, NoCommand )
+                TimerOperationsDialog timerOperationEditDetails ->
+                    ( tryApplyTimerOperation timerOperationEditDetails model, NoCommand )
 
                 TokenOperationsDialog tokenOperationEditDetails ->
                     ( tryApplyTokenOperation tokenOperationEditDetails model, NoCommand )

@@ -98,19 +98,19 @@ suite =
                 \() ->
                     annotate [ NumberCheckerEntry 7 7 6 ]
                         |> Expect.equal [ AnnotatedNumberCheckerEntry 1 7 0 7 0 6 -1 7 ]
-            , test "annotates a single-element list with a possibly-too-large stopwatch-1 count as a delta with that" <|
+            , test "annotates a single-element list with a possibly-too-large timer-1 count as a delta with that" <|
                 \() ->
                     annotate [ NumberCheckerEntry 9 7 7 ]
                         |> Expect.equal [ AnnotatedNumberCheckerEntry 1 9 2 7 0 7 0 7 ]
-            , test "annotates a single-element list with a possibly-too-small stopwatch-1 count as a delta with that" <|
+            , test "annotates a single-element list with a possibly-too-small timer-1 count as a delta with that" <|
                 \() ->
                     annotate [ NumberCheckerEntry 4 7 7 ]
                         |> Expect.equal [ AnnotatedNumberCheckerEntry 1 4 -3 7 0 7 0 7 ]
-            , test "annotates a single-element list with a possibly-too-large stopwatch-2 count as a delta with that" <|
+            , test "annotates a single-element list with a possibly-too-large timer-2 count as a delta with that" <|
                 \() ->
                     annotate [ NumberCheckerEntry 7 8 7 ]
                         |> Expect.equal [ AnnotatedNumberCheckerEntry 1 7 0 8 1 7 0 7 ]
-            , test "annotates a single-element list with a possibly-too-small stopwatch-2 count as a delta with that" <|
+            , test "annotates a single-element list with a possibly-too-small timer-2 count as a delta with that" <|
                 \() ->
                     annotate [ NumberCheckerEntry 7 5 7 ]
                         |> Expect.equal [ AnnotatedNumberCheckerEntry 1 7 0 5 -2 7 0 7 ]

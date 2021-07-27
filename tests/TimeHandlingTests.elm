@@ -2,9 +2,9 @@ module TimeHandlingTests exposing (suite)
 
 import Errors exposing (expectError)
 import Expect
-import Stopwatch exposing (..)
 import Test exposing (Test, describe, test)
 import TimeHandling exposing (formatHoursAndMinutes, formatTime, formatTimeWithHours, parseHoursAndMinutes, parseTime)
+import Timer exposing (..)
 
 
 suite : Test

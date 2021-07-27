@@ -1,16 +1,16 @@
-module StopwatchOffsetDetectionTests exposing (suite)
+module TimerOffsetDetectionTests exposing (suite)
 
 import Errors exposing (expectError)
 import Expect
-import Stopwatch exposing (DoubleStopwatchData, MergeEntry(..), MergedTableRow, Stopwatches(..), noUnderlines)
-import StopwatchOffsetDetection exposing (findPossibleOffsets, getStopwatchTimeOffset)
 import Test exposing (Test, describe, test)
 import TestData exposing (defaultMatchSummary)
+import Timer exposing (DoubleTimerData, MergeEntry(..), MergedTableRow, Timers(..), noUnderlines)
+import TimerOffsetDetection exposing (findPossibleOffsets, getTimerTimeOffset)
 
 
 suite : Test
 suite =
-    describe "Stopwatch offset detection tests"
+    describe "Timer offset detection tests"
         [ describe "findPossibleOffsets tests"
             [ test "findPossibleOffsets returns an empty list for an empty list" <|
                 \() ->
@@ -34,34 +34,34 @@ suite =
                         |> List.sort
                         |> Expect.equal [ 37, 89 ]
             ]
-        , describe "getStopwatchTimeOffset tests"
-            [ test "getStopwatchTimeOffset returns Nothing for no stopwatches" <|
+        , describe "getTimerTimeOffset tests"
+            [ test "getTimerTimeOffset returns Nothing for no timers" <|
                 \() ->
-                    getStopwatchTimeOffset None
+                    getTimerTimeOffset None
                         |> Expect.equal Nothing
-            , test "getStopwatchTimeOffset returns Nothing for a single stopwatch" <|
+            , test "getTimerTimeOffset returns Nothing for a single timer" <|
                 \() ->
-                    getStopwatchTimeOffset (Single "stopwatch1.txt" [ 1000, 1100, 1200 ])
+                    getTimerTimeOffset (Single "timer1.txt" [ 1000, 1100, 1200 ])
                         |> Expect.equal Nothing
-            , test "getStopwatchTimeOffset returns zero for a double stopwatch with identical times" <|
+            , test "getTimerTimeOffset returns zero for a double timer with identical times" <|
                 \() ->
                     let
                         times : List Int
                         times =
                             [ 1000, 1033, 1047, 1066, 1097, 1104, 1119, 1177, 1206 ]
                     in
-                    getStopwatchTimeOffset
+                    getTimerTimeOffset
                         (Double
                             { times1 = times
                             , times2 = times
-                            , filename1 = "stopwatch1.txt"
-                            , filename2 = "stopwatch2.txt"
+                            , filename1 = "timer1.txt"
+                            , filename2 = "timer2.txt"
                             , mergedTableRows = []
                             , matchSummary = defaultMatchSummary
                             }
                         )
                         |> Expect.equal (Just 0)
-            , test "getStopwatchTimeOffset returns a nonzero number for a double stopwatch with identical times with a fixed difference" <|
+            , test "getTimerTimeOffset returns a nonzero number for a double timer with identical times with a fixed difference" <|
                 \() ->
                     let
                         times1 : List Int
@@ -72,18 +72,18 @@ suite =
                         times2 =
                             List.map (\time -> time + 19) times1
                     in
-                    getStopwatchTimeOffset
+                    getTimerTimeOffset
                         (Double
                             { times1 = times1
                             , times2 = times2
-                            , filename1 = "stopwatch1.txt"
-                            , filename2 = "stopwatch2.txt"
+                            , filename1 = "timer1.txt"
+                            , filename2 = "timer2.txt"
                             , mergedTableRows = []
                             , matchSummary = defaultMatchSummary
                             }
                         )
                         |> Expect.equal (Just -19)
-            , test "getStopwatchTimeOffset returns Nothing for two unrelated sets of times" <|
+            , test "getTimerTimeOffset returns Nothing for two unrelated sets of times" <|
                 \() ->
                     let
                         times1 : List Int
@@ -94,12 +94,12 @@ suite =
                         times2 =
                             [ 1104, 1165, 1202, 1204, 1222, 1239, 1248, 1258, 1269 ]
                     in
-                    getStopwatchTimeOffset
+                    getTimerTimeOffset
                         (Double
                             { times1 = times1
                             , times2 = times2
-                            , filename1 = "stopwatch1.txt"
-                            , filename2 = "stopwatch2.txt"
+                            , filename1 = "timer1.txt"
+                            , filename2 = "timer2.txt"
                             , mergedTableRows = []
                             , matchSummary = defaultMatchSummary
                             }

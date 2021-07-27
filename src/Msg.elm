@@ -7,15 +7,15 @@ import Commands exposing (CurrentDateAndTimeOperation)
 import File exposing (File)
 import FileHandling exposing (InteropFile)
 import ProblemFixing exposing (ProblemFix, ProblemIgnorance)
-import Stopwatch exposing (WhichStopwatch(..))
-import StopwatchOperations exposing (StopwatchOperationChangeType, StopwatchOperationEditDetails)
 import Time exposing (Posix, Zone)
+import Timer exposing (WhichTimer(..))
+import TimerOperations exposing (TimerOperationChangeType, TimerOperationEditDetails)
 import TokenOperations exposing (TokenOperationChangeType(..), TokenOperationEditDetails)
 
 
 type NumberCheckerFieldChange
-    = Stopwatch1
-    | Stopwatch2
+    = Timer1
+    | Timer2
     | FinishTokens
 
 
@@ -23,12 +23,12 @@ type Msg
     = NoOp
     | FilesDropped (List InteropFile)
     | ToggleTableRow Int
-    | DownloadStopwatch WhichStopwatch Zone Posix
-    | RemoveStopwatch WhichStopwatch
-    | FlipStopwatches
+    | DownloadTimer WhichTimer Zone Posix
+    | RemoveTimer WhichTimer
+    | FlipTimers
     | ClearAllData
     | RequestCurrentDateAndTime CurrentDateAndTimeOperation
-    | DownloadMergedStopwatchData Zone Posix
+    | DownloadMergedTimerData Zone Posix
     | MouseEnterNumberCheckerRow Int
     | MouseLeaveNumberCheckerRow Int
     | DeleteNumberCheckerRow Int
@@ -51,9 +51,9 @@ type Msg
     | BarcodeScannerEdit BarcodeScannerEditDetails
     | UpdateRowFromBarcodeScannerEditModal BarcodeScannerRowEditDetails
     | DeleteRowFromBarcodeScannerEditModal BarcodeScannerRowEditLocation
-    | ShowStopwatchOperationsModal
-    | StopwatchOperationEdit StopwatchOperationChangeType
-    | ApplyStopwatchOperation StopwatchOperationEditDetails
+    | ShowTimerOperationsModal
+    | TimerOperationEdit TimerOperationChangeType
+    | ApplyTimerOperation TimerOperationEditDetails
     | ShowTokenOperationsModal
     | TokenOperationEdit TokenOperationChangeType
     | ApplyTokenOperation TokenOperationEditDetails

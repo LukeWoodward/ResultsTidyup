@@ -32,11 +32,11 @@ import NumberCheckerView exposing (numberCheckerView)
 import PasteFileModal
 import Ports exposing (filesDropped, recordEventStartTime)
 import Problems
-import Stopwatch exposing (Stopwatches(..))
-import StopwatchesView exposing (stopwatchesView)
 import Task exposing (Task)
 import Time
 import TimeHandling exposing (formatHoursAndMinutes)
+import Timer exposing (Timers(..))
+import TimersView exposing (timersView)
 import UpdateLogic exposing (update)
 import ViewCommon exposing (normalButton)
 
@@ -124,11 +124,11 @@ focus elementToFocus =
 getDownloadOperation : Commands.CurrentDateAndTimeOperation -> (Time.Zone -> Time.Posix -> Msg)
 getDownloadOperation downloadOperation =
     case downloadOperation of
-        Commands.DownloadSingleStopwatch which ->
-            DownloadStopwatch which
+        Commands.DownloadSingleTimer which ->
+            DownloadTimer which
 
-        Commands.DownloadMergedStopwatches ->
-            DownloadMergedStopwatchData
+        Commands.DownloadMergedTimers ->
+            DownloadMergedTimerData
 
         Commands.DownloadAllBarcodeScannerData ->
             DownloadAllBarcodeScannerData
@@ -219,13 +219,13 @@ view model =
             else
                 text ""
 
-        stopwatchesItem : Html Msg
-        stopwatchesItem =
-            if model.stopwatches == None then
+        timersItem : Html Msg
+        timersItem =
+            if model.timers == None then
                 div [] []
 
             else
-                stopwatchesView model.stopwatches model.barcodeScannerData model.problems model.highlightedNumberCheckerId
+                timersView model.timers model.barcodeScannerData model.problems model.highlightedNumberCheckerId
 
         scannersItem : Html Msg
         scannersItem =
@@ -237,8 +237,8 @@ view model =
 
         noFilesUploaded : Html Msg
         noFilesUploaded =
-            if model.stopwatches == None && BarcodeScanner.isEmpty model.barcodeScannerData then
-                Alert.simpleInfo [ class "no-files-uploaded" ] [ text "No files have been uploaded.  Get started by uploading some stopwatch or scanner files." ]
+            if model.timers == None && BarcodeScanner.isEmpty model.barcodeScannerData then
+                Alert.simpleInfo [ class "no-files-uploaded" ] [ text "No files have been uploaded.  Get started by uploading some timer or scanner files." ]
 
             else
                 text ""
@@ -267,7 +267,7 @@ view model =
                 ]
             ]
         , Grid.row []
-            ([ stopwatchesItem, scannersItem ]
+            ([ timersItem, scannersItem ]
                 |> List.map (\element -> Grid.col [ Col.xs6 ] [ element ])
             )
         , noFilesUploaded

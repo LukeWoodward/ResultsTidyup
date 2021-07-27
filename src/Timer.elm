@@ -1,11 +1,11 @@
-module Stopwatch exposing
-    ( DoubleStopwatchData
+module Timer exposing
+    ( DoubleTimerData
     , MergeEntry(..)
     , MergedTableRow
-    , Stopwatch(..)
-    , StopwatchMatchSummary
-    , Stopwatches(..)
-    , WhichStopwatch(..)
+    , Timer(..)
+    , TimerMatchSummary
+    , Timers(..)
+    , WhichTimer(..)
     , createMergedTable
     , flipMatchSummary
     , flipTable
@@ -15,8 +15,8 @@ module Stopwatch exposing
     , merge
     , noUnderlines
     , outputMergedTable
-    , outputSingleStopwatchData
-    , readStopwatchData
+    , outputSingleTimerData
+    , readTimerData
     , toggleRowInTable
     , underlineTable
     )
@@ -30,54 +30,54 @@ import TimeHandling exposing (formatTimeWithHours, parseTime)
 
 
 
-{- Stopwatch data is basically a list of integer numbers of seconds -}
+{- Timer data is basically a list of integer numbers of seconds -}
 
 
-type Stopwatch
-    = StopwatchData (List Int)
+type Timer
+    = TimerData (List Int)
 
 
-type WhichStopwatch
-    = StopwatchOne
-    | StopwatchTwo
+type WhichTimer
+    = TimerOne
+    | TimerTwo
 
 
 type MergeEntry
     = ExactMatch Int
     | NearMatch Int Int
     | NotNearMatch Int Int
-    | OneWatchOnly WhichStopwatch Int
+    | OneWatchOnly WhichTimer Int
 
 
-type alias StopwatchMatchSummary =
+type alias TimerMatchSummary =
     { exactMatches : Int
     , nearMatches : Int
     , notNearMatches : Int
-    , stopwatch1Only : Int
-    , stopwatch2Only : Int
+    , timer1Only : Int
+    , timer2Only : Int
     }
 
 
-type alias DoubleStopwatchData =
+type alias DoubleTimerData =
     { times1 : List Int
     , times2 : List Int
     , filename1 : String
     , filename2 : String
     , mergedTableRows : List MergedTableRow
-    , matchSummary : StopwatchMatchSummary
+    , matchSummary : TimerMatchSummary
     }
 
 
-type Stopwatches
+type Timers
     = None
     | Single String (List Int)
-    | Double DoubleStopwatchData
+    | Double DoubleTimerData
 
 
 type alias Underlines =
     { position : Maybe Int
-    , stopwatch1 : Maybe Int
-    , stopwatch2 : Maybe Int
+    , timer1 : Maybe Int
+    , timer2 : Maybe Int
     , actual : Maybe Int
     }
 
@@ -134,15 +134,15 @@ readLine line =
 failIfNoResults : List Int -> Result Error (List Int)
 failIfNoResults results =
     if List.isEmpty results then
-        Error "NO_RESULTS" "Stopwatch data contained no results"
+        Error "NO_RESULTS" "Timer data contained no results"
             |> Err
 
     else
         Ok results
 
 
-readStopwatchData : String -> Result Error Stopwatch
-readStopwatchData text =
+readTimerData : String -> Result Error Timer
+readTimerData text =
     if isPossibleBinary text then
         Error "BINARY_FILE" "File appears to be a binary file"
             |> Err
@@ -155,7 +155,7 @@ readStopwatchData text =
             |> List.map readLine
             |> Result.Extra.combine
             |> Result.andThen failIfNoResults
-            |> Result.map StopwatchData
+            |> Result.map TimerData
 
 
 defaultMaxNearMatchDistance : Int
@@ -178,7 +178,7 @@ generateInitialTable entries =
     List.indexedMap createInitialTableRow entries
 
 
-addItemToSummary : MergedTableRow -> StopwatchMatchSummary -> StopwatchMatchSummary
+addItemToSummary : MergedTableRow -> TimerMatchSummary -> TimerMatchSummary
 addItemToSummary tableRow summary =
     case tableRow.entry of
         ExactMatch _ ->
@@ -190,16 +190,16 @@ addItemToSummary tableRow summary =
         NotNearMatch _ _ ->
             { summary | notNearMatches = summary.notNearMatches + 1 }
 
-        OneWatchOnly StopwatchOne _ ->
-            { summary | stopwatch1Only = summary.stopwatch1Only + 1 }
+        OneWatchOnly TimerOne _ ->
+            { summary | timer1Only = summary.timer1Only + 1 }
 
-        OneWatchOnly StopwatchTwo _ ->
-            { summary | stopwatch2Only = summary.stopwatch2Only + 1 }
+        OneWatchOnly TimerTwo _ ->
+            { summary | timer2Only = summary.timer2Only + 1 }
 
 
-generateMatchSummary : List MergedTableRow -> StopwatchMatchSummary
+generateMatchSummary : List MergedTableRow -> TimerMatchSummary
 generateMatchSummary mergedTableRows =
-    List.foldr addItemToSummary (StopwatchMatchSummary 0 0 0 0 0) mergedTableRows
+    List.foldr addItemToSummary (TimerMatchSummary 0 0 0 0 0) mergedTableRows
 
 
 isSingleTimeEntry : MergeEntry -> Bool
@@ -262,14 +262,14 @@ toggleRowInTable index rows =
     toggleRowInTableInternal index 1 rows
 
 
-flipStopwatch : WhichStopwatch -> WhichStopwatch
-flipStopwatch stopwatch =
-    case stopwatch of
-        StopwatchOne ->
-            StopwatchTwo
+flipTimer : WhichTimer -> WhichTimer
+flipTimer timer =
+    case timer of
+        TimerOne ->
+            TimerTwo
 
-        StopwatchTwo ->
-            StopwatchOne
+        TimerTwo ->
+            TimerOne
 
 
 flipRow : MergedTableRow -> MergedTableRow
@@ -285,7 +285,7 @@ flipRow row =
             { row | entry = NotNearMatch time2 time1 }
 
         OneWatchOnly watch time ->
-            { row | entry = OneWatchOnly (flipStopwatch watch) time }
+            { row | entry = OneWatchOnly (flipTimer watch) time }
 
 
 flipTable : List MergedTableRow -> List MergedTableRow
@@ -293,22 +293,22 @@ flipTable =
     List.map flipRow
 
 
-flipMatchSummary : StopwatchMatchSummary -> StopwatchMatchSummary
+flipMatchSummary : TimerMatchSummary -> TimerMatchSummary
 flipMatchSummary matchSummary =
     { matchSummary
-        | stopwatch1Only = matchSummary.stopwatch2Only
-        , stopwatch2Only = matchSummary.stopwatch1Only
+        | timer1Only = matchSummary.timer2Only
+        , timer2Only = matchSummary.timer1Only
     }
 
 
 
--- Each dictionary maps an index within the stopwatch-1, stopwatch-2 and
+-- Each dictionary maps an index within the timer-1, timer-2 and
 -- finish-tokens positions to the number-checker entry ID associated.
 
 
 type alias NumberDicts =
-    { stopwatch1 : Dict Int Int
-    , stopwatch2 : Dict Int Int
+    { timer1 : Dict Int Int
+    , timer2 : Dict Int Int
     , finishTokens : Dict Int Int
     , actual : Dict Int Int
     }
@@ -343,10 +343,10 @@ underlineTableInternal numberDicts sw1Posn sw2Posn ftoksPosn actualPosn mergedRo
                         NotNearMatch _ _ ->
                             sw1Posn + 1
 
-                        OneWatchOnly StopwatchOne _ ->
+                        OneWatchOnly TimerOne _ ->
                             sw1Posn + 1
 
-                        OneWatchOnly StopwatchTwo _ ->
+                        OneWatchOnly TimerTwo _ ->
                             sw1Posn
 
                 nextSw2Posn : Int
@@ -361,10 +361,10 @@ underlineTableInternal numberDicts sw1Posn sw2Posn ftoksPosn actualPosn mergedRo
                         NotNearMatch _ _ ->
                             sw2Posn + 1
 
-                        OneWatchOnly StopwatchOne _ ->
+                        OneWatchOnly TimerOne _ ->
                             sw2Posn
 
-                        OneWatchOnly StopwatchTwo _ ->
+                        OneWatchOnly TimerTwo _ ->
                             sw2Posn + 1
 
                 nextFtoksPosn : Int
@@ -385,8 +385,8 @@ underlineTableInternal numberDicts sw1Posn sw2Posn ftoksPosn actualPosn mergedRo
 
                 newUnderlines : Underlines
                 newUnderlines =
-                    { stopwatch1 = getNextEntry sw1Posn nextSw1Posn numberDicts.stopwatch1
-                    , stopwatch2 = getNextEntry sw2Posn nextSw2Posn numberDicts.stopwatch2
+                    { timer1 = getNextEntry sw1Posn nextSw1Posn numberDicts.timer1
+                    , timer2 = getNextEntry sw2Posn nextSw2Posn numberDicts.timer2
                     , position = getNextEntry ftoksPosn nextFtoksPosn numberDicts.finishTokens
                     , actual = getNextEntry actualPosn nextActualPosn numberDicts.actual
                     }
@@ -411,16 +411,16 @@ createMappingDict nums =
 underlineTable : List AnnotatedNumberCheckerEntry -> List MergedTableRow -> List MergedTableRow
 underlineTable numberCheckerEntries mergedRows =
     let
-        stopwatch1Numbers : Dict Int Int
-        stopwatch1Numbers =
+        timer1Numbers : Dict Int Int
+        timer1Numbers =
             numberCheckerEntries
-                |> List.map .stopwatch1
+                |> List.map .timer1
                 |> createMappingDict
 
-        stopwatch2Numbers : Dict Int Int
-        stopwatch2Numbers =
+        timer2Numbers : Dict Int Int
+        timer2Numbers =
             numberCheckerEntries
-                |> List.map .stopwatch2
+                |> List.map .timer2
                 |> createMappingDict
 
         finishTokensNumbers : Dict Int Int
@@ -435,7 +435,7 @@ underlineTable numberCheckerEntries mergedRows =
                 |> List.map .actual
                 |> createMappingDict
     in
-    underlineTableInternal (NumberDicts stopwatch1Numbers stopwatch2Numbers finishTokensNumbers actualNumbers) 0 0 0 0 mergedRows
+    underlineTableInternal (NumberDicts timer1Numbers timer2Numbers finishTokensNumbers actualNumbers) 0 0 0 0 mergedRows
 
 
 header : List String
@@ -463,8 +463,8 @@ formatRow rowNumber time =
         |> Just
 
 
-outputSingleStopwatchData : List Int -> String
-outputSingleStopwatchData times =
+outputSingleTimerData : List Int -> String
+outputSingleTimerData times =
     let
         formatTime : Int -> Int -> Maybe String
         formatTime index time =
@@ -509,7 +509,7 @@ outputMergedTable mergedRows =
         |> String.join crlf
 
 
-createMergedTable : List Int -> List Int -> String -> String -> DoubleStopwatchData
+createMergedTable : List Int -> List Int -> String -> String -> DoubleTimerData
 createMergedTable times1 times2 filename1 filename2 =
     let
         mergedDetails : List MergeEntry
@@ -520,7 +520,7 @@ createMergedTable times1 times2 filename1 filename2 =
         mergedTable =
             generateInitialTable mergedDetails
 
-        matchSummary : StopwatchMatchSummary
+        matchSummary : TimerMatchSummary
         matchSummary =
             generateMatchSummary mergedTable
     in
@@ -549,19 +549,19 @@ addNotNearMatches maxNotNearMatchDistance entries =
         [] ->
             []
 
-        (OneWatchOnly StopwatchOne time1) :: (OneWatchOnly StopwatchTwo time2) :: rest ->
+        (OneWatchOnly TimerOne time1) :: (OneWatchOnly TimerTwo time2) :: rest ->
             if abs (time1 - time2) <= maxNotNearMatchDistance then
                 NotNearMatch time1 time2 :: addNotNearMatches maxNotNearMatchDistance rest
 
             else
-                OneWatchOnly StopwatchOne time1 :: addNotNearMatches maxNotNearMatchDistance (OneWatchOnly StopwatchTwo time2 :: rest)
+                OneWatchOnly TimerOne time1 :: addNotNearMatches maxNotNearMatchDistance (OneWatchOnly TimerTwo time2 :: rest)
 
-        (OneWatchOnly StopwatchTwo time2) :: (OneWatchOnly StopwatchOne time1) :: rest ->
+        (OneWatchOnly TimerTwo time2) :: (OneWatchOnly TimerOne time1) :: rest ->
             if abs (time1 - time2) <= maxNotNearMatchDistance then
                 NotNearMatch time1 time2 :: addNotNearMatches maxNotNearMatchDistance rest
 
             else
-                OneWatchOnly StopwatchTwo time2 :: addNotNearMatches maxNotNearMatchDistance (OneWatchOnly StopwatchOne time1 :: rest)
+                OneWatchOnly TimerTwo time2 :: addNotNearMatches maxNotNearMatchDistance (OneWatchOnly TimerOne time1 :: rest)
 
         first :: rest ->
             first :: addNotNearMatches maxNotNearMatchDistance rest
@@ -577,14 +577,14 @@ merge maxNearMatchDistance maxNotNearMatchDistance times1 times2 =
                     []
 
                 ( _, [] ) ->
-                    List.map (OneWatchOnly StopwatchOne) sortedTimes1
+                    List.map (OneWatchOnly TimerOne) sortedTimes1
 
                 ( [], _ ) ->
-                    List.map (OneWatchOnly StopwatchTwo) sortedTimes2
+                    List.map (OneWatchOnly TimerTwo) sortedTimes2
 
                 ( first1 :: rest1, first2 :: rest2 ) ->
                     if first1 < first2 - maxNearMatchDistance then
-                        OneWatchOnly StopwatchOne first1 :: createTimes rest1 sortedTimes2
+                        OneWatchOnly TimerOne first1 :: createTimes rest1 sortedTimes2
 
                     else if first2 - maxNearMatchDistance <= first1 && first1 < first2 then
                         if
@@ -592,10 +592,10 @@ merge maxNearMatchDistance maxNotNearMatchDistance times1 times2 =
                                 && not (isHeadInRange rest2 first2 (first2 + maxNearMatchDistance))
                         then
                             -- The times match within the interval but there's a nearer time next
-                            -- on stopwatch 1 and the next time on stopwatch 2 isn't particularly near.
+                            -- on timer 1 and the next time on timer 2 isn't particularly near.
                             -- So it's likely that this time is on watch 1 only and the time on watch 2
                             -- will match a nearer time on watch 1.
-                            OneWatchOnly StopwatchOne first1 :: createTimes rest1 sortedTimes2
+                            OneWatchOnly TimerOne first1 :: createTimes rest1 sortedTimes2
 
                         else
                             NearMatch first1 first2 :: createTimes rest1 rest2
@@ -608,14 +608,14 @@ merge maxNearMatchDistance maxNotNearMatchDistance times1 times2 =
                             isHeadInRange rest2 (first2 + 1) first1
                                 && not (isHeadInRange rest1 first1 (first1 + maxNearMatchDistance))
                         then
-                            OneWatchOnly StopwatchTwo first2 :: createTimes sortedTimes1 rest2
+                            OneWatchOnly TimerTwo first2 :: createTimes sortedTimes1 rest2
 
                         else
                             NearMatch first1 first2 :: createTimes rest1 rest2
 
                     else
                         -- first1 > first2 + maxNearMatchDistance
-                        OneWatchOnly StopwatchTwo first2 :: createTimes sortedTimes1 rest2
+                        OneWatchOnly TimerTwo first2 :: createTimes sortedTimes1 rest2
     in
     createTimes (List.sort times1) (List.sort times2)
         |> addNotNearMatches maxNotNearMatchDistance

@@ -4,9 +4,9 @@ import Expect exposing (Expectation)
 import FileDropHandling exposing (handleFilesDropped)
 import FileHandling exposing (InteropFile)
 import Model exposing (Model, initModel)
-import Stopwatch exposing (Stopwatch(..))
 import Test exposing (Test, describe, test)
 import TestData exposing (..)
+import Timer exposing (Timer(..))
 
 
 expectLastError : String -> Model -> Expectation
@@ -57,87 +57,87 @@ suite =
                     \() ->
                         runTestWithSingleError initModel "unrecognised.txt" "This file contents should not be recognised" "UNRECOGNISED_FILE"
                 ]
-            , describe "Stopwatch file tests"
-                [ test "Can upload a single stopwatch data file" <|
+            , describe "Timer file tests"
+                [ test "Can upload a single timer data file" <|
                     \() ->
-                        handleFilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ] initModel
-                            |> Expect.equal { initModel | stopwatches = singleStopwatch }
-                , test "Can upload a single downloaded stopwatch data file" <|
+                        handleFilesDropped [ InteropFile "timer1.txt" sampleTimerData ] initModel
+                            |> Expect.equal { initModel | timers = singleTimer }
+                , test "Can upload a single downloaded timer data file" <|
                     \() ->
-                        handleFilesDropped [ InteropFile "stopwatch1.txt" sampleDownloadedStopwatchData ] initModel
-                            |> Expect.equal { initModel | stopwatches = singleStopwatch }
-                , test "Cannot upload a single invalid stopwatch data file" <|
+                        handleFilesDropped [ InteropFile "timer1.txt" sampleDownloadedTimerData ] initModel
+                            |> Expect.equal { initModel | timers = singleTimer }
+                , test "Cannot upload a single invalid timer data file" <|
                     \() ->
-                        runTestWithSingleError initModel "stopwatch1.txt" (String.replace "00" "XX" sampleStopwatchData) "UNRECOGNISED_TIME"
-                , test "Cannot upload the same single stopwatch data file twice" <|
+                        runTestWithSingleError initModel "timer1.txt" (String.replace "00" "XX" sampleTimerData) "UNRECOGNISED_TIME"
+                , test "Cannot upload the same single timer data file twice" <|
                     \() ->
                         let
                             intermediateModel : Model
                             intermediateModel =
-                                handleFilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ] initModel
+                                handleFilesDropped [ InteropFile "timer1.txt" sampleTimerData ] initModel
                         in
-                        runTestWithSingleError intermediateModel "stopwatch1.txt" sampleStopwatchData "STOPWATCH_FILE_ALREADY_LOADED"
-                , test "Can upload two different stopwatch data files in alphabetical order dropped together" <|
+                        runTestWithSingleError intermediateModel "timer1.txt" sampleTimerData "TIMER_FILE_ALREADY_LOADED"
+                , test "Can upload two different timer data files in alphabetical order dropped together" <|
                     \() ->
                         initModel
                             |> handleFilesDropped
-                                [ InteropFile "stopwatch1.txt" sampleStopwatchData
-                                , InteropFile "stopwatch2.txt" sampleStopwatchData2
+                                [ InteropFile "timer1.txt" sampleTimerData
+                                , InteropFile "timer2.txt" sampleTimerData2
                                 ]
-                            |> Expect.equal { initModel | stopwatches = doubleStopwatches }
-                , test "Can upload two different stopwatch data files in alphabetical order dropped one after the other" <|
+                            |> Expect.equal { initModel | timers = doubleTimers }
+                , test "Can upload two different timer data files in alphabetical order dropped one after the other" <|
                     \() ->
                         initModel
-                            |> handleFilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ]
-                            |> handleFilesDropped [ InteropFile "stopwatch2.txt" sampleStopwatchData2 ]
-                            |> Expect.equal { initModel | stopwatches = doubleStopwatches }
-                , test "Can upload two different stopwatch data files in reverse alphabetical order dropped one after the other" <|
+                            |> handleFilesDropped [ InteropFile "timer1.txt" sampleTimerData ]
+                            |> handleFilesDropped [ InteropFile "timer2.txt" sampleTimerData2 ]
+                            |> Expect.equal { initModel | timers = doubleTimers }
+                , test "Can upload two different timer data files in reverse alphabetical order dropped one after the other" <|
                     \() ->
                         initModel
-                            |> handleFilesDropped [ InteropFile "stopwatch2.txt" sampleStopwatchData2 ]
-                            |> handleFilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ]
-                            |> Expect.equal { initModel | stopwatches = doubleStopwatches }
-                , test "Uploading a third stopwatch data file has no effect" <|
+                            |> handleFilesDropped [ InteropFile "timer2.txt" sampleTimerData2 ]
+                            |> handleFilesDropped [ InteropFile "timer1.txt" sampleTimerData ]
+                            |> Expect.equal { initModel | timers = doubleTimers }
+                , test "Uploading a third timer data file has no effect" <|
                     \() ->
                         let
                             intermediateModel : Model
                             intermediateModel =
                                 handleFilesDropped
-                                    [ InteropFile "stopwatch1.txt" sampleStopwatchData
-                                    , InteropFile "stopwatch2.txt" sampleStopwatchData2
+                                    [ InteropFile "timer1.txt" sampleTimerData
+                                    , InteropFile "timer2.txt" sampleTimerData2
                                     ]
                                     initModel
                         in
                         Expect.equal
                             intermediateModel
-                            (handleFilesDropped [ InteropFile "stopwatch3.txt" sampleStopwatchData ] intermediateModel)
-                , test "Uploading a valid stopwatch file doesn't delete errors from an invalid stopwatch earlier in the same upload" <|
+                            (handleFilesDropped [ InteropFile "timer3.txt" sampleTimerData ] intermediateModel)
+                , test "Uploading a valid timer file doesn't delete errors from an invalid timer earlier in the same upload" <|
                     \() ->
                         let
                             actualModel : Model
                             actualModel =
                                 initModel
                                     |> handleFilesDropped
-                                        [ InteropFile "stopwatch2.txt" (String.replace "00" "XX" sampleStopwatchData2)
-                                        , InteropFile "stopwatch1.txt" sampleStopwatchData
+                                        [ InteropFile "timer2.txt" (String.replace "00" "XX" sampleTimerData2)
+                                        , InteropFile "timer1.txt" sampleTimerData
                                         ]
                         in
                         Expect.all
-                            [ Expect.equal { initModel | stopwatches = singleStopwatch, lastErrors = actualModel.lastErrors }
+                            [ Expect.equal { initModel | timers = singleTimer, lastErrors = actualModel.lastErrors }
                             , expectLastError "UNRECOGNISED_TIME"
                             ]
                             actualModel
-                , test "Uploading a valid stopwatch file doesn't delete errors from an invalid stopwatch in a previous upload" <|
+                , test "Uploading a valid timer file doesn't delete errors from an invalid timer in a previous upload" <|
                     \() ->
                         let
                             actualModel : Model
                             actualModel =
                                 initModel
-                                    |> handleFilesDropped [ InteropFile "stopwatch2.txt" (String.replace "00" "XX" sampleStopwatchData2) ]
-                                    |> handleFilesDropped [ InteropFile "stopwatch1.txt" sampleStopwatchData ]
+                                    |> handleFilesDropped [ InteropFile "timer2.txt" (String.replace "00" "XX" sampleTimerData2) ]
+                                    |> handleFilesDropped [ InteropFile "timer1.txt" sampleTimerData ]
                         in
                         Expect.all
-                            [ Expect.equal { initModel | stopwatches = singleStopwatch, lastErrors = actualModel.lastErrors }
+                            [ Expect.equal { initModel | timers = singleTimer, lastErrors = actualModel.lastErrors }
                             , expectLastError "UNRECOGNISED_TIME"
                             ]
                             actualModel

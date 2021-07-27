@@ -15,7 +15,7 @@ import ViewCommon exposing (intCell, smallButton, tableHeaders)
 
 firstManualEntryCellId : String
 firstManualEntryCellId =
-    "number-checker-stopwatch-1"
+    "number-checker-timer-1"
 
 
 minus : String
@@ -114,10 +114,10 @@ numberCheckerRow entry =
         [ Table.rowAttr (onMouseEnter (MouseEnterNumberCheckerRow entry.entryNumber))
         , Table.rowAttr (onMouseLeave (MouseLeaveNumberCheckerRow entry.entryNumber))
         ]
-        [ intCell entry.stopwatch1
-        , deltaCell entry.stopwatch1Delta
-        , intCell entry.stopwatch2
-        , deltaCell entry.stopwatch2Delta
+        [ intCell entry.timer1
+        , deltaCell entry.timer1Delta
+        , intCell entry.timer2
+        , deltaCell entry.timer2Delta
         , intCell entry.finishTokens
         , deltaCell entry.finishTokensDelta
         , actualEntryCell entry
@@ -136,8 +136,8 @@ manualEntryFieldClass entry =
 
 isManualEntryAddButtonDisabled : NumberCheckerManualEntryRow -> Bool
 isManualEntryAddButtonDisabled manualEntryRow =
-    (manualEntryRow.stopwatch1.parsedValue == Nothing)
-        || (manualEntryRow.stopwatch2.parsedValue == Nothing)
+    (manualEntryRow.timer1.parsedValue == Nothing)
+        || (manualEntryRow.timer2.parsedValue == Nothing)
         || (manualEntryRow.finishTokens.parsedValue == Nothing)
 
 
@@ -148,9 +148,9 @@ enterNewRow manualEntryRow =
             [ input
                 [ type_ "text"
                 , id firstManualEntryCellId
-                , class (manualEntryFieldClass manualEntryRow.stopwatch1)
-                , value manualEntryRow.stopwatch1.enteredValue
-                , onInput (NumberCheckerFieldChanged Stopwatch1)
+                , class (manualEntryFieldClass manualEntryRow.timer1)
+                , value manualEntryRow.timer1.enteredValue
+                , onInput (NumberCheckerFieldChanged Timer1)
                 , onEnterKeypress AddNumberCheckerRow
                 ]
                 []
@@ -158,9 +158,9 @@ enterNewRow manualEntryRow =
         , Table.td [ Table.cellAttr (colspan 2) ]
             [ input
                 [ type_ "text"
-                , class (manualEntryFieldClass manualEntryRow.stopwatch2)
-                , value manualEntryRow.stopwatch2.enteredValue
-                , onInput (NumberCheckerFieldChanged Stopwatch2)
+                , class (manualEntryFieldClass manualEntryRow.timer2)
+                , value manualEntryRow.timer2.enteredValue
+                , onInput (NumberCheckerFieldChanged Timer2)
                 , onEnterKeypress AddNumberCheckerRow
                 ]
                 []
@@ -206,7 +206,7 @@ numberCheckerTable entries manualEntryRow =
     in
     Table.table
         { options = [ Table.bordered, Table.small, Table.hover, Table.attr (class "number-checker-table") ]
-        , thead = tableHeaders [ "Stopwatch 1", plusOrMinus, "Stopwatch 2", plusOrMinus, "Finish tokens", plusOrMinus, "Actual", "" ]
+        , thead = tableHeaders [ "Timer 1", plusOrMinus, "Timer 2", plusOrMinus, "Finish tokens", plusOrMinus, "Actual", "" ]
         , tbody =
             Table.tbody
                 []

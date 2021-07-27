@@ -23,9 +23,9 @@ import DateHandling exposing (dateTimeStringToPosix, posixToDateString)
 import Dict exposing (Dict)
 import EventDateAndTime exposing (EventDateAndTime)
 import Set exposing (Set)
-import Stopwatch exposing (MergeEntry(..), MergedTableRow, Stopwatches(..))
-import StopwatchOffsetDetection exposing (getStopwatchTimeOffset)
 import Time exposing (posixToMillis)
+import Timer exposing (MergeEntry(..), MergedTableRow, Timers(..))
+import TimerOffsetDetection exposing (getTimerTimeOffset)
 
 
 type BarcodeScannerClockDifferenceType
@@ -90,7 +90,7 @@ type alias PositionWithMultipleAthletesProblem =
 
 
 type alias PositionOffEndOfTimesProblem =
-    { stopwatchTimeCount : Int
+    { timerTimeCount : Int
     , maxPosition : Int
     }
 
@@ -102,7 +102,7 @@ type alias Problems =
     , athletesWithAndWithoutPosition : List AthleteAndPositionPair
     , positionsWithAndWithoutAthlete : List AthleteAndPositionPair
     , barcodesScannedTheWrongWayAround : List BarcodesScannedTheWrongWayAroundProblem
-    , stopwatchTimeOffset : Maybe Int
+    , timerTimeOffset : Maybe Int
     , inconsistentBarcodeScannerDates : Maybe InconsistentBarcodeScannerDatesProblem
     , athletesWithMultiplePositions : List AthleteWithMultiplePositionsProblem
     , positionsWithMultipleAthletes : List PositionWithMultipleAthletesProblem
@@ -111,9 +111,9 @@ type alias Problems =
     , positionsMissingAthlete : List Int
     , misScans : List String
     , unrecognisedBarcodeScannerLines : List String
-    , identicalStopwatchTimes : Bool
-    , stopwatchesInconsistentWithNumberChecker : Bool
-    , stopwatchesAndFinishTokensInconsistentWithNumberChecker : Bool
+    , identicalTimerTimes : Bool
+    , timersInconsistentWithNumberChecker : Bool
+    , timersAndFinishTokensInconsistentWithNumberChecker : Bool
     }
 
 
@@ -125,7 +125,7 @@ noProblems =
     , athletesWithAndWithoutPosition = []
     , positionsWithAndWithoutAthlete = []
     , barcodesScannedTheWrongWayAround = []
-    , stopwatchTimeOffset = Nothing
+    , timerTimeOffset = Nothing
     , inconsistentBarcodeScannerDates = Nothing
     , athletesWithMultiplePositions = []
     , positionsWithMultipleAthletes = []
@@ -134,19 +134,19 @@ noProblems =
     , positionsMissingAthlete = []
     , misScans = []
     , unrecognisedBarcodeScannerLines = []
-    , identicalStopwatchTimes = False
-    , stopwatchesInconsistentWithNumberChecker = False
-    , stopwatchesAndFinishTokensInconsistentWithNumberChecker = False
+    , identicalTimerTimes = False
+    , timersInconsistentWithNumberChecker = False
+    , timersAndFinishTokensInconsistentWithNumberChecker = False
     }
 
 
 type alias IgnoredProblems =
-    { ignoreStopwatchTimeOffsets : Bool }
+    { ignoreTimerTimeOffsets : Bool }
 
 
 noIgnoredProblems : IgnoredProblems
 noIgnoredProblems =
-    { ignoreStopwatchTimeOffsets = False }
+    { ignoreTimerTimeOffsets = False }
 
 
 flattenItem : ( Int, List String ) -> List ( Int, String )
@@ -206,17 +206,17 @@ isExactMatch row =
             False
 
 
-identifyIdenticalStopwatches : Stopwatches -> Bool
-identifyIdenticalStopwatches stopwatches =
-    case stopwatches of
+identifyIdenticalTimers : Timers -> Bool
+identifyIdenticalTimers timers =
+    case timers of
         None ->
             False
 
         Single _ _ ->
             False
 
-        Double doubleStopwatchData ->
-            List.all isExactMatch doubleStopwatchData.mergedTableRows
+        Double doubleTimerData ->
+            List.all isExactMatch doubleTimerData.mergedTableRows
 
 
 identifyInconsistentBarcodeScannerDates : BarcodeScannerData -> Maybe InconsistentBarcodeScannerDatesProblem
@@ -278,32 +278,32 @@ identifyPositionsWithMultipleAthletes positionToAthletesDict =
 
 
 checkPositionOffEndOfTimes : Int -> Dict Int (List String) -> Maybe PositionOffEndOfTimesProblem
-checkPositionOffEndOfTimes stopwatchTimeCount positionToAthletesDict =
+checkPositionOffEndOfTimes timerTimeCount positionToAthletesDict =
     Dict.keys positionToAthletesDict
-        |> List.filter (\pos -> pos > stopwatchTimeCount)
+        |> List.filter (\pos -> pos > timerTimeCount)
         |> List.maximum
-        |> Maybe.map (PositionOffEndOfTimesProblem stopwatchTimeCount)
+        |> Maybe.map (PositionOffEndOfTimesProblem timerTimeCount)
 
 
-identifyPositionsOffEndOfTimes : Stopwatches -> Dict Int (List String) -> Maybe PositionOffEndOfTimesProblem
-identifyPositionsOffEndOfTimes stopwatches positionToAthletesDict =
-    case stopwatches of
+identifyPositionsOffEndOfTimes : Timers -> Dict Int (List String) -> Maybe PositionOffEndOfTimesProblem
+identifyPositionsOffEndOfTimes timers positionToAthletesDict =
+    case timers of
         None ->
-            -- Don't report this problem if there are no stopwatches.
+            -- Don't report this problem if there are no timers.
             Nothing
 
         Single _ times ->
             checkPositionOffEndOfTimes (List.length times) positionToAthletesDict
 
-        Double doubleStopwatchData ->
+        Double doubleTimerData ->
             let
-                stopwatchTimeCount : Int
-                stopwatchTimeCount =
-                    List.filterMap .rowNumber doubleStopwatchData.mergedTableRows
+                timerTimeCount : Int
+                timerTimeCount =
+                    List.filterMap .rowNumber doubleTimerData.mergedTableRows
                         |> List.maximum
                         |> Maybe.withDefault 0
             in
-            checkPositionOffEndOfTimes stopwatchTimeCount positionToAthletesDict
+            checkPositionOffEndOfTimes timerTimeCount positionToAthletesDict
 
 
 deduplicate : List comparable -> List comparable
@@ -657,24 +657,24 @@ timesListToArray times =
     Array.fromList (0 :: times)
 
 
-getTimes : Stopwatches -> Array Int
-getTimes stopwatches =
-    case stopwatches of
+getTimes : Timers -> Array Int
+getTimes timers =
+    case timers of
         None ->
             Array.empty
 
         Single _ times ->
             timesListToArray times
 
-        Double doubleStopwatchData ->
-            doubleStopwatchData.mergedTableRows
+        Double doubleTimerData ->
+            doubleTimerData.mergedTableRows
                 |> List.filter .included
                 |> List.map (.entry >> mergeEntryToTime)
                 |> timesListToArray
 
 
-identifyProblems : Stopwatches -> BarcodeScannerData -> EventDateAndTime -> IgnoredProblems -> Problems
-identifyProblems stopwatches barcodeScannerData eventDateAndTime ignoredProblems =
+identifyProblems : Timers -> BarcodeScannerData -> EventDateAndTime -> IgnoredProblems -> Problems
+identifyProblems timers barcodeScannerData eventDateAndTime ignoredProblems =
     let
         positionToAthletesDict : Dict Int (List String)
         positionToAthletesDict =
@@ -706,7 +706,7 @@ identifyProblems stopwatches barcodeScannerData eventDateAndTime ignoredProblems
 
         times : Array Int
         times =
-            getTimes stopwatches
+            getTimes timers
     in
     { barcodeScannerClockDifferences = identifyBarcodeScannerClocksBeingOut barcodeScannerData eventStartDateTimeMillis
     , barcodesScannedBeforeEventStart = Maybe.andThen (identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString) eventStartDateTimeMillis
@@ -714,21 +714,21 @@ identifyProblems stopwatches barcodeScannerData eventDateAndTime ignoredProblems
     , athletesWithAndWithoutPosition = identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly
     , positionsWithAndWithoutAthlete = identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly
     , barcodesScannedTheWrongWayAround = identifyBarcodesScannedTheWrongWayAround barcodeScannerData
-    , stopwatchTimeOffset =
-        if ignoredProblems.ignoreStopwatchTimeOffsets then
+    , timerTimeOffset =
+        if ignoredProblems.ignoreTimerTimeOffsets then
             Nothing
 
         else
-            replaceZeroOffset (getStopwatchTimeOffset stopwatches)
+            replaceZeroOffset (getTimerTimeOffset timers)
     , inconsistentBarcodeScannerDates = identifyInconsistentBarcodeScannerDates barcodeScannerData
     , athletesWithMultiplePositions = identifyAthletesWithMultiplePositions times athleteToPositionsDict
     , positionsWithMultipleAthletes = identifyPositionsWithMultipleAthletes positionToAthletesDict
-    , identicalStopwatchTimes = identifyIdenticalStopwatches stopwatches
-    , positionOffEndOfTimes = identifyPositionsOffEndOfTimes stopwatches positionToAthletesDict
+    , identicalTimerTimes = identifyIdenticalTimers timers
+    , positionOffEndOfTimes = identifyPositionsOffEndOfTimes timers positionToAthletesDict
     , athletesMissingPosition = identifyAthletesWithNoPositions athleteBarcodesOnly athleteToPositionsDict
     , positionsMissingAthlete = identifyPositionsWithNoAthletes finishTokensOnly positionToAthletesDict
     , misScans = identifyMisScannedItems barcodeScannerData.misScannedItems
     , unrecognisedBarcodeScannerLines = identifyUnrecognisedBarcodeScannerLines barcodeScannerData.unrecognisedLines
-    , stopwatchesInconsistentWithNumberChecker = False
-    , stopwatchesAndFinishTokensInconsistentWithNumberChecker = False
+    , timersInconsistentWithNumberChecker = False
+    , timersAndFinishTokensInconsistentWithNumberChecker = False
     }

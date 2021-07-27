@@ -19,10 +19,10 @@ import Expect exposing (Expectation)
 import Model exposing (Model, NumberCheckerManualEntryRow, emptyNumberCheckerManualEntryRow, initModel)
 import ProblemFixing exposing (ProblemFix(..), ProblemIgnorance(..), fixProblem, ignoreProblem)
 import Problems exposing (BarcodeScannerClockDifferenceType(..), IgnoredProblems, noIgnoredProblems)
-import Stopwatch exposing (Stopwatches, WhichStopwatch(..))
 import Test exposing (Test, describe, test)
-import TestData exposing (createBarcodeScannerDataFromFiles, defaultDateTime, doubleStopwatches, ordinaryFileLine, stopwatchesForAdjusting, toPosix)
+import TestData exposing (createBarcodeScannerDataFromFiles, defaultDateTime, doubleTimers, ordinaryFileLine, timersForAdjusting, toPosix)
 import Time
+import Timer exposing (Timers, WhichTimer(..))
 
 
 createBarcodeScannerDataForRemovingUnassociatedFinishTokens : List Int -> BarcodeScannerData
@@ -595,62 +595,62 @@ suite =
                         in
                         runTestForFixingProblem (SwapBarcodes "wrong_filename.txt" 1 2) initialBarcodeScannerData initialBarcodeScannerData
                 ]
-            , describe "AdjustStopwatch tests"
-                [ test "Can adjust stopwatch 1 adding some time to it" <|
+            , describe "AdjustTimer tests"
+                [ test "Can adjust timer 1 adding some time to it" <|
                     \() ->
                         let
                             initialModel : Model
                             initialModel =
-                                { initModel | stopwatches = stopwatchesForAdjusting -19 0 }
+                                { initModel | timers = timersForAdjusting -19 0 }
 
                             actualModel : Model
                             actualModel =
-                                fixProblem (AdjustStopwatch StopwatchOne 19) initialModel
+                                fixProblem (AdjustTimer TimerOne 19) initialModel
                         in
                         Expect.equal
-                            { initialModel | stopwatches = doubleStopwatches }
+                            { initialModel | timers = doubleTimers }
                             actualModel
-                , test "Can adjust stopwatch 1 taking some time from it" <|
+                , test "Can adjust timer 1 taking some time from it" <|
                     \() ->
                         let
                             initialModel : Model
                             initialModel =
-                                { initModel | stopwatches = stopwatchesForAdjusting 46 0 }
+                                { initModel | timers = timersForAdjusting 46 0 }
 
                             actualModel : Model
                             actualModel =
-                                fixProblem (AdjustStopwatch StopwatchOne -46) initialModel
+                                fixProblem (AdjustTimer TimerOne -46) initialModel
                         in
                         Expect.equal
-                            { initialModel | stopwatches = doubleStopwatches }
+                            { initialModel | timers = doubleTimers }
                             actualModel
-                , test "Can adjust stopwatch 2 adding some time to it" <|
+                , test "Can adjust timer 2 adding some time to it" <|
                     \() ->
                         let
                             initialModel : Model
                             initialModel =
-                                { initModel | stopwatches = stopwatchesForAdjusting 0 -22 }
+                                { initModel | timers = timersForAdjusting 0 -22 }
 
                             actualModel : Model
                             actualModel =
-                                fixProblem (AdjustStopwatch StopwatchTwo 22) initialModel
+                                fixProblem (AdjustTimer TimerTwo 22) initialModel
                         in
                         Expect.equal
-                            { initialModel | stopwatches = doubleStopwatches }
+                            { initialModel | timers = doubleTimers }
                             actualModel
-                , test "Can adjust stopwatch 2 taking some time from it" <|
+                , test "Can adjust timer 2 taking some time from it" <|
                     \() ->
                         let
                             initialModel : Model
                             initialModel =
-                                { initModel | stopwatches = stopwatchesForAdjusting 0 37 }
+                                { initModel | timers = timersForAdjusting 0 37 }
 
                             actualModel : Model
                             actualModel =
-                                fixProblem (AdjustStopwatch StopwatchTwo -37) initialModel
+                                fixProblem (AdjustTimer TimerTwo -37) initialModel
                         in
                         Expect.equal
-                            { initialModel | stopwatches = doubleStopwatches }
+                            { initialModel | timers = doubleTimers }
                             actualModel
                 ]
             ]
@@ -790,18 +790,18 @@ suite =
                     Expect.equal expectedModel actualModel
             ]
         , describe "ignoreProblem tests"
-            [ test "Ignoring stopwatch time offsets marks the stopwatch offsets as ignored" <|
+            [ test "Ignoring timer time offsets marks the timer offsets as ignored" <|
                 \() ->
-                    ignoreProblem IgnoreStopwatchTimeOffsets noIgnoredProblems
-                        |> Expect.equal { noIgnoredProblems | ignoreStopwatchTimeOffsets = True }
-            , test "Ignoring stopwatch time offsets when already ignored does nothing" <|
+                    ignoreProblem IgnoreTimerTimeOffsets noIgnoredProblems
+                        |> Expect.equal { noIgnoredProblems | ignoreTimerTimeOffsets = True }
+            , test "Ignoring timer time offsets when already ignored does nothing" <|
                 \() ->
                     let
                         ignoredProblems : IgnoredProblems
                         ignoredProblems =
-                            { noIgnoredProblems | ignoreStopwatchTimeOffsets = True }
+                            { noIgnoredProblems | ignoreTimerTimeOffsets = True }
                     in
-                    ignoreProblem IgnoreStopwatchTimeOffsets ignoredProblems
+                    ignoreProblem IgnoreTimerTimeOffsets ignoredProblems
                         |> Expect.equal ignoredProblems
             ]
         ]
