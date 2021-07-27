@@ -22,7 +22,7 @@ import File.Download as Download
 import File.Select
 import FileHandling exposing (InteropFile)
 import Html exposing (Html, a, div, h1, h3, li, span, text, ul)
-import Html.Attributes exposing (attribute, class, href, id, style)
+import Html.Attributes exposing (attribute, class, href, id, style, target)
 import Html.Events exposing (on, onClick)
 import Json.Decode exposing (Decoder, andThen, fail, field, int, succeed)
 import Modals exposing (showModalDialog)
@@ -251,6 +251,9 @@ view model =
                     [ class "clearfix" ]
                     [ h1 [ id "header" ] [ text "Results Tidyup" ]
                     , badge
+                    , span [ class "about-link" ]
+                        [ a [ href "about.html", target "_blank" ] [ text "About" ]
+                        ]
                     ]
                 , actionsPanelView model
                 , errorsView model.lastErrors

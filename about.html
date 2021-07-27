@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Results Tidyup - About</title>
+  <link rel="stylesheet" href="bootstrap.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+
+<h1>Results Tidyup &ndash; About</h1>
+
+<h2>What is this?</h2>
+<p><a href="index.html" target="_blank">Results Tidyup</a> is an application that can be used to
+    adjust and tidy up results data at parkrun events or similar.  It offers the ability to read in timer and
+    scanner files, make some adjustments to them and download the adjusted files.</p>
+
+<h2>What can it do?</h2>
+<p>Results Tidyup can do the following:</p>
+
+<h4>Timer operations</h4>
+<ul>
+    <li>Compare and merge times in two timer files, including adjusting for offsets between the two timers.</li>
+    <li>Adding an offset to or subtracting an offset from times on one or both timers.</li>
+    <li>Applying a scale factor to all times, either using a specified scale factor or the
+        <a href="https://en.wikipedia.org/wiki/Peter_Riegel#Race_time_prediction">Riegel formula</a>.</li>
+</ul>
+<h4>Token operations</h4>
+<ul>
+    <li>Insert or remove one or more tokens, e.g. due to funnel duckers or tokens not being given out.</li>
+    <li>Swap two ranges of tokens that were given out in the wrong order (e.g. 26-50 and 51-75 in
+        1-25, 51-75, 26-50, 76-100, ...).</li>
+    <li>Reverse a range of tokens given out in reverse order.</li>
+</ul>
+<p>Timer and scanner files can be loaded into Results Tidyup by using the 'Upload Files' button, or by using the
+    'Paste...' button and pasting in the contents of a file.  Files can also be loaded by dragging them into the
+    browser window, but note that some antivirus browser plugins can block this.</p>
+
+<p>You can also upload a combination of timer and scanner files, and it can perform checks on all of them in combination,
+    in particular ensuring that there are enough times for all of the finishers.</p>
+
+<p>Results Tidyup works entirely within your browser.  It does not send any of the files you upload to the servers
+    it is hosted on.  Your browser may report that the site is 'Not secure', but that 'Not secure' label just means
+    that any data you send to the servers for processing isn't encrypted.  With Results Tidyup, there is no data
+    sent to the servers, encrypted or otherwise.</p>
+
+<h2>What can't it do?</h2>
+<p>Results Tidyup cannot possibly solve every single problem with parkrun results. It can assist with identifying
+    some of them, but ultimately, the adjustments have to be made with some understanding from the volunteers about
+    what actually happened on the morning.</p>
+
+<p>Results Tidyup also won't be able to display athlete names, it will only display barcode numbers.  The names are
+    stored only on parkrun's systems.  I know of no way to query parkrun's systems and retrieve names for a bunch of
+    athlete barcodes.  Even if there was a way, there would almost certainly be privacy concerns with doing this.
+</p>
+
+<p>Results Tidyup cannot handle more than two timer files.  (It can handle any number of barcode-scanner files,
+    though.)</p>
+
+<h2>Has this tool been adapted to work with the changes to parkrun results processing, in particular the mandatory
+    use of the Virtual Volunteer app?</h2>
+
+<p>Yes.  Results Tidyup was originally written before these changes came in but it has been updated since then.
+    It can read timer files downloaded from WebFMS: they are in a different format to the timer files obtained
+    in the past from Junsd stopwatches and other similar devices.</p>
+
+<p>Results Tidyup can also handle some problems that are less likely to show up nowadays:</p>
+<ul>
+    <li>Results Tidyup can identify sequences of athlete and token barcodes scanned the wrong way around.
+        However, the Virtual Volunteer app will ensure that athlete barcodes are scanned before finish tokens,
+        so this problem will no longer occur.</li>
+    <li>Scanner files contain the time at which the scan was recorded.  Results Tidyup uses these times to
+        detect barcodes scanned before the event started, e.g. due to a volunteer doing some practice scans
+        before the event but not clearing the scanner before scanning the 'real' barcodes of event finishers.
+        This is less likely to happen with the Virtual Volunteer app, as it's more obvious how to clear it.</li>
+    <li>Related to the previous point, scanning is now done on smartphones that will automatically adjust for
+        daylight-saving time.  With the Opticon scanners, the clocks on these were only adjusted after you
+        downloaded the scans off of them, so the times would be an hour out the first event after a
+        daylight-savings time change.  Results Tidyup would flag this and offer the ability to correct the
+        scan times.  Note however that WebFMS appears to ignore the scan times.  Adjusting them is only useful
+        to be sure there are no problems with practice scans that should have been cleared.</li>
+</ul>
+
+<h2>There are other comparison sites such as <a href="http://stopwatch.megson.org">Steve Megson's tool</a>.
+    Why should I use Results Tidyup instead?</h2>
+
+<p>Results Tidyup compares times in a similar way to Steve Megson's tool, but it features a different
+    way to detect time offsets between timers, e.g. due to one of them being started late.  If it detects an offset
+    between two timers, it also allows the correction to be applied to either timer, i.e. by adding the offset to
+    all times on one stopwatch or subtracting it from all times on the other stopwatch.  It is arguable
+    that most offsets between timers are caused by one of them starting late, but there are occasions where it
+    seems one was started early. (I have seen one set of timer files where it seems this did happen.)</p>
+
+<p>Steve Megson's tool can detect time offsets in some situations, but this only seems to work if the offset is
+    present in the first times in each file.  If the first time is missing on one timer, or is off by a
+    different offset (I have seen both cases happen), it doesn't detect the offset.  Results Tidyup is more
+    resilient to such situations and will continue to detect the offset regardless of whether the first time
+    has additional problems.</p>
+
+<p>It is perhaps worth noting however that there was an alternative timer comparison tool.  This was at
+    <a href="http://www.craighenderson.co.uk/parkrun/">http://www.craighenderson.co.uk/parkrun/</a>, but this appears
+    to have closed.  For what it's worth, this closure seems recent (spring-summer 2021): I was aware it didn't work
+    with the new-format timer files downloaded from WebFMS.  I did contact the site author to let him know this,
+    and sent him a couple of timer files, but it seems he chose to close the tool down rather than adjust it.
+</p>
+
+</div>
+</body>
+</html>

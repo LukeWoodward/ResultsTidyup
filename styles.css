@@ -219,3 +219,7 @@ textarea#pasteFileDialogTextArea {
     width: 100%;
     min-height: 300px;
 }
+
+span.about-link {
+    padding-left: 35px;
+}
