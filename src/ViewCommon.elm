@@ -9,7 +9,7 @@ import Msg exposing (Msg)
 
 urlResultsPrefix : String
 urlResultsPrefix =
-    "http://www.parkrun.org.uk/results/athleteresultshistory/?athleteNumber="
+    "http://www.parkrun.org.uk/parkrunner/"
 
 
 plainCell : String -> Table.Cell a
