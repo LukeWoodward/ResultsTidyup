@@ -368,21 +368,6 @@ unrecognisedBarcodeScannerLinesView unrecognisedBarcodeScannerLines =
                 ]
 
 
-identicalTimerTimesView : Bool -> Maybe (Html Msg)
-identicalTimerTimesView identicalTimerTimes =
-    if identicalTimerTimes then
-        dangerAlert
-            [ text
-                ("Both timer files have identical times.  It is very unlikely in practice for two timers to contain the same times.  "
-                    ++ "Please check you haven't downloaded times from the same timer twice."
-                )
-            ]
-            |> Just
-
-    else
-        Nothing
-
-
 timerProblemsView : Problems -> Html Msg
 timerProblemsView problems =
     let
@@ -390,7 +375,6 @@ timerProblemsView problems =
         problemViewSections =
             [ Maybe.andThen timerTimeOffsetView problems.timerTimeOffset
             , Maybe.map positionOffEndOfTimesView problems.positionOffEndOfTimes
-            , identicalTimerTimesView problems.identicalTimerTimes
             ]
     in
     div [ class "problems-container" ] (List.filterMap identity problemViewSections)

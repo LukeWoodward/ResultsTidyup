@@ -73,7 +73,6 @@ type alias Problems =
     , positionsMissingAthlete : List Int
     , misScans : List String
     , unrecognisedBarcodeScannerLines : List String
-    , identicalTimerTimes : Bool
     , timersInconsistentWithNumberChecker : Bool
     , timersAndFinishTokensInconsistentWithNumberChecker : Bool
     }
@@ -93,7 +92,6 @@ noProblems =
     , positionsMissingAthlete = []
     , misScans = []
     , unrecognisedBarcodeScannerLines = []
-    , identicalTimerTimes = False
     , timersInconsistentWithNumberChecker = False
     , timersAndFinishTokensInconsistentWithNumberChecker = False
     }
@@ -163,19 +161,6 @@ isExactMatch row =
 
         _ ->
             False
-
-
-identifyIdenticalTimers : Timers -> Bool
-identifyIdenticalTimers timers =
-    case timers of
-        None ->
-            False
-
-        Single _ _ ->
-            False
-
-        Double doubleTimerData ->
-            List.all isExactMatch doubleTimerData.mergedTableRows
 
 
 identifyAthletesWithMultiplePositions : Array Int -> Dict String (List Int) -> List AthleteWithMultiplePositionsProblem
@@ -497,7 +482,6 @@ identifyProblems timers barcodeScannerData eventDateAndTime ignoredProblems =
             replaceZeroOffset (getTimerTimeOffset timers)
     , athletesWithMultiplePositions = identifyAthletesWithMultiplePositions times athleteToPositionsDict
     , positionsWithMultipleAthletes = identifyPositionsWithMultipleAthletes positionToAthletesDict
-    , identicalTimerTimes = identifyIdenticalTimers timers
     , positionOffEndOfTimes = identifyPositionsOffEndOfTimes timers positionToAthletesDict
     , athletesMissingPosition = identifyAthletesWithNoPositions athleteBarcodesOnly athleteToPositionsDict
     , positionsMissingAthlete = identifyPositionsWithNoAthletes finishTokensOnly positionToAthletesDict

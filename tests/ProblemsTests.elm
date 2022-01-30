@@ -531,22 +531,6 @@ suite =
                             { noProblems
                                 | barcodesScannedBeforeEventStart = Just (BarcodesScannedBeforeEventStartProblem 2 baseEventStartTime "14/03/2018 09:00")
                             }
-            , test "identifyProblems returns a problem for timers exactly in sync" <|
-                \() ->
-                    identifyProblems
-                        (Double
-                            { times1 = [ 1000, 1080, 1200 ]
-                            , times2 = [ 1000, 1080, 1200 ]
-                            , filename1 = "timers1.txt"
-                            , filename2 = "timers2.txt"
-                            , mergedTableRows = wrapMergeEntriesInTable [ ExactMatch 1000, ExactMatch 1100, ExactMatch 1200 ]
-                            , matchSummary = TimerMatchSummary 3 0 0 0 0
-                            }
-                        )
-                        BarcodeScanner.empty
-                        emptyEventDateAndTime
-                        noIgnoredProblems
-                        |> Expect.equal { noProblems | identicalTimerTimes = True }
             , test "identifyProblems returns no problems for timers almost in sync" <|
                 \() ->
                     identifyProblems
