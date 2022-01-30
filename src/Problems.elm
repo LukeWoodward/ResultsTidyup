@@ -2,7 +2,6 @@ module Problems exposing
     ( AthleteAndPositionPair
     , AthleteWithMultiplePositionsProblem
     , BarcodesScannedBeforeEventStartProblem
-    , BarcodesScannedTheWrongWayAroundProblem
     , IgnoredProblems
     , PositionAndTime
     , PositionOffEndOfTimesProblem
@@ -37,13 +36,6 @@ type alias AthleteAndPositionPair =
     }
 
 
-type alias BarcodesScannedTheWrongWayAroundProblem =
-    { filename : String
-    , startLineNumber : Int
-    , endLineNumber : Int
-    }
-
-
 type alias PositionAndTime =
     { position : Int
     , time : Maybe Int
@@ -73,7 +65,6 @@ type alias Problems =
     , athletesInSamePositionMultipleTimes : List AthleteAndPositionPair
     , athletesWithAndWithoutPosition : List AthleteAndPositionPair
     , positionsWithAndWithoutAthlete : List AthleteAndPositionPair
-    , barcodesScannedTheWrongWayAround : List BarcodesScannedTheWrongWayAroundProblem
     , timerTimeOffset : Maybe Int
     , athletesWithMultiplePositions : List AthleteWithMultiplePositionsProblem
     , positionsWithMultipleAthletes : List PositionWithMultipleAthletesProblem
@@ -94,7 +85,6 @@ noProblems =
     , athletesInSamePositionMultipleTimes = []
     , athletesWithAndWithoutPosition = []
     , positionsWithAndWithoutAthlete = []
-    , barcodesScannedTheWrongWayAround = []
     , timerTimeOffset = Nothing
     , athletesWithMultiplePositions = []
     , positionsWithMultipleAthletes = []
@@ -414,102 +404,6 @@ repeatedElement list =
                 NoRepeatedElement
 
 
-{-| We've found the start of a possible wrong-way-around section. See if we can
-find the end. If we find the end, return the range of lines that the
-wrong-way-around section covers. If not, return Nothing.
--}
-findEndOfWrongWayAroundSection : Int -> Int -> List BarcodeScannerFileLine -> Maybe ( Int, Int )
-findEndOfWrongWayAroundSection startLineNumber prevFinishToken lines =
-    case lines of
-        [] ->
-            -- Hit the end: nothing wrong-way-around.
-            Nothing
-
-        first :: rest ->
-            if first.deletionStatus == NotDeleted then
-                case first.contents of
-                    BarcodeScanner.MisScan text ->
-                        -- Hit a mis-scan: abandon the search.
-                        Nothing
-
-                    Ordinary "" Nothing ->
-                        -- Completely blank record?  Not expecting this: abandon the search.
-                        Nothing
-
-                    Ordinary "" (Just thisFinishToken) ->
-                        -- Another position-only record.  Assume that an athlete barcode has failed
-                        -- to scan and keep going.
-                        findEndOfWrongWayAroundSection startLineNumber thisFinishToken rest
-
-                    Ordinary athlete Nothing ->
-                        -- Athlete-only record.  Stop things here.
-                        Just ( startLineNumber, first.lineNumber )
-
-                    Ordinary athlete (Just thisFinishToken) ->
-                        if thisFinishToken == prevFinishToken then
-                            if startLineNumber + 1 == first.lineNumber then
-                                -- We have a complete record immediately following a finish-token-only
-                                -- record with the same token.  Ignore the former record: there's no
-                                -- sequence of reversed scans.
-                                Nothing
-
-                            else
-                                -- End things here on the previous row: this is an intact record, and
-                                -- the finish token in the previous record will be an error.
-                                Just ( startLineNumber, first.lineNumber - 1 )
-
-                        else
-                            findEndOfWrongWayAroundSection startLineNumber thisFinishToken rest
-
-            else
-                findEndOfWrongWayAroundSection startLineNumber prevFinishToken rest
-
-
-identifyWrongWayArounds : String -> List BarcodeScannerFileLine -> List BarcodesScannedTheWrongWayAroundProblem
-identifyWrongWayArounds filename lines =
-    case lines of
-        [] ->
-            []
-
-        firstLine :: remainingLines ->
-            case ( firstLine.contents, firstLine.deletionStatus ) of
-                ( Ordinary "" (Just finishToken), NotDeleted ) ->
-                    -- Finish token with no athlete: here's the start of a possible run of
-                    -- reversed scans.
-                    let
-                        wrongWayAroundStatus : Maybe ( Int, Int )
-                        wrongWayAroundStatus =
-                            findEndOfWrongWayAroundSection firstLine.lineNumber finishToken remainingLines
-                    in
-                    case wrongWayAroundStatus of
-                        Just ( startLineNumber, endLineNumber ) ->
-                            let
-                                -- Skip the lines within the range given.
-                                subsequentLines : List BarcodeScannerFileLine
-                                subsequentLines =
-                                    List.filter (\line -> line.lineNumber > endLineNumber) remainingLines
-                            in
-                            BarcodesScannedTheWrongWayAroundProblem filename startLineNumber endLineNumber :: identifyWrongWayArounds filename subsequentLines
-
-                        Nothing ->
-                            identifyWrongWayArounds filename remainingLines
-
-                _ ->
-                    -- Anything else: scan remaining lines.
-                    identifyWrongWayArounds filename remainingLines
-
-
-identifyBarcodesScannedTheWrongWayAroundInFile : BarcodeScannerFile -> List BarcodesScannedTheWrongWayAroundProblem
-identifyBarcodesScannedTheWrongWayAroundInFile file =
-    identifyWrongWayArounds file.name file.lines
-
-
-identifyBarcodesScannedTheWrongWayAround : BarcodeScannerData -> List BarcodesScannedTheWrongWayAroundProblem
-identifyBarcodesScannedTheWrongWayAround barcodeScannerData =
-    List.map identifyBarcodesScannedTheWrongWayAroundInFile barcodeScannerData.files
-        |> List.concat
-
-
 replaceZeroOffset : Maybe Int -> Maybe Int
 replaceZeroOffset offset =
     if offset == Just 0 then
@@ -595,7 +489,6 @@ identifyProblems timers barcodeScannerData eventDateAndTime ignoredProblems =
     , athletesInSamePositionMultipleTimes = identifyDuplicateScans positionToAthletesDict
     , athletesWithAndWithoutPosition = identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly
     , positionsWithAndWithoutAthlete = identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly
-    , barcodesScannedTheWrongWayAround = identifyBarcodesScannedTheWrongWayAround barcodeScannerData
     , timerTimeOffset =
         if ignoredProblems.ignoreTimerTimeOffsets then
             Nothing

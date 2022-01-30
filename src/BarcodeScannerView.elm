@@ -47,9 +47,6 @@ deletionReasonToString reason =
         FinishTokenScannedWithAthleteElsewhere position ->
             "Position " ++ String.fromInt position ++ " has been scanned with an athlete barcode elsewhere"
 
-        EndOfWrongWayAroundSection ->
-            "This line was at the end of a section of barcodes scanned the wrong way around"
-
         DeletedByUser ->
             "You deleted this line"
 

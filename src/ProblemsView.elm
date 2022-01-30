@@ -11,7 +11,6 @@ import Problems
         ( AthleteAndPositionPair
         , AthleteWithMultiplePositionsProblem
         , BarcodesScannedBeforeEventStartProblem
-        , BarcodesScannedTheWrongWayAroundProblem
         , PositionAndTime
         , PositionOffEndOfTimesProblem
         , PositionWithMultipleAthletesProblem
@@ -156,69 +155,6 @@ positionsWithAndWithoutAthleteView athleteAndPositionPairs =
             warningAlert
                 [ text "The following finish tokens have been scanned multiple times with an athlete and without an athlete:"
                 , ul [] (List.map (athleteAndPositionRow problemFixGenerator buttonLabel) athleteAndPositionPairs)
-                ]
-
-
-barcodesScannedTheWrongWayAroundView : List BarcodesScannedTheWrongWayAroundProblem -> Html Msg
-barcodesScannedTheWrongWayAroundView barcodesScannedTheWrongWayAround =
-    let
-        makeButton : BarcodesScannedTheWrongWayAroundProblem -> Html Msg
-        makeButton range =
-            smallButton (Msg.FixProblem (SwapBarcodes range.filename range.startLineNumber range.endLineNumber)) [] "Swap over"
-
-        pairsIntro : BarcodesScannedTheWrongWayAroundProblem -> String
-        pairsIntro range =
-            if range.endLineNumber == range.startLineNumber + 1 then
-                "One pair"
-
-            else
-                String.fromInt (range.endLineNumber - range.startLineNumber) ++ " pairs"
-
-        haveOrHas : BarcodesScannedTheWrongWayAroundProblem -> String
-        haveOrHas range =
-            if range.endLineNumber == range.startLineNumber + 1 then
-                "has"
-
-            else
-                "have"
-
-        generateRow : BarcodesScannedTheWrongWayAroundProblem -> Html Msg
-        generateRow range =
-            li
-                []
-                [ text
-                    (pairsIntro range
-                        ++ ", in file "
-                        ++ range.filename
-                        ++ ", lines "
-                        ++ String.fromInt range.startLineNumber
-                        ++ " to "
-                        ++ String.fromInt range.endLineNumber
-                        ++ ". "
-                    )
-                , makeButton range
-                ]
-    in
-    case barcodesScannedTheWrongWayAround of
-        [ singleRange ] ->
-            warningAlert
-                [ text (pairsIntro singleRange)
-                , text " of barcodes in file "
-                , text singleRange.filename
-                , text " "
-                , text (haveOrHas singleRange)
-                , text " been scanned the wrong way around between lines "
-                , text (String.fromInt singleRange.startLineNumber)
-                , text " and "
-                , text (String.fromInt singleRange.endLineNumber)
-                , text ". "
-                , makeButton singleRange
-                ]
-
-        _ ->
-            warningAlert
-                [ text "The following ranges of barcodes may have been scanned the wrong way around:"
-                , ul [] (List.map generateRow barcodesScannedTheWrongWayAround)
                 ]
 
 
@@ -469,7 +405,6 @@ scannerProblemsView problems =
             , hideIfEmpty athletesInSamePositionMultipleTimesView problems.athletesInSamePositionMultipleTimes
             , hideIfEmpty athletesWithAndWithoutPositionView problems.athletesWithAndWithoutPosition
             , hideIfEmpty positionsWithAndWithoutAthleteView problems.positionsWithAndWithoutAthlete
-            , hideIfEmpty barcodesScannedTheWrongWayAroundView problems.barcodesScannedTheWrongWayAround
             , hideIfEmpty athletesWithMultiplePositionsView problems.athletesWithMultiplePositions
             , hideIfEmpty positionsWithMultipleAthletesView problems.positionsWithMultipleAthletes
             , Maybe.map positionOffEndOfTimesView problems.positionOffEndOfTimes

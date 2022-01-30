@@ -67,7 +67,6 @@ type DeletionReason
     | DuplicateScan String Int
     | AthleteScannedWithFinishTokenElsewhere String
     | FinishTokenScannedWithAthleteElsewhere Int
-    | EndOfWrongWayAroundSection
     | DeletedByUser
 
 
