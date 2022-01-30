@@ -12,7 +12,6 @@ import Problems
         , AthleteWithMultiplePositionsProblem
         , BarcodesScannedBeforeEventStartProblem
         , BarcodesScannedTheWrongWayAroundProblem
-        , InconsistentBarcodeScannerDatesProblem
         , PositionAndTime
         , PositionOffEndOfTimesProblem
         , PositionWithMultipleAthletesProblem
@@ -277,19 +276,6 @@ timerTimeOffsetView offset =
             |> Just
 
 
-inconsistentBarcodeScannerDatesView : InconsistentBarcodeScannerDatesProblem -> Html Msg
-inconsistentBarcodeScannerDatesView inconsistentBarcodeScannerDatesProblem =
-    dangerAlert
-        [ text
-            ("Inconsistent dates were found among the barcode scanner files ("
-                ++ inconsistentBarcodeScannerDatesProblem.scannerDate1
-                ++ " and "
-                ++ inconsistentBarcodeScannerDatesProblem.scannerDate2
-                ++ ").  Please check that you have uploaded files from the same date."
-            )
-        ]
-
-
 positionAndTimeToString : PositionAndTime -> String
 positionAndTimeToString { position, time } =
     let
@@ -484,7 +470,6 @@ scannerProblemsView problems =
             , hideIfEmpty athletesWithAndWithoutPositionView problems.athletesWithAndWithoutPosition
             , hideIfEmpty positionsWithAndWithoutAthleteView problems.positionsWithAndWithoutAthlete
             , hideIfEmpty barcodesScannedTheWrongWayAroundView problems.barcodesScannedTheWrongWayAround
-            , Maybe.map inconsistentBarcodeScannerDatesView problems.inconsistentBarcodeScannerDates
             , hideIfEmpty athletesWithMultiplePositionsView problems.athletesWithMultiplePositions
             , hideIfEmpty positionsWithMultipleAthletesView problems.positionsWithMultipleAthletes
             , Maybe.map positionOffEndOfTimesView problems.positionOffEndOfTimes

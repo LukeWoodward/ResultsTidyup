@@ -23,7 +23,6 @@ import Problems
         , AthleteWithMultiplePositionsProblem
         , BarcodesScannedBeforeEventStartProblem
         , BarcodesScannedTheWrongWayAroundProblem
-        , InconsistentBarcodeScannerDatesProblem
         , PositionAndTime
         , PositionOffEndOfTimesProblem
         , PositionWithMultipleAthletesProblem
@@ -138,28 +137,6 @@ suite =
                         emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal noProblems
-            , test "identifyProblems returns a problem for two barcode scanner files with two different last-scan dates" <|
-                \() ->
-                    let
-                        barcodeScannerData : BarcodeScannerData
-                        barcodeScannerData =
-                            BarcodeScannerData
-                                [ BarcodeScannerFile "barcodes1.txt" [] (toPosix "2018-03-14T09:47:03.000Z")
-                                , BarcodeScannerFile "barcodes2.txt" [] (toPosix "2018-03-21T09:47:03.000Z")
-                                ]
-                                Dict.empty
-                                []
-                                []
-                                []
-                                []
-                                Nothing
-                    in
-                    identifyProblems
-                        None
-                        barcodeScannerData
-                        emptyEventDateAndTime
-                        noIgnoredProblems
-                        |> Expect.equal { noProblems | inconsistentBarcodeScannerDates = Just (InconsistentBarcodeScannerDatesProblem "14/03/2018" "21/03/2018") }
             , test "identifyProblems returns a problem for an athlete with two repeated positions" <|
                 \() ->
                     identifyProblems

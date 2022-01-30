@@ -4,7 +4,6 @@ module Problems exposing
     , BarcodesScannedBeforeEventStartProblem
     , BarcodesScannedTheWrongWayAroundProblem
     , IgnoredProblems
-    , InconsistentBarcodeScannerDatesProblem
     , PositionAndTime
     , PositionOffEndOfTimesProblem
     , PositionWithMultipleAthletesProblem
@@ -45,12 +44,6 @@ type alias BarcodesScannedTheWrongWayAroundProblem =
     }
 
 
-type alias InconsistentBarcodeScannerDatesProblem =
-    { scannerDate1 : String
-    , scannerDate2 : String
-    }
-
-
 type alias PositionAndTime =
     { position : Int
     , time : Maybe Int
@@ -82,7 +75,6 @@ type alias Problems =
     , positionsWithAndWithoutAthlete : List AthleteAndPositionPair
     , barcodesScannedTheWrongWayAround : List BarcodesScannedTheWrongWayAroundProblem
     , timerTimeOffset : Maybe Int
-    , inconsistentBarcodeScannerDates : Maybe InconsistentBarcodeScannerDatesProblem
     , athletesWithMultiplePositions : List AthleteWithMultiplePositionsProblem
     , positionsWithMultipleAthletes : List PositionWithMultipleAthletesProblem
     , positionOffEndOfTimes : Maybe PositionOffEndOfTimesProblem
@@ -104,7 +96,6 @@ noProblems =
     , positionsWithAndWithoutAthlete = []
     , barcodesScannedTheWrongWayAround = []
     , timerTimeOffset = Nothing
-    , inconsistentBarcodeScannerDates = Nothing
     , athletesWithMultiplePositions = []
     , positionsWithMultipleAthletes = []
     , positionOffEndOfTimes = Nothing
@@ -195,20 +186,6 @@ identifyIdenticalTimers timers =
 
         Double doubleTimerData ->
             List.all isExactMatch doubleTimerData.mergedTableRows
-
-
-identifyInconsistentBarcodeScannerDates : BarcodeScannerData -> Maybe InconsistentBarcodeScannerDatesProblem
-identifyInconsistentBarcodeScannerDates barcodeScannerData =
-    let
-        maxScanDates : List String
-        maxScanDates =
-            List.filterMap .maxScanDateTime barcodeScannerData.files
-                |> List.map Time.posixToMillis
-                |> deduplicate
-                |> List.map Time.millisToPosix
-                |> List.map posixToDateString
-    in
-    Maybe.map (\( first, second ) -> InconsistentBarcodeScannerDatesProblem first second) (hasDifferentValues maxScanDates)
 
 
 identifyAthletesWithMultiplePositions : Array Int -> Dict String (List Int) -> List AthleteWithMultiplePositionsProblem
@@ -625,7 +602,6 @@ identifyProblems timers barcodeScannerData eventDateAndTime ignoredProblems =
 
         else
             replaceZeroOffset (getTimerTimeOffset timers)
-    , inconsistentBarcodeScannerDates = identifyInconsistentBarcodeScannerDates barcodeScannerData
     , athletesWithMultiplePositions = identifyAthletesWithMultiplePositions times athleteToPositionsDict
     , positionsWithMultipleAthletes = identifyPositionsWithMultipleAthletes positionToAthletesDict
     , identicalTimerTimes = identifyIdenticalTimers timers
