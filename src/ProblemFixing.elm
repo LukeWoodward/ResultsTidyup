@@ -14,7 +14,7 @@ import BarcodeScanner
         )
 import DateHandling exposing (dateTimeStringToPosix, posixToDateTimeString)
 import Model exposing (Model)
-import Problems exposing (BarcodeScannerClockDifference, BarcodeScannerClockDifferenceType(..), IgnoredProblems)
+import Problems exposing (IgnoredProblems)
 import Time exposing (Posix)
 import Timer exposing (DoubleTimerData, Timers(..), WhichTimer(..), createMergedTable)
 
@@ -26,8 +26,6 @@ type ProblemFix
     | RemoveScansBeforeEventStart Int
     | AdjustTimer WhichTimer Int
     | SwapBarcodes String Int Int
-    | CorrectBarcodeScannerClock BarcodeScannerClockDifference
-    | CorrectAllBarcodeScannerClocks BarcodeScannerClockDifferenceType
 
 
 deleteWithinFiles : (BarcodeScannerFileLine -> BarcodeScannerFileLine) -> List BarcodeScannerFile -> List BarcodeScannerFile
@@ -250,37 +248,6 @@ applyCorrectionToLine offset line =
             line
 
 
-correctBarcodeScannerClock : BarcodeScannerClockDifferenceType -> BarcodeScannerFile -> BarcodeScannerFile
-correctBarcodeScannerClock differenceType file =
-    let
-        offset : Int
-        offset =
-            case differenceType of
-                OneHourSlow ->
-                    60 * 60 * 1000
-
-                OneHourFast ->
-                    -60 * 60 * 1000
-
-        newMaxScanDateTime : Maybe Posix
-        newMaxScanDateTime =
-            file.maxScanDateTime
-                |> Maybe.map Time.posixToMillis
-                |> Maybe.map ((+) offset)
-                |> Maybe.map Time.millisToPosix
-    in
-    { file | lines = List.map (applyCorrectionToLine offset) file.lines, maxScanDateTime = newMaxScanDateTime }
-
-
-correctBarcodeScannerClockIfFilenameMatches : BarcodeScannerClockDifference -> BarcodeScannerFile -> BarcodeScannerFile
-correctBarcodeScannerClockIfFilenameMatches { filename, differenceType } file =
-    if file.name == filename then
-        correctBarcodeScannerClock differenceType file
-
-    else
-        file
-
-
 fixProblem : ProblemFix -> Model -> Model
 fixProblem problemFix model =
     let
@@ -324,18 +291,6 @@ fixProblem problemFix model =
                 AdjustTimer whichTimer offset ->
                     -- This problem-fix applies no change to the barcode-scanner data.
                     oldBarcodeScannerData
-
-                CorrectBarcodeScannerClock differenceDetected ->
-                    regenerate
-                        { oldBarcodeScannerData
-                            | files = List.map (correctBarcodeScannerClockIfFilenameMatches differenceDetected) oldBarcodeScannerData.files
-                        }
-
-                CorrectAllBarcodeScannerClocks differenceType ->
-                    regenerate
-                        { oldBarcodeScannerData
-                            | files = List.map (correctBarcodeScannerClock differenceType) oldBarcodeScannerData.files
-                        }
 
         oldTimers : Timers
         oldTimers =

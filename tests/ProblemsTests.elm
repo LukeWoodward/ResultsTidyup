@@ -21,9 +21,6 @@ import Problems
     exposing
         ( AthleteAndPositionPair
         , AthleteWithMultiplePositionsProblem
-        , BarcodeScannerClockDifference
-        , BarcodeScannerClockDifferenceType(..)
-        , BarcodeScannerClockDifferences(..)
         , BarcodesScannedBeforeEventStartProblem
         , BarcodesScannedTheWrongWayAroundProblem
         , InconsistentBarcodeScannerDatesProblem
@@ -650,26 +647,6 @@ suite =
                         lateEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal noProblems
-            , test "identifyProblems returns two problems for a barcode-scanner file with all scan times within an hour before the event start" <|
-                \() ->
-                    identifyProblems
-                        None
-                        (createBarcodeScannerDataFromFiles
-                            [ BarcodeScannerFile "barcodes1.txt"
-                                [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 08:47:03"
-                                , ordinaryFileLine 2 "A123456" (Just 33) "14/03/2018 08:37:22"
-                                , ordinaryFileLine 3 "A252525" (Just 59) "14/03/2018 08:42:08"
-                                ]
-                                (toPosix "2018-03-14T08:47:03.000Z")
-                            ]
-                        )
-                        exampleEventDateAndTime
-                        noIgnoredProblems
-                        |> Expect.equal
-                            { noProblems
-                                | barcodesScannedBeforeEventStart = Just (BarcodesScannedBeforeEventStartProblem 3 baseEventStartTime "14/03/2018 09:00")
-                                , barcodeScannerClockDifferences = SomeClocksDifferent [ BarcodeScannerClockDifference "barcodes1.txt" OneHourSlow ]
-                            }
             , test "identifyProblems returns no problems for a barcode-scanner file with all scan times within an hour before the event start but all rows deleted" <|
                 \() ->
                     identifyProblems
@@ -705,104 +682,6 @@ suite =
                         |> Expect.equal
                             { noProblems
                                 | barcodesScannedBeforeEventStart = Just (BarcodesScannedBeforeEventStartProblem 2 baseEventStartTime "14/03/2018 09:00")
-                            }
-            , test "identifyProblems returns a problem for a barcode-scanner file with all scan times between one and two hours after the event start" <|
-                \() ->
-                    identifyProblems
-                        None
-                        (createBarcodeScannerDataFromFiles
-                            [ BarcodeScannerFile "barcodes1.txt"
-                                [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 10:47:03"
-                                , ordinaryFileLine 2 "A123456" (Just 33) "14/03/2018 10:37:22"
-                                , ordinaryFileLine 3 "A252525" (Just 59) "14/03/2018 10:42:08"
-                                ]
-                                (toPosix "2018-03-14T10:47:03.000Z")
-                            ]
-                        )
-                        exampleEventDateAndTime
-                        noIgnoredProblems
-                        |> Expect.equal
-                            { noProblems
-                                | barcodeScannerClockDifferences = SomeClocksDifferent [ BarcodeScannerClockDifference "barcodes1.txt" OneHourFast ]
-                            }
-            , test "identifyProblems returns a fixable problem for two barcode-scanner files, one of which has all scan times within an hour before the event start" <|
-                \() ->
-                    identifyProblems
-                        None
-                        (createBarcodeScannerDataFromFiles
-                            [ BarcodeScannerFile "barcodes1.txt"
-                                [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 08:47:03"
-                                , ordinaryFileLine 2 "A123456" (Just 33) "14/03/2018 08:37:22"
-                                , ordinaryFileLine 3 "A252525" (Just 59) "14/03/2018 08:42:08"
-                                ]
-                                (toPosix "2018-03-14T08:47:03.000Z")
-                            , BarcodeScannerFile "barcodes2.txt"
-                                [ ordinaryFileLine 1 "A987654" (Just 44) "14/03/2018 09:33:37"
-                                , ordinaryFileLine 2 "A555555" (Just 41) "14/03/2018 09:39:00"
-                                ]
-                                (toPosix "2018-03-14T09:39:00.000Z")
-                            ]
-                        )
-                        exampleEventDateAndTime
-                        noIgnoredProblems
-                        |> Expect.equal
-                            { noProblems
-                                | barcodesScannedBeforeEventStart = Just (BarcodesScannedBeforeEventStartProblem 3 baseEventStartTime "14/03/2018 09:00")
-                                , barcodeScannerClockDifferences = SomeClocksDifferent [ BarcodeScannerClockDifference "barcodes1.txt" OneHourSlow ]
-                            }
-            , test "identifyProblems returns a fixable problem for two barcode-scanner files, both of which have scan times within an hour before the event start" <|
-                \() ->
-                    identifyProblems
-                        None
-                        (createBarcodeScannerDataFromFiles
-                            [ BarcodeScannerFile "barcodes1.txt"
-                                [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 08:47:03"
-                                , ordinaryFileLine 2 "A123456" (Just 33) "14/03/2018 08:37:22"
-                                , ordinaryFileLine 3 "A252525" (Just 59) "14/03/2018 08:42:08"
-                                ]
-                                (toPosix "2018-03-14T08:47:03.000Z")
-                            , BarcodeScannerFile "barcodes2.txt"
-                                [ ordinaryFileLine 1 "A987654" (Just 44) "14/03/2018 08:33:37"
-                                , ordinaryFileLine 2 "A555555" (Just 41) "14/03/2018 08:39:00"
-                                ]
-                                (toPosix "2018-03-14T08:39:00.000Z")
-                            ]
-                        )
-                        exampleEventDateAndTime
-                        noIgnoredProblems
-                        |> Expect.equal
-                            { noProblems
-                                | barcodesScannedBeforeEventStart = Just (BarcodesScannedBeforeEventStartProblem 5 baseEventStartTime "14/03/2018 09:00")
-                                , barcodeScannerClockDifferences = AllClocksDifferent OneHourSlow
-                            }
-            , test "identifyProblems returns a fixable problem for two barcode-scanner files, one of which have scan times within an hour before the event start and the other with scan times between one and two hours after the evennt start" <|
-                \() ->
-                    identifyProblems
-                        None
-                        (createBarcodeScannerDataFromFiles
-                            [ BarcodeScannerFile "barcodes1.txt"
-                                [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 08:47:03"
-                                , ordinaryFileLine 2 "A123456" (Just 33) "14/03/2018 08:37:22"
-                                , ordinaryFileLine 3 "A252525" (Just 59) "14/03/2018 08:42:08"
-                                ]
-                                (toPosix "2018-03-14T08:47:03.000Z")
-                            , BarcodeScannerFile "barcodes2.txt"
-                                [ ordinaryFileLine 1 "A987654" (Just 44) "14/03/2018 10:33:37"
-                                , ordinaryFileLine 2 "A555555" (Just 41) "14/03/2018 10:39:00"
-                                ]
-                                (toPosix "2018-03-14T10:39:00.000Z")
-                            ]
-                        )
-                        exampleEventDateAndTime
-                        noIgnoredProblems
-                        |> Expect.equal
-                            { noProblems
-                                | barcodesScannedBeforeEventStart = Just (BarcodesScannedBeforeEventStartProblem 3 baseEventStartTime "14/03/2018 09:00")
-                                , barcodeScannerClockDifferences =
-                                    SomeClocksDifferent
-                                        [ { filename = "barcodes1.txt", differenceType = OneHourSlow }
-                                        , { filename = "barcodes2.txt", differenceType = OneHourFast }
-                                        ]
                             }
             , test "identifyProblems returns a problem for timers exactly in sync" <|
                 \() ->

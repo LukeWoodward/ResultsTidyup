@@ -1,9 +1,6 @@
 module Problems exposing
     ( AthleteAndPositionPair
     , AthleteWithMultiplePositionsProblem
-    , BarcodeScannerClockDifference
-    , BarcodeScannerClockDifferenceType(..)
-    , BarcodeScannerClockDifferences(..)
     , BarcodesScannedBeforeEventStartProblem
     , BarcodesScannedTheWrongWayAroundProblem
     , IgnoredProblems
@@ -26,23 +23,6 @@ import Set exposing (Set)
 import Time exposing (posixToMillis)
 import Timer exposing (MergeEntry(..), MergedTableRow, Timers(..))
 import TimerOffsetDetection exposing (getTimerTimeOffset)
-
-
-type BarcodeScannerClockDifferenceType
-    = OneHourSlow
-    | OneHourFast
-
-
-type alias BarcodeScannerClockDifference =
-    { filename : String
-    , differenceType : BarcodeScannerClockDifferenceType
-    }
-
-
-type BarcodeScannerClockDifferences
-    = NoClockDifferences
-    | SomeClocksDifferent (List BarcodeScannerClockDifference)
-    | AllClocksDifferent BarcodeScannerClockDifferenceType
 
 
 type alias BarcodesScannedBeforeEventStartProblem =
@@ -96,8 +76,7 @@ type alias PositionOffEndOfTimesProblem =
 
 
 type alias Problems =
-    { barcodeScannerClockDifferences : BarcodeScannerClockDifferences
-    , barcodesScannedBeforeEventStart : Maybe BarcodesScannedBeforeEventStartProblem
+    { barcodesScannedBeforeEventStart : Maybe BarcodesScannedBeforeEventStartProblem
     , athletesInSamePositionMultipleTimes : List AthleteAndPositionPair
     , athletesWithAndWithoutPosition : List AthleteAndPositionPair
     , positionsWithAndWithoutAthlete : List AthleteAndPositionPair
@@ -119,8 +98,7 @@ type alias Problems =
 
 noProblems : Problems
 noProblems =
-    { barcodeScannerClockDifferences = NoClockDifferences
-    , barcodesScannedBeforeEventStart = Nothing
+    { barcodesScannedBeforeEventStart = Nothing
     , athletesInSamePositionMultipleTimes = []
     , athletesWithAndWithoutPosition = []
     , positionsWithAndWithoutAthlete = []
@@ -427,43 +405,6 @@ identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsSt
         Just (BarcodesScannedBeforeEventStartProblem totalNumberOfScansBeforeEventStart eventStartDateTimeMillis eventStartTimeAsString)
 
 
-identifyBarcodeScannerClockBeingOut : Int -> BarcodeScannerFile -> Maybe BarcodeScannerClockDifference
-identifyBarcodeScannerClockBeingOut eventStartDateTimeMillis file =
-    let
-        totalScans : Int
-        totalScans =
-            List.length file.lines
-
-        countBeforeEventStart : Int
-        countBeforeEventStart =
-            countScansBefore eventStartDateTimeMillis file
-
-        countOneHourBeforeEventStart : Int
-        countOneHourBeforeEventStart =
-            countScansBefore (eventStartDateTimeMillis - 60 * 60 * 1000) file
-
-        countWithinOneHourAfterEventStart : Int
-        countWithinOneHourAfterEventStart =
-            countScansBefore (eventStartDateTimeMillis + 60 * 60 * 1000) file
-
-        countWithinTwoHoursAfterEventStart : Int
-        countWithinTwoHoursAfterEventStart =
-            countScansBefore (eventStartDateTimeMillis + 2 * 60 * 60 * 1000) file
-
-        mostOf : Int -> Bool
-        mostOf num =
-            totalScans > 1 && toFloat num > toFloat totalScans * 0.75
-    in
-    if mostOf countBeforeEventStart && not (mostOf countOneHourBeforeEventStart) then
-        Just { filename = file.name, differenceType = OneHourSlow }
-
-    else if not (mostOf countWithinOneHourAfterEventStart) && mostOf countWithinTwoHoursAfterEventStart then
-        Just { filename = file.name, differenceType = OneHourFast }
-
-    else
-        Nothing
-
-
 type RepeatedElementResult a
     = NoElements
     | NoRepeatedElement
@@ -494,41 +435,6 @@ repeatedElement list =
 
             else
                 NoRepeatedElement
-
-
-identifyBarcodeScannerClocksBeingOut : BarcodeScannerData -> Maybe Int -> BarcodeScannerClockDifferences
-identifyBarcodeScannerClocksBeingOut barcodeScannerData eventStartDateTimeMillisMaybe =
-    case eventStartDateTimeMillisMaybe of
-        Just eventStartDateTimeMillis ->
-            let
-                allClockDifferences : List BarcodeScannerClockDifference
-                allClockDifferences =
-                    List.filterMap (identifyBarcodeScannerClockBeingOut eventStartDateTimeMillis) barcodeScannerData.files
-
-                allDifferenceTypes : List BarcodeScannerClockDifferenceType
-                allDifferenceTypes =
-                    List.map .differenceType allClockDifferences
-
-                commonDifferenceType : RepeatedElementResult BarcodeScannerClockDifferenceType
-                commonDifferenceType =
-                    repeatedElement allDifferenceTypes
-            in
-            case commonDifferenceType of
-                NoElements ->
-                    NoClockDifferences
-
-                RepeatedElement differenceType ->
-                    if List.length allClockDifferences == List.length barcodeScannerData.files && List.length barcodeScannerData.files > 1 then
-                        AllClocksDifferent differenceType
-
-                    else
-                        SomeClocksDifferent allClockDifferences
-
-                NoRepeatedElement ->
-                    SomeClocksDifferent allClockDifferences
-
-        Nothing ->
-            NoClockDifferences
 
 
 {-| We've found the start of a possible wrong-way-around section. See if we can
@@ -708,8 +614,7 @@ identifyProblems timers barcodeScannerData eventDateAndTime ignoredProblems =
         times =
             getTimes timers
     in
-    { barcodeScannerClockDifferences = identifyBarcodeScannerClocksBeingOut barcodeScannerData eventStartDateTimeMillis
-    , barcodesScannedBeforeEventStart = Maybe.andThen (identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString) eventStartDateTimeMillis
+    { barcodesScannedBeforeEventStart = Maybe.andThen (identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString) eventStartDateTimeMillis
     , athletesInSamePositionMultipleTimes = identifyDuplicateScans positionToAthletesDict
     , athletesWithAndWithoutPosition = identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly
     , positionsWithAndWithoutAthlete = identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly

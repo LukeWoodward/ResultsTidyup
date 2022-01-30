@@ -10,9 +10,6 @@ import Problems
     exposing
         ( AthleteAndPositionPair
         , AthleteWithMultiplePositionsProblem
-        , BarcodeScannerClockDifference
-        , BarcodeScannerClockDifferenceType(..)
-        , BarcodeScannerClockDifferences(..)
         , BarcodesScannedBeforeEventStartProblem
         , BarcodesScannedTheWrongWayAroundProblem
         , InconsistentBarcodeScannerDatesProblem
@@ -34,58 +31,6 @@ warningAlert contents =
 dangerAlert : List (Html Msg) -> Html Msg
 dangerAlert contents =
     Alert.simpleDanger [ class "warning-condensed" ] contents
-
-
-clockDifferenceTypeToString : BarcodeScannerClockDifferenceType -> String
-clockDifferenceTypeToString differenceType =
-    case differenceType of
-        OneHourSlow ->
-            "one hour slow"
-
-        OneHourFast ->
-            "one hour fast"
-
-
-singleClockDifferenceView : BarcodeScannerClockDifference -> Html Msg
-singleClockDifferenceView difference =
-    div []
-        [ text
-            ("The clock in the scanner that "
-                ++ difference.filename
-                ++ " was downloaded from appears to be "
-                ++ clockDifferenceTypeToString difference.differenceType
-                ++ ". "
-            )
-        , smallButton (Msg.FixProblem (CorrectBarcodeScannerClock difference)) [] (clockCorrectionButtonText difference.differenceType)
-        ]
-
-
-clockCorrectionButtonText : BarcodeScannerClockDifferenceType -> String
-clockCorrectionButtonText differenceType =
-    case differenceType of
-        OneHourFast ->
-            "Take one hour off"
-
-        OneHourSlow ->
-            "Add one hour on"
-
-
-barcodeScannerClockDifferencesView : BarcodeScannerClockDifferences -> Maybe (Html Msg)
-barcodeScannerClockDifferencesView clockDifferences =
-    case clockDifferences of
-        NoClockDifferences ->
-            Nothing
-
-        SomeClocksDifferent differences ->
-            warningAlert (List.map singleClockDifferenceView differences)
-                |> Just
-
-        AllClocksDifferent differenceType ->
-            warningAlert
-                [ text ("All barcode scanner clocks appear to be " ++ clockDifferenceTypeToString differenceType ++ ". ")
-                , smallButton (Msg.FixProblem (CorrectAllBarcodeScannerClocks differenceType)) [] (clockCorrectionButtonText differenceType)
-                ]
-                |> Just
 
 
 barcodesScannedBeforeEventStartProblemView : BarcodesScannedBeforeEventStartProblem -> Html Msg
@@ -534,8 +479,7 @@ scannerProblemsView problems =
     let
         problemViewSections : List (Maybe (Html Msg))
         problemViewSections =
-            [ barcodeScannerClockDifferencesView problems.barcodeScannerClockDifferences
-            , Maybe.map barcodesScannedBeforeEventStartProblemView problems.barcodesScannedBeforeEventStart
+            [ Maybe.map barcodesScannedBeforeEventStartProblemView problems.barcodesScannedBeforeEventStart
             , hideIfEmpty athletesInSamePositionMultipleTimesView problems.athletesInSamePositionMultipleTimes
             , hideIfEmpty athletesWithAndWithoutPositionView problems.athletesWithAndWithoutPosition
             , hideIfEmpty positionsWithAndWithoutAthleteView problems.positionsWithAndWithoutAthlete
