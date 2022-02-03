@@ -221,7 +221,7 @@ view model =
 
         timersItem : Html Msg
         timersItem =
-            if model.timers == None then
+            if model.timers == None && BarcodeScanner.isEmpty model.barcodeScannerData then
                 div [] []
 
             else

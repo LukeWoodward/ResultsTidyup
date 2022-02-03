@@ -461,10 +461,18 @@ timersView timers barcodeScannerData problems highlightedNumberCheckerId =
                     [ timerOperationsButton
                     , normalButton (RequestCurrentDateAndTime Commands.DownloadMergedTimers) [] "Download merged times"
                     ]
+
+        headerText : String
+        headerText =
+            if timers == None then
+                "Positions"
+
+            else
+                "Timers"
     in
     div
         []
-        [ h3 [] (text "Timers" :: [ div [ class "timer-buttons" ] buttons ])
+        [ h3 [] (text headerText :: [ div [ class "timer-buttons" ] buttons ])
         , timerProblemsView problems
         , timerTable timers barcodeScannerData highlightedNumberCheckerId
         , div
