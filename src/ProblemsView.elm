@@ -252,7 +252,7 @@ positionOffEndOfTimesView positionOffEndOfTimes =
                 ++ String.fromInt positionOffEndOfTimes.maxPosition
                 ++ " but there are only "
                 ++ String.fromInt positionOffEndOfTimes.timerTimeCount
-                ++ " times recorded on the timer(es)"
+                ++ " times recorded on the timer(s)"
             )
         ]
 
