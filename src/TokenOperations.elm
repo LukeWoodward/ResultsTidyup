@@ -24,7 +24,6 @@ import BarcodeScanner
         , DeletionReason(..)
         , DeletionStatus(..)
         , LineContents(..)
-        , PositionAndTimePair
         , allTokensUsed
         , regenerate
         )

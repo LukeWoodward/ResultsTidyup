@@ -206,27 +206,23 @@ singleTimer =
             Single "timer1.txt" times
 
 
-createBarcodeScannerDataForRemovingUnassociatedFinishTokens : List Int -> Model
-createBarcodeScannerDataForRemovingUnassociatedFinishTokens finishTokens =
+createBarcodeScannerDataForRemovingUnassociatedAthletes : List String -> Model
+createBarcodeScannerDataForRemovingUnassociatedAthletes athletes =
     let
-        fakeAthlete : Int -> String
-        fakeAthlete index =
-            "A" ++ String.fromInt (index + 1)
-
         fileLines : List BarcodeScannerFileLine
         fileLines =
-            finishTokens
+            athletes
                 |> List.indexedMap
-                    (\index token ->
-                        [ ordinaryFileLine (index * 2 + 1) (fakeAthlete index) (Just token) "14/03/2018 09:47:03"
-                        , ordinaryFileLine (index * 2 + 2) "" (Just token) "14/03/2018 09:47:03"
+                    (\index athlete ->
+                        [ ordinaryFileLine (index * 2 + 1) athlete (Just (index + 1)) "14/03/2018 09:47:03"
+                        , ordinaryFileLine (index * 2 + 2) athlete Nothing "14/03/2018 09:47:03"
                         ]
                     )
                 |> List.concat
     in
     { initModel
         | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines Nothing ] }
-        , problems = { noProblems | positionsWithAndWithoutAthlete = List.indexedMap (\index position -> AthleteAndPositionPair (fakeAthlete index) position) finishTokens }
+        , problems = { noProblems | athletesWithAndWithoutPosition = List.indexedMap (\index athlete -> AthleteAndPositionPair athlete (index + 1)) athletes }
     }
 
 
@@ -240,12 +236,12 @@ deleteLinesWithinFile deleter files =
     List.map deleteInFile files
 
 
-ifFinishPosition : Int -> BarcodeScannerFileLine -> BarcodeScannerFileLine
-ifFinishPosition position line =
+ifAthleteBarcode : String -> BarcodeScannerFileLine -> BarcodeScannerFileLine
+ifAthleteBarcode athlete line =
     case line.contents of
-        Ordinary "" somePosition ->
-            if somePosition == Just position then
-                { line | deletionStatus = Deleted (FinishTokenScannedWithAthleteElsewhere position) }
+        Ordinary someAthlete Nothing ->
+            if someAthlete == athlete then
+                { line | deletionStatus = Deleted (AthleteScannedWithFinishTokenElsewhere athlete) }
 
             else
                 line
@@ -310,7 +306,7 @@ suite =
                             |> Expect.all
                                 (expectBarcodeScannerData parsedBarcodeScannerDataWithIncompleteRecordFirst
                                     :: expectEventDateAndTime parsedEventDateOnly
-                                    :: expectProblems { noProblems | positionsMissingAthlete = [ 33 ] }
+                                    :: expectProblems { noProblems | athletesMissingPosition = [ "A2044293" ] }
                                     :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, EventDateAndTimeAssertion, Problems ]
                                 )
                 ]
@@ -384,7 +380,7 @@ suite =
             , test "Clearing all data when some to clear clears it" <|
                 \() ->
                     { initModel
-                        | barcodeScannerData = createBarcodeScannerData (Dict.singleton 47 [ "A4580484" ]) [ "A123456" ] [ 11 ]
+                        | barcodeScannerData = createBarcodeScannerData (Dict.singleton 47 [ "A4580484" ]) [ "A123456" ]
                         , eventDateAndTime = { parsedEventDateOnly | time = IntegerEntry "09:00" (Just (9 * 60)) }
                         , timers = doubleTimers
                         , lastErrors = [ FileError "TEST_ERROR" "Some test error message" "somefile.txt" ]
@@ -393,7 +389,7 @@ suite =
                         , numberCheckerManualEntryRow = NumberCheckerManualEntryRow (IntegerEntry "2" (Just 2)) (IntegerEntry "2" (Just 2)) (IntegerEntry "2" (Just 2))
                         , problems =
                             { noProblems
-                                | positionsWithAndWithoutAthlete = [ AthleteAndPositionPair "A123" 5 ]
+                                | athletesWithAndWithoutPosition = [ AthleteAndPositionPair "A123" 5 ]
                                 , misScans = [ "something" ]
                             }
                         , ignoredProblems =
@@ -682,12 +678,12 @@ suite =
                             )
             ]
         , describe "Fixing problems tests"
-            [ test "Can remove unassociated finish token" <|
+            [ test "Can remove unassociated athlete" <|
                 \() ->
                     let
                         initialModel : Model
                         initialModel =
-                            createBarcodeScannerDataForRemovingUnassociatedFinishTokens [ 14, 18, 39, 44 ]
+                            createBarcodeScannerDataForRemovingUnassociatedAthletes [ "A447", "A1193762", "A4492701", "A2366890" ]
 
                         initialBarcodeScannerData : BarcodeScannerData
                         initialBarcodeScannerData =
@@ -696,17 +692,17 @@ suite =
                         expectedBarcodeScannerData : BarcodeScannerData
                         expectedBarcodeScannerData =
                             { initialBarcodeScannerData
-                                | finishTokensOnly = List.filter (\x -> x.position /= 39) initialBarcodeScannerData.finishTokensOnly
-                                , files = deleteLinesWithinFile (ifFinishPosition 39) initialModel.barcodeScannerData.files
+                                | athleteBarcodesOnly = List.filter (\x -> x.athlete /= "A1193762") initialBarcodeScannerData.athleteBarcodesOnly
+                                , files = deleteLinesWithinFile (ifAthleteBarcode "A1193762") initialModel.barcodeScannerData.files
                             }
                     in
                     initialModel
-                        |> update (FixProblem (RemoveUnassociatedFinishToken 39))
+                        |> update (FixProblem (RemoveUnassociatedAthlete "A1193762"))
                         |> Expect.all
                             (expectBarcodeScannerData expectedBarcodeScannerData
                                 :: expectProblems
                                     { noProblems
-                                        | positionsWithAndWithoutAthlete = [ AthleteAndPositionPair "A1" 14, AthleteAndPositionPair "A2" 18, AthleteAndPositionPair "A4" 44 ]
+                                        | athletesWithAndWithoutPosition = [ AthleteAndPositionPair "A447" 1, AthleteAndPositionPair "A4492701" 3, AthleteAndPositionPair "A2366890" 4 ]
                                     }
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems ]
                             )

@@ -10,7 +10,6 @@ import BarcodeScanner
         , DeletionStatus(..)
         , LineContents(..)
         , MisScannedItem
-        , PositionAndTimePair
         , UnrecognisedLine
         , allTokensUsed
         , deleteBarcodeScannerLine
@@ -39,8 +38,8 @@ dummyTime =
     "14/03/2018 09:47:03"
 
 
-createBarcodeScannerData : Dict Int (List String) -> List String -> List Int -> BarcodeScannerData
-createBarcodeScannerData athleteToPositionsDict athleteBarcodesOnly finishTokensOnly =
+createBarcodeScannerData : Dict Int (List String) -> List String -> BarcodeScannerData
+createBarcodeScannerData athleteToPositionsDict athleteBarcodesOnly =
     let
         wrapAthlete : String -> AthleteAndTimePair
         wrapAthlete athlete =
@@ -54,7 +53,6 @@ createBarcodeScannerData athleteToPositionsDict athleteBarcodesOnly finishTokens
         []
         athletesToPosition
         (List.map wrapAthlete athleteBarcodesOnly)
-        (List.map (\position -> PositionAndTimePair position dummyTime) finishTokensOnly)
         []
         []
         Nothing
@@ -113,16 +111,12 @@ suite =
                         |> Expect.true "Empty data is empty"
             , test "Data with non-empty barcodes scanned should not be empty" <|
                 \() ->
-                    isEmpty (createBarcodeScannerData (Dict.singleton 47 [ "A4580442" ]) [] [])
+                    isEmpty (createBarcodeScannerData (Dict.singleton 47 [ "A4580442" ]) [])
                         |> Expect.false "Data with non-empty barcodes scanned should not be empty"
             , test "Data with non-empty athletes-only should not be empty" <|
                 \() ->
-                    isEmpty (createBarcodeScannerData Dict.empty [ "A123456" ] [])
+                    isEmpty (createBarcodeScannerData Dict.empty [ "A123456" ])
                         |> Expect.false "Data with non-empty athletes-only should not be empty"
-            , test "Data with non-empty finish-tokens-only should not be empty" <|
-                \() ->
-                    isEmpty (createBarcodeScannerData Dict.empty [] [ 47 ])
-                        |> Expect.false "Data with non-empty finish-tokens  should not be empty"
             ]
         , describe "readBarcodeScannerData tests"
             [ test "readBarcodeScannerData of a valid single-line string with athlete and finish token is valid" <|
@@ -148,7 +142,6 @@ suite =
                                     [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]
                                     []
                                     []
-                                    []
                                     (toPosix "2018-03-14T09:47:03.000Z")
                                 )
                             )
@@ -167,11 +160,10 @@ suite =
                                     [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]
                                     []
                                     []
-                                    []
                                     (toPosix "2018-03-14T09:47:03.000Z")
                                 )
                             )
-            , test "readBarcodeScannerData of a valid single-line string with finish token only is valid" <|
+            , test "readBarcodeScannerData of a valid single-line string with finish token only is valid but empty" <|
                 \() ->
                     readBarcodeScannerData "barcodes3.txt" ",P0047,14/03/2018 09:47:03"
                         |> Expect.equal
@@ -180,17 +172,16 @@ suite =
                                     [ BarcodeScannerFile
                                         "barcodes3.txt"
                                         [ ordinaryFileLine 1 "" (Just 47) "14/03/2018 09:47:03" ]
-                                        (toPosix "2018-03-14T09:47:03.000Z")
+                                        Nothing
                                     ]
                                     Dict.empty
                                     []
-                                    [ PositionAndTimePair 47 "14/03/2018 09:47:03" ]
                                     []
                                     []
-                                    (toPosix "2018-03-14T09:47:03.000Z")
+                                    Nothing
                                 )
                             )
-            , test "readBarcodeScannerData of a valid single-line string with null athlete and finish token only is valid" <|
+            , test "readBarcodeScannerData of a valid single-line string with null athlete and finish token only is valid but empty" <|
                 \() ->
                     readBarcodeScannerData "barcodes3.txt" "null,P0047,14/03/2018 09:47:03"
                         |> Expect.equal
@@ -199,14 +190,13 @@ suite =
                                     [ BarcodeScannerFile
                                         "barcodes3.txt"
                                         [ ordinaryFileLine 1 "" (Just 47) "14/03/2018 09:47:03" ]
-                                        (toPosix "2018-03-14T09:47:03.000Z")
+                                        Nothing
                                     ]
                                     Dict.empty
                                     []
-                                    [ PositionAndTimePair 47 "14/03/2018 09:47:03" ]
                                     []
                                     []
-                                    (toPosix "2018-03-14T09:47:03.000Z")
+                                    Nothing
                                 )
                             )
             , test "readBarcodeScannerData of a valid single-line string with mis-scanned item only is valid" <|
@@ -221,7 +211,6 @@ suite =
                                         (toPosix "2018-03-14T09:47:03.000Z")
                                     ]
                                     Dict.empty
-                                    []
                                     []
                                     [ MisScannedItem "&d084" "14/03/2018 09:47:03" ]
                                     []
@@ -250,7 +239,6 @@ suite =
                                         , AthleteAndTimePair "A1866207" "14/03/2018 09:48:44"
                                         ]
                                     )
-                                    []
                                     []
                                     []
                                     []
@@ -294,11 +282,11 @@ suite =
                         |> Expect.equal Nothing
             , test "maxFinishToken of a single scanned barcode returns the finish position" <|
                 \() ->
-                    maxFinishToken (createBarcodeScannerData (Dict.singleton 47 [ "A4580442" ]) [] [])
+                    maxFinishToken (createBarcodeScannerData (Dict.singleton 47 [ "A4580442" ]) [])
                         |> Expect.equal (Just 47)
             , test "maxFinishToken of three scanned barcodes returns the maximum finish position" <|
                 \() ->
-                    maxFinishToken (createBarcodeScannerData (Dict.fromList [ ( 47, [ "A4580442" ] ), ( 59, [ "A456321" ] ), ( 33, [ "A464631" ] ) ]) [] [])
+                    maxFinishToken (createBarcodeScannerData (Dict.fromList [ ( 47, [ "A4580442" ] ), ( 59, [ "A456321" ] ), ( 33, [ "A464631" ] ) ]) [])
                         |> Expect.equal (Just 59)
             ]
         , describe "generateDownloadText tests"
@@ -614,37 +602,5 @@ suite =
                     in
                     allTokensUsed barcodeScannerData
                         |> Expect.equal (Set.fromList [ 39, 47 ])
-            , test "allTokensUsed of some valid barcode scanner data is the set of all finish token scans from finish-token-only records" <|
-                \() ->
-                    let
-                        barcodeScannerData : BarcodeScannerData
-                        barcodeScannerData =
-                            createBarcodeScannerDataFromFiles
-                                [ BarcodeScannerFile
-                                    "barcodes.txt"
-                                    [ ordinaryFileLine 1 "" (Just 36) "14/03/2018 09:47:03"
-                                    , ordinaryFileLine 2 "" (Just 43) "14/03/2018 09:48:44"
-                                    ]
-                                    (toPosix "2018-03-14T09:48:44.000Z")
-                                ]
-                    in
-                    allTokensUsed barcodeScannerData
-                        |> Expect.equal (Set.fromList [ 36, 43 ])
-            , test "allTokensUsed of some valid barcode scanner data is the combination of all finish token scans from scanned barcodes and finish-token-only records" <|
-                \() ->
-                    let
-                        barcodeScannerData : BarcodeScannerData
-                        barcodeScannerData =
-                            createBarcodeScannerDataFromFiles
-                                [ BarcodeScannerFile
-                                    "barcodes.txt"
-                                    [ ordinaryFileLine 1 "A4580442" (Just 29) "14/03/2018 09:47:03"
-                                    , ordinaryFileLine 2 "" (Just 33) "14/03/2018 09:48:44"
-                                    ]
-                                    (toPosix "2018-03-14T09:48:44.000Z")
-                                ]
-                    in
-                    allTokensUsed barcodeScannerData
-                        |> Expect.equal (Set.fromList [ 29, 33 ])
             ]
         ]

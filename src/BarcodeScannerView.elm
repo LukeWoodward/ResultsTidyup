@@ -44,9 +44,6 @@ deletionReasonToString reason =
         AthleteScannedWithFinishTokenElsewhere athlete ->
             "Athlete " ++ athlete ++ " has been scanned with a finish token elsewhere"
 
-        FinishTokenScannedWithAthleteElsewhere position ->
-            "Position " ++ String.fromInt position ++ " has been scanned with an athlete barcode elsewhere"
-
         DeletedByUser ->
             "You deleted this line"
 

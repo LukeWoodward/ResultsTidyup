@@ -127,37 +127,6 @@ athletesWithAndWithoutPositionView athleteAndPositionPairs =
                 ]
 
 
-positionsWithAndWithoutAthleteView : List AthleteAndPositionPair -> Html Msg
-positionsWithAndWithoutAthleteView athleteAndPositionPairs =
-    let
-        buttonLabel : String
-        buttonLabel =
-            "Remove unassociated finish token scan"
-
-        problemFixGenerator : AthleteAndPositionPair -> ProblemFix
-        problemFixGenerator pair =
-            RemoveUnassociatedFinishToken pair.position
-    in
-    case athleteAndPositionPairs of
-        [ pair ] ->
-            warningAlert
-                [ text
-                    ("Finish token "
-                        ++ String.fromInt pair.position
-                        ++ " has been scanned with athlete "
-                        ++ pair.athlete
-                        ++ " and also without an athlete. "
-                    )
-                , generateButton (problemFixGenerator pair) buttonLabel
-                ]
-
-        _ ->
-            warningAlert
-                [ text "The following finish tokens have been scanned multiple times with an athlete and without an athlete:"
-                , ul [] (List.map (athleteAndPositionRow problemFixGenerator buttonLabel) athleteAndPositionPairs)
-                ]
-
-
 timerTimeOffsetView : Int -> Maybe (Html Msg)
 timerTimeOffsetView offset =
     if offset == 0 then
@@ -315,21 +284,6 @@ hideIfEmpty viewer list =
         Just (viewer list)
 
 
-positionsMissingAthleteView : List Int -> Html Msg
-positionsMissingAthleteView positions =
-    case positions of
-        [ singlePosition ] ->
-            dangerAlert
-                [ text ("Finish token " ++ String.fromInt singlePosition ++ " was scanned without an athlete barcode.") ]
-
-        _ ->
-            dangerAlert
-                [ text "The following finish tokens have been scanned without athlete barcodes: "
-                , span [] (List.map (text << String.fromInt) positions |> List.intersperse (text ", "))
-                , text "."
-                ]
-
-
 misScannedItemsView : List String -> Html Msg
 misScannedItemsView misScans =
     let
@@ -388,12 +342,10 @@ scannerProblemsView problems =
             [ Maybe.map barcodesScannedBeforeEventStartProblemView problems.barcodesScannedBeforeEventStart
             , hideIfEmpty athletesInSamePositionMultipleTimesView problems.athletesInSamePositionMultipleTimes
             , hideIfEmpty athletesWithAndWithoutPositionView problems.athletesWithAndWithoutPosition
-            , hideIfEmpty positionsWithAndWithoutAthleteView problems.positionsWithAndWithoutAthlete
             , hideIfEmpty athletesWithMultiplePositionsView problems.athletesWithMultiplePositions
             , hideIfEmpty positionsWithMultipleAthletesView problems.positionsWithMultipleAthletes
             , Maybe.map positionOffEndOfTimesView problems.positionOffEndOfTimes
             , hideIfEmpty athletesMissingPositionView problems.athletesMissingPosition
-            , hideIfEmpty positionsMissingAthleteView problems.positionsMissingAthlete
             , hideIfEmpty misScannedItemsView problems.misScans
             , hideIfEmpty unrecognisedBarcodeScannerLinesView problems.unrecognisedBarcodeScannerLines
             ]

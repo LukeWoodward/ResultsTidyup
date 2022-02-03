@@ -64,13 +64,11 @@ type alias Problems =
     { barcodesScannedBeforeEventStart : Maybe BarcodesScannedBeforeEventStartProblem
     , athletesInSamePositionMultipleTimes : List AthleteAndPositionPair
     , athletesWithAndWithoutPosition : List AthleteAndPositionPair
-    , positionsWithAndWithoutAthlete : List AthleteAndPositionPair
     , timerTimeOffset : Maybe Int
     , athletesWithMultiplePositions : List AthleteWithMultiplePositionsProblem
     , positionsWithMultipleAthletes : List PositionWithMultipleAthletesProblem
     , positionOffEndOfTimes : Maybe PositionOffEndOfTimesProblem
     , athletesMissingPosition : List String
-    , positionsMissingAthlete : List Int
     , misScans : List String
     , unrecognisedBarcodeScannerLines : List String
     , timersInconsistentWithNumberChecker : Bool
@@ -83,13 +81,11 @@ noProblems =
     { barcodesScannedBeforeEventStart = Nothing
     , athletesInSamePositionMultipleTimes = []
     , athletesWithAndWithoutPosition = []
-    , positionsWithAndWithoutAthlete = []
     , timerTimeOffset = Nothing
     , athletesWithMultiplePositions = []
     , positionsWithMultipleAthletes = []
     , positionOffEndOfTimes = Nothing
     , athletesMissingPosition = []
-    , positionsMissingAthlete = []
     , misScans = []
     , unrecognisedBarcodeScannerLines = []
     , timersInconsistentWithNumberChecker = False
@@ -289,12 +285,6 @@ identifyAthletesWithNoPositions unpairedAthletes athleteToPositionsDict =
         |> List.filter (\athlete -> not (Dict.member athlete athleteToPositionsDict))
 
 
-identifyPositionsWithNoAthletes : List Int -> Dict Int (List String) -> List Int
-identifyPositionsWithNoAthletes unpairedPositions positionToAthletesDict =
-    deduplicate unpairedPositions
-        |> List.filter (\position -> not (Dict.member position positionToAthletesDict))
-
-
 identifyMisScannedItems : List MisScannedItem -> List String
 identifyMisScannedItems misScannedItems =
     List.map .scannedText misScannedItems
@@ -328,18 +318,6 @@ identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnl
                 |> Maybe.map (AthleteAndPositionPair athlete)
     in
     List.filterMap getProblemIfSinglePosition athleteBarcodesOnly
-
-
-identifyPositionsWithAndWithoutAthlete : Dict Int (List String) -> List Int -> List AthleteAndPositionPair
-identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly =
-    let
-        getProblemIfSingleAthlete : Int -> Maybe AthleteAndPositionPair
-        getProblemIfSingleAthlete position =
-            Dict.get position positionToAthletesDict
-                |> Maybe.andThen getSingleValue
-                |> Maybe.map (\athlete -> AthleteAndPositionPair athlete position)
-    in
-    List.filterMap getProblemIfSingleAthlete finishTokensOnly
 
 
 identifyRecordsScannedBeforeEventStartTime : BarcodeScannerData -> String -> Int -> Maybe BarcodesScannedBeforeEventStartProblem
@@ -451,10 +429,6 @@ identifyProblems timers barcodeScannerData eventDateAndTime ignoredProblems =
         athleteBarcodesOnly =
             List.map .athlete barcodeScannerData.athleteBarcodesOnly
 
-        finishTokensOnly : List Int
-        finishTokensOnly =
-            List.map .position barcodeScannerData.finishTokensOnly
-
         eventStartDateTimeMillis : Maybe Int
         eventStartDateTimeMillis =
             Maybe.map2
@@ -473,7 +447,6 @@ identifyProblems timers barcodeScannerData eventDateAndTime ignoredProblems =
     { barcodesScannedBeforeEventStart = Maybe.andThen (identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString) eventStartDateTimeMillis
     , athletesInSamePositionMultipleTimes = identifyDuplicateScans positionToAthletesDict
     , athletesWithAndWithoutPosition = identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly
-    , positionsWithAndWithoutAthlete = identifyPositionsWithAndWithoutAthlete positionToAthletesDict finishTokensOnly
     , timerTimeOffset =
         if ignoredProblems.ignoreTimerTimeOffsets then
             Nothing
@@ -484,7 +457,6 @@ identifyProblems timers barcodeScannerData eventDateAndTime ignoredProblems =
     , positionsWithMultipleAthletes = identifyPositionsWithMultipleAthletes positionToAthletesDict
     , positionOffEndOfTimes = identifyPositionsOffEndOfTimes timers positionToAthletesDict
     , athletesMissingPosition = identifyAthletesWithNoPositions athleteBarcodesOnly athleteToPositionsDict
-    , positionsMissingAthlete = identifyPositionsWithNoAthletes finishTokensOnly positionToAthletesDict
     , misScans = identifyMisScannedItems barcodeScannerData.misScannedItems
     , unrecognisedBarcodeScannerLines = identifyUnrecognisedBarcodeScannerLines barcodeScannerData.unrecognisedLines
     , timersInconsistentWithNumberChecker = False

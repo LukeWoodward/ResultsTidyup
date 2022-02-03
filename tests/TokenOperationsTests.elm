@@ -8,7 +8,6 @@ import BarcodeScanner
         , BarcodeScannerFileLine
         , DeletionStatus(..)
         , LineContents(..)
-        , PositionAndTimePair
         , empty
         , regenerate
         )

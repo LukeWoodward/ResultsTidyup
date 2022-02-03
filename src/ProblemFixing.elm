@@ -9,7 +9,6 @@ import BarcodeScanner
         , DeletionReason(..)
         , DeletionStatus(..)
         , LineContents(..)
-        , PositionAndTimePair
         , regenerate
         )
 import DateHandling exposing (dateTimeStringToPosix, posixToDateTimeString)
@@ -20,8 +19,7 @@ import Timer exposing (DoubleTimerData, Timers(..), WhichTimer(..), createMerged
 
 
 type ProblemFix
-    = RemoveUnassociatedFinishToken Int
-    | RemoveUnassociatedAthlete String
+    = RemoveUnassociatedAthlete String
     | RemoveDuplicateScans Int String
     | RemoveScansBeforeEventStart Int
     | AdjustTimer WhichTimer Int
@@ -43,23 +41,6 @@ deleteUnassociatedAthlete athlete line =
         Ordinary someAthlete Nothing ->
             if athlete == someAthlete then
                 { line | deletionStatus = Deleted (AthleteScannedWithFinishTokenElsewhere athlete) }
-
-            else
-                line
-
-        Ordinary _ _ ->
-            line
-
-        BarcodeScanner.MisScan _ ->
-            line
-
-
-deleteUnassociatedFinishPosition : Int -> BarcodeScannerFileLine -> BarcodeScannerFileLine
-deleteUnassociatedFinishPosition position line =
-    case line.contents of
-        Ordinary "" somePosition ->
-            if somePosition == Just position then
-                { line | deletionStatus = Deleted (FinishTokenScannedWithAthleteElsewhere position) }
 
             else
                 line
@@ -192,12 +173,6 @@ fixProblem problemFix model =
         newBarcodeScannerData : BarcodeScannerData
         newBarcodeScannerData =
             case problemFix of
-                RemoveUnassociatedFinishToken position ->
-                    regenerate
-                        { oldBarcodeScannerData
-                            | files = deleteWithinFiles (deleteUnassociatedFinishPosition position) oldBarcodeScannerData.files
-                        }
-
                 RemoveUnassociatedAthlete athlete ->
                     regenerate
                         { oldBarcodeScannerData

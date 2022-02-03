@@ -46,7 +46,6 @@ import BarcodeScanner
         , BarcodeScannerFileLine
         , DeletionStatus(..)
         , LineContents(..)
-        , PositionAndTimePair
         , regenerate
         )
 import DataEntry exposing (DateEntry, emptyEntry, integerEntryFromInt)
@@ -246,7 +245,7 @@ validBarcodeScannerData2 =
 
 validBarcodeScannerDataWithIncompleteRecordFirst : String
 validBarcodeScannerDataWithIncompleteRecordFirst =
-    ",P0033,14/03/2018 09:44:06" ++ crlf ++ validBarcodeScannerData1
+    "A2044293,,14/03/2018 09:44:06" ++ crlf ++ validBarcodeScannerData1
 
 
 invalidBarcodeScannerData : String
@@ -263,7 +262,6 @@ parsedBarcodeScannerData1 =
             defaultDateTime
         ]
         (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
-        []
         []
         []
         []
@@ -290,7 +288,6 @@ parsedBarcodeScannerData1And2 =
         []
         []
         []
-        []
         (toPosix "2018-03-14T09:49:44.000Z")
 
 
@@ -299,14 +296,13 @@ parsedBarcodeScannerDataWithIncompleteRecordFirst =
     BarcodeScannerData
         [ BarcodeScannerFile
             "barcodes1.txt"
-            [ ordinaryFileLine 1 "" (Just 33) "14/03/2018 09:44:06"
+            [ ordinaryFileLine 1 "A2044293" Nothing "14/03/2018 09:44:06"
             , ordinaryFileLine 2 "A4580442" (Just 47) "14/03/2018 09:47:03"
             ]
             defaultDateTime
         ]
         (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
-        []
-        [ PositionAndTimePair 33 "14/03/2018 09:44:06" ]
+        [ AthleteAndTimePair "A2044293" "14/03/2018 09:44:06" ]
         []
         []
         defaultDateTime
@@ -317,7 +313,6 @@ parsedInvalidBarcodeScannerData =
     BarcodeScannerData
         [ BarcodeScannerFile "invalid.txt" [] Nothing ]
         Dict.empty
-        []
         []
         []
         [ { errorCode = "INVALID_POSITION_ZERO"
@@ -551,5 +546,5 @@ createNumberCheckerManualEntryRow timer1 timer2 finishTokens =
 
 createBarcodeScannerDataFromFiles : List BarcodeScannerFile -> BarcodeScannerData
 createBarcodeScannerDataFromFiles files =
-    BarcodeScannerData files Dict.empty [] [] [] [] Nothing
+    BarcodeScannerData files Dict.empty [] [] [] Nothing
         |> regenerate

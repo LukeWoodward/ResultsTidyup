@@ -7,7 +7,6 @@ module BarcodeScanner exposing
     , DeletionStatus(..)
     , LineContents(..)
     , MisScannedItem
-    , PositionAndTimePair
     , UnrecognisedLine
     , allTokensUsed
     , deleteBarcodeScannerLine
@@ -43,12 +42,6 @@ type alias AthleteAndTimePair =
     }
 
 
-type alias PositionAndTimePair =
-    { position : Int
-    , scanDateTime : String
-    }
-
-
 type alias MisScannedItem =
     { scannedText : String
     , scanDateTime : String
@@ -66,7 +59,6 @@ type DeletionReason
     = BeforeEventStart
     | DuplicateScan String Int
     | AthleteScannedWithFinishTokenElsewhere String
-    | FinishTokenScannedWithAthleteElsewhere Int
     | DeletedByUser
 
 
@@ -99,7 +91,6 @@ type alias BarcodeScannerData =
     { files : List BarcodeScannerFile
     , scannedBarcodes : Dict Int (List AthleteAndTimePair)
     , athleteBarcodesOnly : List AthleteAndTimePair
-    , finishTokensOnly : List PositionAndTimePair
     , misScannedItems : List MisScannedItem
     , unrecognisedLines : List UnrecognisedLine
     , lastScanDateTime : Maybe Posix
@@ -118,14 +109,13 @@ toMaybeError result =
 
 empty : BarcodeScannerData
 empty =
-    BarcodeScannerData [] Dict.empty [] [] [] [] Nothing
+    BarcodeScannerData [] Dict.empty [] [] [] Nothing
 
 
 isEmpty : BarcodeScannerData -> Bool
 isEmpty barcodeScannerData =
     Dict.isEmpty barcodeScannerData.scannedBarcodes
         && List.isEmpty barcodeScannerData.athleteBarcodesOnly
-        && List.isEmpty barcodeScannerData.finishTokensOnly
 
 
 athleteParser : Parser ()
@@ -229,15 +219,12 @@ readLine lineNumber line =
 mergeEntry : BarcodeScannerFileLine -> BarcodeScannerData -> BarcodeScannerData
 mergeEntry line barcodeData =
     case line.contents of
-        Ordinary "" Nothing ->
+        Ordinary "" _ ->
             -- Unexpected, do nothing.
             barcodeData
 
         Ordinary athlete Nothing ->
             { barcodeData | athleteBarcodesOnly = List.append barcodeData.athleteBarcodesOnly [ AthleteAndTimePair athlete line.scanDateTime ] }
-
-        Ordinary "" (Just position) ->
-            { barcodeData | finishTokensOnly = List.append barcodeData.finishTokensOnly [ PositionAndTimePair position line.scanDateTime ] }
 
         Ordinary athlete (Just pos) ->
             let
@@ -302,7 +289,6 @@ withLastScanDateTime barcodeScannerData =
                     |> List.concat
                     |> List.map .scanDateTime
                 , List.map .scanDateTime barcodeScannerData.athleteBarcodesOnly
-                , List.map .scanDateTime barcodeScannerData.finishTokensOnly
                 , List.map .scanDateTime barcodeScannerData.misScannedItems
                 ]
 
@@ -328,7 +314,6 @@ mergeScannerData data1 data2 =
         (data1.files ++ data2.files)
         (mergeScannerDicts data1.scannedBarcodes data2.scannedBarcodes)
         (data1.athleteBarcodesOnly ++ data2.athleteBarcodesOnly)
-        (data1.finishTokensOnly ++ data2.finishTokensOnly)
         (data1.misScannedItems ++ data2.misScannedItems)
         (data1.unrecognisedLines ++ data2.unrecognisedLines)
         (maxDate data1.lastScanDateTime data2.lastScanDateTime)
@@ -514,5 +499,5 @@ deleteBarcodeScannerLine fileName lineNumber barcodeScannerData =
 
 allTokensUsed : BarcodeScannerData -> Set Int
 allTokensUsed barcodeScannerData =
-    List.append (Dict.keys barcodeScannerData.scannedBarcodes) (List.map .position barcodeScannerData.finishTokensOnly)
+    Dict.keys barcodeScannerData.scannedBarcodes
         |> Set.fromList
