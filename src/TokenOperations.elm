@@ -54,8 +54,10 @@ type TokenOperationValidationError
     | InvalidRange TokenRangeField
     | EmptyRange TokenRangeField
     | ZeroInRange TokenRangeField
+    | TokenOffEndOfTokens Int Int TokenRangeField
     | InsertRangeOffEndOfTokens Int Range
     | RangeOffEndOfTokens Int Range TokenRangeField
+    | RemovingExistingToken Int
     | RemovingExistingTokens (List Int) Range
     | SwapTokenRangesOfDifferentSizes
     | SwapTokenRangesOverlap
@@ -105,7 +107,11 @@ insertTokenRangeEndOffTokens lastToken entry =
     case entry.parsedValue of
         Just someRange ->
             if lastToken < someRange.start && someRange.start <= someRange.end then
-                Just (InsertRangeOffEndOfTokens lastToken someRange)
+                if someRange.start < someRange.end then
+                    Just (InsertRangeOffEndOfTokens lastToken someRange)
+
+                else
+                    Just (TokenOffEndOfTokens lastToken someRange.start InsertTokenRangeField)
 
             else
                 Nothing
@@ -119,7 +125,11 @@ tokenRangeEndOffTokens lastToken field entry =
     case entry.parsedValue of
         Just someRange ->
             if someRange.start <= someRange.end && someRange.end > lastToken then
-                Just (RangeOffEndOfTokens lastToken someRange field)
+                if someRange.start < someRange.end then
+                    Just (RangeOffEndOfTokens lastToken someRange field)
+
+                else
+                    Just (TokenOffEndOfTokens lastToken someRange.start field)
 
             else
                 Nothing
@@ -141,11 +151,15 @@ removingExistingTokens allTokens entry =
                         |> Set.toList
                         |> List.sort
             in
-            if List.isEmpty removedExistingTokens then
-                Nothing
+            case removedExistingTokens of
+                [] ->
+                    Nothing
 
-            else
-                Just (RemovingExistingTokens removedExistingTokens someRange)
+                [ singleToken ] ->
+                    Just (RemovingExistingToken singleToken)
+
+                _ ->
+                    Just (RemovingExistingTokens removedExistingTokens someRange)
 
         Nothing ->
             Nothing
@@ -289,11 +303,17 @@ isTokenRangeFieldInvalid field tokenOperationEditDetails =
         ZeroInRange errorField ->
             errorField == field
 
+        TokenOffEndOfTokens _ _ errorField ->
+            errorField == field
+
         InsertRangeOffEndOfTokens _ _ ->
             field == InsertTokenRangeField
 
         RangeOffEndOfTokens _ _ errorField ->
             errorField == field
+
+        RemovingExistingToken _ ->
+            field == RemoveTokenRangeField
 
         RemovingExistingTokens _ _ ->
             field == RemoveTokenRangeField

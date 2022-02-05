@@ -91,29 +91,31 @@ validationErrorToString validationError =
         ZeroInRange field ->
             "Token number 0 cannot be used"
 
+        TokenOffEndOfTokens lastToken token field ->
+            "Token " ++ String.fromInt token ++ " is beyond the last token used (" ++ String.fromInt lastToken ++ ")"
+
         InsertRangeOffEndOfTokens lastToken range ->
             "The range " ++ rangeToString range ++ " is entirely beyond the last token used (" ++ String.fromInt lastToken ++ ")"
 
+        RemovingExistingToken token ->
+            "Token " ++ String.fromInt token ++ " cannot be removed because it is used"
+
         RemovingExistingTokens tokens range ->
-            if range.start == range.end then
-                "Token " ++ String.fromInt range.start ++ " cannot be removed because it is used"
+            let
+                reason : String
+                reason =
+                    case tokens of
+                        [ singleToken ] ->
+                            "token " ++ String.fromInt singleToken ++ " is used"
 
-            else
-                let
-                    reason : String
-                    reason =
-                        case tokens of
-                            [ singleToken ] ->
-                                "token " ++ String.fromInt singleToken ++ " is used"
-
-                            _ ->
-                                "tokens "
-                                    ++ (List.map String.fromInt tokens
-                                            |> String.join ", "
-                                       )
-                                    ++ " are used"
-                in
-                "Tokens " ++ rangeToString range ++ " cannot be removed because " ++ reason
+                        _ ->
+                            "tokens "
+                                ++ (List.map String.fromInt tokens
+                                        |> String.join ", "
+                                   )
+                                ++ " are used"
+            in
+            "Tokens " ++ rangeToString range ++ " cannot be removed because " ++ reason
 
         RangeOffEndOfTokens lastToken range field ->
             "The range " ++ rangeToString range ++ " goes beyond the last token used (" ++ String.fromInt lastToken ++ ")"

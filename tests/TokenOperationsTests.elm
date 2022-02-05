@@ -154,6 +154,10 @@ suite =
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = InsertTokensOption, insertTokenRange = makeEntry 55 65 }
                         |> Expect.equal (InsertRangeOffEndOfTokens 50 (Range 55 65))
+            , test "validating an insert operation with the single token off the end of the tokens returns an error" <|
+                \() ->
+                    validateEditDetails tokenSet { emptyEditDetails | operation = InsertTokensOption, insertTokenRange = makeEntry 55 55 }
+                        |> Expect.equal (TokenOffEndOfTokens 50 55 InsertTokenRangeField)
             , test "validating an insert operation with only the end of the range off the end of the tokens is valid" <|
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = InsertTokensOption, insertTokenRange = makeEntry 45 55 }
@@ -178,14 +182,22 @@ suite =
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = RemoveTokensOption, removeTokenRange = makeEntry -10 0 }
                         |> Expect.equal (ZeroInRange RemoveTokenRangeField)
-            , test "validating a remove operation that attempts to remove unused tokens returns an error" <|
+            , test "validating a remove operation that attempts to remove existing tokens returns an error" <|
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = RemoveTokensOption, removeTokenRange = makeEntry 40 50 }
                         |> Expect.equal (RemovingExistingTokens [ 41, 48, 50 ] (Range 40 50))
+            , test "validating a remove operation that attempts to remove a single existing token returns an error" <|
+                \() ->
+                    validateEditDetails tokenSet { emptyEditDetails | operation = RemoveTokensOption, removeTokenRange = makeEntry 48 48 }
+                        |> Expect.equal (RemovingExistingToken 48)
             , test "validating a remove operation with a range off the end returns an error" <|
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = RemoveTokensOption, removeTokenRange = makeEntry 45 55 }
                         |> Expect.equal (RangeOffEndOfTokens 50 (Range 45 55) RemoveTokenRangeField)
+            , test "validating a remove operation with a single token off the end returns an error" <|
+                \() ->
+                    validateEditDetails tokenSet { emptyEditDetails | operation = RemoveTokensOption, removeTokenRange = makeEntry 55 55 }
+                        |> Expect.equal (TokenOffEndOfTokens 50 55 RemoveTokenRangeField)
             , test "validating a valid swap operation returns no error" <|
                 \() ->
                     validateEditDetails tokenSet { emptyEditDetails | operation = SwapTokenRangeOption, swapTokenRange1 = makeEntry 10 20, swapTokenRange2 = makeEntry 30 40 }
