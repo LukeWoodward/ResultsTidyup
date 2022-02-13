@@ -12,6 +12,7 @@ import Problems
         , AthleteWithAndWithoutPositionProblem
         , AthleteWithMultiplePositionsProblem
         , BarcodesScannedBeforeEventStartProblem
+        , MisScannedAthleteBarcodeProblem
         , PositionAndTime
         , PositionOffEndOfTimesProblem
         , PositionWithMultipleAthletesProblem
@@ -289,6 +290,39 @@ athletesMissingPositionView athletes =
                 ]
 
 
+misScannedAthleteBarcodesView : List MisScannedAthleteBarcodeProblem -> Html Msg
+misScannedAthleteBarcodesView misScannedAthleteBarcodes =
+    let
+        generateRow : MisScannedAthleteBarcodeProblem -> Html Msg
+        generateRow misScannedAthlete =
+            li []
+                [ text (misScannedAthlete.scannedBarcode ++ " (likely to be " ++ misScannedAthlete.similarBarcode ++ ")")
+                , generateButton (RemoveUnassociatedAthlete misScannedAthlete.scannedBarcode) "Remove"
+                ]
+    in
+    case misScannedAthleteBarcodes of
+        [ singleMisScannedAthlete ] ->
+            warningAlert
+                [ text
+                    ("Athlete barcode "
+                        ++ singleMisScannedAthlete.scannedBarcode
+                        ++ " is too long to be real but is similar to "
+                    )
+                , athleteLink singleMisScannedAthlete.similarBarcode
+                , text " so is likely to have been mis-scanned. "
+                , generateButton (RemoveUnassociatedAthlete singleMisScannedAthlete.scannedBarcode) "Remove"
+                ]
+
+        _ ->
+            warningAlert
+                [ text
+                    ("The following athlete barcodes are too long to be real "
+                        ++ "but are similar to other scanned barcodes so are likely to have been mis-scanned:"
+                    )
+                , ul [] (List.map generateRow misScannedAthleteBarcodes)
+                ]
+
+
 hideIfEmpty : (List a -> Html Msg) -> List a -> Maybe (Html Msg)
 hideIfEmpty viewer list =
     if List.isEmpty list then
@@ -360,6 +394,7 @@ scannerProblemsView problems =
             , hideIfEmpty positionsWithMultipleAthletesView problems.positionsWithMultipleAthletes
             , Maybe.map positionOffEndOfTimesView problems.positionOffEndOfTimes
             , hideIfEmpty athletesMissingPositionView problems.athletesMissingPosition
+            , hideIfEmpty misScannedAthleteBarcodesView problems.misScannedAthleteBarcodes
             , hideIfEmpty misScannedItemsView problems.misScans
             , hideIfEmpty unrecognisedBarcodeScannerLinesView problems.unrecognisedBarcodeScannerLines
             ]

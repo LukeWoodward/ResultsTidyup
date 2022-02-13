@@ -23,6 +23,7 @@ import Problems
         , AthleteWithAndWithoutPositionProblem
         , AthleteWithMultiplePositionsProblem
         , BarcodesScannedBeforeEventStartProblem
+        , MisScannedAthleteBarcodeProblem
         , PositionAndTime
         , PositionOffEndOfTimesProblem
         , PositionWithMultipleAthletesProblem
@@ -352,6 +353,30 @@ suite =
                         emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal { noProblems | athletesMissingPosition = [ "A321456", "A951623" ] }
+            , test "identifyProblems returns a mis-scanned athlete barcode problem for an athlete barcode too long and similar to an existing barcode" <|
+                \() ->
+                    identifyProblems
+                        None
+                        (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A987654" ] ) ]) [ "A123456789" ])
+                        emptyEventDateAndTime
+                        noIgnoredProblems
+                        |> Expect.equal { noProblems | misScannedAthleteBarcodes = [ MisScannedAthleteBarcodeProblem "A123456789" "A123456" ] }
+            , test "identifyProblems returns a mis-scanned athlete barcode problem for an athlete barcode too long scanned multiple times and similar to an existing barcode" <|
+                \() ->
+                    identifyProblems
+                        None
+                        (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A987654" ] ) ]) [ "A123456789", "A123456789", "A123456789" ])
+                        emptyEventDateAndTime
+                        noIgnoredProblems
+                        |> Expect.equal { noProblems | misScannedAthleteBarcodes = [ MisScannedAthleteBarcodeProblem "A123456789" "A123456" ] }
+            , test "identifyProblems returns an athlete-barcode-without-position problem for an athlete barcode too long but not similar to an existing barcode" <|
+                \() ->
+                    identifyProblems
+                        None
+                        (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A987654" ] ) ]) [ "A505479977654" ])
+                        emptyEventDateAndTime
+                        noIgnoredProblems
+                        |> Expect.equal { noProblems | athletesMissingPosition = [ "A505479977654" ] }
             , test "identifyProblems returns a problem for a mis-scanned item" <|
                 \() ->
                     identifyProblems

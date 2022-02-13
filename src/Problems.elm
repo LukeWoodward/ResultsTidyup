@@ -4,6 +4,7 @@ module Problems exposing
     , AthleteWithMultiplePositionsProblem
     , BarcodesScannedBeforeEventStartProblem
     , IgnoredProblems
+    , MisScannedAthleteBarcodeProblem
     , PositionAndTime
     , PositionOffEndOfTimesProblem
     , PositionWithMultipleAthletesProblem
@@ -22,6 +23,24 @@ import Set exposing (Set)
 import Time exposing (posixToMillis)
 import Timer exposing (MergeEntry(..), MergedTableRow, Timers(..))
 import TimerOffsetDetection exposing (getTimerTimeOffset)
+
+
+{-| The maximum permitted length of an athlete barcode, as a string, including
+the leading "A". This is presently 9, to allow for 8-digit barcodes, for
+up to 100 million athletes. At the time of writing there are no 8-digit
+barcodes in use.
+-}
+maxAthleteBarcodeLength : Int
+maxAthleteBarcodeLength =
+    9
+
+
+{-| When a too-long barcode has been found, the length of barcode prefix we
+check for to identify a similar barcode. This includes the leading "A".
+-}
+misScannedAthleteBarcodeSimilarityLength : Int
+misScannedAthleteBarcodeSimilarityLength =
+    6
 
 
 type alias BarcodesScannedBeforeEventStartProblem =
@@ -68,6 +87,12 @@ type alias AthleteWithAndWithoutPositionProblem =
     }
 
 
+type alias MisScannedAthleteBarcodeProblem =
+    { scannedBarcode : String
+    , similarBarcode : String
+    }
+
+
 type alias Problems =
     { barcodesScannedBeforeEventStart : Maybe BarcodesScannedBeforeEventStartProblem
     , athletesInSamePositionMultipleTimes : List AthleteAndPositionPair
@@ -77,6 +102,7 @@ type alias Problems =
     , positionsWithMultipleAthletes : List PositionWithMultipleAthletesProblem
     , positionOffEndOfTimes : Maybe PositionOffEndOfTimesProblem
     , athletesMissingPosition : List String
+    , misScannedAthleteBarcodes : List MisScannedAthleteBarcodeProblem
     , misScans : List String
     , unrecognisedBarcodeScannerLines : List String
     , timersInconsistentWithNumberChecker : Bool
@@ -94,6 +120,7 @@ noProblems =
     , positionsWithMultipleAthletes = []
     , positionOffEndOfTimes = Nothing
     , athletesMissingPosition = []
+    , misScannedAthleteBarcodes = []
     , misScans = []
     , unrecognisedBarcodeScannerLines = []
     , timersInconsistentWithNumberChecker = False
@@ -287,9 +314,10 @@ countScansBefore timeMillis file =
         |> countDatesBefore
 
 
-identifyAthletesWithNoPositions : List String -> Dict String (List Int) -> List String
-identifyAthletesWithNoPositions unpairedAthletes athleteToPositionsDict =
+identifyAthletesWithNoPositions : List String -> Dict String (List Int) -> Set String -> List String
+identifyAthletesWithNoPositions unpairedAthletes athleteToPositionsDict athletesToExclude =
     deduplicate unpairedAthletes
+        |> List.filter (\athlete -> not (Set.member athlete athletesToExclude))
         |> List.filter (\athlete -> not (Dict.member athlete athleteToPositionsDict))
 
 
@@ -314,6 +342,31 @@ identifyDuplicateScans positionToAthletesDict =
     Dict.toList positionToAthletesDict
         |> List.filter (\( position, athletes ) -> List.length athletes > 1)
         |> List.concatMap identifyDuplicates
+
+
+identifyMisScannedAthleteBarcodes : Dict String (List Int) -> List String -> List MisScannedAthleteBarcodeProblem
+identifyMisScannedAthleteBarcodes athleteToPositionsDict athleteBarcodesOnly =
+    let
+        athleteBarcodesTooLong : List String
+        athleteBarcodesTooLong =
+            List.filter (\barcode -> String.length barcode > maxAthleteBarcodeLength) athleteBarcodesOnly
+                |> Set.fromList
+                |> Set.toList
+
+        findSimilarBarcode : String -> Maybe MisScannedAthleteBarcodeProblem
+        findSimilarBarcode misScannedBarcode =
+            let
+                misScannedBarcodePrefix : String
+                misScannedBarcodePrefix =
+                    String.slice 0 misScannedAthleteBarcodeSimilarityLength misScannedBarcode
+            in
+            List.append (Dict.keys athleteToPositionsDict) athleteBarcodesOnly
+                |> List.filter (\barcode -> String.length barcode <= maxAthleteBarcodeLength)
+                |> List.filter (\barcode -> String.slice 0 misScannedAthleteBarcodeSimilarityLength barcode == misScannedBarcodePrefix)
+                |> List.head
+                |> Maybe.map (MisScannedAthleteBarcodeProblem misScannedBarcode)
+    in
+    List.filterMap findSimilarBarcode athleteBarcodesTooLong
 
 
 identifyAthletesWithAndWithoutPosition : Dict String (List Int) -> List String -> List AthleteWithAndWithoutPositionProblem
@@ -436,6 +489,15 @@ identifyProblems timers barcodeScannerData eventDateAndTime ignoredProblems =
         times : Array Int
         times =
             getTimes timers
+
+        misScannedAthleteBarcodes : List MisScannedAthleteBarcodeProblem
+        misScannedAthleteBarcodes =
+            identifyMisScannedAthleteBarcodes athleteToPositionsDict athleteBarcodesOnly
+
+        misScannedAthleteBarcodesSet : Set String
+        misScannedAthleteBarcodesSet =
+            List.map .scannedBarcode misScannedAthleteBarcodes
+                |> Set.fromList
     in
     { barcodesScannedBeforeEventStart = Maybe.andThen (identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString) eventStartDateTimeMillis
     , athletesInSamePositionMultipleTimes = identifyDuplicateScans positionToAthletesDict
@@ -449,7 +511,8 @@ identifyProblems timers barcodeScannerData eventDateAndTime ignoredProblems =
     , athletesWithMultiplePositions = identifyAthletesWithMultiplePositions times athleteToPositionsDict
     , positionsWithMultipleAthletes = identifyPositionsWithMultipleAthletes positionToAthletesDict
     , positionOffEndOfTimes = identifyPositionsOffEndOfTimes timers positionToAthletesDict
-    , athletesMissingPosition = identifyAthletesWithNoPositions athleteBarcodesOnly athleteToPositionsDict
+    , athletesMissingPosition = identifyAthletesWithNoPositions athleteBarcodesOnly athleteToPositionsDict misScannedAthleteBarcodesSet
+    , misScannedAthleteBarcodes = misScannedAthleteBarcodes
     , misScans = identifyMisScannedItems barcodeScannerData.misScannedItems
     , unrecognisedBarcodeScannerLines = identifyUnrecognisedBarcodeScannerLines barcodeScannerData.unrecognisedLines
     , timersInconsistentWithNumberChecker = False
