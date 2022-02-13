@@ -360,38 +360,6 @@ identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsSt
         Just (BarcodesScannedBeforeEventStartProblem totalNumberOfScansBeforeEventStart eventStartDateTimeMillis eventStartTimeAsString)
 
 
-type RepeatedElementResult a
-    = NoElements
-    | NoRepeatedElement
-    | RepeatedElement a
-
-
-{-| If a list contains only the same element repeated, return that element,
-otherwise return Nothing.
-
-    allElementsEqual [] == Nothing
-
-    allElementsEqual [ 5 ] == Just 5
-
-    allElementsEqual [ 5, 5, 5 ] == Just 5
-
-    allElementsEqual [ 5, 5, 6 ] == Nothing
-
--}
-repeatedElement : List a -> RepeatedElementResult a
-repeatedElement list =
-    case list of
-        [] ->
-            NoElements
-
-        first :: rest ->
-            if List.isEmpty (List.filter ((/=) first) rest) then
-                RepeatedElement first
-
-            else
-                NoRepeatedElement
-
-
 replaceZeroOffset : Maybe Int -> Maybe Int
 replaceZeroOffset offset =
     if offset == Just 0 then
