@@ -9,6 +9,7 @@ import ProblemFixing exposing (ProblemFix(..), ProblemIgnorance(..))
 import Problems
     exposing
         ( AthleteAndPositionPair
+        , AthleteWithAndWithoutPositionProblem
         , AthleteWithMultiplePositionsProblem
         , BarcodesScannedBeforeEventStartProblem
         , PositionAndTime
@@ -69,6 +70,15 @@ athleteAndPositionRow problemFixGenerator buttonLabel pair =
         ]
 
 
+athleteWithAndWithoutPositionRow : (AthleteWithAndWithoutPositionProblem -> ProblemFix) -> (Int -> String) -> AthleteWithAndWithoutPositionProblem -> Html Msg
+athleteWithAndWithoutPositionRow problemFixGenerator buttonLabel athleteWithAndWithoutPosition =
+    li []
+        [ athleteLink athleteWithAndWithoutPosition.athlete
+        , text (" and " ++ String.fromInt athleteWithAndWithoutPosition.position ++ " ")
+        , generateButton (problemFixGenerator athleteWithAndWithoutPosition) (buttonLabel athleteWithAndWithoutPosition.count)
+        ]
+
+
 athletesInSamePositionMultipleTimesView : List AthleteAndPositionPair -> Html Msg
 athletesInSamePositionMultipleTimesView athleteAndPositionPairs =
     let
@@ -96,34 +106,38 @@ athletesInSamePositionMultipleTimesView athleteAndPositionPairs =
                 ]
 
 
-athletesWithAndWithoutPositionView : List AthleteAndPositionPair -> Html Msg
-athletesWithAndWithoutPositionView athleteAndPositionPairs =
+athletesWithAndWithoutPositionView : List AthleteWithAndWithoutPositionProblem -> Html Msg
+athletesWithAndWithoutPositionView athletesWithAndWithoutPosition =
     let
-        buttonLabel : String
-        buttonLabel =
-            "Remove unassociated athlete scan"
+        buttonLabel : Int -> String
+        buttonLabel count =
+            if count == 1 then
+                "Remove unassociated athlete scan"
 
-        problemFixGenerator : AthleteAndPositionPair -> ProblemFix
-        problemFixGenerator pair =
-            RemoveUnassociatedAthlete pair.athlete
+            else
+                "Remove unassociated athlete scans (" ++ String.fromInt count ++ ")"
+
+        problemFixGenerator : AthleteWithAndWithoutPositionProblem -> ProblemFix
+        problemFixGenerator athleteWithAndWithoutPosition =
+            RemoveUnassociatedAthlete athleteWithAndWithoutPosition.athlete
     in
-    case athleteAndPositionPairs of
-        [ pair ] ->
+    case athletesWithAndWithoutPosition of
+        [ singleItem ] ->
             warningAlert
                 [ text "Athlete "
-                , athleteLink pair.athlete
+                , athleteLink singleItem.athlete
                 , text
                     (" has been scanned with finish token "
-                        ++ String.fromInt pair.position
+                        ++ String.fromInt singleItem.position
                         ++ " and also without a finish token. "
                     )
-                , generateButton (problemFixGenerator pair) buttonLabel
+                , generateButton (problemFixGenerator singleItem) (buttonLabel singleItem.count)
                 ]
 
         _ ->
             warningAlert
-                [ text "The following athlete barcodes have been scanned multiple times with a finish token and without a finish token:"
-                , ul [] (List.map (athleteAndPositionRow problemFixGenerator buttonLabel) athleteAndPositionPairs)
+                [ text "The following athlete barcodes have been scanned with a finish token and without a finish token:"
+                , ul [] (List.map (athleteWithAndWithoutPositionRow problemFixGenerator buttonLabel) athletesWithAndWithoutPosition)
                 ]
 
 

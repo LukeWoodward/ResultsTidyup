@@ -1,5 +1,6 @@
 module Problems exposing
     ( AthleteAndPositionPair
+    , AthleteWithAndWithoutPositionProblem
     , AthleteWithMultiplePositionsProblem
     , BarcodesScannedBeforeEventStartProblem
     , IgnoredProblems
@@ -60,10 +61,17 @@ type alias PositionOffEndOfTimesProblem =
     }
 
 
+type alias AthleteWithAndWithoutPositionProblem =
+    { athlete : String
+    , count : Int
+    , position : Int
+    }
+
+
 type alias Problems =
     { barcodesScannedBeforeEventStart : Maybe BarcodesScannedBeforeEventStartProblem
     , athletesInSamePositionMultipleTimes : List AthleteAndPositionPair
-    , athletesWithAndWithoutPosition : List AthleteAndPositionPair
+    , athletesWithAndWithoutPosition : List AthleteWithAndWithoutPositionProblem
     , timerTimeOffset : Maybe Int
     , athletesWithMultiplePositions : List AthleteWithMultiplePositionsProblem
     , positionsWithMultipleAthletes : List PositionWithMultipleAthletesProblem
@@ -308,16 +316,33 @@ identifyDuplicateScans positionToAthletesDict =
         |> List.concatMap identifyDuplicates
 
 
-identifyAthletesWithAndWithoutPosition : Dict String (List Int) -> List String -> List AthleteAndPositionPair
+identifyAthletesWithAndWithoutPosition : Dict String (List Int) -> List String -> List AthleteWithAndWithoutPositionProblem
 identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly =
     let
-        getProblemIfSinglePosition : String -> Maybe AthleteAndPositionPair
-        getProblemIfSinglePosition athlete =
+        insert : String -> List ( String, Int ) -> List ( String, Int )
+        insert value items =
+            case items of
+                [] ->
+                    [ ( value, 1 ) ]
+
+                ( existingValue, count ) :: remainder ->
+                    if value == existingValue then
+                        ( existingValue, count + 1 ) :: remainder
+
+                    else
+                        ( existingValue, count ) :: insert value remainder
+
+        athleteBarcodesOnlyWithCounts : List ( String, Int )
+        athleteBarcodesOnlyWithCounts =
+            List.foldl insert [] athleteBarcodesOnly
+
+        getProblemIfSinglePosition : ( String, Int ) -> Maybe AthleteWithAndWithoutPositionProblem
+        getProblemIfSinglePosition ( athlete, count ) =
             Dict.get athlete athleteToPositionsDict
                 |> Maybe.andThen getSingleValue
-                |> Maybe.map (AthleteAndPositionPair athlete)
+                |> Maybe.map (AthleteWithAndWithoutPositionProblem athlete count)
     in
-    List.filterMap getProblemIfSinglePosition athleteBarcodesOnly
+    List.filterMap getProblemIfSinglePosition athleteBarcodesOnlyWithCounts
 
 
 identifyRecordsScannedBeforeEventStartTime : BarcodeScannerData -> String -> Int -> Maybe BarcodesScannedBeforeEventStartProblem

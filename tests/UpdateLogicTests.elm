@@ -33,7 +33,7 @@ import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import PastedFile exposing (PastedFileDetails, PastedFileInterpretation(..))
 import PastedFileTests exposing (timerFileContents)
 import ProblemFixing exposing (ProblemFix(..), ProblemIgnorance(..))
-import Problems exposing (AthleteAndPositionPair, IgnoredProblems, Problems, noIgnoredProblems, noProblems)
+import Problems exposing (AthleteAndPositionPair, AthleteWithAndWithoutPositionProblem, IgnoredProblems, Problems, noIgnoredProblems, noProblems)
 import Test exposing (Test, describe, test)
 import TestData exposing (..)
 import Time
@@ -222,7 +222,7 @@ createBarcodeScannerDataForRemovingUnassociatedAthletes athletes =
     in
     { initModel
         | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines Nothing ] }
-        , problems = { noProblems | athletesWithAndWithoutPosition = List.indexedMap (\index athlete -> AthleteAndPositionPair athlete (index + 1)) athletes }
+        , problems = { noProblems | athletesWithAndWithoutPosition = List.indexedMap (\index athlete -> AthleteWithAndWithoutPositionProblem athlete 1 (index + 1)) athletes }
     }
 
 
@@ -389,7 +389,7 @@ suite =
                         , numberCheckerManualEntryRow = NumberCheckerManualEntryRow (IntegerEntry "2" (Just 2)) (IntegerEntry "2" (Just 2)) (IntegerEntry "2" (Just 2))
                         , problems =
                             { noProblems
-                                | athletesWithAndWithoutPosition = [ AthleteAndPositionPair "A123" 5 ]
+                                | athletesWithAndWithoutPosition = [ AthleteWithAndWithoutPositionProblem "A123" 2 5 ]
                                 , misScans = [ "something" ]
                             }
                         , ignoredProblems =
@@ -702,7 +702,11 @@ suite =
                             (expectBarcodeScannerData expectedBarcodeScannerData
                                 :: expectProblems
                                     { noProblems
-                                        | athletesWithAndWithoutPosition = [ AthleteAndPositionPair "A447" 1, AthleteAndPositionPair "A4492701" 3, AthleteAndPositionPair "A2366890" 4 ]
+                                        | athletesWithAndWithoutPosition =
+                                            [ AthleteWithAndWithoutPositionProblem "A447" 1 1
+                                            , AthleteWithAndWithoutPositionProblem "A4492701" 1 3
+                                            , AthleteWithAndWithoutPositionProblem "A2366890" 1 4
+                                            ]
                                     }
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems ]
                             )

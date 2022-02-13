@@ -20,6 +20,7 @@ import Expect
 import Problems
     exposing
         ( AthleteAndPositionPair
+        , AthleteWithAndWithoutPositionProblem
         , AthleteWithMultiplePositionsProblem
         , BarcodesScannedBeforeEventStartProblem
         , PositionAndTime
@@ -399,7 +400,7 @@ suite =
                         )
                         emptyEventDateAndTime
                         noIgnoredProblems
-                        |> Expect.equal { noProblems | athletesWithAndWithoutPosition = [ AthleteAndPositionPair "A252525" 16 ] }
+                        |> Expect.equal { noProblems | athletesWithAndWithoutPosition = [ AthleteWithAndWithoutPositionProblem "A252525" 1 16 ] }
             , test "identifyProblems returns two fixable problems for two athletes with and without a position" <|
                 \() ->
                     identifyProblems
@@ -410,7 +411,18 @@ suite =
                         )
                         emptyEventDateAndTime
                         noIgnoredProblems
-                        |> Expect.equal { noProblems | athletesWithAndWithoutPosition = [ AthleteAndPositionPair "A252525" 16, AthleteAndPositionPair "A987654" 19 ] }
+                        |> Expect.equal { noProblems | athletesWithAndWithoutPosition = [ AthleteWithAndWithoutPositionProblem "A252525" 1 16, AthleteWithAndWithoutPositionProblem "A987654" 1 19 ] }
+            , test "identifyProblems returns two fixable problems for two athletes with and without a position, one with multiple no-position scans" <|
+                \() ->
+                    identifyProblems
+                        None
+                        (createBarcodeScannerData
+                            (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A987654" ] ) ])
+                            [ "A252525", "A987654", "A252525", "A252525" ]
+                        )
+                        emptyEventDateAndTime
+                        noIgnoredProblems
+                        |> Expect.equal { noProblems | athletesWithAndWithoutPosition = [ AthleteWithAndWithoutPositionProblem "A252525" 3 16, AthleteWithAndWithoutPositionProblem "A987654" 1 19 ] }
             , test "identifyProblems returns no problems for a scanned barcode with its scan time after the event start" <|
                 \() ->
                     identifyProblems
