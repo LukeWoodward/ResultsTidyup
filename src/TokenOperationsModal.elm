@@ -144,7 +144,7 @@ tokenOperationsModalBody tokenOperationEditDetails =
             ]
         , textRow
             ("Use this option if a token should have been given out, but wasn't, e.g. due to a funnel ducker or "
-                ++ "a person declined to take a finish token and a token wasn't put aside for that runner."
+                ++ "a person declined to take a finish token and a token wasn't put aside for that finisher."
             )
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
             [ radioButton "removeTokensRadioButtonId" RemoveTokensOption "Remove token(s)" tokenOperationEditDetails
@@ -153,7 +153,7 @@ tokenOperationsModalBody tokenOperationEditDetails =
         , textRow
             ("Use this option if one or more tokens were not given out, for example, they were missing before the event "
                 ++ "started, they were dropped during the event by the finish token volunteers and not given out, "
-                ++ "or more than one token was given to a runner."
+                ++ "or more than one token was given to a finisher."
             )
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
             [ radioButton "swapTokensRadioButtonId" SwapTokenRangeOption "Swap token(s)" tokenOperationEditDetails
