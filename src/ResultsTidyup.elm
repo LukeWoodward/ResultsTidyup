@@ -47,6 +47,11 @@ type alias FlagsRecord =
     }
 
 
+aboutUrl : String
+aboutUrl =
+    "https://github.com/LukeWoodward/ResultsTidyup#results-tidyup"
+
+
 main : Program FlagsRecord Model Msg
 main =
     Browser.element
@@ -252,7 +257,7 @@ view model =
                     [ h1 [ id "header" ] [ text "Results Tidyup" ]
                     , badge
                     , span [ class "about-link" ]
-                        [ a [ href "about.html", target "_blank" ] [ text "About" ]
+                        [ a [ href aboutUrl, target "_blank" ] [ text "About" ]
                         ]
                     ]
                 , actionsPanelView model

@@ -14,4 +14,3 @@ copy /y index-release.html release\index.html
 copy /y styles.css release\
 copy /y bootstrap.min.css release\
 copy /y jquery-3.6.0.min.js release\
-copy /y about.html release\about.html
