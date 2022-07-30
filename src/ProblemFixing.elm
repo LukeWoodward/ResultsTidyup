@@ -10,7 +10,7 @@ import BarcodeScanner
         , LineContents(..)
         , regenerate
         )
-import DateHandling exposing (dateTimeStringToPosix, posixToDateTimeString)
+import DateHandling exposing (dateTimeStringToPosix)
 import Model exposing (Model)
 import Problems exposing (IgnoredProblems)
 import Time exposing (Posix)
