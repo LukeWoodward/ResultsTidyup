@@ -1,9 +1,8 @@
 module ProblemsView exposing (scannerProblemsView, timerProblemsView)
 
 import Bootstrap.Alert as Alert
-import Html exposing (Html, button, div, h4, li, span, text, ul)
-import Html.Attributes exposing (class, type_)
-import Html.Events exposing (onClick)
+import Html exposing (Html, div, li, span, text, ul)
+import Html.Attributes exposing (class)
 import Msg exposing (Msg)
 import ProblemFixing exposing (ProblemFix(..), ProblemIgnorance(..))
 import Problems

@@ -13,8 +13,7 @@ import BarcodeScanner
         )
 import BarcodeScannerTests exposing (createBarcodeScannerData)
 import DataEntry exposing (DateEntry, IntegerEntry, emptyEntry)
-import Dict exposing (Dict)
-import Errors exposing (expectError)
+import Dict
 import EventDateAndTime exposing (EventDateAndTime)
 import Expect
 import Problems
@@ -27,13 +26,12 @@ import Problems
         , PositionAndTime
         , PositionOffEndOfTimesProblem
         , PositionWithMultipleAthletesProblem
-        , Problems
         , identifyProblems
         , noIgnoredProblems
         , noProblems
         )
 import Test exposing (Test, describe, test)
-import TestData exposing (createBarcodeScannerDataFromFiles, doubleTimers, misScanFileLine, ordinaryFileLine, toPosix)
+import TestData exposing (createBarcodeScannerDataFromFiles, doubleTimers, ordinaryFileLine, toPosix)
 import Timer exposing (MergeEntry(..), MergedTableRow, TimerMatchSummary, Timers(..), WhichTimer(..), noUnderlines)
 
 

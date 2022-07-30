@@ -13,9 +13,9 @@ import BarcodeScanner
         )
 import BarcodeScannerEditing exposing (BarcodeScannerFieldBeingEdited(..), BarcodeScannerRowEditDetails, BarcodeScannerRowEditLocation)
 import BarcodeScannerTests exposing (createBarcodeScannerData)
-import Commands exposing (Command(..), CurrentDateAndTimeOperation, ElementToFocus(..))
+import Commands exposing (Command(..), ElementToFocus(..))
 import DataEntry exposing (DateEntry, IntegerEntry, emptyEntry)
-import Dict exposing (Dict)
+import Dict
 import Error exposing (FileError)
 import EventDateAndTime exposing (EventDateAndTime)
 import Expect exposing (Expectation)
@@ -33,7 +33,7 @@ import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import PastedFile exposing (PastedFileDetails, PastedFileInterpretation(..))
 import PastedFileTests exposing (timerFileContents)
 import ProblemFixing exposing (ProblemFix(..), ProblemIgnorance(..))
-import Problems exposing (AthleteAndPositionPair, AthleteWithAndWithoutPositionProblem, IgnoredProblems, Problems, noIgnoredProblems, noProblems)
+import Problems exposing (AthleteWithAndWithoutPositionProblem, IgnoredProblems, Problems, noIgnoredProblems, noProblems)
 import Test exposing (Test, describe, test)
 import TestData exposing (..)
 import Time
@@ -54,25 +54,6 @@ expectCommand command ( _, cmd ) =
 expectTimers : Timers -> ( Model, Command ) -> Expectation
 expectTimers expectedTimers ( model, _ ) =
     Expect.equal expectedTimers model.timers
-
-
-expectLastError : String -> ( Model, Command ) -> Expectation
-expectLastError expectedCode ( model, _ ) =
-    case model.lastErrors of
-        [ singleError ] ->
-            Expect.equal expectedCode singleError.code
-
-        [] ->
-            Expect.fail ("Expected to fail with error " ++ expectedCode ++ ", but no error was present")
-
-        _ ->
-            let
-                codes : String
-                codes =
-                    List.map .code model.lastErrors
-                        |> String.join ", "
-            in
-            Expect.fail ("Expected to fail with error " ++ expectedCode ++ ", but multiple errors were present: " ++ codes)
 
 
 expectNumberCheckerEntries : List AnnotatedNumberCheckerEntry -> ( Model, Command ) -> Expectation

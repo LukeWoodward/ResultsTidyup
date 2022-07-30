@@ -21,6 +21,7 @@ module Timer exposing
     , underlineTable
     )
 
+import Bootstrap.Form exposing (row)
 import Dict exposing (Dict)
 import Error exposing (Error)
 import FileHandling exposing (crlf, isPossibleBinary, splitLines)
@@ -478,27 +479,26 @@ outputSingleTimerData times =
 
 outputMergedRow : MergedTableRow -> Maybe String
 outputMergedRow row =
-    case row.rowNumber of
-        Just rowNum ->
-            case row.entry of
-                ExactMatch time ->
-                    formatRow rowNum time
-
-                NearMatch time1 time2 ->
-                    formatRow rowNum (min time1 time2)
-
-                NotNearMatch time1 time2 ->
-                    formatRow rowNum (min time1 time2)
-
-                OneWatchOnly _ time ->
-                    if row.included then
+    row.rowNumber
+        |> Maybe.andThen
+            (\rowNum ->
+                case row.entry of
+                    ExactMatch time ->
                         formatRow rowNum time
 
-                    else
-                        Nothing
+                    NearMatch time1 time2 ->
+                        formatRow rowNum (min time1 time2)
 
-        Nothing ->
-            Nothing
+                    NotNearMatch time1 time2 ->
+                        formatRow rowNum (min time1 time2)
+
+                    OneWatchOnly _ time ->
+                        if row.included then
+                            formatRow rowNum time
+
+                        else
+                            Nothing
+            )
 
 
 outputMergedTable : List MergedTableRow -> String

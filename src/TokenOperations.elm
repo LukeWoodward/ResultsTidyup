@@ -17,8 +17,7 @@ module TokenOperations exposing
 
 import BarcodeScanner
     exposing
-        ( AthleteAndTimePair
-        , BarcodeScannerData
+        ( BarcodeScannerData
         , BarcodeScannerFile
         , BarcodeScannerFileLine
         , DeletionReason(..)
@@ -28,7 +27,6 @@ import BarcodeScanner
         , regenerate
         )
 import DataEntry exposing (Range, RangeEntry, emptyEntry, rangeEntryFromString)
-import Dict exposing (Dict)
 import Set exposing (Set)
 
 
@@ -104,8 +102,8 @@ commonTokenRangeValidation field entry =
 
 insertTokenRangeEndOffTokens : Int -> RangeEntry -> Maybe TokenOperationValidationError
 insertTokenRangeEndOffTokens lastToken entry =
-    case entry.parsedValue of
-        Just someRange ->
+    entry.parsedValue
+        |> Maybe.andThen (\someRange -> 
             if lastToken < someRange.start && someRange.start <= someRange.end then
                 if someRange.start < someRange.end then
                     Just (InsertRangeOffEndOfTokens lastToken someRange)
@@ -115,15 +113,13 @@ insertTokenRangeEndOffTokens lastToken entry =
 
             else
                 Nothing
-
-        Nothing ->
-            Nothing
+        )
 
 
 tokenRangeEndOffTokens : Int -> TokenRangeField -> RangeEntry -> Maybe TokenOperationValidationError
 tokenRangeEndOffTokens lastToken field entry =
-    case entry.parsedValue of
-        Just someRange ->
+    entry.parsedValue
+        |> Maybe.andThen (\someRange -> 
             if someRange.start <= someRange.end && someRange.end > lastToken then
                 if someRange.start < someRange.end then
                     Just (RangeOffEndOfTokens lastToken someRange field)
@@ -133,15 +129,13 @@ tokenRangeEndOffTokens lastToken field entry =
 
             else
                 Nothing
-
-        Nothing ->
-            Nothing
+        )
 
 
 removingExistingTokens : Set Int -> RangeEntry -> Maybe TokenOperationValidationError
 removingExistingTokens allTokens entry =
-    case entry.parsedValue of
-        Just someRange ->
+    entry.parsedValue
+        |> Maybe.andThen (\someRange -> 
             let
                 removedExistingTokens : List Int
                 removedExistingTokens =
@@ -160,10 +154,7 @@ removingExistingTokens allTokens entry =
 
                 _ ->
                     Just (RemovingExistingTokens removedExistingTokens someRange)
-
-        Nothing ->
-            Nothing
-
+        )
 
 rangesOfDifferentSizeValidation : RangeEntry -> RangeEntry -> Maybe TokenOperationValidationError
 rangesOfDifferentSizeValidation swapTokenEntry1 swapTokenEntry2 =
@@ -200,16 +191,14 @@ rangeTokenOverlapValidation swapTokenEntry1 swapTokenEntry2 =
 
 reverseSingleTokenValidation : RangeEntry -> Maybe TokenOperationValidationError
 reverseSingleTokenValidation reverseTokenEntry =
-    case reverseTokenEntry.parsedValue of
-        Just someRange ->
+    reverseTokenEntry.parsedValue
+        |> Maybe.andThen (\someRange -> 
             if someRange.start == someRange.end then
                 Just ReverseTokenRangeSingleToken
 
             else
                 Nothing
-
-        Nothing ->
-            Nothing
+        )
 
 
 validateEditDetails : Set Int -> TokenOperationEditDetails -> TokenOperationValidationError

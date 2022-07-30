@@ -1,7 +1,6 @@
 module DateHandlingTests exposing (suite)
 
 import DateHandling exposing (dateTimeStringToPosix, generateFilenameDatePart, posixToDateString, posixToDateTimeString)
-import Errors exposing (expectError)
 import Expect
 import Test exposing (Test, describe, test)
 import Time

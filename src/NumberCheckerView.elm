@@ -1,11 +1,10 @@
 module NumberCheckerView exposing (firstManualEntryCellId, numberCheckerView)
 
-import Bootstrap.Button as Button
 import Bootstrap.Table as Table
 import DataEntry exposing (IntegerEntry)
 import Html exposing (Attribute, Html, div, h3, input, text)
 import Html.Attributes exposing (class, colspan, disabled, id, type_, value)
-import Html.Events exposing (keyCode, on, onClick, onInput, onMouseEnter, onMouseLeave)
+import Html.Events exposing (keyCode, on, onInput, onMouseEnter, onMouseLeave)
 import Json.Decode as Json
 import Model exposing (NumberCheckerManualEntryRow)
 import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
@@ -76,36 +75,6 @@ actualEntryCell entry =
         , smallButton (IncrementNumberCheckerRowActualCount entry.entryNumber) [ class "number-checker-command" ] "+"
         , smallButton (DecrementNumberCheckerRowActualCount entry.entryNumber) [ class "number-checker-command" ] minus
         ]
-
-
-numberCheckerUnderlineClass : Int -> Maybe Int -> String
-numberCheckerUnderlineClass numberCheckerId highlightedNumberCheckerId =
-    let
-        highlightClassPrefix : String
-        highlightClassPrefix =
-            if highlightedNumberCheckerId == Just numberCheckerId then
-                "highlighted "
-
-            else
-                ""
-    in
-    highlightClassPrefix ++ "underlined number-checker-row-" ++ String.fromInt numberCheckerId
-
-
-numberCheckerUnderlineAttributes : Maybe String -> Maybe Int -> Maybe Int -> List (Html.Attribute a)
-numberCheckerUnderlineAttributes className numberCheckerId highlightedNumberCheckerId =
-    case ( className, numberCheckerId ) of
-        ( Just someClass, Just someNumberCheckerId ) ->
-            [ class (someClass ++ " " ++ numberCheckerUnderlineClass someNumberCheckerId highlightedNumberCheckerId) ]
-
-        ( Nothing, Just someNumberCheckerId ) ->
-            [ class (numberCheckerUnderlineClass someNumberCheckerId highlightedNumberCheckerId) ]
-
-        ( Just someClass, Nothing ) ->
-            [ class someClass ]
-
-        ( Nothing, Nothing ) ->
-            []
 
 
 numberCheckerRow : AnnotatedNumberCheckerEntry -> Table.Row Msg

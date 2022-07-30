@@ -2,7 +2,6 @@ module Commands exposing (Command(..), CurrentDateAndTimeOperation(..), ElementT
 
 import File exposing (File)
 import FileHandling exposing (InteropFile)
-import Time exposing (Posix, Zone)
 import Timer exposing (WhichTimer)
 
 

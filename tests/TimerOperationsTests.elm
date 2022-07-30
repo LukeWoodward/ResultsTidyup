@@ -4,7 +4,7 @@ import DataEntry exposing (IntegerEntry, emptyEntry, floatEntryFromFloat, intege
 import Expect exposing (Expectation)
 import Test exposing (Test, describe, test)
 import TestData exposing (doubleTimers, singleTimer)
-import Timer exposing (DoubleTimerData, Timers(..), WhichTimer(..), createMergedTable)
+import Timer exposing (Timers(..), WhichTimer(..))
 import TimerOperations
     exposing
         ( DistanceType(..)
@@ -63,7 +63,7 @@ allValidationErrors =
 runFieldValidationTest : (TimerOperationEditDetails -> Bool) -> List String -> Expectation
 runFieldValidationTest validationFunction expectedFields =
     allValidationErrors
-        |> List.filter (\( name, error ) -> validationFunction { emptyEditDetails | validationError = error })
+        |> List.filter (\( _, error ) -> validationFunction { emptyEditDetails | validationError = error })
         |> List.map Tuple.first
         |> Expect.equal expectedFields
 

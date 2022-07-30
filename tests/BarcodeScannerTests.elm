@@ -10,7 +10,6 @@ import BarcodeScanner
         , DeletionStatus(..)
         , LineContents(..)
         , MisScannedItem
-        , UnrecognisedLine
         , allTokensUsed
         , deleteBarcodeScannerLine
         , empty
@@ -19,7 +18,6 @@ import BarcodeScanner
         , isEmpty
         , maxFinishToken
         , readBarcodeScannerData
-        , regenerate
         , updateBarcodeScannerLine
         )
 import Dict exposing (Dict)
@@ -27,10 +25,9 @@ import Error exposing (Error)
 import Errors exposing (expectError)
 import Expect exposing (Expectation)
 import FileHandling exposing (crlf)
-import Set exposing (Set)
+import Set
 import Test exposing (Test, describe, test)
 import TestData exposing (createBarcodeScannerDataFromFiles, ordinaryFileLine, toPosix)
-import Time exposing (Posix)
 
 
 dummyTime : String
@@ -47,7 +44,7 @@ createBarcodeScannerData athleteToPositionsDict athleteBarcodesOnly =
 
         athletesToPosition : Dict Int (List AthleteAndTimePair)
         athletesToPosition =
-            Dict.map (\position athletes -> List.map wrapAthlete athletes) athleteToPositionsDict
+            Dict.map (\_ athletes -> List.map wrapAthlete athletes) athleteToPositionsDict
     in
     BarcodeScannerData
         []
@@ -77,7 +74,7 @@ expectSingleUnrecognisedLine expectedValidLineCount expectedLine expectedCode ba
                     else
                         Expect.equal expectedValidLineCount (Dict.size barcodeScannerData.scannedBarcodes)
 
-                first :: second :: rest ->
+                _ ->
                     Expect.fail "More than one unrecognised line was found"
 
         Err error ->

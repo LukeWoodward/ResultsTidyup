@@ -9,13 +9,12 @@ import BarcodeScanner
         , LineContents(..)
         )
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditLocation)
-import Bootstrap.Button as Button
 import Bootstrap.Tab as Tab
 import Bootstrap.Table as Table
 import Commands
-import Html exposing (Attribute, Html, button, div, h3, small, span, text)
-import Html.Attributes exposing (class, colspan, rowspan, title)
-import Html.Events exposing (onClick, onDoubleClick)
+import Html exposing (Attribute, Html, div, h3, small, text)
+import Html.Attributes exposing (class, colspan, title)
+import Html.Events exposing (onDoubleClick)
 import Model exposing (Model)
 import Msg exposing (Msg(..))
 import ProblemsView exposing (scannerProblemsView)
@@ -105,8 +104,8 @@ barcodeScannerViewRow fileName line =
     in
     Table.tr
         (List.map Table.rowAttr rowAttributes)
-        ([ Table.td [] [ text (String.fromInt line.lineNumber) ] ]
-            ++ barcodeScannerContents line.contents line.deletionStatus
+        (Table.td [] [ text (String.fromInt line.lineNumber) ]
+            :: barcodeScannerContents line.contents line.deletionStatus
             ++ [ Table.td [] [ text line.scanDateTime ] ]
         )
 
@@ -201,7 +200,7 @@ barcodeScannersView model =
     in
     div []
         [ h3 []
-            (text "Scanners" :: [ div [ class "barcode-scanner-buttons" ] buttons ])
+            [ text "Scanners", div [ class "barcode-scanner-buttons" ] buttons ]
         , scannerProblemsView model.problems
         , Tab.config ChangeBarcodeScannerTab
             |> Tab.items (List.indexedMap barcodeScannerTabView model.barcodeScannerData.files)

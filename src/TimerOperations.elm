@@ -157,8 +157,8 @@ isDoubleTimerData timers =
             True
 
 
-timeOffsetValidation : TimerField -> OffsetType -> Timers -> OffsetDetails -> Maybe TimerOperationValidationError
-timeOffsetValidation field offsetType timers offsetDetails =
+timeOffsetValidation : OffsetType -> Timers -> OffsetDetails -> Maybe TimerOperationValidationError
+timeOffsetValidation offsetType timers offsetDetails =
     if isPositive offsetDetails.offset then
         if isDoubleTimerData timers && not offsetDetails.applyToTimer1 && not offsetDetails.applyToTimer2 then
             Just (NoTimersToApplyOffsetTo offsetType)
@@ -229,10 +229,10 @@ validateEditDetails timers editDetails =
                     [ Just TimerOperationNotSelected ]
 
                 AddTimerTimeOffset ->
-                    [ timeOffsetValidation AddOffsetField AddOffset timers editDetails.addOffsetDetails ]
+                    [ timeOffsetValidation AddOffset timers editDetails.addOffsetDetails ]
 
                 SubtractTimerTimeOffset ->
-                    [ timeOffsetValidation SubtractOffsetField SubtractOffset timers editDetails.subtractOffsetDetails
+                    [ timeOffsetValidation SubtractOffset timers editDetails.subtractOffsetDetails
                     , offsetToRemoveLessThanFastestTime timers editDetails.subtractOffsetDetails
                     ]
 

@@ -15,34 +15,13 @@ import BarcodeScanner
 import BarcodeScannerTests exposing (createBarcodeScannerData)
 import Dict
 import Expect exposing (Expectation)
-import Model exposing (Model, NumberCheckerManualEntryRow, emptyNumberCheckerManualEntryRow, initModel)
+import Model exposing (Model, initModel)
 import ProblemFixing exposing (ProblemFix(..), ProblemIgnorance(..), fixProblem, ignoreProblem)
 import Problems exposing (IgnoredProblems, noIgnoredProblems)
 import Test exposing (Test, describe, test)
-import TestData exposing (createBarcodeScannerDataFromFiles, defaultDateTime, doubleTimers, ordinaryFileLine, timersForAdjusting, toPosix)
+import TestData exposing (createBarcodeScannerDataFromFiles, defaultDateTime, doubleTimers, ordinaryFileLine, timersForAdjusting)
 import Time
-import Timer exposing (Timers, WhichTimer(..))
-
-
-createBarcodeScannerDataForRemovingUnassociatedFinishTokens : List Int -> BarcodeScannerData
-createBarcodeScannerDataForRemovingUnassociatedFinishTokens finishTokens =
-    let
-        fakeAthlete : Int -> String
-        fakeAthlete index =
-            "A" ++ String.fromInt (index + 1)
-
-        fileLines : List BarcodeScannerFileLine
-        fileLines =
-            finishTokens
-                |> List.indexedMap
-                    (\index token ->
-                        [ ordinaryFileLine (index * 2 + 1) (fakeAthlete index) (Just token) "14/03/2018 09:47:03"
-                        , ordinaryFileLine (index * 2 + 2) "" (Just token) "14/03/2018 09:47:03"
-                        ]
-                    )
-                |> List.concat
-    in
-    regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines Nothing ] }
+import Timer exposing (WhichTimer(..))
 
 
 createBarcodeScannerDataForRemovingUnassociatedAthletes : List String -> BarcodeScannerData
@@ -65,10 +44,6 @@ createBarcodeScannerDataForRemovingUnassociatedAthletes athletes =
 createBarcodeScannerDataForRemovingDuplicateScans : Int -> BarcodeScannerData
 createBarcodeScannerDataForRemovingDuplicateScans numberOfTimes =
     let
-        barcodeScannerData : BarcodeScannerData
-        barcodeScannerData =
-            createBarcodeScannerData (Dict.singleton 27 (List.repeat numberOfTimes "A1234")) []
-
         fileLines : List BarcodeScannerFileLine
         fileLines =
             List.range 1 numberOfTimes
@@ -90,25 +65,6 @@ barcodeScannerDataForEventStartTimeFiltering =
             , ordinaryFileLine 3 "" (Just 19) "14/03/2018 10:11:16"
             ]
             Nothing
-        ]
-
-
-barcodeScannerDataForScanTimeAdjustments : BarcodeScannerData
-barcodeScannerDataForScanTimeAdjustments =
-    createBarcodeScannerDataFromFiles
-        [ BarcodeScannerFile
-            "barcodes1.txt"
-            [ ordinaryFileLine 1 "A123456" (Just 27) "14/03/2018 09:22:08"
-            , ordinaryFileLine 2 "A345678" Nothing "14/03/2018 09:47:54"
-            , ordinaryFileLine 3 "A888888" (Just 88) "Not a valid time"
-            ]
-            (Just (Time.millisToPosix 1521020874000))
-        , BarcodeScannerFile
-            "barcodes2.txt"
-            [ ordinaryFileLine 1 "" (Just 19) "14/03/2018 10:11:16"
-            , ordinaryFileLine 2 "A987654" (Just 38) "14/03/2018 11:08:44"
-            ]
-            (Just (Time.millisToPosix 1521018668000))
         ]
 
 
@@ -159,12 +115,6 @@ ifLineNumberGreaterThanOne line =
 baseEventStartTime : Int
 baseEventStartTime =
     1521018000000
-
-
-createBarcodeScannerDataForSwappingBarcodes : List BarcodeScannerFile -> BarcodeScannerData
-createBarcodeScannerDataForSwappingBarcodes files =
-    BarcodeScannerData files Dict.empty [] [] [] Nothing
-        |> regenerate
 
 
 runTestForFixingProblem : ProblemFix -> BarcodeScannerData -> BarcodeScannerData -> Expectation

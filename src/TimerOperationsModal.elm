@@ -1,7 +1,5 @@
 module TimerOperationsModal exposing (timerOperationsButtons, timerOperationsDialogSizer, timerOperationsDialogTitle, timerOperationsModalBody)
 
-import Bootstrap.Button as Button
-import Bootstrap.Form as Form
 import Bootstrap.Form.Checkbox as Checkbox
 import Bootstrap.Form.Input as Input
 import Bootstrap.Form.InputGroup as InputGroup
@@ -11,9 +9,8 @@ import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
 import Bootstrap.Modal as Modal
 import DataEntry exposing (Entry, IntegerEntry)
-import Html exposing (Html, div, hr, label, text)
-import Html.Attributes exposing (class, for)
-import Html.Events exposing (onClick)
+import Html exposing (Html, div, hr, text)
+import Html.Attributes exposing (class)
 import Msg exposing (Msg(..))
 import TimeHandling exposing (formatTime)
 import Timer exposing (WhichTimer(..))
@@ -33,7 +30,7 @@ import TimerOperations
         , isExpectedDistanceFieldInvalid
         , isScaleFactorFieldInvalid
         , isSubtractOffsetFieldInvalid
-        , validateEditDetails
+        
         )
 import ViewCommon exposing (normalButton, outlineButton)
 

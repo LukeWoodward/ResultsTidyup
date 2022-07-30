@@ -25,10 +25,10 @@ dialogTitle dialogDetails =
         BarcodeScannerRowEditDialog rowEditDetails ->
             barcodeScannerDialogTitle rowEditDetails
 
-        TokenOperationsDialog tokenOperationEditDetails ->
+        TokenOperationsDialog _ ->
             tokenOperationsDialogTitle
 
-        TimerOperationsDialog timerOperationEditDetails ->
+        TimerOperationsDialog _ ->
             timerOperationsDialogTitle
 
         PasteFileDialog _ ->

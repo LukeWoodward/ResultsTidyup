@@ -1,15 +1,12 @@
 module ResultsTidyup exposing (main)
 
-import BarcodeScanner exposing (BarcodeScannerData)
+import BarcodeScanner
 import BarcodeScannerEditModal
 import BarcodeScannerView exposing (barcodeScannersView)
 import Bootstrap.Alert as Alert
 import Bootstrap.Badge as Badge
-import Bootstrap.Button as Button
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
-import Bootstrap.Grid.Row as Row
-import Bootstrap.Tab as Tab
 import Browser
 import Browser.Dom
 import Commands exposing (Command(..), ElementToFocus(..))
@@ -21,17 +18,16 @@ import File exposing (File)
 import File.Download as Download
 import File.Select
 import FileHandling exposing (InteropFile)
-import Html exposing (Html, a, div, h1, h3, li, span, text, ul)
-import Html.Attributes exposing (attribute, class, href, id, style, target)
+import Html exposing (Html, a, div, h1, span, text)
+import Html.Attributes exposing (class, href, id, target)
 import Html.Events exposing (on, onClick)
 import Json.Decode exposing (Decoder, andThen, fail, field, int, succeed)
 import Modals exposing (showModalDialog)
 import Model exposing (Model, initModel)
 import Msg exposing (Msg(..))
-import NumberCheckerView exposing (numberCheckerView)
+import NumberCheckerView
 import PasteFileModal
 import Ports exposing (filesDropped, recordEventStartTime)
-import Problems
 import Task exposing (Task)
 import Time
 import TimeHandling exposing (formatHoursAndMinutes)
@@ -83,7 +79,7 @@ init { startTime, isBeta } =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Sub.batch [ filesDropped FilesDropped ]
 
 
@@ -204,7 +200,7 @@ updateAndMapCommand msg model =
 
 
 actionsPanelView : Model -> Html Msg
-actionsPanelView model =
+actionsPanelView _ =
     div
         [ id "actionsPanelContainer" ]
         [ normalButton OpenUploadFileDialog [] "Upload files..."

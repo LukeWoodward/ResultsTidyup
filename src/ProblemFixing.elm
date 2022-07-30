@@ -2,8 +2,7 @@ module ProblemFixing exposing (ProblemFix(..), ProblemIgnorance(..), fixProblem,
 
 import BarcodeScanner
     exposing
-        ( AthleteAndTimePair
-        , BarcodeScannerData
+        ( BarcodeScannerData
         , BarcodeScannerFile
         , BarcodeScannerFileLine
         , DeletionReason(..)
@@ -147,22 +146,6 @@ deleteDuplicateScansWithinFiles athlete position files =
         |> Tuple.first
 
 
-applyCorrectionToLine : Int -> BarcodeScannerFileLine -> BarcodeScannerFileLine
-applyCorrectionToLine offset line =
-    case dateTimeStringToPosix line.scanDateTime of
-        Just somePosixValue ->
-            { line
-                | scanDateTime =
-                    Time.posixToMillis somePosixValue
-                        |> (+) offset
-                        |> Time.millisToPosix
-                        |> posixToDateTimeString
-            }
-
-        Nothing ->
-            line
-
-
 fixProblem : ProblemFix -> Model -> Model
 fixProblem problemFix model =
     let
@@ -191,7 +174,7 @@ fixProblem problemFix model =
                             | files = deleteWithinFiles (deleteBeforeEventStart eventStartDateTimeMillis) oldBarcodeScannerData.files
                         }
 
-                AdjustTimer whichTimer offset ->
+                AdjustTimer _ _ ->
                     -- This problem-fix applies no change to the barcode-scanner data.
                     oldBarcodeScannerData
 

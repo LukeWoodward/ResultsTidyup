@@ -13,13 +13,11 @@ import BarcodeScannerEditing
         ( BarcodeScannerEditDetails(..)
         , BarcodeScannerFieldBeingEdited(..)
         , BarcodeScannerRowEditDetails
-        , BarcodeScannerRowEditLocation
         , BarcodeScannerValidationError(..)
         , isValidAthlete
         , isValidFinishPosition
         )
 import Bootstrap.Button as Button
-import Bootstrap.Form as Form
 import Bootstrap.Form.Input as Input
 import Bootstrap.Form.Radio as Radio
 import Bootstrap.Grid as Grid
@@ -27,7 +25,7 @@ import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
 import Bootstrap.Modal as Modal
 import Html exposing (Html, b, div, text)
-import Html.Attributes exposing (class, type_)
+import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg(..))
 import ViewCommon exposing (outlineButton)

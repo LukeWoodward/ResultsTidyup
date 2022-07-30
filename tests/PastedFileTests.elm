@@ -1,6 +1,5 @@
 module PastedFileTests exposing (suite, timerFileContents)
 
-import Errors exposing (expectError)
 import Expect
 import PastedFile exposing (..)
 import Test exposing (Test, describe, test)

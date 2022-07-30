@@ -1,12 +1,10 @@
 module TimersView exposing (timersView)
 
 import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, maxFinishToken)
-import Bootstrap.Button as Button
-import Bootstrap.Tab as Tab
 import Bootstrap.Table as Table
 import Commands
-import Dict exposing (Dict)
-import Html exposing (Html, br, button, div, h3, input, label, small, text)
+import Dict
+import Html exposing (Html, br, div, h3, input, label, text)
 import Html.Attributes exposing (checked, class, for, id, title, type_)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg(..))
@@ -177,8 +175,8 @@ rowWithNoTimerTime barcodeScannerData blankTimeColumns position =
     let
         cells : List (Table.Cell Msg)
         cells =
-            [ intCell position ]
-                ++ List.repeat blankTimeColumns (plainCell "")
+            ( intCell position )
+                :: List.repeat blankTimeColumns (plainCell "")
                 ++ [ barcodeScannerCell barcodeScannerData position Nothing Nothing ]
     in
     Table.tr [] cells
@@ -472,7 +470,7 @@ timersView timers barcodeScannerData problems highlightedNumberCheckerId =
     in
     div
         []
-        [ h3 [] (text headerText :: [ div [ class "timer-buttons" ] buttons ])
+        [ h3 [] ([text headerText, div [ class "timer-buttons" ] buttons ])
         , timerProblemsView problems
         , timerTable timers barcodeScannerData highlightedNumberCheckerId
         , div

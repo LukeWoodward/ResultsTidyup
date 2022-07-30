@@ -14,15 +14,13 @@ import Bootstrap.Tab as Tab
 import Commands exposing (Command(..), ElementToFocus(..))
 import DataEntry exposing (emptyEntry)
 import DateHandling exposing (generateFilenameDatePart)
-import Dict
 import EventDateAndTime exposing (EventDateAndTime)
 import EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeChange)
 import File exposing (File)
 import FileDropHandling exposing (handleFilesDropped)
 import FileHandling exposing (InteropFile)
-import Model exposing (DialogDetails(..), Model, NumberCheckerManualEntryRow, emptyNumberCheckerManualEntryRow, initModel)
+import Model exposing (DialogDetails(..), Model, emptyNumberCheckerManualEntryRow)
 import Msg exposing (Msg(..))
-import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import NumberCheckerEditing
     exposing
         ( addNumberCheckerRow
@@ -34,8 +32,6 @@ import NumberCheckerEditing
 import PastedFile exposing (PastedFileDetails, interpretPastedFile)
 import ProblemFixing exposing (fixProblem, ignoreProblem)
 import Problems exposing (Problems, identifyProblems, noIgnoredProblems, noProblems)
-import Set exposing (Set)
-import Task exposing (Task)
 import Time exposing (Posix, Zone)
 import Timer
     exposing
@@ -71,24 +67,7 @@ maxFileSize =
     1048576
 
 
-underlineTimers : Timers -> List AnnotatedNumberCheckerEntry -> Timers
-underlineTimers timers numberCheckerEntries =
-    if List.isEmpty numberCheckerEntries then
-        timers
 
-    else
-        case timers of
-            None ->
-                timers
-
-            Single _ _ ->
-                timers
-
-            Double doubleTimerData ->
-                Double
-                    { doubleTimerData
-                        | mergedTableRows = underlineTable numberCheckerEntries doubleTimerData.mergedTableRows
-                    }
 
 
 identifyProblemsIn : Model -> Model
@@ -638,6 +617,6 @@ update msg model =
                 TokenOperationsDialog tokenOperationEditDetails ->
                     ( tryApplyTokenOperation tokenOperationEditDetails model, NoCommand )
 
-                PasteFileDialog pastedFileDetails ->
+                PasteFileDialog _ ->
                     -- TODOO
                     ( model, NoCommand )

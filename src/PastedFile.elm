@@ -1,7 +1,7 @@
 module PastedFile exposing (PastedFileDetails, PastedFileInterpretation(..), empty, interpretPastedFile)
 
 import BarcodeScanner exposing (readBarcodeScannerData)
-import Dict exposing (Dict)
+import Dict
 import Timer exposing (Timer(..), readTimerData)
 
 

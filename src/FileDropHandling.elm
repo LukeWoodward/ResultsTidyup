@@ -7,7 +7,7 @@ import EventDateAndTimeEditing exposing (handleEventDateChange)
 import FileHandling exposing (InteropFile)
 import Model exposing (Model)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, annotate, parseNumberCheckerFile)
-import Parser exposing ((|.), Parser, chompIf, chompWhile, end, int, run, symbol)
+import Parser exposing ((|.), Parser, chompIf, chompWhile, end, run)
 import Regex exposing (Regex)
 import Result.Extra
 import Timer exposing (Timer(..), Timers(..), createMergedTable, readTimerData)

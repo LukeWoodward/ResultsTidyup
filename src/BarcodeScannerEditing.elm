@@ -13,7 +13,7 @@ module BarcodeScannerEditing exposing
     , validate
     )
 
-import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFileLine, DeletionStatus(..), LineContents(..), updateBarcodeScannerLine)
+import BarcodeScanner exposing (BarcodeScannerData, DeletionStatus(..), LineContents(..), updateBarcodeScannerLine)
 import Commands exposing (ElementToFocus(..))
 import DataEntry
     exposing
@@ -69,7 +69,7 @@ startEditing location contents isDeleted =
         Ordinary athlete finishPosition ->
             BarcodeScannerRowEditDetails location contents (integerEntryFromAthleteNumber athlete) (integerEntryFromMaybeInt finishPosition) Both Nothing isDeleted
 
-        MisScan misScannedText ->
+        MisScan _ ->
             BarcodeScannerRowEditDetails location contents emptyEntry emptyEntry Neither Nothing isDeleted
 
 

@@ -1,7 +1,7 @@
 module TimeHandling exposing (formatHoursAndMinutes, formatTime, formatTimeWithHours, parseHoursAndMinutes, parseTime)
 
 import Error exposing (Error)
-import Parser exposing ((|.), (|=), Parser, end, map, oneOf, run, succeed, symbol)
+import Parser exposing ((|.), (|=), Parser, end, oneOf, run, succeed, symbol)
 import Parsers exposing (digitsRange)
 
 
@@ -33,11 +33,6 @@ timeParser =
             , succeed ()
             ]
         |. end
-
-
-intMatches : List (Maybe String) -> List (Maybe Int)
-intMatches matches =
-    List.map (Maybe.andThen String.toInt) matches
 
 
 {-| Parse a string containing a time in the form MM:SS or HH:MM:SS to a time,

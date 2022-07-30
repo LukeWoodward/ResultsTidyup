@@ -8,7 +8,7 @@ module PasteFileModal exposing
 
 import Bootstrap.Modal as Modal
 import Commands exposing (CurrentDateAndTimeOperation(..))
-import Html exposing (Html, div, p, text, textarea)
+import Html exposing (Html, div, text, textarea)
 import Html.Attributes exposing (disabled, id, placeholder)
 import Html.Events exposing (onInput)
 import Msg exposing (Msg(..))

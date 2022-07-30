@@ -25,15 +25,11 @@ import DateHandling exposing (dateTimeStringToPosix)
 import Dict exposing (Dict)
 import Error exposing (Error)
 import FileHandling exposing (crlf, isPossibleBinary, splitLines)
-import Parser exposing ((|.), (|=), Parser, end, int, run, succeed, symbol)
+import Parser exposing ((|.), (|=), Parser, end, int, run, symbol)
 import Parsers exposing (digitsRange)
 import Result.Extra
 import Set exposing (Set)
 import Time exposing (Posix)
-
-
-type alias Timed a =
-    { a | scanDateTime : String }
 
 
 type alias AthleteAndTimePair =
@@ -272,7 +268,7 @@ maxDate maxDate1 maxDate2 =
                 |> Time.millisToPosix
                 |> Just
 
-        ( Just date1, Nothing ) ->
+        ( Just _, Nothing ) ->
             maxDate1
 
         ( Nothing, _ ) ->

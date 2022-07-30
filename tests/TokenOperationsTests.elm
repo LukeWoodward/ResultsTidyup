@@ -2,8 +2,7 @@ module TokenOperationsTests exposing (suite)
 
 import BarcodeScanner
     exposing
-        ( AthleteAndTimePair
-        , BarcodeScannerData
+        ( BarcodeScannerData
         , BarcodeScannerFile
         , BarcodeScannerFileLine
         , DeletionStatus(..)
@@ -12,7 +11,6 @@ import BarcodeScanner
         , regenerate
         )
 import DataEntry exposing (Range, RangeEntry)
-import Dict exposing (Dict)
 import Expect exposing (Expectation)
 import Set exposing (Set)
 import Test exposing (Test, describe, test)
@@ -117,7 +115,7 @@ allValidationErrors field =
 runFieldValidationTest : (TokenOperationEditDetails -> Bool) -> TokenRangeField -> List String -> Expectation
 runFieldValidationTest validationFunction field expectedFields =
     allValidationErrors field
-        |> List.filter (\( name, error ) -> validationFunction { emptyEditDetails | validationError = error })
+        |> List.filter (\( _, error ) -> validationFunction { emptyEditDetails | validationError = error })
         |> List.map Tuple.first
         |> Expect.equal expectedFields
 

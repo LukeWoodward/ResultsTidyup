@@ -15,13 +15,13 @@ module Problems exposing
     )
 
 import Array exposing (Array)
-import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, BarcodeScannerFileLine, DeletionStatus(..), LineContents(..), MisScannedItem, UnrecognisedLine)
-import DateHandling exposing (dateTimeStringToPosix, posixToDateString)
+import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, DeletionStatus(..), LineContents(..), MisScannedItem, UnrecognisedLine)
+import DateHandling exposing (dateTimeStringToPosix)
 import Dict exposing (Dict)
 import EventDateAndTime exposing (EventDateAndTime)
 import Set exposing (Set)
-import Time exposing (posixToMillis)
-import Timer exposing (MergeEntry(..), MergedTableRow, Timers(..))
+import Time
+import Timer exposing (MergeEntry(..), Timers(..))
 import TimerOffsetDetection exposing (getTimerTimeOffset)
 
 
@@ -170,30 +170,6 @@ getAthleteToPositionsDict positionToAthletesDict =
     List.foldr mergeItem Dict.empty flattenedDict
 
 
-hasDifferentValues : List comparable -> Maybe ( comparable, comparable )
-hasDifferentValues list =
-    case list of
-        first :: second :: rest ->
-            if first /= second then
-                Just ( first, second )
-
-            else
-                hasDifferentValues (second :: rest)
-
-        _ ->
-            Nothing
-
-
-isExactMatch : MergedTableRow -> Bool
-isExactMatch row =
-    case row.entry of
-        ExactMatch _ ->
-            True
-
-        _ ->
-            False
-
-
 identifyAthletesWithMultiplePositions : Array Int -> Dict String (List Int) -> List AthleteWithMultiplePositionsProblem
 identifyAthletesWithMultiplePositions times athleteToPositionsDict =
     let
@@ -340,7 +316,7 @@ identifyDuplicateScans positionToAthletesDict =
                 |> List.map (\athlete -> AthleteAndPositionPair athlete position)
     in
     Dict.toList positionToAthletesDict
-        |> List.filter (\( position, athletes ) -> List.length athletes > 1)
+        |> List.filter (\( _, athletes ) -> List.length athletes > 1)
         |> List.concatMap identifyDuplicates
 
 
@@ -465,7 +441,7 @@ identifyProblems timers barcodeScannerData eventDateAndTime ignoredProblems =
         positionToAthletesDict : Dict Int (List String)
         positionToAthletesDict =
             barcodeScannerData.scannedBarcodes
-                |> Dict.map (\key athleteAndTimePairs -> List.map .athlete athleteAndTimePairs)
+                |> Dict.map (\_ athleteAndTimePairs -> List.map .athlete athleteAndTimePairs)
 
         athleteToPositionsDict : Dict String (List Int)
         athleteToPositionsDict =

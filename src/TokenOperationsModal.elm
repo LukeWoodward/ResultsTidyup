@@ -1,7 +1,5 @@
 module TokenOperationsModal exposing (tokenOperationsButtons, tokenOperationsDialogSizer, tokenOperationsDialogTitle, tokenOperationsModalBody)
 
-import Bootstrap.Button as Button
-import Bootstrap.Form as Form
 import Bootstrap.Form.Input as Input
 import Bootstrap.Form.Radio as Radio
 import Bootstrap.Grid as Grid
@@ -9,9 +7,8 @@ import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
 import Bootstrap.Modal as Modal
 import DataEntry exposing (RangeEntry, rangeToString)
-import Html exposing (Html, div, label, text)
-import Html.Attributes exposing (class, for)
-import Html.Events exposing (onClick)
+import Html exposing (Html, div, text)
+import Html.Attributes exposing (class)
 import Msg exposing (Msg(..))
 import TokenOperations
     exposing
@@ -82,16 +79,16 @@ validationErrorToString validationError =
         TokenOperationNotSelected ->
             "Please select a token operation"
 
-        InvalidRange field ->
+        InvalidRange _ ->
             "Please enter a valid token or a range of tokens, e.g. 47 or 81-90"
 
-        EmptyRange field ->
+        EmptyRange _ ->
             "Please enter token ranges with the lower end of the range first, e.g. 81-90"
 
-        ZeroInRange field ->
+        ZeroInRange _ ->
             "Token number 0 cannot be used"
 
-        TokenOffEndOfTokens lastToken token field ->
+        TokenOffEndOfTokens lastToken token _ ->
             "Token " ++ String.fromInt token ++ " is beyond the last token used (" ++ String.fromInt lastToken ++ ")"
 
         InsertRangeOffEndOfTokens lastToken range ->
@@ -117,7 +114,7 @@ validationErrorToString validationError =
             in
             "Tokens " ++ rangeToString range ++ " cannot be removed because " ++ reason
 
-        RangeOffEndOfTokens lastToken range field ->
+        RangeOffEndOfTokens lastToken range _ ->
             "The range " ++ rangeToString range ++ " goes beyond the last token used (" ++ String.fromInt lastToken ++ ")"
 
         SwapTokenRangesOfDifferentSizes ->

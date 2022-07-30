@@ -6,8 +6,8 @@ module Model exposing
     , initModel
     )
 
-import BarcodeScanner exposing (BarcodeScannerData, LineContents)
-import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, BarcodeScannerRowEditLocation)
+import BarcodeScanner exposing (BarcodeScannerData)
+import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails)
 import Bootstrap.Tab as Tab
 import DataEntry exposing (IntegerEntry, emptyEntry)
 import Error exposing (FileError)
@@ -15,7 +15,6 @@ import EventDateAndTime exposing (EventDateAndTime)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import PastedFile exposing (PastedFileDetails)
 import Problems exposing (IgnoredProblems, Problems)
-import Time exposing (Posix)
 import Timer exposing (Timers(..))
 import TimerOperations exposing (TimerOperationEditDetails)
 import TokenOperations exposing (TokenOperationEditDetails)
