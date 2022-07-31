@@ -30,7 +30,6 @@ import TimerOperations
         , isExpectedDistanceFieldInvalid
         , isScaleFactorFieldInvalid
         , isSubtractOffsetFieldInvalid
-        
         )
 import ViewCommon exposing (normalButton, outlineButton)
 
@@ -139,15 +138,6 @@ inputTextField rangeEntryGetter field option validator editDetails =
 
 distanceField : (TimerOperationEditDetails -> IntegerEntry) -> TimerField -> (TimerOperationEditDetails -> Bool) -> TimerOperationEditDetails -> Grid.Column Msg
 distanceField rangeEntryGetter field validator editDetails =
-    let
-        dangerAttributes : List (Input.Option Msg)
-        dangerAttributes =
-            if validator editDetails then
-                [ Input.danger ]
-
-            else
-                []
-    in
     Grid.col [ Col.xs2 ]
         [ InputGroup.config
             (InputGroup.text (inputTextFieldOptions rangeEntryGetter field ApplyDistanceBasedTimerScaleFactor validator editDetails))

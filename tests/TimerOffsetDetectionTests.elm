@@ -1,10 +1,9 @@
 module TimerOffsetDetectionTests exposing (suite)
 
-import Errors exposing (expectError)
 import Expect
 import Test exposing (Test, describe, test)
 import TestData exposing (defaultMatchSummary)
-import Timer exposing (DoubleTimerData, MergeEntry(..), MergedTableRow, Timers(..), noUnderlines)
+import Timer exposing (MergeEntry(..), Timers(..))
 import TimerOffsetDetection exposing (findPossibleOffsets, getTimerTimeOffset)
 
 

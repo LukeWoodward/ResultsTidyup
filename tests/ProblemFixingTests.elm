@@ -20,7 +20,6 @@ import ProblemFixing exposing (ProblemFix(..), ProblemIgnorance(..), fixProblem,
 import Problems exposing (IgnoredProblems, noIgnoredProblems)
 import Test exposing (Test, describe, test)
 import TestData exposing (createBarcodeScannerDataFromFiles, defaultDateTime, doubleTimers, ordinaryFileLine, timersForAdjusting)
-import Time
 import Timer exposing (WhichTimer(..))
 
 
@@ -364,7 +363,7 @@ suite =
                         fileChanger : BarcodeScannerFile -> BarcodeScannerFile
                         fileChanger file =
                             case file.lines of
-                                first :: second :: rest ->
+                                first :: _ :: rest ->
                                     { file
                                         | lines = first :: BarcodeScannerFileLine 2 (Ordinary "A345678" Nothing) "This is not a valid time" NotDeleted :: rest
                                     }

@@ -1,6 +1,6 @@
 module EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeChange)
 
-import DataEntry exposing (DateEntry, IntegerEntry, integerEntryFromHoursAndMinutes)
+import DataEntry exposing (DateEntry, integerEntryFromHoursAndMinutes)
 import DateHandling exposing (dateTimeStringToPosix)
 import EventDateAndTime exposing (EventDateAndTime)
 import Model exposing (Model)

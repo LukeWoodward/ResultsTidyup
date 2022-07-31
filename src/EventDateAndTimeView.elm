@@ -4,9 +4,9 @@ import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
 import EventDateAndTime exposing (EventDateAndTime)
-import Html exposing (Html, button, div, h3, input, label, text)
+import Html exposing (Html, div, h3, input, label, text)
 import Html.Attributes exposing (class, for, id, type_, value)
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (onInput)
 import Msg exposing (Msg(..))
 import ViewCommon exposing (smallButton)
 

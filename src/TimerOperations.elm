@@ -172,21 +172,20 @@ timeOffsetValidation offsetType timers offsetDetails =
 
 offsetToRemoveLessThanFastestTime : Timers -> OffsetDetails -> Maybe TimerOperationValidationError
 offsetToRemoveLessThanFastestTime timers offsetDetails =
-    case offsetDetails.offset.parsedValue of
-        Just someOffset ->
-            let
-                fastestTime : Int
-                fastestTime =
-                    getFastestTime timers
-            in
-            if someOffset > fastestTime then
-                Just (SubtractOffsetTooLarge fastestTime someOffset)
+    offsetDetails.offset.parsedValue
+        |> Maybe.andThen
+            (\someOffset ->
+                let
+                    fastestTime : Int
+                    fastestTime =
+                        getFastestTime timers
+                in
+                if someOffset > fastestTime then
+                    Just (SubtractOffsetTooLarge fastestTime someOffset)
 
-            else
-                Nothing
-
-        Nothing ->
-            Nothing
+                else
+                    Nothing
+            )
 
 
 scaleFactorValidation : FloatEntry -> Maybe TimerOperationValidationError
