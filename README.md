@@ -100,9 +100,9 @@ Results Tidyup can identify the following problems with the files uploaded:
 
 Development of this application started before the use of the Virtual Volunteer app everywhere was made compulsory. Use of the Virtual Volunteer app has removed a number of problems that had previously been encountered with results processing, such as barcode scanner volunteers scanning athlete barcodes and finish tokens the wrong way around, so the ability to detect such problems has been removed. However, Results Tidyup still supports handling a couple of problems that are still possible but less likely to turn up with the Virtual Volunteer app:
 
-* Barcodes scanned before the event start.  This usually happens because a volunteer was practising using the scanner before the event starts and these practice scans didn't get cleared from the scanner before they started scanning for real.  The fix to this problem is clearly to remove all scans before the event start.
+* Barcodes scanned before the event start.  This usually happens because a volunteer was practising scanning using the app before the event started and these practice scans didn't get cleared from the app before they started scanning for real.  The fix to this problem is clearly to remove all scans before the event start.
 
- The Virtual Volunteer app makes this less likely to occur, as it's easier for a scanner volunteer to see that they have the practice scans on their phone and to clear them.
+  The Virtual Volunteer app makes this less likely to occur, as it's easier for a scanner volunteer to see that they have the practice scans on their phone and to clear them.
 
 * Mis-scanned barcodes and unrecognised lines.  I've seen the Opticon scanners misread a barcode and generate nonsense barcodes such as `&d084`.  In theory, the Virtual Volunteer app *shouldn't* scan any barcode that isn't an athlete or finish-token barcode, but I've left a check for these in just in case.
 
