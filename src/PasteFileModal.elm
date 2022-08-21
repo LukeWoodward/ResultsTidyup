@@ -56,7 +56,7 @@ pasteFileModalBody pastedFileDetails =
     div []
         [ textarea
             [ id pasteFileDialogTextAreaId
-            , placeholder "Paste text here..."
+            , placeholder "Paste contents of timer or scanner file here..."
             , onInput PastedFileChanged
             ]
             [ text pastedFileDetails.pastedText ]
