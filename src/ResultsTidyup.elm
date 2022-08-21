@@ -16,7 +16,7 @@ import File.Download as Download
 import File.Select
 import FileHandling exposing (InteropFile)
 import Html exposing (Html, a, div, h1, span, text)
-import Html.Attributes exposing (class, href, id, target)
+import Html.Attributes exposing (class, disabled, href, id, target)
 import Html.Events exposing (on, onClick)
 import Json.Decode exposing (Decoder, andThen, fail, field, int, succeed)
 import Modals exposing (showModalDialog)
@@ -177,12 +177,17 @@ updateAndMapCommand msg model =
 
 
 actionsPanelView : Model -> Html Msg
-actionsPanelView _ =
+actionsPanelView model =
+    let
+        noData : Bool
+        noData =
+            model.timers == None && BarcodeScanner.isEmpty model.barcodeScannerData
+    in
     div
         [ id "actionsPanelContainer" ]
         [ normalButton OpenUploadFileDialog [] "Upload files..."
         , normalButton OpenPasteFileDialog [] "Paste..."
-        , normalButton ClearAllData [] "Clear everything"
+        , normalButton ClearAllData [ disabled noData ] "Clear everything"
         ]
 
 
