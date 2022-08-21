@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
- <head>
+
+<head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -8,88 +9,80 @@
   <link rel="stylesheet" href="bootstrap.min.css">
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-
-<div id="results-tidyup-container" class="main-content container-fluid">
-  <div id="results-tidyup"></div>
-</div>
-<noscript>
-  <div class="container-fluid">
-    <h1>Results Tidyup</h1>
-    <h3>JavaScript is disabled</h3>
-    <p>You appear to have JavaScript disabled in your browser.  To use Results Tidyup please enable JavaScript.</p>
+  <div id="results-tidyup-container" class="main-content container-fluid">
+    <div id="results-tidyup"></div>
   </div>
-</noscript>
-<script src="results-tidyup.min.js"></script>
-<script src="jquery-3.6.0.min.js"></script>
-<script>
-var startTime = parseInt(window.localStorage.getItem("eventStartTime"), 10);
-if (isNaN(startTime)) {
-    startTime = null;
-}
-
-var app = Elm.ResultsTidyup.init({
-    node: document.getElementById("results-tidyup"),
-    flags: { startTime: startTime, isBeta: true }
-});
-
-app.ports.recordEventStartTime.subscribe(function (time) {
-    window.localStorage.setItem("eventStartTime", time);
-});
-
-var allFilesDropped = [];
-
-function handleNextFileLoad(files, index) {
-  var reader = new FileReader();
-  reader.onload = function (e) {
-    allFilesDropped.push({
-      fileName: files[index].name,
-      // Replace UTF-8 byte-order marks for the benefit of IE.
-      fileText: e.target.result.replace(/\ufeff/, "")
+  <noscript>
+    <div class="container-fluid">
+      <h1>Results Tidyup</h1>
+      <h3>JavaScript is disabled</h3>
+      <p>You appear to have JavaScript disabled in your browser. To use Results Tidyup please enable JavaScript.</p>
+    </div>
+  </noscript>
+  <script src="results-tidyup.min.js"></script>
+  <script src="jquery-3.6.0.min.js"></script>
+  <script>
+    var app = Elm.ResultsTidyup.init({
+      node: document.getElementById("results-tidyup"),
+      flags: { isBeta: true }
     });
 
-    if (allFilesDropped.length < files.length) {
-      handleNextFileLoad(files, index + 1);
+    var allFilesDropped = [];
+
+    function handleNextFileLoad(files, index) {
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        allFilesDropped.push({
+          fileName: files[index].name,
+          // Replace UTF-8 byte-order marks for the benefit of IE.
+          fileText: e.target.result.replace(/\ufeff/, "")
+        });
+
+        if (allFilesDropped.length < files.length) {
+          handleNextFileLoad(files, index + 1);
+        }
+        else {
+          app.ports.filesDropped.send(allFilesDropped);
+          allFilesDropped = [];
+        }
+      };
+
+      if (index < files.length) {
+        reader.readAsText(files[index], "UTF-8");
+      }
     }
-    else {
-      app.ports.filesDropped.send(allFilesDropped);
+
+    function handleLoad(files) {
+      if (typeof files === "undefined") {
+        // Sorry, IE9 users, can't help you here.
+        alert("Sorry, this feature doesn't work in your browser.  Please try another browser.");
+        return;
+      }
+
       allFilesDropped = [];
+      handleNextFileLoad(files, 0);
     }
-  };
 
-  if (index < files.length) {
-    reader.readAsText(files[index], "UTF-8");
-  }
-}
+    // The following functions have been adapted from
+    // https://developer.mozilla.org/en-US/docs/Using_files_from_web_applications#Selecting_files_using_drag_and_drop
+    function stopDefaultBehaviour(e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
 
-function handleLoad(files) {
-  if (typeof files === "undefined") {
-    // Sorry, IE9 users, can't help you here.
-    alert("Sorry, this feature doesn't work in your browser.  Please try another browser.");
-    return;
-  }
+    function drop(e) {
+      stopDefaultBehaviour(e);
+      handleLoad(e.dataTransfer.files);
+    }
 
-  allFilesDropped = [];
-  handleNextFileLoad(files, 0);
-}
+    document.body.addEventListener("dragenter", stopDefaultBehaviour, false);
+    document.body.addEventListener("dragover", stopDefaultBehaviour, false);
+    document.body.addEventListener("drop", drop, false);
 
-// The following functions have been adapted from
-// https://developer.mozilla.org/en-US/docs/Using_files_from_web_applications#Selecting_files_using_drag_and_drop
-function stopDefaultBehaviour(e) {
-  e.stopPropagation();
-  e.preventDefault();
-}
-
-function drop(e) {
-  stopDefaultBehaviour(e);
-  handleLoad(e.dataTransfer.files);
-}
-
-document.body.addEventListener("dragenter", stopDefaultBehaviour, false);
-document.body.addEventListener("dragover", stopDefaultBehaviour, false);
-document.body.addEventListener("drop", drop, false);
-
-</script>
+  </script>
 
 </body>
+
 </html>

@@ -19,7 +19,7 @@ import Model exposing (Model, initModel)
 import ProblemFixing exposing (ProblemFix(..), ProblemIgnorance(..), fixProblem, ignoreProblem)
 import Problems exposing (IgnoredProblems, noIgnoredProblems)
 import Test exposing (Test, describe, test)
-import TestData exposing (createBarcodeScannerDataFromFiles, defaultDateTime, doubleTimers, ordinaryFileLine, timersForAdjusting)
+import TestData exposing (defaultDateTime, doubleTimers, ordinaryFileLine, timersForAdjusting)
 import Timer exposing (WhichTimer(..))
 
 
@@ -54,19 +54,6 @@ createBarcodeScannerDataForRemovingDuplicateScans numberOfTimes =
     regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines defaultDateTime ] }
 
 
-barcodeScannerDataForEventStartTimeFiltering : BarcodeScannerData
-barcodeScannerDataForEventStartTimeFiltering =
-    createBarcodeScannerDataFromFiles
-        [ BarcodeScannerFile
-            "barcodes1.txt"
-            [ ordinaryFileLine 1 "A123456" (Just 27) "14/03/2018 09:22:08"
-            , ordinaryFileLine 2 "A345678" Nothing "14/03/2018 09:47:54"
-            , ordinaryFileLine 3 "" (Just 19) "14/03/2018 10:11:16"
-            ]
-            Nothing
-        ]
-
-
 deleteLinesWithinFile : (BarcodeScannerFileLine -> BarcodeScannerFileLine) -> List BarcodeScannerFile -> List BarcodeScannerFile
 deleteLinesWithinFile deleter files =
     let
@@ -75,15 +62,6 @@ deleteLinesWithinFile deleter files =
             { file | lines = List.map deleter file.lines }
     in
     List.map deleteInFile files
-
-
-ifLineNumberIn : List Int -> BarcodeScannerFileLine -> BarcodeScannerFileLine
-ifLineNumberIn linesToDelete line =
-    if List.member line.lineNumber linesToDelete then
-        { line | deletionStatus = Deleted BeforeEventStart }
-
-    else
-        line
 
 
 ifAthlete : String -> BarcodeScannerFileLine -> BarcodeScannerFileLine
@@ -107,13 +85,6 @@ ifLineNumberGreaterThanOne line =
 
     else
         line
-
-
-{-| 2018-03-14T09:00:00
--}
-baseEventStartTime : Int
-baseEventStartTime =
-    1521018000000
 
 
 runTestForFixingProblem : ProblemFix -> BarcodeScannerData -> BarcodeScannerData -> Expectation
@@ -288,108 +259,6 @@ suite =
                             { barcodeScannerData | files = [ file ], lastScanDateTime = defaultDateTime }
                     in
                     runTestForFixingProblem (RemoveDuplicateScans 27 "A1234") initialBarcodeScannerData initialBarcodeScannerData
-            ]
-        , describe "Removing scans before event start time"
-            [ test "Removing scans before 9am clears nothing" <|
-                \() ->
-                    let
-                        initialBarcodeScannerData : BarcodeScannerData
-                        initialBarcodeScannerData =
-                            barcodeScannerDataForEventStartTimeFiltering
-                    in
-                    runTestForFixingProblem (RemoveScansBeforeEventStart baseEventStartTime) initialBarcodeScannerData initialBarcodeScannerData
-            , test "Removing scans before 9:30am clears genuine scan" <|
-                \() ->
-                    let
-                        initialBarcodeScannerData : BarcodeScannerData
-                        initialBarcodeScannerData =
-                            barcodeScannerDataForEventStartTimeFiltering
-
-                        expectedBarcodeScannerData : BarcodeScannerData
-                        expectedBarcodeScannerData =
-                            { barcodeScannerDataForEventStartTimeFiltering
-                                | scannedBarcodes = Dict.empty
-                                , files = deleteLinesWithinFile (ifLineNumberIn [ 1 ]) barcodeScannerDataForEventStartTimeFiltering.files
-                            }
-
-                        problemFix : ProblemFix
-                        problemFix =
-                            RemoveScansBeforeEventStart (baseEventStartTime + 30 * 60 * 1000)
-                    in
-                    runTestForFixingProblem problemFix initialBarcodeScannerData expectedBarcodeScannerData
-            , test "Removing scans before 10:00am clears genuine scan and athlete-barcode only" <|
-                \() ->
-                    let
-                        initialBarcodeScannerData : BarcodeScannerData
-                        initialBarcodeScannerData =
-                            barcodeScannerDataForEventStartTimeFiltering
-
-                        expectedBarcodeScannerData : BarcodeScannerData
-                        expectedBarcodeScannerData =
-                            { barcodeScannerDataForEventStartTimeFiltering
-                                | scannedBarcodes = Dict.empty
-                                , athleteBarcodesOnly = []
-                                , files = deleteLinesWithinFile (ifLineNumberIn [ 1, 2 ]) barcodeScannerDataForEventStartTimeFiltering.files
-                            }
-
-                        problemFix : ProblemFix
-                        problemFix =
-                            RemoveScansBeforeEventStart (baseEventStartTime + 60 * 60 * 1000)
-                    in
-                    runTestForFixingProblem problemFix initialBarcodeScannerData expectedBarcodeScannerData
-            , test "Removing scans before 10:30am clears everything" <|
-                \() ->
-                    let
-                        initialBarcodeScannerData : BarcodeScannerData
-                        initialBarcodeScannerData =
-                            barcodeScannerDataForEventStartTimeFiltering
-
-                        expectedBarcodeScannerData : BarcodeScannerData
-                        expectedBarcodeScannerData =
-                            { barcodeScannerDataForEventStartTimeFiltering
-                                | scannedBarcodes = Dict.empty
-                                , athleteBarcodesOnly = []
-                                , files = deleteLinesWithinFile (ifLineNumberIn [ 1, 2, 3 ]) barcodeScannerDataForEventStartTimeFiltering.files
-                            }
-
-                        problemFix : ProblemFix
-                        problemFix =
-                            RemoveScansBeforeEventStart (baseEventStartTime + 90 * 60 * 1000)
-                    in
-                    runTestForFixingProblem problemFix initialBarcodeScannerData expectedBarcodeScannerData
-            , test "A scan with an invalid time never gets removed" <|
-                \() ->
-                    let
-                        fileChanger : BarcodeScannerFile -> BarcodeScannerFile
-                        fileChanger file =
-                            case file.lines of
-                                first :: _ :: rest ->
-                                    { file
-                                        | lines = first :: BarcodeScannerFileLine 2 (Ordinary "A345678" Nothing) "This is not a valid time" NotDeleted :: rest
-                                    }
-
-                                _ ->
-                                    file
-
-                        initialBarcodeScannerData : BarcodeScannerData
-                        initialBarcodeScannerData =
-                            { barcodeScannerDataForEventStartTimeFiltering
-                                | athleteBarcodesOnly = [ AthleteAndTimePair "A345678" "This is not a valid time" ]
-                                , files = List.map fileChanger barcodeScannerDataForEventStartTimeFiltering.files
-                            }
-
-                        expectedBarcodeScannerData : BarcodeScannerData
-                        expectedBarcodeScannerData =
-                            { initialBarcodeScannerData
-                                | scannedBarcodes = Dict.empty
-                                , files = deleteLinesWithinFile (ifLineNumberIn [ 1, 3 ]) initialBarcodeScannerData.files
-                            }
-
-                        problemFix : ProblemFix
-                        problemFix =
-                            RemoveScansBeforeEventStart (baseEventStartTime + 2 * 60 * 60 * 1000)
-                    in
-                    runTestForFixingProblem problemFix initialBarcodeScannerData expectedBarcodeScannerData
             ]
         , describe "AdjustTimer tests"
             [ test "Can adjust timer 1 adding some time to it" <|

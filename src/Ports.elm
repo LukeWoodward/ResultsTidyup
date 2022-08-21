@@ -1,9 +1,6 @@
-port module Ports exposing (filesDropped, recordEventStartTime)
+port module Ports exposing (filesDropped)
 
 import FileHandling exposing (InteropFile)
 
 
 port filesDropped : (List InteropFile -> msg) -> Sub msg
-
-
-port recordEventStartTime : Int -> Cmd msg

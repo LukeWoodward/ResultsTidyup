@@ -12,10 +12,7 @@ import BarcodeScanner
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, BarcodeScannerValidationError, tryUpdateBarcodeScannerLine)
 import Bootstrap.Tab as Tab
 import Commands exposing (Command(..), ElementToFocus(..))
-import DataEntry exposing (emptyEntry)
 import DateHandling exposing (generateFilenameDatePart)
-import EventDateAndTime exposing (EventDateAndTime)
-import EventDateAndTimeEditing exposing (handleEventDateChange, handleEventTimeChange)
 import File exposing (File)
 import FileDropHandling exposing (handleFilesDropped)
 import FileHandling exposing (InteropFile)
@@ -67,15 +64,12 @@ maxFileSize =
     1048576
 
 
-
-
-
 identifyProblemsIn : Model -> Model
 identifyProblemsIn model =
     let
         newProblems : Problems
         newProblems =
-            identifyProblems model.timers model.barcodeScannerData model.eventDateAndTime model.ignoredProblems
+            identifyProblems model.timers model.barcodeScannerData model.ignoredProblems
     in
     { model | problems = newProblems }
 
@@ -203,7 +197,6 @@ clearAllData model =
         , barcodeScannerData = BarcodeScanner.empty
         , problems = noProblems
         , ignoredProblems = noIgnoredProblems
-        , eventDateAndTime = EventDateAndTime emptyEntry model.eventDateAndTime.time
         , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
         , barcodeScannerTab = Tab.initialState
         , dialogDetails = NoDialog
@@ -420,22 +413,6 @@ update msg model =
 
         DeleteNumberCheckerRow entryNumber ->
             ( reunderlineTimerTable (deleteNumberCheckerEntry entryNumber model), NoCommand )
-
-        EventDateChanged newEventDate ->
-            ( identifyProblemsIn (handleEventDateChange newEventDate model), NoCommand )
-
-        EventTimeChanged newEventTime ->
-            let
-                modelWithNewTime : Model
-                modelWithNewTime =
-                    handleEventTimeChange newEventTime model
-
-                command : Command
-                command =
-                    Maybe.map SaveEventStartTime modelWithNewTime.eventDateAndTime.time.parsedValue
-                        |> Maybe.withDefault NoCommand
-            in
-            ( identifyProblemsIn modelWithNewTime, command )
 
         NumberCheckerFieldChanged fieldChange newValue ->
             ( handleNumberCheckerFieldChange fieldChange newValue model, NoCommand )

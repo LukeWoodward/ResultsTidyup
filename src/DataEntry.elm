@@ -1,6 +1,5 @@
 module DataEntry exposing
-    ( DateEntry
-    , Entry
+    ( Entry
     , FloatEntry
     , IntegerEntry
     , Range
@@ -9,7 +8,6 @@ module DataEntry exposing
     , floatEntryFromFloat
     , floatEntryFromString
     , integerEntryFromAthleteNumber
-    , integerEntryFromHoursAndMinutes
     , integerEntryFromInt
     , integerEntryFromMaybeInt
     , integerEntryFromString
@@ -20,8 +18,7 @@ module DataEntry exposing
     , rangeToString
     )
 
-import Time exposing (Posix)
-import TimeHandling exposing (parseHoursAndMinutes, parseTime)
+import TimeHandling exposing (parseTime)
 
 
 type alias Entry a =
@@ -39,12 +36,6 @@ type alias IntegerEntry =
 type alias FloatEntry =
     { enteredValue : String
     , parsedValue : Maybe Float
-    }
-
-
-type alias DateEntry =
-    { enteredValue : String
-    , parsedValue : Maybe Posix
     }
 
 
@@ -118,13 +109,6 @@ integerEntryFromMaybeInt maybeIntValue =
                 |> Maybe.withDefault ""
     in
     IntegerEntry stringValue maybeIntValue
-
-
-integerEntryFromHoursAndMinutes : String -> IntegerEntry
-integerEntryFromHoursAndMinutes hoursAndMinutes =
-    parseHoursAndMinutes hoursAndMinutes
-        |> Result.toMaybe
-        |> IntegerEntry hoursAndMinutes
 
 
 integerEntryFromTime : String -> IntegerEntry

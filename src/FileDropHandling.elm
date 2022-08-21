@@ -1,9 +1,7 @@
 module FileDropHandling exposing (handleFilesDropped)
 
 import BarcodeScanner exposing (BarcodeScannerData, mergeScannerData, readBarcodeScannerData)
-import DateHandling exposing (posixToDateString)
 import Error exposing (Error, FileError, mapError)
-import EventDateAndTimeEditing exposing (handleEventDateChange)
 import FileHandling exposing (InteropFile)
 import Model exposing (Model)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, annotate, parseNumberCheckerFile)
@@ -75,28 +73,6 @@ isPossibleBarcodeScannerFile fileText =
     Regex.contains barcodeScannerRegex fileText
 
 
-setEventDateAndTimeIn : Model -> Model
-setEventDateAndTimeIn model =
-    let
-        newEventDate : Maybe String
-        newEventDate =
-            model.barcodeScannerData.lastScanDateTime
-                |> Maybe.map posixToDateString
-    in
-    case ( newEventDate, model.eventDateAndTime.date.parsedValue ) of
-        ( Just _, Just _ ) ->
-            -- Already have an event date so leave it.
-            model
-
-        ( Just newDateString, Nothing ) ->
-            -- We've got an event date now and we didn't before.
-            handleEventDateChange newDateString model
-
-        ( Nothing, _ ) ->
-            -- No event date read so leave things as they were.
-            model
-
-
 handleBarcodeScannerFileDrop : String -> String -> Model -> Model
 handleBarcodeScannerFileDrop fileName fileText model =
     if List.any (\file -> file.name == fileName) model.barcodeScannerData.files then
@@ -121,7 +97,6 @@ handleBarcodeScannerFileDrop fileName fileText model =
                 { model
                     | barcodeScannerData = mergeScannerData model.barcodeScannerData scannerData
                 }
-                    |> setEventDateAndTimeIn
 
             Err error ->
                 { model | lastErrors = model.lastErrors ++ [ mapError fileName error ] }

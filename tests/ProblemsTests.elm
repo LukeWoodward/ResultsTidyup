@@ -4,7 +4,6 @@ import BarcodeScanner
     exposing
         ( BarcodeScannerData
         , BarcodeScannerFile
-        , BarcodeScannerFileLine
         , DeletionReason(..)
         , DeletionStatus(..)
         , LineContents(..)
@@ -12,16 +11,13 @@ import BarcodeScanner
         , UnrecognisedLine
         )
 import BarcodeScannerTests exposing (createBarcodeScannerData)
-import DataEntry exposing (DateEntry, IntegerEntry, emptyEntry)
 import Dict
-import EventDateAndTime exposing (EventDateAndTime)
 import Expect
 import Problems
     exposing
         ( AthleteAndPositionPair
         , AthleteWithAndWithoutPositionProblem
         , AthleteWithMultiplePositionsProblem
-        , BarcodesScannedBeforeEventStartProblem
         , MisScannedAthleteBarcodeProblem
         , PositionAndTime
         , PositionOffEndOfTimesProblem
@@ -33,28 +29,6 @@ import Problems
 import Test exposing (Test, describe, test)
 import TestData exposing (createBarcodeScannerDataFromFiles, doubleTimers, ordinaryFileLine, toPosix)
 import Timer exposing (MergeEntry(..), MergedTableRow, TimerMatchSummary, Timers(..), WhichTimer(..), noUnderlines)
-
-
-emptyEventDateAndTime : EventDateAndTime
-emptyEventDateAndTime =
-    EventDateAndTime emptyEntry emptyEntry
-
-
-exampleEventDateAndTime : EventDateAndTime
-exampleEventDateAndTime =
-    EventDateAndTime (DateEntry "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z")) (IntegerEntry "09:00" (Just (9 * 60)))
-
-
-lateEventDateAndTime : EventDateAndTime
-lateEventDateAndTime =
-    EventDateAndTime (DateEntry "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z")) (IntegerEntry "10:00" (Just (10 * 60)))
-
-
-{-| 2018-03-14T09:00:00
--}
-baseEventStartTime : Int
-baseEventStartTime =
-    1521018000000
 
 
 wrapMergeEntriesInTable : List MergeEntry -> List MergedTableRow
@@ -100,18 +74,17 @@ suite =
         [ describe "identifyProblems tests"
             [ test "identifyProblems returns no problems for no data" <|
                 \() ->
-                    identifyProblems None BarcodeScanner.empty emptyEventDateAndTime noIgnoredProblems
+                    identifyProblems None BarcodeScanner.empty noIgnoredProblems
                         |> Expect.equal noProblems
             , test "identifyProblems returns no problems for a single athlete with a single position" <|
                 \() ->
-                    identifyProblems None (createBarcodeScannerData (Dict.singleton 12 [ "A123456" ]) []) emptyEventDateAndTime noIgnoredProblems
+                    identifyProblems None (createBarcodeScannerData (Dict.singleton 12 [ "A123456" ]) []) noIgnoredProblems
                         |> Expect.equal noProblems
             , test "identifyProblems returns no problems for three athletes with three different positions" <|
                 \() ->
                     identifyProblems
                         None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A987654" ] ) ]) [])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal noProblems
             , test "identifyProblems returns no problem for two barcode scanner files with two equal last-scan dates" <|
@@ -132,7 +105,6 @@ suite =
                     identifyProblems
                         None
                         barcodeScannerData
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal noProblems
             , test "identifyProblems returns a problem for an athlete with two repeated positions" <|
@@ -140,7 +112,6 @@ suite =
                     identifyProblems
                         None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A123456" ] ) ]) [])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal
                             { noProblems
@@ -153,7 +124,6 @@ suite =
                     identifyProblems
                         (Single "timer1.txt" [ 604, 775, 802, 993, 1011, 1143, 1197 ])
                         (createBarcodeScannerData (Dict.fromList [ ( 3, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 6, [ "A123456" ] ) ]) [])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal
                             { noProblems
@@ -166,7 +136,6 @@ suite =
                     identifyProblems
                         (Single "timer1.txt" [ 604, 775, 802, 993, 1011 ])
                         (createBarcodeScannerData (Dict.fromList [ ( 3, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 6, [ "A123456" ] ) ]) [])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal
                             { noProblems
@@ -180,7 +149,6 @@ suite =
                     identifyProblems
                         doubleTimers
                         (createBarcodeScannerData (Dict.fromList [ ( 1, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 2, [ "A123456" ] ) ]) [])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal
                             { noProblems
@@ -193,7 +161,6 @@ suite =
                     identifyProblems
                         doubleTimers
                         (createBarcodeScannerData (Dict.fromList [ ( 3, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 5, [ "A123456" ] ) ]) [])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal
                             { noProblems
@@ -206,7 +173,6 @@ suite =
                     identifyProblems
                         doubleTimersForTimeLookupTests
                         (createBarcodeScannerData (Dict.fromList [ ( 2, [ "A123456" ] ), ( 3, [ "A252525" ] ), ( 4, [ "A123456" ] ) ]) [])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal
                             { noProblems
@@ -219,7 +185,6 @@ suite =
                     identifyProblems
                         doubleTimers
                         (createBarcodeScannerData (Dict.fromList [ ( 1, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 8, [ "A123456" ] ) ]) [])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal
                             { noProblems
@@ -233,7 +198,6 @@ suite =
                     identifyProblems
                         None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A123456" ] ), ( 19, [ "A123456" ] ) ]) [])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal
                             { noProblems
@@ -246,7 +210,6 @@ suite =
                     identifyProblems
                         None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A123456", "A123456" ] ) ]) [])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal
                             { noProblems
@@ -260,7 +223,6 @@ suite =
                     identifyProblems
                         None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A123456" ] ), ( 25, [ "A252525" ] ) ]) [])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal
                             { noProblems
@@ -274,7 +236,6 @@ suite =
                     identifyProblems
                         None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456", "A252525" ] ), ( 19, [ "A987654" ] ) ]) [])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal { noProblems | positionsWithMultipleAthletes = [ PositionWithMultipleAthletesProblem 12 [ "A123456", "A252525" ] ] }
             , test "identifyProblems returns a problem for a position with three athletes" <|
@@ -282,7 +243,6 @@ suite =
                     identifyProblems
                         None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456", "A252525", "A748159" ] ), ( 19, [ "A987654" ] ) ]) [])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal { noProblems | positionsWithMultipleAthletes = [ PositionWithMultipleAthletesProblem 12 [ "A123456", "A252525", "A748159" ] ] }
             , test "identifyProblems returns a problem for a position with three athletes, two of which are the same" <|
@@ -290,7 +250,6 @@ suite =
                     identifyProblems
                         None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456", "A252525", "A252525" ] ), ( 19, [ "A987654" ] ) ]) [])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal
                             { noProblems
@@ -302,7 +261,6 @@ suite =
                     identifyProblems
                         None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456", "A252525" ] ), ( 19, [ "A987654", "A748159" ] ) ]) [])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal
                             { noProblems
@@ -316,7 +274,6 @@ suite =
                     identifyProblems
                         (Single "filename" [ 1000, 1100, 1200, 1300, 1400 ])
                         (createBarcodeScannerData (Dict.fromList [ ( 3, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 5, [ "A987654" ] ) ]) [])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal noProblems
             , test "identifyProblems returns a problem for a finish position off the end" <|
@@ -324,7 +281,6 @@ suite =
                     identifyProblems
                         (Single "filename" [ 1000, 1100, 1200, 1300 ])
                         (createBarcodeScannerData (Dict.fromList [ ( 3, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 5, [ "A987654" ] ) ]) [])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal { noProblems | positionOffEndOfTimes = Just (PositionOffEndOfTimesProblem 4 5) }
             , test "identifyProblems returns a single problem for multiple finish positions off the end" <|
@@ -332,7 +288,6 @@ suite =
                     identifyProblems
                         (Single "filename" [ 1000, 1100 ])
                         (createBarcodeScannerData (Dict.fromList [ ( 3, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 5, [ "A987654" ] ) ]) [])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal { noProblems | positionOffEndOfTimes = Just (PositionOffEndOfTimesProblem 2 5) }
             , test "identifyProblems returns a single problem for an athlete with no position" <|
@@ -340,7 +295,6 @@ suite =
                     identifyProblems
                         None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A987654" ] ) ]) [ "A951623" ])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal { noProblems | athletesMissingPosition = [ "A951623" ] }
             , test "identifyProblems returns multiple problems for multiple athletes with no position" <|
@@ -348,7 +302,6 @@ suite =
                     identifyProblems
                         None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A987654" ] ) ]) [ "A321456", "A951623" ])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal { noProblems | athletesMissingPosition = [ "A321456", "A951623" ] }
             , test "identifyProblems returns a mis-scanned athlete barcode problem for an athlete barcode too long and similar to an existing barcode" <|
@@ -356,7 +309,6 @@ suite =
                     identifyProblems
                         None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A987654" ] ) ]) [ "A123456789" ])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal { noProblems | misScannedAthleteBarcodes = [ MisScannedAthleteBarcodeProblem "A123456789" "A123456" ] }
             , test "identifyProblems returns a mis-scanned athlete barcode problem for an athlete barcode too long scanned multiple times and similar to an existing barcode" <|
@@ -364,7 +316,6 @@ suite =
                     identifyProblems
                         None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A987654" ] ) ]) [ "A123456789", "A123456789", "A123456789" ])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal { noProblems | misScannedAthleteBarcodes = [ MisScannedAthleteBarcodeProblem "A123456789" "A123456" ] }
             , test "identifyProblems returns an athlete-barcode-without-position problem for an athlete barcode too long but not similar to an existing barcode" <|
@@ -372,7 +323,6 @@ suite =
                     identifyProblems
                         None
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A987654" ] ) ]) [ "A505479977654" ])
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal { noProblems | athletesMissingPosition = [ "A505479977654" ] }
             , test "identifyProblems returns a problem for a mis-scanned item" <|
@@ -380,7 +330,6 @@ suite =
                     identifyProblems
                         None
                         (BarcodeScannerData [] Dict.empty [] [ MisScannedItem "&d084" "14/03/2018 09:47:03" ] [] Nothing)
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal { noProblems | misScans = [ "&d084" ] }
             , test "identifyProblems returns a problem for an unrecognised barcode-scanner line" <|
@@ -388,7 +337,6 @@ suite =
                     identifyProblems
                         None
                         (BarcodeScannerData [] Dict.empty [] [] [ UnrecognisedLine "This is not a valid line" "code" "message" ] Nothing)
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal { noProblems | unrecognisedBarcodeScannerLines = [ "This is not a valid line" ] }
             , test "identifyProblems returns a fixable problem for the same athlete with the same finish position twice" <|
@@ -399,7 +347,6 @@ suite =
                             (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525", "A252525" ] ), ( 19, [ "A987654" ] ) ])
                             []
                         )
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal { noProblems | athletesInSamePositionMultipleTimes = [ AthleteAndPositionPair "A252525" 16 ] }
             , test "identifyProblems returns two fixable problems for two athletes with the same finish position twice" <|
@@ -410,7 +357,6 @@ suite =
                             (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525", "A252525" ] ), ( 19, [ "A987654", "A987654" ] ) ])
                             []
                         )
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal { noProblems | athletesInSamePositionMultipleTimes = [ AthleteAndPositionPair "A252525" 16, AthleteAndPositionPair "A987654" 19 ] }
             , test "identifyProblems returns a fixable problem for an athlete with a position and with a missing position" <|
@@ -421,7 +367,6 @@ suite =
                             (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A987654" ] ) ])
                             [ "A252525" ]
                         )
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal { noProblems | athletesWithAndWithoutPosition = [ AthleteWithAndWithoutPositionProblem "A252525" 1 16 ] }
             , test "identifyProblems returns two fixable problems for two athletes with and without a position" <|
@@ -432,7 +377,6 @@ suite =
                             (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A987654" ] ) ])
                             [ "A252525", "A987654" ]
                         )
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal { noProblems | athletesWithAndWithoutPosition = [ AthleteWithAndWithoutPositionProblem "A252525" 1 16, AthleteWithAndWithoutPositionProblem "A987654" 1 19 ] }
             , test "identifyProblems returns two fixable problems for two athletes with and without a position, one with multiple no-position scans" <|
@@ -443,7 +387,6 @@ suite =
                             (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A987654" ] ) ])
                             [ "A252525", "A987654", "A252525", "A252525" ]
                         )
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal { noProblems | athletesWithAndWithoutPosition = [ AthleteWithAndWithoutPositionProblem "A252525" 3 16, AthleteWithAndWithoutPositionProblem "A987654" 1 19 ] }
             , test "identifyProblems returns no problems for a scanned barcode with its scan time after the event start" <|
@@ -456,71 +399,8 @@ suite =
                                 (toPosix "2018-03-14T09:47:03.000Z")
                             ]
                         )
-                        exampleEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal noProblems
-            , test "identifyProblems returns a fixable problem for a scanned barcode with its scan time before the event start" <|
-                \() ->
-                    identifyProblems
-                        None
-                        (createBarcodeScannerDataFromFiles
-                            [ BarcodeScannerFile "barcodes1.txt"
-                                [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
-                                (toPosix "2018-03-14T09:47:03.000Z")
-                            ]
-                        )
-                        lateEventDateAndTime
-                        noIgnoredProblems
-                        |> Expect.equal { noProblems | barcodesScannedBeforeEventStart = Just (BarcodesScannedBeforeEventStartProblem 1 (baseEventStartTime + 60 * 60 * 1000) "14/03/2018 10:00") }
-            , test "identifyProblems returns no problems for a deleted scanned barcode with its scan time before the event start" <|
-                \() ->
-                    identifyProblems
-                        None
-                        (createBarcodeScannerDataFromFiles
-                            [ BarcodeScannerFile "barcodes1.txt"
-                                [ BarcodeScannerFileLine 1 (Ordinary "A4580442" (Just 47)) "14/03/2018 09:47:03" (Deleted BeforeEventStart) ]
-                                (toPosix "2018-03-14T09:47:03.000Z")
-                            ]
-                        )
-                        lateEventDateAndTime
-                        noIgnoredProblems
-                        |> Expect.equal noProblems
-            , test "identifyProblems returns no problems for a barcode-scanner file with all scan times within an hour before the event start but all rows deleted" <|
-                \() ->
-                    identifyProblems
-                        None
-                        (createBarcodeScannerDataFromFiles
-                            [ BarcodeScannerFile "barcodes1.txt"
-                                [ BarcodeScannerFileLine 1 (Ordinary "A4580442" (Just 47)) "14/03/2018 08:47:03" (Deleted BeforeEventStart)
-                                , BarcodeScannerFileLine 2 (Ordinary "A123456" (Just 33)) "14/03/2018 08:37:22" (Deleted BeforeEventStart)
-                                , BarcodeScannerFileLine 3 (Ordinary "A252525" (Just 59)) "14/03/2018 08:42:08" (Deleted BeforeEventStart)
-                                ]
-                                (toPosix "2018-03-14T08:47:03.000Z")
-                            ]
-                        )
-                        exampleEventDateAndTime
-                        noIgnoredProblems
-                        |> Expect.equal noProblems
-            , test "identifyProblems returns only an individual problem for a barcode-scanner file with half the scan times within an hour before the event start" <|
-                \() ->
-                    identifyProblems
-                        None
-                        (createBarcodeScannerDataFromFiles
-                            [ BarcodeScannerFile "barcodes1.txt"
-                                [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 08:47:03"
-                                , ordinaryFileLine 2 "A123456" (Just 33) "14/03/2018 08:37:22"
-                                , ordinaryFileLine 3 "A252525" (Just 59) "14/03/2018 09:42:08"
-                                , ordinaryFileLine 4 "A987654" (Just 42) "14/03/2018 09:44:07"
-                                ]
-                                (toPosix "2018-03-14T09:44:07.000Z")
-                            ]
-                        )
-                        exampleEventDateAndTime
-                        noIgnoredProblems
-                        |> Expect.equal
-                            { noProblems
-                                | barcodesScannedBeforeEventStart = Just (BarcodesScannedBeforeEventStartProblem 2 baseEventStartTime "14/03/2018 09:00")
-                            }
             , test "identifyProblems returns no problems for timers almost in sync" <|
                 \() ->
                     identifyProblems
@@ -534,7 +414,6 @@ suite =
                             }
                         )
                         BarcodeScanner.empty
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal noProblems
             , test "identifyProblems returns a problem for timers not in sync" <|
@@ -558,7 +437,6 @@ suite =
                             }
                         )
                         BarcodeScanner.empty
-                        emptyEventDateAndTime
                         noIgnoredProblems
                         |> Expect.equal { noProblems | timerTimeOffset = Just -5 }
             , test "identifyProblems returns no problems for timers not in sync if problem ignored" <|
@@ -582,7 +460,6 @@ suite =
                             }
                         )
                         BarcodeScanner.empty
-                        emptyEventDateAndTime
                         { noIgnoredProblems | ignoreTimerTimeOffsets = True }
                         |> Expect.equal noProblems
             ]

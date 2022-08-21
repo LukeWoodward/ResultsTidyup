@@ -10,10 +10,7 @@ import Bootstrap.Grid.Col as Col
 import Browser
 import Browser.Dom
 import Commands exposing (Command(..), ElementToFocus(..))
-import DataEntry exposing (IntegerEntry, emptyEntry)
 import Error exposing (FileError)
-import EventDateAndTime exposing (EventDateAndTime)
-import EventDateAndTimeView exposing (eventDateAndTimeView)
 import File exposing (File)
 import File.Download as Download
 import File.Select
@@ -27,10 +24,9 @@ import Model exposing (Model, initModel)
 import Msg exposing (Msg(..))
 import NumberCheckerView
 import PasteFileModal
-import Ports exposing (filesDropped, recordEventStartTime)
+import Ports exposing (filesDropped)
 import Task exposing (Task)
 import Time
-import TimeHandling exposing (formatHoursAndMinutes)
 import Timer exposing (Timers(..))
 import TimersView exposing (timersView)
 import UpdateLogic exposing (update)
@@ -38,8 +34,7 @@ import ViewCommon exposing (normalButton)
 
 
 type alias FlagsRecord =
-    { startTime : Maybe Int
-    , isBeta : Bool
+    { isBeta : Bool
     }
 
 
@@ -59,23 +54,8 @@ main =
 
 
 init : FlagsRecord -> ( Model, Cmd Msg )
-init { startTime, isBeta } =
-    let
-        startTimeAsString : String
-        startTimeAsString =
-            Maybe.map formatHoursAndMinutes startTime
-                |> Maybe.withDefault ""
-
-        initialEventDateAndTime : EventDateAndTime
-        initialEventDateAndTime =
-            EventDateAndTime emptyEntry (IntegerEntry startTimeAsString startTime)
-    in
-    ( { initModel
-        | isBeta = isBeta
-        , eventDateAndTime = initialEventDateAndTime
-      }
-    , Cmd.none
-    )
+init { isBeta } =
+    ( { initModel | isBeta = isBeta }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -155,9 +135,6 @@ mapCommand command =
 
         FocusElement elementToFocus ->
             focus elementToFocus
-
-        SaveEventStartTime startTime ->
-            recordEventStartTime startTime
 
         SelectFileForUpload ->
             File.Select.files [ ".txt", ".csv" ] FilesUploaded
@@ -258,13 +235,6 @@ view model =
                     ]
                 , actionsPanelView model
                 , errorsView model.lastErrors
-                ]
-            , Grid.col [ Col.xs6 ]
-                [ if BarcodeScanner.isEmpty model.barcodeScannerData then
-                    div [] []
-
-                  else
-                    eventDateAndTimeView model.eventDateAndTime
                 ]
             ]
         , Grid.row []

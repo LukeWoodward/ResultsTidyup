@@ -52,8 +52,7 @@ type alias UnrecognisedLine =
 
 
 type DeletionReason
-    = BeforeEventStart
-    | DuplicateScan String Int
+    = DuplicateScan String Int
     | AthleteScannedWithFinishTokenElsewhere String
     | DeletedByUser
 

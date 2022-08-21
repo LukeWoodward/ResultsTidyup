@@ -2,7 +2,6 @@ module Problems exposing
     ( AthleteAndPositionPair
     , AthleteWithAndWithoutPositionProblem
     , AthleteWithMultiplePositionsProblem
-    , BarcodesScannedBeforeEventStartProblem
     , IgnoredProblems
     , MisScannedAthleteBarcodeProblem
     , PositionAndTime
@@ -18,7 +17,6 @@ import Array exposing (Array)
 import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, DeletionStatus(..), LineContents(..), MisScannedItem, UnrecognisedLine)
 import DateHandling exposing (dateTimeStringToPosix)
 import Dict exposing (Dict)
-import EventDateAndTime exposing (EventDateAndTime)
 import Set exposing (Set)
 import Time
 import Timer exposing (MergeEntry(..), Timers(..))
@@ -41,13 +39,6 @@ check for to identify a similar barcode. This includes the leading "A".
 misScannedAthleteBarcodeSimilarityLength : Int
 misScannedAthleteBarcodeSimilarityLength =
     6
-
-
-type alias BarcodesScannedBeforeEventStartProblem =
-    { numberOfScansBeforeEventStart : Int
-    , eventStartDateTimeMillis : Int
-    , eventStartTime : String
-    }
 
 
 type alias AthleteAndPositionPair =
@@ -94,8 +85,7 @@ type alias MisScannedAthleteBarcodeProblem =
 
 
 type alias Problems =
-    { barcodesScannedBeforeEventStart : Maybe BarcodesScannedBeforeEventStartProblem
-    , athletesInSamePositionMultipleTimes : List AthleteAndPositionPair
+    { athletesInSamePositionMultipleTimes : List AthleteAndPositionPair
     , athletesWithAndWithoutPosition : List AthleteWithAndWithoutPositionProblem
     , timerTimeOffset : Maybe Int
     , athletesWithMultiplePositions : List AthleteWithMultiplePositionsProblem
@@ -112,8 +102,7 @@ type alias Problems =
 
 noProblems : Problems
 noProblems =
-    { barcodesScannedBeforeEventStart = Nothing
-    , athletesInSamePositionMultipleTimes = []
+    { athletesInSamePositionMultipleTimes = []
     , athletesWithAndWithoutPosition = []
     , timerTimeOffset = Nothing
     , athletesWithMultiplePositions = []
@@ -275,21 +264,6 @@ getSingleValue list =
             Nothing
 
 
-countScansBefore : Int -> BarcodeScannerFile -> Int
-countScansBefore timeMillis file =
-    let
-        countDatesBefore : List String -> Int
-        countDatesBefore dates =
-            List.filterMap dateTimeStringToPosix dates
-                |> List.map Time.posixToMillis
-                |> List.filter (\t -> t < timeMillis)
-                |> List.length
-    in
-    List.filter (\line -> line.deletionStatus == NotDeleted) file.lines
-        |> List.map .scanDateTime
-        |> countDatesBefore
-
-
 identifyAthletesWithNoPositions : List String -> Dict String (List Int) -> Set String -> List String
 identifyAthletesWithNoPositions unpairedAthletes athleteToPositionsDict athletesToExclude =
     deduplicate unpairedAthletes
@@ -374,21 +348,6 @@ identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnl
     List.filterMap getProblemIfSinglePosition athleteBarcodesOnlyWithCounts
 
 
-identifyRecordsScannedBeforeEventStartTime : BarcodeScannerData -> String -> Int -> Maybe BarcodesScannedBeforeEventStartProblem
-identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString eventStartDateTimeMillis =
-    let
-        totalNumberOfScansBeforeEventStart : Int
-        totalNumberOfScansBeforeEventStart =
-            List.map (countScansBefore eventStartDateTimeMillis) barcodeScannerData.files
-                |> List.sum
-    in
-    if totalNumberOfScansBeforeEventStart == 0 then
-        Nothing
-
-    else
-        Just (BarcodesScannedBeforeEventStartProblem totalNumberOfScansBeforeEventStart eventStartDateTimeMillis eventStartTimeAsString)
-
-
 replaceZeroOffset : Maybe Int -> Maybe Int
 replaceZeroOffset offset =
     if offset == Just 0 then
@@ -435,8 +394,8 @@ getTimes timers =
                 |> timesListToArray
 
 
-identifyProblems : Timers -> BarcodeScannerData -> EventDateAndTime -> IgnoredProblems -> Problems
-identifyProblems timers barcodeScannerData eventDateAndTime ignoredProblems =
+identifyProblems : Timers -> BarcodeScannerData -> IgnoredProblems -> Problems
+identifyProblems timers barcodeScannerData ignoredProblems =
     let
         positionToAthletesDict : Dict Int (List String)
         positionToAthletesDict =
@@ -451,17 +410,6 @@ identifyProblems timers barcodeScannerData eventDateAndTime ignoredProblems =
         athleteBarcodesOnly =
             List.map .athlete barcodeScannerData.athleteBarcodesOnly
 
-        eventStartDateTimeMillis : Maybe Int
-        eventStartDateTimeMillis =
-            Maybe.map2
-                (\dateAsPosix timeInMinutes -> Time.posixToMillis dateAsPosix + timeInMinutes * 60 * 1000)
-                eventDateAndTime.date.parsedValue
-                eventDateAndTime.time.parsedValue
-
-        eventStartTimeAsString : String
-        eventStartTimeAsString =
-            eventDateAndTime.date.enteredValue ++ " " ++ eventDateAndTime.time.enteredValue
-
         times : Array Int
         times =
             getTimes timers
@@ -475,8 +423,7 @@ identifyProblems timers barcodeScannerData eventDateAndTime ignoredProblems =
             List.map .scannedBarcode misScannedAthleteBarcodes
                 |> Set.fromList
     in
-    { barcodesScannedBeforeEventStart = Maybe.andThen (identifyRecordsScannedBeforeEventStartTime barcodeScannerData eventStartTimeAsString) eventStartDateTimeMillis
-    , athletesInSamePositionMultipleTimes = identifyDuplicateScans positionToAthletesDict
+    { athletesInSamePositionMultipleTimes = identifyDuplicateScans positionToAthletesDict
     , athletesWithAndWithoutPosition = identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly
     , timerTimeOffset =
         if ignoredProblems.ignoreTimerTimeOffsets then

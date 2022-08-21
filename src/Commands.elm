@@ -25,6 +25,5 @@ type Command
     | GetCurrentDateAndTime CurrentDateAndTimeOperation
     | DownloadFile String InteropFile
     | FocusElement ElementToFocus
-    | SaveEventStartTime Int
     | SelectFileForUpload
     | ReadFiles (List File)

@@ -10,7 +10,6 @@ import Problems
         ( AthleteAndPositionPair
         , AthleteWithAndWithoutPositionProblem
         , AthleteWithMultiplePositionsProblem
-        , BarcodesScannedBeforeEventStartProblem
         , MisScannedAthleteBarcodeProblem
         , PositionAndTime
         , PositionOffEndOfTimesProblem
@@ -30,30 +29,6 @@ warningAlert contents =
 dangerAlert : List (Html Msg) -> Html Msg
 dangerAlert contents =
     Alert.simpleDanger [ class "warning-condensed" ] contents
-
-
-barcodesScannedBeforeEventStartProblemView : BarcodesScannedBeforeEventStartProblem -> Html Msg
-barcodesScannedBeforeEventStartProblemView problem =
-    let
-        barcodesStringPrefix : String
-        barcodesStringPrefix =
-            if problem.numberOfScansBeforeEventStart == 1 then
-                "One barcode was"
-
-            else
-                String.fromInt problem.numberOfScansBeforeEventStart ++ " barcodes were"
-
-        problemText : String
-        problemText =
-            barcodesStringPrefix
-                ++ " scanned before the event start ("
-                ++ problem.eventStartTime
-                ++ ") "
-    in
-    warningAlert
-        [ text problemText
-        , smallButton (Msg.FixProblem (RemoveScansBeforeEventStart problem.eventStartDateTimeMillis)) [] "Remove barcodes scanned before event start"
-        ]
 
 
 generateButton : ProblemFix -> String -> Html Msg
@@ -386,8 +361,7 @@ scannerProblemsView problems =
     let
         problemViewSections : List (Maybe (Html Msg))
         problemViewSections =
-            [ Maybe.map barcodesScannedBeforeEventStartProblemView problems.barcodesScannedBeforeEventStart
-            , hideIfEmpty athletesInSamePositionMultipleTimesView problems.athletesInSamePositionMultipleTimes
+            [ hideIfEmpty athletesInSamePositionMultipleTimesView problems.athletesInSamePositionMultipleTimes
             , hideIfEmpty athletesWithAndWithoutPositionView problems.athletesWithAndWithoutPosition
             , hideIfEmpty athletesWithMultiplePositionsView problems.athletesWithMultiplePositions
             , hideIfEmpty positionsWithMultipleAthletesView problems.positionsWithMultipleAthletes

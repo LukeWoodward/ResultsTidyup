@@ -3,7 +3,7 @@ module TimeHandlingTests exposing (suite)
 import Errors exposing (expectError)
 import Expect
 import Test exposing (Test, describe, test)
-import TimeHandling exposing (formatHoursAndMinutes, formatTime, formatTimeWithHours, parseHoursAndMinutes, parseTime)
+import TimeHandling exposing (formatHoursAndMinutes, formatTime, formatTimeWithHours, parseTime)
 import Timer exposing (..)
 
 
@@ -63,40 +63,6 @@ suite =
                 \() ->
                     parseTime "00:04:17.446abc"
                         |> expectError "UNRECOGNISED_TIME"
-            ]
-        , describe "parseHoursAndMinutes tests"
-            [ test "parseHoursAndMinutes of a valid time is successful" <|
-                \() ->
-                    parseHoursAndMinutes "04:17"
-                        |> Expect.equal (Ok (4 * 60 + 17))
-            , test "parseHoursAndMinutes of a string with single-digit minutes field is a valid list of results" <|
-                \() ->
-                    parseHoursAndMinutes "4:17"
-                        |> Expect.equal (Ok (4 * 60 + 17))
-            , test "parseHoursAndMinutes of a string with single-digit seconds field is a valid list of results" <|
-                \() ->
-                    parseHoursAndMinutes "04:9"
-                        |> Expect.equal (Ok (4 * 60 + 9))
-            , test "parseHoursAndMinutes of a time with leading whitespace is valid" <|
-                \() ->
-                    parseHoursAndMinutes "     \t  04:17"
-                        |> Expect.equal (Ok (4 * 60 + 17))
-            , test "parseHoursAndMinutes of a time with trailing whitespace is valid" <|
-                \() ->
-                    parseHoursAndMinutes "04:17     \t  "
-                        |> Expect.equal (Ok (4 * 60 + 17))
-            , test "parseHoursAndMinutes of an invalid time is an error" <|
-                \() ->
-                    parseHoursAndMinutes "nonsense"
-                        |> expectError "UNRECOGNISED_TIME"
-            , test "parseHoursAndMinutes of a string with a minutes value too large is not a valid list of results" <|
-                \() ->
-                    parseHoursAndMinutes "00:60"
-                        |> expectError "MINUTES_TOO_LARGE"
-            , test "parseHoursAndMinutes of a string with a seconds value too large is not a valid list of results" <|
-                \() ->
-                    parseHoursAndMinutes "24:00"
-                        |> expectError "HOURS_TOO_LARGE"
             ]
         , describe "formatTime tests"
             [ test "formatTime of zero is correct" <|

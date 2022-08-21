@@ -20,7 +20,6 @@ import Timer exposing (DoubleTimerData, Timers(..), WhichTimer(..), createMerged
 type ProblemFix
     = RemoveUnassociatedAthlete String
     | RemoveDuplicateScans Int String
-    | RemoveScansBeforeEventStart Int
     | AdjustTimer WhichTimer Int
 
 
@@ -48,20 +47,6 @@ deleteUnassociatedAthlete athlete line =
             line
 
         BarcodeScanner.MisScan _ ->
-            line
-
-
-deleteBeforeEventStart : Int -> BarcodeScannerFileLine -> BarcodeScannerFileLine
-deleteBeforeEventStart eventStartDateTimeMillis line =
-    case Maybe.map Time.posixToMillis (dateTimeStringToPosix line.scanDateTime) of
-        Just scanDateTimeMillis ->
-            if scanDateTimeMillis < eventStartDateTimeMillis then
-                { line | deletionStatus = Deleted BeforeEventStart }
-
-            else
-                line
-
-        Nothing ->
             line
 
 
@@ -166,12 +151,6 @@ fixProblem problemFix model =
                     regenerate
                         { oldBarcodeScannerData
                             | files = deleteDuplicateScansWithinFiles athlete position oldBarcodeScannerData.files
-                        }
-
-                RemoveScansBeforeEventStart eventStartDateTimeMillis ->
-                    regenerate
-                        { oldBarcodeScannerData
-                            | files = deleteWithinFiles (deleteBeforeEventStart eventStartDateTimeMillis) oldBarcodeScannerData.files
                         }
 
                 AdjustTimer _ _ ->

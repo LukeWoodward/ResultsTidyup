@@ -11,7 +11,6 @@ import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails)
 import Bootstrap.Tab as Tab
 import DataEntry exposing (IntegerEntry, emptyEntry)
 import Error exposing (FileError)
-import EventDateAndTime exposing (EventDateAndTime)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import PastedFile exposing (PastedFileDetails)
 import Problems exposing (IgnoredProblems, Problems)
@@ -49,7 +48,6 @@ type alias Model =
     , barcodeScannerData : BarcodeScannerData
     , problems : Problems
     , ignoredProblems : IgnoredProblems
-    , eventDateAndTime : EventDateAndTime
     , numberCheckerManualEntryRow : NumberCheckerManualEntryRow
     , secondTab : Tab.State
     , barcodeScannerTab : Tab.State
@@ -67,7 +65,6 @@ initModel =
     , barcodeScannerData = BarcodeScanner.empty
     , problems = Problems.noProblems
     , ignoredProblems = Problems.noIgnoredProblems
-    , eventDateAndTime = EventDateAndTime emptyEntry emptyEntry
     , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
     , secondTab = Tab.initialState
     , barcodeScannerTab = Tab.initialState

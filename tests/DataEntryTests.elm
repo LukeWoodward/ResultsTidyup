@@ -9,7 +9,6 @@ import DataEntry
         , emptyEntry
         , floatEntryFromString
         , integerEntryFromAthleteNumber
-        , integerEntryFromHoursAndMinutes
         , integerEntryFromInt
         , integerEntryFromMaybeInt
         , integerEntryFromString
@@ -90,16 +89,6 @@ suite =
             , test "Can create an integer entry from a string containing an invalid value not beginning with A" <|
                 \() ->
                     integerEntryFromAthleteNumber "This is not valid"
-                        |> Expect.equal (IntegerEntry "This is not valid" Nothing)
-            ]
-        , describe "integerEntryFromHoursAndMinutes tests"
-            [ test "Can create an integer entry from valid hours and minutes values " <|
-                \() ->
-                    integerEntryFromHoursAndMinutes "12:35"
-                        |> Expect.equal (IntegerEntry "12:35" (Just (12 * 60 + 35)))
-            , test "Can create an integer entry from invalid hours and minutes values " <|
-                \() ->
-                    integerEntryFromHoursAndMinutes "This is not valid"
                         |> Expect.equal (IntegerEntry "This is not valid" Nothing)
             ]
         , describe "integerEntryFromTime tests"

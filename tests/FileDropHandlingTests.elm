@@ -146,15 +146,15 @@ suite =
                 [ test "Can upload a single barcode scanner file" <|
                     \() ->
                         handleFilesDropped [ InteropFile "barcodes1.txt" validBarcodeScannerData1 ] initModel
-                            |> Expect.equal { initModel | eventDateAndTime = parsedEventDateOnly, barcodeScannerData = parsedBarcodeScannerData1 }
+                            |> Expect.equal { initModel | barcodeScannerData = parsedBarcodeScannerData1 }
                 , test "Can upload a single barcode scanner file with position token without leading zeroes" <|
                     \() ->
                         handleFilesDropped [ InteropFile "barcodes1.txt" (String.replace "P0047" "P47" validBarcodeScannerData1) ] initModel
-                            |> Expect.equal { initModel | eventDateAndTime = parsedEventDateOnly, barcodeScannerData = parsedBarcodeScannerData1 }
+                            |> Expect.equal { initModel | barcodeScannerData = parsedBarcodeScannerData1 }
                 , test "Can upload a single barcode scanner file where the first line in the file is incomplete" <|
                     \() ->
                         handleFilesDropped [ InteropFile "barcodes1.txt" validBarcodeScannerDataWithIncompleteRecordFirst ] initModel
-                            |> Expect.equal { initModel | eventDateAndTime = parsedEventDateOnly, barcodeScannerData = parsedBarcodeScannerDataWithIncompleteRecordFirst }
+                            |> Expect.equal { initModel | barcodeScannerData = parsedBarcodeScannerDataWithIncompleteRecordFirst }
                 , test "Can upload a single invalid barcode scanner file" <|
                     \() ->
                         handleFilesDropped [ InteropFile "invalid.txt" invalidBarcodeScannerData ] initModel
@@ -174,7 +174,7 @@ suite =
                             , InteropFile "barcodes2.txt" validBarcodeScannerData2
                             ]
                             initModel
-                            |> Expect.equal { initModel | eventDateAndTime = parsedEventDateOnly, barcodeScannerData = parsedBarcodeScannerData1And2 }
+                            |> Expect.equal { initModel | barcodeScannerData = parsedBarcodeScannerData1And2 }
                 , test "Cannot upload an invalid barcode scanner file" <|
                     \() ->
                         runTestWithSingleError

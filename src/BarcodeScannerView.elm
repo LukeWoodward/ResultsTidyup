@@ -34,9 +34,6 @@ maybeIntToString maybeInt =
 deletionReasonToString : DeletionReason -> String
 deletionReasonToString reason =
     case reason of
-        BeforeEventStart ->
-            "Before event start"
-
         DuplicateScan athlete position ->
             "Athlete " ++ athlete ++ " has been scanned in position " ++ String.fromInt position ++ " elsewhere"
 

@@ -1,17 +1,8 @@
-module TimeHandling exposing (formatHoursAndMinutes, formatTime, formatTimeWithHours, parseHoursAndMinutes, parseTime)
+module TimeHandling exposing (formatHoursAndMinutes, formatTime, formatTimeWithHours, parseTime)
 
 import Error exposing (Error)
 import Parser exposing ((|.), (|=), Parser, end, oneOf, run, succeed, symbol)
 import Parsers exposing (digitsRange)
-
-
-hoursAndMinutesParser : Parser ( Int, Int )
-hoursAndMinutesParser =
-    succeed (\h m -> ( h, m ))
-        |= digitsRange 1 2
-        |. symbol ":"
-        |= digitsRange 1 2
-        |. end
 
 
 timeParser : Parser ( Int, Int, Maybe Int )
@@ -71,34 +62,6 @@ checkTime hours minutes seconds =
 
     else
         Ok (hours * 3600 + minutes * 60 + seconds)
-
-
-{-| Parse a string containing a time in the form HH:MM to a time,
-as a number of minutes.
-
-    parseHoursAndMinutes "00:00" = Ok 0
-    parseHoursAndMinutes "09:30" = Ok 570   -- 570 = 9 * 60 + 30
-    parseHoursAndMinutes "junk" = Err ...
-
--}
-parseHoursAndMinutes : String -> Result Error Int
-parseHoursAndMinutes timeString =
-    case run hoursAndMinutesParser (String.trim timeString) of
-        Ok ( hours, minutes ) ->
-            if hours >= 24 then
-                Error "HOURS_TOO_LARGE" ("Hours value " ++ String.fromInt hours ++ " is too large")
-                    |> Err
-
-            else if minutes >= 60 then
-                Error "MINUTES_TOO_LARGE" ("Minutes value " ++ String.fromInt minutes ++ " is too large")
-                    |> Err
-
-            else
-                Ok (hours * 60 + minutes)
-
-        _ ->
-            Error "UNRECOGNISED_TIME" ("Time '" ++ timeString ++ "' was not recognised")
-                |> Err
 
 
 formatToAtLeastTwoChars : Int -> String

@@ -16,7 +16,6 @@ module TestData exposing
     , parsedBarcodeScannerData1
     , parsedBarcodeScannerData1And2
     , parsedBarcodeScannerDataWithIncompleteRecordFirst
-    , parsedEventDateOnly
     , parsedInvalidBarcodeScannerData
     , parsedNumberCheckerData
     , parsedTimerTimes1
@@ -48,9 +47,8 @@ import BarcodeScanner
         , LineContents(..)
         , regenerate
         )
-import DataEntry exposing (DateEntry, emptyEntry, integerEntryFromInt)
+import DataEntry exposing (integerEntryFromInt)
 import Dict
-import EventDateAndTime exposing (EventDateAndTime)
 import FileHandling exposing (crlf)
 import Iso8601
 import Model exposing (NumberCheckerManualEntryRow)
@@ -321,11 +319,6 @@ parsedInvalidBarcodeScannerData =
           }
         ]
         Nothing
-
-
-parsedEventDateOnly : EventDateAndTime
-parsedEventDateOnly =
-    EventDateAndTime (DateEntry "14/03/2018" (toPosix "2018-03-14T00:00:00.000Z")) emptyEntry
 
 
 validNumberCheckerData : String

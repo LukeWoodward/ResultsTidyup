@@ -33,8 +33,6 @@ You can then load the timer and/or scanner files into the application.  Do this 
 
 You don't have to upload both timer and scanner files.  You can upload only timer files, or upload only scanner files, or upload both.
 
-You can also set the start time of your event if you want.  There are some convenient buttons to set it to one of a number of times, but if the event started at a different time you can type it in.  Setting the event start time allows Results Tidyup to detect barcode scans left on the scanners and not cleared before the event started.  Results Tidyup will also remember the time you've set so that it's still there next week when you come to process next week's results.
-
 You can either look at Results Tidyup to see what changes to make to the results, or download the files from Results Tidyup and upload them back in to WebFMS. Note that if you do the latter, you must deselect the original files in WebFMS.
 
 ### How to...
@@ -98,19 +96,15 @@ Results Tidyup can identify the following problems with the files uploaded:
 
 #### Problems that come up less frequently with the Virtual Volunteer app
 
-Development of this application started before the use of the Virtual Volunteer app everywhere was made compulsory. Use of the Virtual Volunteer app has removed a number of problems that had previously been encountered with results processing, such as barcode scanner volunteers scanning athlete barcodes and finish tokens the wrong way around, so the ability to detect such problems has been removed. However, Results Tidyup still supports handling a couple of problems that are still possible but less likely to turn up with the Virtual Volunteer app:
+Development of this application started before the use of the Virtual Volunteer app everywhere was made compulsory. Use of the Virtual Volunteer app has removed a number of problems that had previously been encountered with results processing, such as barcode scanner volunteers scanning athlete barcodes and finish tokens the wrong way around, so the ability to detect such problems has been removed. It's also a lot less likely that volunteers will end up with practice scans left on their phone (I haven't seen this happen since the Virtual Volunteer app became compulsory, but I saw it happen several times before), so Results Tidyup no longer offers to set the event start time and check for scans before it.
 
-* Barcodes scanned before the event start.  This usually happens because a volunteer was practising scanning using the app before the event started and these practice scans didn't get cleared from the app before they started scanning for real.  The fix to this problem is clearly to remove all scans before the event start.
-
-  The Virtual Volunteer app makes this less likely to occur, as it's easier for a scanner volunteer to see that they have the practice scans on their phone and to clear them.
-
-* Mis-scanned barcodes and unrecognised lines.  I've seen the Opticon scanners misread a barcode and generate nonsense barcodes such as `&d084`.  In theory, the Virtual Volunteer app *shouldn't* scan any barcode that isn't an athlete or finish-token barcode, but I've left a check for these in just in case.
+Results Tidyup still supports detecting mis-scanned barcodes and unrecognised lines.  I've seen the Opticon scanners misread a barcode and generate nonsense barcodes such as `&d084`.  In theory, the Virtual Volunteer app *shouldn't* scan any barcode that isn't an athlete or finish-token barcode, but I'll leave this check in just in case.
 
 ### What this doesn't do but may do in the future
 
 This tool has so far been based on what I've seen happen when processing results.  Doubtless there are other things which Results Tidyup could include support for, such as:
 
-* Handling three or more timers.  (Do events often use three or more timers?)
+* Handling three or more timers. (Do events often use three or more timers?)
 
 ### What this won't do
 
@@ -130,7 +124,7 @@ Results Tidyup runs entirely in your browser and doesn't send your data to any s
 
 Your browser also might say that Results Tidyup is "Not secure".  What this means is that any data transmitted between your browser and the server isn't encrypted and can be intercepted. As Results Tidyup doesn't send your data to a server, there is no data transmitted to the server so no data that can be intercepted in this way.
 
-Results Tidyup does not use cookies, but it does use 'local storage' in your browser to store your event's start time.  This is so that the event start time is remembered the next time you start the application. Clearing cookies in your browser may cause it to forget the saved event start time.  Running it within a 'private' browser window will also cause it to not remember the start time.
+Results Tidyup does not use any cookies nor 'local storage' in your browser to store any data.
 
 ## Questions
 
