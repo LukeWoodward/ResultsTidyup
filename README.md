@@ -19,7 +19,7 @@
 
 This is an attempt to help out parkrun volunteers doing results processing who encounter problems with the results.  It's something that several times I have wished I had available to me when I've been processing results myself.
 
-It attempts to detect problems with timer and scanner files dropped into it, and provide ways to fix some of the problems it identifies.  You can then download modified files and upload them in to WebFMS.
+It attempts to detect problems with timer and scanner files dropped into it, and provide ways to fix some of the problems it identifies.  You can then download modified files and upload them in to EMS.
 
 ### Where is it?
 
@@ -27,13 +27,13 @@ It can be found [here](http://lack-of.org.uk/results-tidyup).
 
 ### How to use it?
 
-Before you can use Results Tidyup, you must first download from WebFMS any files you wish to use with it. Do this by clicking the "(i)" to view the contents of the file in WebFMS and clicking 'save to uploadable file format'. Save this somewhere on your computer.
+Before you can use Results Tidyup, you must first download from EMS any files you wish to use with it. Do this by clicking the timer or scanner icon to view the contents of the file in EMS and clicking Save. Save this somewhere on your computer.
 
 You can then load the timer and/or scanner files into the application.  Do this using the 'Upload files...' button at the top.  You can also drag files into the browser window, but note that some browser antivirus plugins will block this.  Times should then appear on the left and barcodes scanned on the right.
 
 You don't have to upload both timer and scanner files.  You can upload only timer files, or upload only scanner files, or upload both.
 
-You can either look at Results Tidyup to see what changes to make to the results, or download the files from Results Tidyup and upload them back in to WebFMS. Note that if you do the latter, you must deselect the original files in WebFMS.
+You can either look at Results Tidyup to see what changes to make to the results, or download the files from Results Tidyup and upload them back in to EMS. Note that if you do the latter, you must deselect the original files in EMS.
 
 ### How to...
 
@@ -82,9 +82,7 @@ Results Tidyup can identify the following problems with the files uploaded:
 
 * Time offsets detected between the times in two timer files, indicating the timers weren't started at the same time.  You can fix this by adding or subtracting the detected time offset from all times on one of the timers.
 
-* The same athlete barcode scanned with and without a finish token. WebFMS will report an error in the scanner file for an athlete-barcode scan without a corresponding finish-token scan, so you might think that this athlete had scanned in but won't get a result.  However, we can ignore the row without a finish token.
-
-* The same athlete barcode scanned with the same finish token more than once. I have seen this happen, and WebFMS will report this as an error, but the fix to this problem is clear: you delete the duplicate row.
+* The same athlete barcode scanned with and without a finish token. EMS will report an error in the scanner file for an athlete-barcode scan without a corresponding finish-token scan, so you might think that this athlete had scanned in but won't get a result.  However, we can ignore the row without a finish token.
 
 * The same athlete barcode scanned with multiple different finish tokens.  Results Tidyup can't by itself tell which finish position is correct for that athlete: you will have to figure this out for yourself.  To help you, the athlete IDs link to the athlete's results history. If you've loaded one or more timer files, then the times recorded against the positions are also shown, allowing you to judge which of the finish positions is the more likely one.
 
