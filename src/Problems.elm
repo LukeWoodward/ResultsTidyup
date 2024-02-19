@@ -83,8 +83,7 @@ type alias MisScannedAthleteBarcodeProblem =
 
 
 type alias Problems =
-    { athletesInSamePositionMultipleTimes : List AthleteAndPositionPair
-    , athletesWithAndWithoutPosition : List AthleteWithAndWithoutPositionProblem
+    { athletesWithAndWithoutPosition : List AthleteWithAndWithoutPositionProblem
     , timerTimeOffset : Maybe Int
     , athletesWithMultiplePositions : List AthleteWithMultiplePositionsProblem
     , positionsWithMultipleAthletes : List PositionWithMultipleAthletesProblem
@@ -100,8 +99,7 @@ type alias Problems =
 
 noProblems : Problems
 noProblems =
-    { athletesInSamePositionMultipleTimes = []
-    , athletesWithAndWithoutPosition = []
+    { athletesWithAndWithoutPosition = []
     , timerTimeOffset = Nothing
     , athletesWithMultiplePositions = []
     , positionsWithMultipleAthletes = []
@@ -236,22 +234,6 @@ deduplicate list =
         |> Set.toList
 
 
-repeatedItems : List comparable -> List comparable
-repeatedItems items =
-    let
-        insertItem : comparable -> ( Set comparable, Set comparable ) -> ( Set comparable, Set comparable )
-        insertItem item ( itemsSoFar, repeatedItemsSoFar ) =
-            if Set.member item itemsSoFar then
-                ( itemsSoFar, Set.insert item repeatedItemsSoFar )
-
-            else
-                ( Set.insert item itemsSoFar, repeatedItemsSoFar )
-    in
-    List.foldr insertItem ( Set.empty, Set.empty ) items
-        |> Tuple.second
-        |> Set.toList
-
-
 getSingleValue : List comparable -> Maybe comparable
 getSingleValue list =
     case deduplicate list of
@@ -277,19 +259,6 @@ identifyMisScannedItems misScannedItems =
 identifyUnrecognisedBarcodeScannerLines : List UnrecognisedLine -> List String
 identifyUnrecognisedBarcodeScannerLines unrecognisedLines =
     List.map .line unrecognisedLines
-
-
-identifyDuplicateScans : Dict Int (List String) -> List AthleteAndPositionPair
-identifyDuplicateScans positionToAthletesDict =
-    let
-        identifyDuplicates : ( Int, List String ) -> List AthleteAndPositionPair
-        identifyDuplicates ( position, athletes ) =
-            repeatedItems athletes
-                |> List.map (\athlete -> AthleteAndPositionPair athlete position)
-    in
-    Dict.toList positionToAthletesDict
-        |> List.filter (\( _, athletes ) -> List.length athletes > 1)
-        |> List.concatMap identifyDuplicates
 
 
 identifyMisScannedAthleteBarcodes : Dict String (List Int) -> List String -> List MisScannedAthleteBarcodeProblem
@@ -421,8 +390,7 @@ identifyProblems timers barcodeScannerData ignoredProblems =
             List.map .scannedBarcode misScannedAthleteBarcodes
                 |> Set.fromList
     in
-    { athletesInSamePositionMultipleTimes = identifyDuplicateScans positionToAthletesDict
-    , athletesWithAndWithoutPosition = identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly
+    { athletesWithAndWithoutPosition = identifyAthletesWithAndWithoutPosition athleteToPositionsDict athleteBarcodesOnly
     , timerTimeOffset =
         if ignoredProblems.ignoreTimerTimeOffsets then
             Nothing

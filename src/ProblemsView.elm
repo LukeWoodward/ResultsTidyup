@@ -7,8 +7,7 @@ import Msg exposing (Msg)
 import ProblemFixing exposing (ProblemFix(..), ProblemIgnorance(..))
 import Problems
     exposing
-        ( AthleteAndPositionPair
-        , AthleteWithAndWithoutPositionProblem
+        ( AthleteWithAndWithoutPositionProblem
         , AthleteWithMultiplePositionsProblem
         , MisScannedAthleteBarcodeProblem
         , PositionAndTime
@@ -36,15 +35,6 @@ generateButton problemFix buttonLabel =
     smallButton (Msg.FixProblem problemFix) [] buttonLabel
 
 
-athleteAndPositionRow : (AthleteAndPositionPair -> ProblemFix) -> String -> AthleteAndPositionPair -> Html Msg
-athleteAndPositionRow problemFixGenerator buttonLabel pair =
-    li []
-        [ athleteLink pair.athlete
-        , text (" and " ++ String.fromInt pair.position ++ " ")
-        , generateButton (problemFixGenerator pair) buttonLabel
-        ]
-
-
 athleteWithAndWithoutPositionRow : (AthleteWithAndWithoutPositionProblem -> ProblemFix) -> (Int -> String) -> AthleteWithAndWithoutPositionProblem -> Html Msg
 athleteWithAndWithoutPositionRow problemFixGenerator buttonLabel athleteWithAndWithoutPosition =
     li []
@@ -52,33 +42,6 @@ athleteWithAndWithoutPositionRow problemFixGenerator buttonLabel athleteWithAndW
         , text (" and " ++ String.fromInt athleteWithAndWithoutPosition.position ++ " ")
         , generateButton (problemFixGenerator athleteWithAndWithoutPosition) (buttonLabel athleteWithAndWithoutPosition.count)
         ]
-
-
-athletesInSamePositionMultipleTimesView : List AthleteAndPositionPair -> Html Msg
-athletesInSamePositionMultipleTimesView athleteAndPositionPairs =
-    let
-        buttonLabel : String
-        buttonLabel =
-            "Remove duplicate scans"
-
-        problemFixGenerator : AthleteAndPositionPair -> ProblemFix
-        problemFixGenerator pair =
-            RemoveDuplicateScans pair.position pair.athlete
-    in
-    case athleteAndPositionPairs of
-        [ pair ] ->
-            warningAlert
-                [ text "Athlete "
-                , athleteLink pair.athlete
-                , text (" has been scanned with finish token " ++ String.fromInt pair.position ++ " more than once. ")
-                , generateButton (problemFixGenerator pair) buttonLabel
-                ]
-
-        _ ->
-            warningAlert
-                [ text "The following athlete barcodes have been scanned multiple times with same finish token more than once:"
-                , ul [] (List.map (athleteAndPositionRow problemFixGenerator buttonLabel) athleteAndPositionPairs)
-                ]
 
 
 athletesWithAndWithoutPositionView : List AthleteWithAndWithoutPositionProblem -> Html Msg
@@ -361,8 +324,7 @@ scannerProblemsView problems =
     let
         problemViewSections : List (Maybe (Html Msg))
         problemViewSections =
-            [ hideIfEmpty athletesInSamePositionMultipleTimesView problems.athletesInSamePositionMultipleTimes
-            , hideIfEmpty athletesWithAndWithoutPositionView problems.athletesWithAndWithoutPosition
+            [ hideIfEmpty athletesWithAndWithoutPositionView problems.athletesWithAndWithoutPosition
             , hideIfEmpty athletesWithMultiplePositionsView problems.athletesWithMultiplePositions
             , hideIfEmpty positionsWithMultipleAthletesView problems.positionsWithMultipleAthletes
             , Maybe.map positionOffEndOfTimesView problems.positionOffEndOfTimes

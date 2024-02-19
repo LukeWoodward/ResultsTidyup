@@ -205,19 +205,6 @@ suite =
                                     [ AthleteWithMultiplePositionsProblem "A123456" [ PositionAndTime 12 Nothing, PositionAndTime 16 Nothing, PositionAndTime 19 Nothing ]
                                     ]
                             }
-            , test "identifyProblems returns a problem for an athlete with three positions, two of which are the same" <|
-                \() ->
-                    identifyProblems
-                        None
-                        (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A123456", "A123456" ] ) ]) [])
-                        noIgnoredProblems
-                        |> Expect.equal
-                            { noProblems
-                                | athletesInSamePositionMultipleTimes = [ AthleteAndPositionPair "A123456" 16 ]
-                                , athletesWithMultiplePositions =
-                                    [ AthleteWithMultiplePositionsProblem "A123456" [ PositionAndTime 12 Nothing, PositionAndTime 16 Nothing ]
-                                    ]
-                            }
             , test "identifyProblems returns two problems for two athletes with repeated positions" <|
                 \() ->
                     identifyProblems
@@ -245,17 +232,6 @@ suite =
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456", "A252525", "A748159" ] ), ( 19, [ "A987654" ] ) ]) [])
                         noIgnoredProblems
                         |> Expect.equal { noProblems | positionsWithMultipleAthletes = [ PositionWithMultipleAthletesProblem 12 [ "A123456", "A252525", "A748159" ] ] }
-            , test "identifyProblems returns a problem for a position with three athletes, two of which are the same" <|
-                \() ->
-                    identifyProblems
-                        None
-                        (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456", "A252525", "A252525" ] ), ( 19, [ "A987654" ] ) ]) [])
-                        noIgnoredProblems
-                        |> Expect.equal
-                            { noProblems
-                                | athletesInSamePositionMultipleTimes = [ AthleteAndPositionPair "A252525" 12 ]
-                                , positionsWithMultipleAthletes = [ PositionWithMultipleAthletesProblem 12 [ "A123456", "A252525" ] ]
-                            }
             , test "identifyProblems returns two problems for two positions with two athletes" <|
                 \() ->
                     identifyProblems
@@ -339,26 +315,6 @@ suite =
                         (BarcodeScannerData [] Dict.empty [] [] [ UnrecognisedLine "This is not a valid line" "code" "message" ] Nothing)
                         noIgnoredProblems
                         |> Expect.equal { noProblems | unrecognisedBarcodeScannerLines = [ "This is not a valid line" ] }
-            , test "identifyProblems returns a fixable problem for the same athlete with the same finish position twice" <|
-                \() ->
-                    identifyProblems
-                        None
-                        (createBarcodeScannerData
-                            (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525", "A252525" ] ), ( 19, [ "A987654" ] ) ])
-                            []
-                        )
-                        noIgnoredProblems
-                        |> Expect.equal { noProblems | athletesInSamePositionMultipleTimes = [ AthleteAndPositionPair "A252525" 16 ] }
-            , test "identifyProblems returns two fixable problems for two athletes with the same finish position twice" <|
-                \() ->
-                    identifyProblems
-                        None
-                        (createBarcodeScannerData
-                            (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525", "A252525" ] ), ( 19, [ "A987654", "A987654" ] ) ])
-                            []
-                        )
-                        noIgnoredProblems
-                        |> Expect.equal { noProblems | athletesInSamePositionMultipleTimes = [ AthleteAndPositionPair "A252525" 16, AthleteAndPositionPair "A987654" 19 ] }
             , test "identifyProblems returns a fixable problem for an athlete with a position and with a missing position" <|
                 \() ->
                     identifyProblems
