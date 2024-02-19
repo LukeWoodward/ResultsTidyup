@@ -70,7 +70,7 @@ Occasionally, a set of tokens at a parkrun will be given out in the wrong order.
 
 * Upload all barcode scanner files.
 * Click 'Token Operations...'.
-* In the dialog that opens, click 'Reverse token' and enter 51-75 in the field.
+* In the dialog that opens, click 'Reverse tokens' and enter 51-75 in the field.
 * Click 'Reverse tokens'.
 * Download all barcode data using the 'Download all scanned barcodes' button.  This downloads one scanner file containing all scanned barcodes.
 
@@ -106,7 +106,7 @@ This tool has so far been based on what I've seen happen when processing results
 
 ### What this won't do
 
-* Results Tidyup will never magically fix all results-processing problems at an event.  It can detect a number of problems, but it never makes any corrections if you don't tell it to.  As a results processor you will always need to understand what has gone on during the run and use your judgement to decide what modifications to make to the results, if any.  Some modifications suggested by Results Tidyup may in fact be incorrect.
+* Results Tidyup will never magically fix all results-processing problems at an event.  It can detect a number of problems, but it never makes any corrections if you don't tell it to.  As a results processor you will always need to understand what has gone on during the event and use your judgement to decide what modifications to make to the results, if any.  Some modifications suggested by Results Tidyup may in fact be incorrect.
 
 * Results Tidyup will never be able to look up athlete names from athlete barcode numbers.  That would require access to the parkrun database but for data-protection reasons we can't have that.
 
