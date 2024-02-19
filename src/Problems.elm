@@ -14,11 +14,9 @@ module Problems exposing
     )
 
 import Array exposing (Array)
-import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, DeletionStatus(..), LineContents(..), MisScannedItem, UnrecognisedLine)
-import DateHandling exposing (dateTimeStringToPosix)
+import BarcodeScanner exposing (BarcodeScannerData, DeletionStatus(..), LineContents(..), MisScannedItem, UnrecognisedLine)
 import Dict exposing (Dict)
 import Set exposing (Set)
-import Time
 import Timer exposing (MergeEntry(..), Timers(..))
 import TimerOffsetDetection exposing (getTimerTimeOffset)
 
