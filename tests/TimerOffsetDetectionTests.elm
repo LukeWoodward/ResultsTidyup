@@ -3,7 +3,7 @@ module TimerOffsetDetectionTests exposing (suite)
 import Expect
 import Test exposing (Test, describe, test)
 import TestData exposing (defaultMatchSummary)
-import Timer exposing (MergeEntry(..), Timers(..))
+import Timer exposing (MergeEntry(..), TimerFile, Timers(..))
 import TimerOffsetDetection exposing (findPossibleOffsets, getTimerTimeOffset)
 
 
@@ -40,7 +40,7 @@ suite =
                         |> Expect.equal Nothing
             , test "getTimerTimeOffset returns Nothing for a single timer" <|
                 \() ->
-                    getTimerTimeOffset (Single "timer1.txt" [ 1000, 1100, 1200 ])
+                    getTimerTimeOffset (Single (TimerFile "timer1.txt" "Name1") [ 1000, 1100, 1200 ])
                         |> Expect.equal Nothing
             , test "getTimerTimeOffset returns zero for a double timer with identical times" <|
                 \() ->
@@ -53,8 +53,8 @@ suite =
                         (Double
                             { times1 = times
                             , times2 = times
-                            , filename1 = "timer1.txt"
-                            , filename2 = "timer2.txt"
+                            , file1 = TimerFile "timer1.txt" "Name1"
+                            , file2 = TimerFile "timer2.txt" "Name2"
                             , mergedTableRows = []
                             , matchSummary = defaultMatchSummary
                             }
@@ -75,8 +75,8 @@ suite =
                         (Double
                             { times1 = times1
                             , times2 = times2
-                            , filename1 = "timer1.txt"
-                            , filename2 = "timer2.txt"
+                            , file1 = TimerFile "timer1.txt" "Name1"
+                            , file2 = TimerFile "timer2.txt" "Name2"
                             , mergedTableRows = []
                             , matchSummary = defaultMatchSummary
                             }
@@ -97,8 +97,8 @@ suite =
                         (Double
                             { times1 = times1
                             , times2 = times2
-                            , filename1 = "timer1.txt"
-                            , filename2 = "timer2.txt"
+                            , file1 = TimerFile "timer1.txt" "Name1"
+                            , file2 = TimerFile "timer2.txt" "Name2"
                             , mergedTableRows = []
                             , matchSummary = defaultMatchSummary
                             }

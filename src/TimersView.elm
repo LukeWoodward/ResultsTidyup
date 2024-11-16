@@ -175,7 +175,7 @@ rowWithNoTimerTime barcodeScannerData blankTimeColumns position =
     let
         cells : List (Table.Cell Msg)
         cells =
-            ( intCell position )
+            intCell position
                 :: List.repeat blankTimeColumns (plainCell "")
                 ++ [ barcodeScannerCell barcodeScannerData position Nothing Nothing ]
     in
@@ -271,14 +271,14 @@ timerTable timers barcodeScannerData highlightedNumberCheckerId =
                     , tbody = noTimerTableBody barcodeScannerData
                     }
 
-        Single filename timerTimes ->
+        Single file timerTimes ->
             Table.table
                 { options = tableOptions
                 , thead =
                     tableHeadersWithButtons
                         (appendAthletesHeader
                             [ TableHeaderWithButtons "Position" "" []
-                            , TableHeaderWithButtons "Timer 1" filename (timerButtons TimerOne)
+                            , TableHeaderWithButtons ("Timer 1: " ++ file.name) file.filename (timerButtons TimerOne)
                             ]
                         )
                 , tbody = singleTimerTableBody timerTimes barcodeScannerData
@@ -291,8 +291,8 @@ timerTable timers barcodeScannerData highlightedNumberCheckerId =
                     tableHeadersWithButtons
                         (appendAthletesHeader
                             [ TableHeaderWithButtons "Position" "" []
-                            , TableHeaderWithButtons "Timer 1" doubleTimerData.filename1 (timerButtons TimerOne)
-                            , TableHeaderWithButtons "Timer 2" doubleTimerData.filename2 (timerButtons TimerTwo)
+                            , TableHeaderWithButtons ("Timer 1: " ++ doubleTimerData.file1.name) doubleTimerData.file1.filename (timerButtons TimerOne)
+                            , TableHeaderWithButtons ("Timer 2: " ++ doubleTimerData.file2.name) doubleTimerData.file2.filename (timerButtons TimerTwo)
                             ]
                         )
                 , tbody = mergedTableBody highlightedNumberCheckerId barcodeScannerData doubleTimerData.mergedTableRows
@@ -470,7 +470,8 @@ timersView timers barcodeScannerData problems highlightedNumberCheckerId =
     in
     div
         []
-        [ h3 [] ([text headerText, div [ class "timer-buttons" ] buttons ])
+        [ h3 [] [ text headerText, div [ class "timer-buttons" ] buttons ]
+        , div [ class "clearfix" ] []
         , timerProblemsView problems
         , timerTable timers barcodeScannerData highlightedNumberCheckerId
         , div

@@ -4,7 +4,7 @@ import DataEntry exposing (IntegerEntry, emptyEntry, floatEntryFromFloat, intege
 import Expect exposing (Expectation)
 import Test exposing (Test, describe, test)
 import TestData exposing (doubleTimers, singleTimer)
-import Timer exposing (Timers(..), WhichTimer(..))
+import Timer exposing (TimerFile, Timers(..), WhichTimer(..))
 import TimerOperations
     exposing
         ( DistanceType(..)
@@ -58,6 +58,11 @@ allValidationErrors =
     , ( "invalidActualDistance", InvalidDistance ActualDistance )
     , ( "actualDistanceEqualsExpectedDistance", ActualDistanceEqualsExpectedDistance )
     ]
+
+
+testTimerFile : TimerFile
+testTimerFile =
+    TimerFile "timer1.txt" "Name1"
 
 
 runFieldValidationTest : (TimerOperationEditDetails -> Bool) -> List String -> Expectation
@@ -378,12 +383,12 @@ suite =
                         |> Expect.equal (Ok ( [ 191, 464, 603, 746, 882, 1029 ], [ 221, 493, 776, 821, 912 ] ))
             , test "Adds offset to single timer" <|
                 \() ->
-                    tryApplyOperationToTimerData (getAddOffsetEditDetails 30 True True) (Single "timer1.txt" [ 191, 464, 603, 746, 882, 1029 ])
-                        |> Expect.equal (Ok (Single "timer1.txt" [ 221, 494, 633, 776, 912, 1059 ]))
+                    tryApplyOperationToTimerData (getAddOffsetEditDetails 30 True True) (Single testTimerFile [ 191, 464, 603, 746, 882, 1029 ])
+                        |> Expect.equal (Ok (Single testTimerFile [ 221, 494, 633, 776, 912, 1059 ]))
             , test "Adds offset to single timer even if flag disabled" <|
                 \() ->
-                    tryApplyOperationToTimerData (getAddOffsetEditDetails 30 False True) (Single "timer1.txt" [ 191, 464, 603, 746, 882, 1029 ])
-                        |> Expect.equal (Ok (Single "timer1.txt" [ 221, 494, 633, 776, 912, 1059 ]))
+                    tryApplyOperationToTimerData (getAddOffsetEditDetails 30 False True) (Single testTimerFile [ 191, 464, 603, 746, 882, 1029 ])
+                        |> Expect.equal (Ok (Single testTimerFile [ 221, 494, 633, 776, 912, 1059 ]))
             , test "Adding offset to no timers does nothing" <|
                 \() ->
                     tryApplyOperationToTimerData (getAddOffsetEditDetails 30 True True) None
@@ -405,12 +410,12 @@ suite =
                         |> Expect.equal (Ok ( [ 191, 464, 603, 746, 882, 1029 ], [ 161, 433, 716, 761, 852 ] ))
             , test "Subtracts offset from single timer" <|
                 \() ->
-                    tryApplyOperationToTimerData (getSubtractOffsetEditDetails 30 True True) (Single "timer1.txt" [ 191, 464, 603, 746, 882, 1029 ])
-                        |> Expect.equal (Ok (Single "timer1.txt" [ 161, 434, 573, 716, 852, 999 ]))
+                    tryApplyOperationToTimerData (getSubtractOffsetEditDetails 30 True True) (Single testTimerFile [ 191, 464, 603, 746, 882, 1029 ])
+                        |> Expect.equal (Ok (Single testTimerFile [ 161, 434, 573, 716, 852, 999 ]))
             , test "Subtracts offset from single timer even if flag disabled" <|
                 \() ->
-                    tryApplyOperationToTimerData (getSubtractOffsetEditDetails 30 False True) (Single "timer1.txt" [ 191, 464, 603, 746, 882, 1029 ])
-                        |> Expect.equal (Ok (Single "timer1.txt" [ 161, 434, 573, 716, 852, 999 ]))
+                    tryApplyOperationToTimerData (getSubtractOffsetEditDetails 30 False True) (Single testTimerFile [ 191, 464, 603, 746, 882, 1029 ])
+                        |> Expect.equal (Ok (Single testTimerFile [ 161, 434, 573, 716, 852, 999 ]))
             , test "Applies a scale factor to two timers" <|
                 \() ->
                     tryApplyOperationToTimerData (getApplyScaleFactorEditDetails 1.37) doubleTimers
@@ -418,8 +423,8 @@ suite =
                         |> Expect.equal (Ok ( [ 262, 636, 826, 1022, 1208, 1410 ], [ 262, 634, 1022, 1084, 1208 ] ))
             , test "Applies a scale factor to a single timer" <|
                 \() ->
-                    tryApplyOperationToTimerData (getApplyScaleFactorEditDetails 1.37) (Single "timer1.txt" [ 191, 464, 603, 746, 882, 1029 ])
-                        |> Expect.equal (Ok (Single "timer1.txt" [ 262, 636, 826, 1022, 1208, 1410 ]))
+                    tryApplyOperationToTimerData (getApplyScaleFactorEditDetails 1.37) (Single testTimerFile [ 191, 464, 603, 746, 882, 1029 ])
+                        |> Expect.equal (Ok (Single testTimerFile [ 262, 636, 826, 1022, 1208, 1410 ]))
             , test "Applies a scale factor to no timers" <|
                 \() ->
                     tryApplyOperationToTimerData (getApplyScaleFactorEditDetails 1.37) None
@@ -433,8 +438,8 @@ suite =
                         |> Expect.equal (Ok ( [ 209, 507, 659, 815, 964, 1124 ], [ 209, 506, 815, 864, 964 ] ))
             , test "Applies a distance-based scale factor to a single timer" <|
                 \() ->
-                    tryApplyOperationToTimerData (getApplyDistanceBasedScaleFactorEditDetails 5000 4600) (Single "timer1.txt" [ 191, 464, 603, 746, 882, 1029 ])
-                        |> Expect.equal (Ok (Single "timer1.txt" [ 209, 507, 659, 815, 964, 1124 ]))
+                    tryApplyOperationToTimerData (getApplyDistanceBasedScaleFactorEditDetails 5000 4600) (Single testTimerFile [ 191, 464, 603, 746, 882, 1029 ])
+                        |> Expect.equal (Ok (Single testTimerFile [ 209, 507, 659, 815, 964, 1124 ]))
             , test "Applies a distance-based scale factor to no timers" <|
                 \() ->
                     tryApplyOperationToTimerData (getApplyDistanceBasedScaleFactorEditDetails 5000 4600) None

@@ -18,7 +18,7 @@ import DataEntry exposing (IntegerEntry, emptyEntry)
 import Dict
 import Error exposing (FileError)
 import Expect exposing (Expectation)
-import FileHandling exposing (InteropFile)
+import FileHandling exposing (AddedFile, InteropFile)
 import Model
     exposing
         ( DialogDetails(..)
@@ -36,7 +36,7 @@ import Problems exposing (AthleteWithAndWithoutPositionProblem, IgnoredProblems,
 import Test exposing (Test, describe, test)
 import TestData exposing (..)
 import Time
-import Timer exposing (Timer(..), Timers(..), WhichTimer(..))
+import Timer exposing (Timer(..), TimerFile, Timers(..), WhichTimer(..))
 import UpdateLogic exposing (barcodeScannerFileMimeType, timerFileMimeType, update)
 
 
@@ -172,7 +172,7 @@ singleTimer : Timers
 singleTimer =
     case expectedParsedSampleTimerData of
         TimerData times ->
-            Single "timer1.txt" times
+            Single (TimerFile "timer1.txt" "Name1") times
 
 
 createBarcodeScannerDataForRemovingUnassociatedAthletes : List String -> Model
@@ -305,7 +305,7 @@ suite =
                     { initModel | timers = doubleTimers }
                         |> update (RemoveTimer TimerOne)
                         |> Expect.all
-                            (expectTimers (Single "timer2.txt" parsedTimerTimes2)
+                            (expectTimers (Single (TimerFile "timer2.txt" "Name2") parsedTimerTimes2)
                                 :: defaultAssertionsExcept [ Timers ]
                             )
             , test "Deleting timer 2 when two to delete deletes timer 2" <|
@@ -382,7 +382,7 @@ suite =
             , test "Does not download merged data for one timer" <|
                 \() ->
                     initModel
-                        |> update (FilesDropped [ InteropFile "timer1.txt" sampleTimerData ])
+                        |> update (FilesAdded [ AddedFile "timer1.txt" "Name1" sampleTimerData ])
                         |> Tuple.first
                         |> update (DownloadMergedTimerData Time.utc recentTime)
                         |> Expect.all
@@ -392,13 +392,13 @@ suite =
             , test "Can download merged data for two timers" <|
                 \() ->
                     initModel
-                        |> update (FilesDropped [ InteropFile "timer1.txt" sampleTimerData ])
+                        |> update (FilesAdded [ AddedFile "timer1.txt" "Name1" sampleTimerData ])
                         |> Tuple.first
-                        |> update (FilesDropped [ InteropFile "timer2.txt" sampleTimerData2 ])
+                        |> update (FilesAdded [ AddedFile "timer2.txt" "Name2" sampleTimerData2 ])
                         |> Tuple.first
                         |> update (DownloadMergedTimerData Time.utc recentTime)
                         |> Expect.all
-                            (expectCommand (DownloadFile timerFileMimeType (InteropFile "results_tidyup_timer_14072017024000.txt" expectedMergedTimerFileContents))
+                            (expectCommand (DownloadFile timerFileMimeType (InteropFile "results_tidyup_timer_20170714024000.txt" expectedMergedTimerFileContents))
                                 :: expectTimers doubleTimers
                                 :: defaultAssertionsExcept [ Timers, Command ]
                             )
@@ -417,44 +417,44 @@ suite =
             , test "Can create a timer file for timer 1 when single timer" <|
                 \() ->
                     initModel
-                        |> update (FilesDropped [ InteropFile "timer1.txt" sampleTimerData ])
+                        |> update (FilesAdded [ AddedFile "timer1.txt" "Name1" sampleTimerData ])
                         |> Tuple.first
                         |> update (DownloadTimer TimerOne Time.utc recentTime)
                         |> Expect.all
-                            (expectCommand (DownloadFile timerFileMimeType (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedTimerData1))
+                            (expectCommand (DownloadFile timerFileMimeType (InteropFile "results_tidyup_timer_20170714024000.txt" expectedDownloadedTimerData1))
                                 :: expectTimers singleTimer
                                 :: defaultAssertionsExcept [ Timers, Command ]
                             )
             , test "Cannot create a timer file for timer 2 when only one timer" <|
                 \() ->
                     initModel
-                        |> update (FilesDropped [ InteropFile "timer1.txt" sampleTimerData ])
+                        |> update (FilesAdded [ AddedFile "timer1.txt" "Name1" sampleTimerData ])
                         |> Tuple.first
                         |> update (DownloadTimer TimerTwo Time.utc recentTime)
                         |> Expect.all (defaultAssertionsExcept [ Timers ])
             , test "Can create a timer file for timer 1 when two timers uploaded" <|
                 \() ->
                     initModel
-                        |> update (FilesDropped [ InteropFile "timer1.txt" sampleTimerData ])
+                        |> update (FilesAdded [ AddedFile "timer1.txt" "Name1" sampleTimerData ])
                         |> Tuple.first
-                        |> update (FilesDropped [ InteropFile "timer2.txt" sampleTimerData2 ])
+                        |> update (FilesAdded [ AddedFile "timer2.txt" "Name2" sampleTimerData2 ])
                         |> Tuple.first
                         |> update (DownloadTimer TimerOne Time.utc recentTime)
                         |> Expect.all
-                            (expectCommand (DownloadFile timerFileMimeType (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedTimerData1))
+                            (expectCommand (DownloadFile timerFileMimeType (InteropFile "results_tidyup_timer_20170714024000.txt" expectedDownloadedTimerData1))
                                 :: expectTimers doubleTimers
                                 :: defaultAssertionsExcept [ Timers, Command ]
                             )
             , test "Can create a timer file for timer 2 when two timers uploaded" <|
                 \() ->
                     initModel
-                        |> update (FilesDropped [ InteropFile "timer1.txt" sampleTimerData ])
+                        |> update (FilesAdded [ AddedFile "timer1.txt" "Name1" sampleTimerData ])
                         |> Tuple.first
-                        |> update (FilesDropped [ InteropFile "timer2.txt" sampleTimerData2 ])
+                        |> update (FilesAdded [ AddedFile "timer2.txt" "Name2" sampleTimerData2 ])
                         |> Tuple.first
                         |> update (DownloadTimer TimerTwo Time.utc recentTime)
                         |> Expect.all
-                            (expectCommand (DownloadFile timerFileMimeType (InteropFile "results_tidyup_timer_14072017024000.txt" expectedDownloadedTimerData2))
+                            (expectCommand (DownloadFile timerFileMimeType (InteropFile "results_tidyup_timer_20170714024000.txt" expectedDownloadedTimerData2))
                                 :: expectTimers doubleTimers
                                 :: defaultAssertionsExcept [ Timers, Command ]
                             )
@@ -683,7 +683,7 @@ suite =
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
                         |> update (DownloadBarcodeScannerFile "1.txt" Time.utc recentTime)
                         |> Expect.all
-                            (expectCommand (DownloadFile barcodeScannerFileMimeType (InteropFile "results_tidyup_barcode_14072017024000.txt" ""))
+                            (expectCommand (DownloadFile barcodeScannerFileMimeType (InteropFile "results_tidyup_barcode_20170714024000.txt" ""))
                                 :: expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2, 3 ])
                                 :: defaultAssertionsExcept [ Command, BarcodeScannerDataAssertion ]
                             )
@@ -692,7 +692,7 @@ suite =
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
                         |> update (DownloadBarcodeScannerFile "2.txt" Time.utc recentTime)
                         |> Expect.all
-                            (expectCommand (DownloadFile barcodeScannerFileMimeType (InteropFile "results_tidyup_barcode_14072017024000.txt" ""))
+                            (expectCommand (DownloadFile barcodeScannerFileMimeType (InteropFile "results_tidyup_barcode_20170714024000.txt" ""))
                                 :: expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2, 3 ])
                                 :: defaultAssertionsExcept [ Command, BarcodeScannerDataAssertion ]
                             )
@@ -701,7 +701,7 @@ suite =
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
                         |> update (DownloadBarcodeScannerFile "3.txt" Time.utc recentTime)
                         |> Expect.all
-                            (expectCommand (DownloadFile barcodeScannerFileMimeType (InteropFile "results_tidyup_barcode_14072017024000.txt" ""))
+                            (expectCommand (DownloadFile barcodeScannerFileMimeType (InteropFile "results_tidyup_barcode_20170714024000.txt" ""))
                                 :: expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2, 3 ])
                                 :: defaultAssertionsExcept [ Command, BarcodeScannerDataAssertion ]
                             )
@@ -865,7 +865,7 @@ suite =
                 \() ->
                     update (PastedFileUploaded sampleTimerData Time.utc recentTime) initModel
                         |> Expect.all
-                            (expectTimers (Single "pasted_file_14072017024000.txt" parsedTimerTimes1)
+                            (expectTimers (Single (TimerFile "pasted_file_20170714024000.txt" "File pasted at 2017-07-14 02:40:00") parsedTimerTimes1)
                                 :: defaultAssertionsExcept [ Timers ]
                             )
             ]

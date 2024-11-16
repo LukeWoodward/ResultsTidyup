@@ -306,8 +306,8 @@ suite =
         , describe "createMergedTable tests"
             [ test "Creating a merged table from an empty list generates empty data" <|
                 \() ->
-                    createMergedTable [] [] "empty1.txt" "empty2.txt"
-                        |> Expect.equal (DoubleTimerData [] [] "empty1.txt" "empty2.txt" [] (TimerMatchSummary 0 0 0 0 0))
+                    createMergedTable [] [] (TimerFile "empty1.txt" "Name1") (TimerFile "empty2.txt" "Name2")
+                        |> Expect.equal (DoubleTimerData [] [] (TimerFile "empty1.txt" "Name1") (TimerFile "empty2.txt" "Name2") [] (TimerMatchSummary 0 0 0 0 0))
             , test "Creating a merged table from a list of identical times" <|
                 \() ->
                     let
@@ -320,8 +320,15 @@ suite =
                             merge 1 10 times times
                                 |> generateInitialTable
                     in
-                    createMergedTable times times "identical1.txt" "identical2.txt"
-                        |> Expect.equal (DoubleTimerData times times "identical1.txt" "identical2.txt" mergedTable (TimerMatchSummary 3 0 0 0 0))
+                    createMergedTable times times (TimerFile "identical1.txt" "Name1") (TimerFile "identical2.txt" "Name2")
+                        |> Expect.equal
+                            (DoubleTimerData times
+                                times
+                                (TimerFile "identical1.txt" "Name1")
+                                (TimerFile "identical2.txt" "Name2")
+                                mergedTable
+                                (TimerMatchSummary 3 0 0 0 0)
+                            )
             , test "Creating a merged table from a pair of lists of times with a near match" <|
                 \() ->
                     let
@@ -338,8 +345,15 @@ suite =
                             merge 1 10 times1 times2
                                 |> generateInitialTable
                     in
-                    createMergedTable times1 times2 "nearmatch1.txt" "nearmatch2.txt"
-                        |> Expect.equal (DoubleTimerData times1 times2 "nearmatch1.txt" "nearmatch2.txt" mergedTable (TimerMatchSummary 2 1 0 0 0))
+                    createMergedTable times1 times2 (TimerFile "nearmatch1.txt" "Name1") (TimerFile "nearmatch2.txt" "Name2")
+                        |> Expect.equal
+                            (DoubleTimerData times1
+                                times2
+                                (TimerFile "nearmatch1.txt" "Name1")
+                                (TimerFile "nearmatch2.txt" "Name2")
+                                mergedTable
+                                (TimerMatchSummary 2 1 0 0 0)
+                            )
             , test "Creating a merged table from a pair of lists of times with a not-near match" <|
                 \() ->
                     let
@@ -356,8 +370,15 @@ suite =
                             merge 1 10 times1 times2
                                 |> generateInitialTable
                     in
-                    createMergedTable times1 times2 "notnearmatch1.txt" "notnearmatch2.txt"
-                        |> Expect.equal (DoubleTimerData times1 times2 "notnearmatch1.txt" "notnearmatch2.txt" mergedTable (TimerMatchSummary 2 0 1 0 0))
+                    createMergedTable times1 times2 (TimerFile "notnearmatch1.txt" "Name1") (TimerFile "notnearmatch2.txt" "Name2")
+                        |> Expect.equal
+                            (DoubleTimerData times1
+                                times2
+                                (TimerFile "notnearmatch1.txt" "Name1")
+                                (TimerFile "notnearmatch2.txt" "Name2")
+                                mergedTable
+                                (TimerMatchSummary 2 0 1 0 0)
+                            )
             , test "Creating a merged table from a pair of lists of times with a time only on the first watch" <|
                 \() ->
                     let
@@ -374,8 +395,15 @@ suite =
                             merge 1 10 times1 times2
                                 |> generateInitialTable
                     in
-                    createMergedTable times1 times2 "watch1only1.txt" "watch1only2.txt"
-                        |> Expect.equal (DoubleTimerData times1 times2 "watch1only1.txt" "watch1only2.txt" mergedTable (TimerMatchSummary 2 0 0 1 0))
+                    createMergedTable times1 times2 (TimerFile "watch1only1.txt" "Name1") (TimerFile "watch1only2.txt" "Name2")
+                        |> Expect.equal
+                            (DoubleTimerData times1
+                                times2
+                                (TimerFile "watch1only1.txt" "Name1")
+                                (TimerFile "watch1only2.txt" "Name2")
+                                mergedTable
+                                (TimerMatchSummary 2 0 0 1 0)
+                            )
             , test "Creating a merged table from a pair of lists of times with a time only on the second watch" <|
                 \() ->
                     let
@@ -392,8 +420,15 @@ suite =
                             merge 1 10 times1 times2
                                 |> generateInitialTable
                     in
-                    createMergedTable times1 times2 "watch2only1.txt" "watch2only2.txt"
-                        |> Expect.equal (DoubleTimerData times1 times2 "watch2only1.txt" "watch2only2.txt" mergedTable (TimerMatchSummary 2 0 0 0 1))
+                    createMergedTable times1 times2 (TimerFile "watch2only1.txt" "Name1") (TimerFile "watch2only2.txt" "Name2")
+                        |> Expect.equal
+                            (DoubleTimerData times1
+                                times2
+                                (TimerFile "watch2only1.txt" "Name1")
+                                (TimerFile "watch2only2.txt" "Name2")
+                                mergedTable
+                                (TimerMatchSummary 2 0 0 0 1)
+                            )
             ]
         , describe "outputMergedTable tests"
             [ test "outputMergedTable of an empty list of timer times is empty" <|

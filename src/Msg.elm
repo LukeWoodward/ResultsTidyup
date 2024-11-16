@@ -5,7 +5,7 @@ import BarcodeScannerEditing exposing (BarcodeScannerEditDetails, BarcodeScanner
 import Bootstrap.Tab as Tab
 import Commands exposing (CurrentDateAndTimeOperation)
 import File exposing (File)
-import FileHandling exposing (InteropFile)
+import FileHandling exposing (AddedFile, InteropFile)
 import ProblemFixing exposing (ProblemFix, ProblemIgnorance)
 import Time exposing (Posix, Zone)
 import Timer exposing (WhichTimer(..))
@@ -22,6 +22,7 @@ type NumberCheckerFieldChange
 type Msg
     = NoOp
     | FilesDropped (List InteropFile)
+    | FilesAdded (List AddedFile)
     | ToggleTableRow Int
     | DownloadTimer WhichTimer Zone Posix
     | RemoveTimer WhichTimer

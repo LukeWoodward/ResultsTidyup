@@ -416,7 +416,7 @@ applyTimerOffset offset applyToTimer1 applyToTimer2 timers =
 
 recreateDoubleTimerData : List Int -> List Int -> DoubleTimerData -> DoubleTimerData
 recreateDoubleTimerData times1 times2 doubleTimerData =
-    createMergedTable times1 times2 doubleTimerData.filename1 doubleTimerData.filename2
+    createMergedTable times1 times2 doubleTimerData.file1 doubleTimerData.file2
 
 
 applyScaleFactor : Float -> Timers -> Timers

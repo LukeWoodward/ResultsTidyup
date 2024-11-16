@@ -175,7 +175,7 @@ fixProblem problemFix model =
                                 TimerTwo ->
                                     { doubleTimerData | times2 = List.map (\time -> time + offset) doubleTimerData.times2 }
                     in
-                    Double (createMergedTable adjustedTimers.times1 adjustedTimers.times2 adjustedTimers.filename1 adjustedTimers.filename2)
+                    Double (createMergedTable adjustedTimers.times1 adjustedTimers.times2 adjustedTimers.file1 adjustedTimers.file2)
 
                 _ ->
                     -- Not two timers or some other problem-fix.

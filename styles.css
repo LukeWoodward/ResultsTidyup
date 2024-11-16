@@ -2,7 +2,9 @@ button.btn.nav-link.barcode-scanner-file-ok {
     background-color: #e6ffe6;
 }
 
-td.exact-match, tr.barcode-scanner-row-ok, button.btn.nav-link.active.barcode-scanner-file-ok {
+td.exact-match,
+tr.barcode-scanner-row-ok,
+button.btn.nav-link.active.barcode-scanner-file-ok {
     background-color: #ccffcc;
 }
 
@@ -10,7 +12,9 @@ button.btn.nav-link.barcode-scanner-file-warning {
     background-color: #ffffe6;
 }
 
-td.near-match, tr.barcode-scanner-row-warning, button.btn.nav-link.active.barcode-scanner-file-warning {
+td.near-match,
+tr.barcode-scanner-row-warning,
+button.btn.nav-link.active.barcode-scanner-file-warning {
     background-color: #ffffcc;
 }
 
@@ -18,7 +22,10 @@ button.btn.nav-link.barcode-scanner-file-error {
     background-color: #ffe6e6;
 }
 
-td.not-near-match, td.mismatch, tr.barcode-scanner-row-error, button.btn.nav-link.active.barcode-scanner-file-error {
+td.not-near-match,
+td.mismatch,
+tr.barcode-scanner-row-error,
+button.btn.nav-link.active.barcode-scanner-file-error {
     background-color: #ffcccc;
 }
 
@@ -26,33 +33,37 @@ table.table.timer-times {
     float: left;
 }
 
-table.table.timer-times, table.table.number-checker-table, table.table.barcode-scanner-table {
+table.table.timer-times,
+table.table.number-checker-table,
+table.table.barcode-scanner-table {
     width: auto;
 }
 
-table.table.timer-times > tbody > tr > td, table.table.number-checker-table > tbody > tr > td {
+table.table.timer-times>tbody>tr>td,
+table.table.number-checker-table>tbody>tr>td {
     text-align: right;
 }
 
-table.table.timer-times > tbody > tr > td.scanned-athlete,
-table.table.timer-times > tbody > tr > td.no-scanned-athlete {
+table.table.timer-times>tbody>tr>td.scanned-athlete,
+table.table.timer-times>tbody>tr>td.no-scanned-athlete {
     text-align: left;
 }
 
-table.table.timer-times > tbody > tr > td.no-scanned-athlete {
+table.table.timer-times>tbody>tr>td.no-scanned-athlete {
     color: #dddddd;
 }
 
-table.table.timer-times > tbody > tr > td, table.table.barcode-scanner-table > tbody > tr > td {
+table.table.timer-times>tbody>tr>td,
+table.table.barcode-scanner-table>tbody>tr>td {
     padding-top: 1px;
     padding-bottom: 1px;
 }
 
-table.table.timer-times > tbody > tr > td > input[type=checkbox] {
+table.table.timer-times>tbody>tr>td>input[type=checkbox] {
     margin: 0;
 }
 
-table.table.timer-times > tbody > tr > td > label {
+table.table.timer-times>tbody>tr>td>label {
     margin-bottom: 0;
 }
 
@@ -60,11 +71,11 @@ td.empty-cell {
     color: #dddddd;
 }
 
-.table-bordered > tbody > tr > td.underlined {
+.table-bordered>tbody>tr>td.underlined {
     border-bottom: 5px solid black;
 }
 
-.table-bordered > tbody > tr > td.underlined.highlighted {
+.table-bordered>tbody>tr>td.underlined.highlighted {
     border-bottom: 5px solid red;
 }
 
@@ -98,15 +109,18 @@ th.timer-header {
     vertical-align: middle;
 }
 
-input#eventDateBox, input#eventTimeBox {
+input#eventDateBox,
+input#eventTimeBox {
     margin-left: 10px;
 }
 
-input#eventDateBox.date-error, input#eventTimeBox.time-error{
+input#eventDateBox.date-error,
+input#eventTimeBox.time-error {
     background-color: #ffdddd;
 }
 
-input#eventDateBox.date-error:focus, input#eventTimeBox.time-error:focus {
+input#eventDateBox.date-error:focus,
+input#eventTimeBox.time-error:focus {
     background-color: inherit;
 }
 
@@ -127,7 +141,7 @@ input.number-checker-manual-entry.number-error:focus {
     background-color: inherit;
 }
 
-table.table.number-checker-table > tbody > tr.number-checker-manual-entry-row > td {
+table.table.number-checker-table>tbody>tr.number-checker-manual-entry-row>td {
     text-align: left;
 }
 
@@ -161,20 +175,24 @@ tr.deleted-barcode-scanner-row {
     margin-top: 10px;
 }
 
-div.barcode-scanner-buttons, div.timer-buttons {
+div.barcode-scanner-buttons,
+div.timer-buttons {
     float: right;
 }
 
-div.barcode-scanner-buttons button, div.timer-buttons button {
+div.barcode-scanner-buttons button,
+div.timer-buttons button {
     margin-left: 15px;
+    margin-bottom: 10px;
 }
 
 /* Adapted from https://github.com/twbs/bootstrap/issues/21881#issuecomment-341972830 */
-.btn-group-xs > .btn, .btn-xs {
-    padding  : .4rem;
-    font-size  : .875rem;
-    line-height  : .5;
-    border-radius : .2rem;
+.btn-group-xs>.btn,
+.btn-xs {
+    padding: .4rem;
+    font-size: .875rem;
+    line-height: .5;
+    border-radius: .2rem;
 }
 
 td.swap-barcodes-around-button-cell {
@@ -191,6 +209,7 @@ div#actionsPanelContainer {
 
 div#actionsPanelContainer button {
     margin-right: 10px;
+    margin-bottom: 10px;
 }
 
 div#timerMatchSummaryView {
@@ -205,7 +224,9 @@ div.token-operation-help-text {
     font-style: italic;
 }
 
-#header { float: left; }
+#header {
+    float: left;
+}
 
 .alert.warning-condensed {
     padding: .375rem 0.625rem;

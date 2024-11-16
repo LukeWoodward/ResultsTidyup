@@ -1,14 +1,14 @@
-module FileDropHandling exposing (handleFilesDropped)
+module FileDropHandling exposing (handleFilesAdded)
 
 import BarcodeScanner exposing (BarcodeScannerData, mergeScannerData, readBarcodeScannerData)
 import Error exposing (Error, FileError, mapError)
-import FileHandling exposing (InteropFile)
+import FileHandling exposing (AddedFile)
 import Model exposing (Model)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, annotate, parseNumberCheckerFile)
 import Parser exposing ((|.), Parser, chompIf, chompWhile, end, run)
 import Regex exposing (Regex)
 import Result.Extra
-import Timer exposing (Timer(..), Timers(..), createMergedTable, readTimerData)
+import Timer exposing (Timer(..), TimerFile, Timers(..), createMergedTable, readTimerData)
 
 
 hasFileAlreadyBeenUploaded : String -> Timers -> Bool
@@ -17,15 +17,20 @@ hasFileAlreadyBeenUploaded newFileName timers =
         None ->
             False
 
-        Single existingFilename _ ->
-            newFileName == existingFilename
+        Single existingFile _ ->
+            newFileName == existingFile.filename
 
         Double doubleTimerData ->
-            newFileName == doubleTimerData.filename1 || newFileName == doubleTimerData.filename2
+            newFileName == doubleTimerData.file1.filename || newFileName == doubleTimerData.file2.filename
 
 
-handleTimerFileDrop : String -> String -> Model -> Model
-handleTimerFileDrop fileName fileText model =
+handleTimerFileAdded : String -> String -> String -> Model -> Model
+handleTimerFileAdded fileName fileText name model =
+    let
+        makeTimerFile : String -> TimerFile
+        makeTimerFile filename =
+            TimerFile filename name
+    in
     case readTimerData fileText of
         Ok (TimerData newTimer) ->
             if hasFileAlreadyBeenUploaded fileName model.timers then
@@ -44,14 +49,14 @@ handleTimerFileDrop fileName fileText model =
                     newTimers =
                         case model.timers of
                             None ->
-                                Single fileName newTimer
+                                Single (makeTimerFile fileName) newTimer
 
-                            Single existingFilename firstTimer ->
-                                if fileName < existingFilename then
-                                    Double (createMergedTable newTimer firstTimer fileName existingFilename)
+                            Single existingFile firstTimer ->
+                                if fileName < existingFile.filename then
+                                    Double (createMergedTable newTimer firstTimer (makeTimerFile fileName) existingFile)
 
                                 else
-                                    Double (createMergedTable firstTimer newTimer existingFilename fileName)
+                                    Double (createMergedTable firstTimer newTimer existingFile (makeTimerFile fileName))
 
                             Double _ ->
                                 model.timers
@@ -73,8 +78,8 @@ isPossibleBarcodeScannerFile fileText =
     Regex.contains barcodeScannerRegex fileText
 
 
-handleBarcodeScannerFileDrop : String -> String -> Model -> Model
-handleBarcodeScannerFileDrop fileName fileText model =
+handleBarcodeScannerFileAdded : String -> String -> Model -> Model
+handleBarcodeScannerFileAdded fileName fileText model =
     if List.any (\file -> file.name == fileName) model.barcodeScannerData.files then
         { model
             | lastErrors =
@@ -119,8 +124,8 @@ isPossibleNumberCheckerFile fileText =
     Result.Extra.isOk (run numberCheckerParser fileText)
 
 
-handleNumberCheckerFileDrop : String -> String -> Model -> Model
-handleNumberCheckerFileDrop fileName fileText model =
+handleNumberCheckerFileAdded : String -> String -> Model -> Model
+handleNumberCheckerFileAdded fileName fileText model =
     let
         result : Result Error (List NumberCheckerEntry)
         result =
@@ -141,16 +146,16 @@ handleNumberCheckerFileDrop fileName fileText model =
             }
 
 
-handleFileDropped : InteropFile -> Model -> Model
-handleFileDropped { fileName, fileText } model =
+handleFileAdded : AddedFile -> Model -> Model
+handleFileAdded { fileName, name, fileText } model =
     if String.startsWith "STARTOFEVENT" fileText || String.startsWith "I, CP" fileText then
-        handleTimerFileDrop fileName fileText model
+        handleTimerFileAdded fileName fileText name model
 
     else if isPossibleNumberCheckerFile fileText then
-        handleNumberCheckerFileDrop fileName fileText model
+        handleNumberCheckerFileAdded fileName fileText model
 
     else if isPossibleBarcodeScannerFile fileText then
-        handleBarcodeScannerFileDrop fileName fileText model
+        handleBarcodeScannerFileAdded fileName fileText model
 
     else
         { model
@@ -158,12 +163,12 @@ handleFileDropped { fileName, fileText } model =
         }
 
 
-handleFilesDropped : List InteropFile -> Model -> Model
-handleFilesDropped files model =
+handleFilesAdded : List AddedFile -> Model -> Model
+handleFilesAdded files model =
     let
-        sortedFiles : List InteropFile
+        sortedFiles : List AddedFile
         sortedFiles =
             List.sortBy .fileName files
                 |> List.reverse
     in
-    List.foldr handleFileDropped model sortedFiles
+    List.foldr handleFileAdded model sortedFiles

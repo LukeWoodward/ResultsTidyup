@@ -3,6 +3,7 @@ module Timer exposing
     , MergeEntry(..)
     , MergedTableRow
     , Timer(..)
+    , TimerFile
     , TimerMatchSummary
     , Timers(..)
     , WhichTimer(..)
@@ -59,11 +60,20 @@ type alias TimerMatchSummary =
     }
 
 
+{-| Contains the filename of a timer file along with the deduced name of
+the volunteer who recorded these times.
+-}
+type alias TimerFile =
+    { filename : String
+    , name : String
+    }
+
+
 type alias DoubleTimerData =
     { times1 : List Int
     , times2 : List Int
-    , filename1 : String
-    , filename2 : String
+    , file1 : TimerFile
+    , file2 : TimerFile
     , mergedTableRows : List MergedTableRow
     , matchSummary : TimerMatchSummary
     }
@@ -71,7 +81,7 @@ type alias DoubleTimerData =
 
 type Timers
     = None
-    | Single String (List Int)
+    | Single TimerFile (List Int)
     | Double DoubleTimerData
 
 
@@ -509,8 +519,8 @@ outputMergedTable mergedRows =
         |> String.join crlf
 
 
-createMergedTable : List Int -> List Int -> String -> String -> DoubleTimerData
-createMergedTable times1 times2 filename1 filename2 =
+createMergedTable : List Int -> List Int -> TimerFile -> TimerFile -> DoubleTimerData
+createMergedTable times1 times2 file1 file2 =
     let
         mergedDetails : List MergeEntry
         mergedDetails =
@@ -526,8 +536,8 @@ createMergedTable times1 times2 filename1 filename2 =
     in
     { times1 = times1
     , times2 = times2
-    , filename1 = filename1
-    , filename2 = filename2
+    , file1 = file1
+    , file2 = file2
     , mergedTableRows = mergedTable
     , matchSummary = matchSummary
     }

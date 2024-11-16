@@ -2,7 +2,7 @@ module TimerOffsetDetection exposing (findPossibleOffsets, getTimerTimeOffset)
 
 import Array exposing (Array)
 import Dict exposing (Dict)
-import Timer exposing (DoubleTimerData, Timers(..), createMergedTable)
+import Timer exposing (DoubleTimerData, TimerFile, Timers(..), createMergedTable)
 
 
 timerTimeOffsetRange : Int
@@ -57,7 +57,8 @@ scale index1 length1 length2 =
 
 getPossibleTimerTimeOffsetsInDoubleTimerData : DoubleTimerData -> List Int
 getPossibleTimerTimeOffsetsInDoubleTimerData doubleTimerData =
-    {- The implementation of this is somewhat basic: we compare corresponding
+    {-
+       The implementation of this is somewhat basic: we compare corresponding
        times that are within a given number of positions away from each other.
        Adjustments are made if the timers don't have the same number of
        times recorded.  All differences between pairs of times that occur
@@ -136,7 +137,7 @@ getBestTimerTimeOffsetInDoubleTimerData doubleTimerData =
 
         getMergedTableResult : Int -> Int
         getMergedTableResult offset =
-            createMergedTable doubleTimerData.times1 (List.map ((+) offset) doubleTimerData.times2) "dummy-filename1" "fummy-filename2"
+            createMergedTable doubleTimerData.times1 (List.map ((+) offset) doubleTimerData.times2) (TimerFile "dummy-filename1" "Dummy1") (TimerFile "dummy-filename2" "Dummy2")
                 |> .matchSummary
                 |> .exactMatches
 

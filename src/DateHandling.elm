@@ -1,6 +1,7 @@
-module DateHandling exposing (dateTimeStringToPosix, generateFilenameDatePart, posixToDateString, posixToDateTimeString)
+module DateHandling exposing (dateTimeStringToPosix, generateFilenameDatePart, generateNameOfPastedFile, posixToDateString, posixToDateTimeString)
 
 import Iso8601
+import List.Extra
 import Parser exposing ((|.), (|=), Parser, end, keyword, oneOf, run, spaces, symbol)
 import Parsers exposing (digits)
 import Result.Extra
@@ -58,14 +59,28 @@ getMonthNumber zone time =
 
 generateFilenameDatePart : Zone -> Posix -> String
 generateFilenameDatePart zone time =
-    [ Time.toDay zone time
+    [ Time.toYear zone time
     , getMonthNumber zone time
-    , Time.toYear zone time
+    , Time.toDay zone time
     , Time.toHour zone time
     , Time.toMinute zone time
     , Time.toSecond zone time
     ]
         |> List.map formatToAtLeastTwoChars
+        |> String.join ""
+
+
+generateNameOfPastedFile : Zone -> Posix -> String
+generateNameOfPastedFile zone time =
+    [ Time.toYear zone time
+    , getMonthNumber zone time
+    , Time.toDay zone time
+    , Time.toHour zone time
+    , Time.toMinute zone time
+    , Time.toSecond zone time
+    ]
+        |> List.map formatToAtLeastTwoChars
+        |> List.Extra.interweave [ "", "-", "-", " ", ":", ":" ]
         |> String.join ""
 
 

@@ -27,7 +27,7 @@ import Problems
         )
 import Test exposing (Test, describe, test)
 import TestData exposing (createBarcodeScannerDataFromFiles, doubleTimers, ordinaryFileLine, toPosix)
-import Timer exposing (MergeEntry(..), MergedTableRow, TimerMatchSummary, Timers(..), WhichTimer(..), noUnderlines)
+import Timer exposing (MergeEntry(..), MergedTableRow, TimerFile, TimerMatchSummary, Timers(..), WhichTimer(..), noUnderlines)
 
 
 wrapMergeEntriesInTable : List MergeEntry -> List MergedTableRow
@@ -60,8 +60,8 @@ doubleTimersForTimeLookupTests =
     Double
         { times1 = [ 191, 469, 603, 746, 882 ]
         , times2 = [ 191, 463, 746, 791, 882 ]
-        , filename1 = "timer1.txt"
-        , filename2 = "timer2.txt"
+        , file1 = TimerFile "timer1.txt" "Name1"
+        , file2 = TimerFile "timer2.txt" "Name2"
         , mergedTableRows = expectedEntries
         , matchSummary = expectedMatchSummary
         }
@@ -121,7 +121,7 @@ suite =
             , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from single timer data" <|
                 \() ->
                     identifyProblems
-                        (Single "timer1.txt" [ 604, 775, 802, 993, 1011, 1143, 1197 ])
+                        (Single (TimerFile "timer1.txt" "Name1") [ 604, 775, 802, 993, 1011, 1143, 1197 ])
                         (createBarcodeScannerData (Dict.fromList [ ( 3, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 6, [ "A123456" ] ) ]) [])
                         noIgnoredProblems
                         |> Expect.equal
@@ -133,7 +133,7 @@ suite =
             , test "identifyProblems returns a problem for an athlete with two repeated positions and looks times up from single timer data, ignoring time off the end" <|
                 \() ->
                     identifyProblems
-                        (Single "timer1.txt" [ 604, 775, 802, 993, 1011 ])
+                        (Single (TimerFile "timer1.txt" "Name1") [ 604, 775, 802, 993, 1011 ])
                         (createBarcodeScannerData (Dict.fromList [ ( 3, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 6, [ "A123456" ] ) ]) [])
                         noIgnoredProblems
                         |> Expect.equal
@@ -247,21 +247,21 @@ suite =
             , test "identifyProblems returns no problems for a finish position not off the end" <|
                 \() ->
                     identifyProblems
-                        (Single "filename" [ 1000, 1100, 1200, 1300, 1400 ])
+                        (Single (TimerFile "timer1.txt" "Name1") [ 1000, 1100, 1200, 1300, 1400 ])
                         (createBarcodeScannerData (Dict.fromList [ ( 3, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 5, [ "A987654" ] ) ]) [])
                         noIgnoredProblems
                         |> Expect.equal noProblems
             , test "identifyProblems returns a problem for a finish position off the end" <|
                 \() ->
                     identifyProblems
-                        (Single "filename" [ 1000, 1100, 1200, 1300 ])
+                        (Single (TimerFile "timer1.txt" "Name1") [ 1000, 1100, 1200, 1300 ])
                         (createBarcodeScannerData (Dict.fromList [ ( 3, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 5, [ "A987654" ] ) ]) [])
                         noIgnoredProblems
                         |> Expect.equal { noProblems | positionOffEndOfTimes = Just (PositionOffEndOfTimesProblem 4 5) }
             , test "identifyProblems returns a single problem for multiple finish positions off the end" <|
                 \() ->
                     identifyProblems
-                        (Single "filename" [ 1000, 1100 ])
+                        (Single (TimerFile "timer1.txt" "Name1") [ 1000, 1100 ])
                         (createBarcodeScannerData (Dict.fromList [ ( 3, [ "A123456" ] ), ( 4, [ "A252525" ] ), ( 5, [ "A987654" ] ) ]) [])
                         noIgnoredProblems
                         |> Expect.equal { noProblems | positionOffEndOfTimes = Just (PositionOffEndOfTimesProblem 2 5) }
@@ -362,8 +362,8 @@ suite =
                         (Double
                             { times1 = [ 1000, 1080, 1201 ]
                             , times2 = [ 1000, 1080, 1200 ]
-                            , filename1 = "timers1.txt"
-                            , filename2 = "timers2.txt"
+                            , file1 = TimerFile "timer1.txt" "Name1"
+                            , file2 = TimerFile "timer2.txt" "Name2"
                             , mergedTableRows = wrapMergeEntriesInTable [ ExactMatch 1000, ExactMatch 1100, NearMatch 1201 1200 ]
                             , matchSummary = TimerMatchSummary 2 1 0 0 0
                             }
@@ -377,8 +377,8 @@ suite =
                         (Double
                             { times1 = [ 1000, 1080, 1200 ]
                             , times2 = [ 1005, 1085, 1205 ]
-                            , filename1 = "timers1.txt"
-                            , filename2 = "timers2.txt"
+                            , file1 = TimerFile "timer1.txt" "Name1"
+                            , file2 = TimerFile "timer2.txt" "Name2"
                             , mergedTableRows =
                                 wrapMergeEntriesInTable
                                     [ OneWatchOnly TimerOne 1000
@@ -400,8 +400,8 @@ suite =
                         (Double
                             { times1 = [ 1000, 1080, 1200 ]
                             , times2 = [ 1005, 1085, 1205 ]
-                            , filename1 = "timers1.txt"
-                            , filename2 = "timers2.txt"
+                            , file1 = TimerFile "timer1.txt" "Name1"
+                            , file2 = TimerFile "timer2.txt" "Name2"
                             , mergedTableRows =
                                 wrapMergeEntriesInTable
                                     [ OneWatchOnly TimerOne 1000

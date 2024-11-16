@@ -13,7 +13,7 @@ suite =
             [ test "Can generate a filename part" <|
                 \() ->
                     generateFilenameDatePart Time.utc (Time.millisToPosix 1500000000000)
-                        |> Expect.equal "14072017024000"
+                        |> Expect.equal "20170714024000"
             ]
         , describe "dateTimeStringToPosix tests"
             [ test "Can parse an actual time into a Posix value" <|

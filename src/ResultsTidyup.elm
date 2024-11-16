@@ -14,7 +14,7 @@ import Error exposing (FileError)
 import File exposing (File)
 import File.Download as Download
 import File.Select
-import FileHandling exposing (InteropFile)
+import FileHandling exposing (AddedFile, deduceNameFromFilename)
 import Html exposing (Html, a, div, h1, span, text)
 import Html.Attributes exposing (class, disabled, href, id, target)
 import Html.Events exposing (on, onClick)
@@ -143,13 +143,13 @@ mapCommand command =
             let
                 -- Convert each File into a Task that returns the corresponding
                 -- InteropFile when performed.
-                mapTask : File -> Task Never InteropFile
+                mapTask : File -> Task Never AddedFile
                 mapTask file =
-                    Task.map (InteropFile (File.name file)) (File.toString file)
+                    Task.map (AddedFile (File.name file) (deduceNameFromFilename (File.name file))) (File.toString file)
             in
             List.map mapTask files
                 |> Task.sequence
-                |> Task.perform FilesDropped
+                |> Task.perform FilesAdded
 
 
 handleKey : Int -> Decoder Msg
@@ -229,7 +229,7 @@ view model =
     div
         [ on "keyup" keyDecoder ]
         [ Grid.row []
-            [ Grid.col [ Col.xs6 ]
+            [ Grid.col [ Col.xs12, Col.md6 ]
                 [ div
                     [ class "clearfix" ]
                     [ h1 [ id "header" ] [ text "Results Tidyup" ]
@@ -244,7 +244,7 @@ view model =
             ]
         , Grid.row []
             ([ timersItem, scannersItem ]
-                |> List.map (\element -> Grid.col [ Col.xs6 ] [ element ])
+                |> List.map (\element -> Grid.col [ Col.xs12, Col.md6 ] [ element ])
             )
         , noFilesUploaded
         , showModalDialog model

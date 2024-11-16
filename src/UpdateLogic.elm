@@ -12,10 +12,10 @@ import BarcodeScanner
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, BarcodeScannerValidationError, tryUpdateBarcodeScannerLine)
 import Bootstrap.Tab as Tab
 import Commands exposing (Command(..), ElementToFocus(..))
-import DateHandling exposing (generateFilenameDatePart)
+import DateHandling exposing (generateFilenameDatePart, generateNameOfPastedFile)
 import File exposing (File)
-import FileDropHandling exposing (handleFilesDropped)
-import FileHandling exposing (InteropFile)
+import FileDropHandling exposing (handleFilesAdded)
+import FileHandling exposing (AddedFile, InteropFile, deduceNameFromFilename)
 import Model exposing (DialogDetails(..), Model, emptyNumberCheckerManualEntryRow)
 import Msg exposing (Msg(..))
 import NumberCheckerEditing
@@ -142,7 +142,7 @@ removeTimer which model =
             let
                 newTimers : Timers
                 newTimers =
-                    Single doubleTimerData.filename2 doubleTimerData.times2
+                    Single doubleTimerData.file2 doubleTimerData.times2
             in
             identifyProblemsIn
                 { model | timers = newTimers }
@@ -151,7 +151,7 @@ removeTimer which model =
             let
                 newTimers : Timers
                 newTimers =
-                    Single doubleTimerData.filename1 doubleTimerData.times1
+                    Single doubleTimerData.file1 doubleTimerData.times1
             in
             identifyProblemsIn
                 { model | timers = newTimers }
@@ -178,8 +178,8 @@ flipTimers model =
                 newDoubleTimerData =
                     { times1 = oldDoubleTimerData.times2
                     , times2 = oldDoubleTimerData.times1
-                    , filename1 = oldDoubleTimerData.filename2
-                    , filename2 = oldDoubleTimerData.filename1
+                    , file1 = oldDoubleTimerData.file2
+                    , file2 = oldDoubleTimerData.file1
                     , mergedTableRows = newMergedTableRows
                     , matchSummary = flipMatchSummary oldDoubleTimerData.matchSummary
                     }
@@ -364,7 +364,23 @@ update msg model =
             ( model, NoCommand )
 
         FilesDropped files ->
-            ( handleFilesDropped files model
+            let
+                mapFile : InteropFile -> AddedFile
+                mapFile interopFile =
+                    AddedFile interopFile.fileName (deduceNameFromFilename interopFile.fileName) interopFile.fileText
+
+                addedFiles : List AddedFile
+                addedFiles =
+                    List.map mapFile files
+            in
+            ( handleFilesAdded addedFiles model
+                |> identifyProblemsIn
+                |> reunderlineTimerTable
+            , NoCommand
+            )
+
+        FilesAdded files ->
+            ( handleFilesAdded files model
                 |> identifyProblemsIn
                 |> reunderlineTimerTable
             , NoCommand
@@ -561,8 +577,12 @@ update msg model =
                 fileName : String
                 fileName =
                     "pasted_file_" ++ generateFilenameDatePart zone time ++ ".txt"
+
+                name : String
+                name =
+                    "File pasted at " ++ generateNameOfPastedFile zone time
             in
-            ( handleFilesDropped [ InteropFile fileName contents ] { model | dialogDetails = NoDialog }
+            ( handleFilesAdded [ AddedFile fileName name contents ] { model | dialogDetails = NoDialog }
                 |> identifyProblemsIn
                 |> reunderlineTimerTable
             , NoCommand

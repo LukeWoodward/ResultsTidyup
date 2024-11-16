@@ -59,6 +59,7 @@ import Timer
         ( MergeEntry(..)
         , MergedTableRow
         , Timer(..)
+        , TimerFile
         , TimerMatchSummary
         , Timers(..)
         , WhichTimer(..)
@@ -108,7 +109,7 @@ expectedParsedSampleTimerData =
 
 singleTimer : Timers
 singleTimer =
-    Single "timer1.txt" parsedTimerTimes1
+    Single (TimerFile "timer1.txt" "Name1") parsedTimerTimes1
 
 
 defaultMatchSummary : TimerMatchSummary
@@ -184,8 +185,8 @@ doubleTimers =
     Double
         { times1 = parsedTimerTimes1
         , times2 = parsedTimerTimes2
-        , filename1 = "timer1.txt"
-        , filename2 = "timer2.txt"
+        , file1 = TimerFile "timer1.txt" "Name1"
+        , file2 = TimerFile "timer2.txt" "Name2"
         , mergedTableRows = expectedEntries
         , matchSummary = expectedMatchSummary
         }
@@ -212,8 +213,8 @@ flippedDoubleTimers =
     Double
         { times1 = parsedTimerTimes2
         , times2 = parsedTimerTimes1
-        , filename1 = "timer2.txt"
-        , filename2 = "timer1.txt"
+        , file1 = TimerFile "timer2.txt" "Name2"
+        , file2 = TimerFile "timer1.txt" "Name1"
         , mergedTableRows = expectedEntries
         , matchSummary = expectedMatchSummary
         }
@@ -224,8 +225,8 @@ timersForAdjusting timer1Offset timer2Offset =
     Double
         { times1 = List.map (\t -> t + timer1Offset) parsedTimerTimes1
         , times2 = List.map (\t -> t + timer2Offset) parsedTimerTimes2
-        , filename1 = "timer1.txt"
-        , filename2 = "timer2.txt"
+        , file1 = TimerFile "timer1.txt" "Name1"
+        , file2 = TimerFile "timer2.txt" "Name2"
         , mergedTableRows = []
         , matchSummary = defaultMatchSummary
         }
