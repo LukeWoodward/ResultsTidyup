@@ -15,8 +15,7 @@ import Dict
 import Expect
 import Problems
     exposing
-        ( AthleteAndPositionPair
-        , AthleteWithAndWithoutPositionProblem
+        ( AthleteWithAndWithoutPositionProblem
         , AthleteWithMultiplePositionsProblem
         , MisScannedAthleteBarcodeProblem
         , PositionAndTime
