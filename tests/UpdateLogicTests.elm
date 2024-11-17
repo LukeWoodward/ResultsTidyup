@@ -403,7 +403,8 @@ suite =
                         |> update FlipTimers
                         |> Expect.all
                             (expectTimers flippedDoubleTimers
-                                :: defaultAssertionsExcept [ Timers ]
+                                :: expectProblems { noProblems | timerTimeOffset = Just -283 }
+                                :: defaultAssertionsExcept [ Timers, Problems ]
                             )
             ]
         , describe "Clear All Data tests"

@@ -52,11 +52,7 @@ handleTimerFileAdded addedFile model =
                                 Single (makeTimerFile addedFile.fileName) newTimer
 
                             Single existingFile firstTimer ->
-                                if addedFile.fileName < existingFile.filename then
-                                    Double (createMergedTable newTimer firstTimer (makeTimerFile addedFile.fileName) existingFile)
-
-                                else
-                                    Double (createMergedTable firstTimer newTimer existingFile (makeTimerFile addedFile.fileName))
+                                Double (createMergedTable firstTimer newTimer existingFile (makeTimerFile addedFile.fileName))
 
                             Double _ ->
                                 model.timers

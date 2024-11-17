@@ -96,7 +96,7 @@ suite =
                         initModel
                             |> handleFilesAdded [ AddedFile "timer2.txt" "Name2" sampleTimerData2 ]
                             |> handleFilesAdded [ AddedFile "timer1.txt" "Name1" sampleTimerData ]
-                            |> Expect.equal { initModel | timers = doubleTimers }
+                            |> Expect.equal { initModel | timers = flippedDoubleTimers }
                 , test "Uploading a third timer data file has no effect" <|
                     \() ->
                         let
