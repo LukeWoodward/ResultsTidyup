@@ -1,4 +1,4 @@
-module ViewCommon exposing (athleteLink, intCell, normalButton, outlineButton, plainCell, smallButton, tableHeaders)
+module ViewCommon exposing (athleteLink, intCell, normalButton, outlineButton, plainCell, smallButton, tableHeader, tableHeaderWithClass, tableHeaders)
 
 import Bootstrap.Button as Button
 import Bootstrap.Table as Table
@@ -25,6 +25,11 @@ intCell contents =
 tableHeader : String -> Table.Cell a
 tableHeader headerText =
     Table.th [] [ text headerText ]
+
+
+tableHeaderWithClass : String -> String -> Table.Cell a
+tableHeaderWithClass headerText className =
+    Table.th [ Table.cellAttr (class className) ] [ text headerText ]
 
 
 tableHeaders : List String -> Table.THead a

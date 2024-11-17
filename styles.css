@@ -244,3 +244,9 @@ textarea#pasteFileDialogTextArea {
 span.about-link {
     padding-left: 35px;
 }
+
+@media screen and (max-width:767px) {
+    .scanner-date-cell {
+        display: none;
+    }
+}

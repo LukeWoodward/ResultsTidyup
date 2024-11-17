@@ -18,7 +18,7 @@ import Html.Events exposing (onDoubleClick)
 import Model exposing (Model)
 import Msg exposing (Msg(..))
 import ProblemsView exposing (scannerProblemsView)
-import ViewCommon exposing (athleteLink, normalButton, smallButton, tableHeaders)
+import ViewCommon exposing (athleteLink, normalButton, smallButton, tableHeader, tableHeaderWithClass)
 
 
 maybeIntToString : Maybe Int -> String
@@ -103,12 +103,22 @@ barcodeScannerViewRow fileName line =
         (List.map Table.rowAttr rowAttributes)
         (Table.td [] [ text (String.fromInt line.lineNumber) ]
             :: barcodeScannerContents line.contents line.deletionStatus
-            ++ [ Table.td [] [ text line.scanDateTime ] ]
+            ++ [ Table.td [ Table.cellAttr (class "scanner-date-cell") ] [ text line.scanDateTime ] ]
         )
 
 
 barcodeScannerView : BarcodeScannerFile -> Html Msg
 barcodeScannerView file =
+    let
+        thead : Table.THead a
+        thead =
+            Table.simpleThead
+                [ tableHeader "Line #"
+                , tableHeader "Athlete"
+                , tableHeader "Position"
+                , tableHeaderWithClass "Date/Time" "scanner-date-cell"
+                ]
+    in
     div []
         [ div
             [ class "barcode-scanner-buttons" ]
@@ -117,7 +127,7 @@ barcodeScannerView file =
             ]
         , Table.table
             { options = [ Table.bordered, Table.small, Table.hover, Table.attr (class "barcode-scanner-table") ]
-            , thead = tableHeaders [ "Line #", "Athlete", "Position", "Date/Time" ]
+            , thead = thead
             , tbody = Table.tbody [] (List.map (barcodeScannerViewRow file.filename) file.lines)
             }
         ]
