@@ -257,4 +257,8 @@ span.about-link {
     .scanner-date-cell {
         display: none;
     }
+
+    div.token-operation-help-text:not(.selected) {
+        display: none;
+    }
 }

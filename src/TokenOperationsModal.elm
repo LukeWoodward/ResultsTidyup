@@ -31,14 +31,23 @@ tokenOperationsDialogTitle =
     "Token operations"
 
 
-textRow : String -> Html Msg
-textRow textContents =
-    div [ class "token-operation-help-text" ] [ text textContents ]
+textRow : TokenOperationOption -> TokenOperationEditDetails -> String -> Html Msg
+textRow changeType tokenOperationEditDetails textContents =
+    let
+        classes : String
+        classes =
+            if tokenOperationEditDetails.operation == changeType then
+                "token-operation-help-text selected"
+
+            else
+                "token-operation-help-text"
+    in
+    div [ class classes ] [ text textContents ]
 
 
 radioButton : String -> TokenOperationOption -> String -> TokenOperationEditDetails -> Grid.Column Msg
 radioButton elementId option labelText tokenOperationEditDetails =
-    Grid.col [ Col.xs3 ]
+    Grid.col [ Col.xs6, Col.md3 ]
         [ Radio.radio
             [ Radio.id elementId
             , Radio.checked (tokenOperationEditDetails.operation == option)
@@ -59,7 +68,7 @@ inputTextField rangeEntryGetter field option validator tokenOperationEditDetails
             else
                 []
     in
-    Grid.col [ Col.xs3 ]
+    Grid.col [ Col.xs6, Col.md3 ]
         [ Input.text
             ([ Input.value (rangeEntryGetter tokenOperationEditDetails).enteredValue
              , Input.onInput (TokenOperationEdit << RangeEdited field)
@@ -139,7 +148,8 @@ tokenOperationsModalBody tokenOperationEditDetails =
             [ radioButton "insertTokensRadioButtonId" InsertTokensOption "Insert token(s)" tokenOperationEditDetails
             , inputTextField .insertTokenRange InsertTokenRangeField InsertTokensOption isInsertTokenRangeFieldInvalid tokenOperationEditDetails
             ]
-        , textRow
+        , textRow InsertTokensOption
+            tokenOperationEditDetails
             ("Use this option if a token should have been given out, but wasn't, e.g. due to a funnel ducker or "
                 ++ "a person declined to take a finish token and a token wasn't put aside for that finisher."
             )
@@ -147,7 +157,8 @@ tokenOperationsModalBody tokenOperationEditDetails =
             [ radioButton "removeTokensRadioButtonId" RemoveTokensOption "Remove token(s)" tokenOperationEditDetails
             , inputTextField .removeTokenRange RemoveTokenRangeField RemoveTokensOption isRemoveTokenRangeFieldInvalid tokenOperationEditDetails
             ]
-        , textRow
+        , textRow RemoveTokensOption
+            tokenOperationEditDetails
             ("Use this option if one or more tokens were not given out, for example, they were missing before the event "
                 ++ "started, they were dropped during the event by the finish token volunteers and not given out, "
                 ++ "or more than one token was given to a finisher."
@@ -155,10 +166,11 @@ tokenOperationsModalBody tokenOperationEditDetails =
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
             [ radioButton "swapTokensRadioButtonId" SwapTokenRangeOption "Swap token(s)" tokenOperationEditDetails
             , inputTextField .swapTokenRange1 SwapTokenRangeField1 SwapTokenRangeOption isSwapTokenRange1FieldInvalid tokenOperationEditDetails
-            , Grid.col [ Col.xs1 ] [ text " and " ]
+            , Grid.col [ Col.xs5, Col.offsetXs1, Col.md1, Col.offsetMd0 ] [ text " and " ]
             , inputTextField .swapTokenRange2 SwapTokenRangeField2 SwapTokenRangeOption isSwapTokenRange2FieldInvalid tokenOperationEditDetails
             ]
-        , textRow
+        , textRow SwapTokenRangeOption
+            tokenOperationEditDetails
             ("Use this option if you give out tokens in batches (e.g. 25, 50 or 100 tokens) but one or more of "
                 ++ "these batches were given out in the wrong order."
             )
@@ -166,7 +178,7 @@ tokenOperationsModalBody tokenOperationEditDetails =
             [ radioButton "reverseTokensRadioButtonId" ReverseTokenRangeOption "Reverse tokens" tokenOperationEditDetails
             , inputTextField .reverseTokenRange ReverseTokenRangeField ReverseTokenRangeOption isReverseTokenRangeFieldInvalid tokenOperationEditDetails
             ]
-        , textRow "Use this option if a range of tokens was given out in the reverse order."
+        , textRow ReverseTokenRangeOption tokenOperationEditDetails "Use this option if a range of tokens was given out in the reverse order."
         , validationErrorRow tokenOperationEditDetails.validationError
         ]
 
