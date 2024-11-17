@@ -184,7 +184,7 @@ flipTimers model =
                     , matchSummary = flipMatchSummary oldDoubleTimerData.matchSummary
                     }
             in
-            { model | timers = Double newDoubleTimerData }
+            identifyProblemsIn { model | timers = Double newDoubleTimerData }
 
 
 clearAllData : Model -> Model

@@ -442,6 +442,10 @@ mergedTimerRow highlightedNumberCheckerId barcodeScannerData row =
 timersView : Timers -> BarcodeScannerData -> Problems -> Maybe Int -> Html Msg
 timersView timers barcodeScannerData problems highlightedNumberCheckerId =
     let
+        flipTimersButton : Html Msg
+        flipTimersButton =
+            normalButton FlipTimers [] "← Swap timers →"
+
         timerOperationsButton : Html Msg
         timerOperationsButton =
             normalButton ShowTimerOperationsModal [] "Timer operations..."
@@ -456,7 +460,8 @@ timersView timers barcodeScannerData problems highlightedNumberCheckerId =
                     [ timerOperationsButton ]
 
                 Double _ ->
-                    [ timerOperationsButton
+                    [ flipTimersButton
+                    , timerOperationsButton
                     , normalButton (RequestCurrentDateAndTime Commands.DownloadMergedTimers) [] "Download merged times"
                     ]
 
