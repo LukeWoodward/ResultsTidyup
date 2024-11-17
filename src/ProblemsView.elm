@@ -17,7 +17,7 @@ import Problems
         )
 import TimeHandling exposing (formatTime)
 import Timer exposing (WhichTimer(..))
-import ViewCommon exposing (athleteLink, smallButton)
+import ViewCommon exposing (athleteLink, normalButton, smallButton)
 
 
 warningAlert : List (Html Msg) -> Html Msg
@@ -91,8 +91,11 @@ timerTimeOffsetView offset =
                 if abs offset == 1 then
                     "1 second"
 
-                else
+                else if abs offset < 60 then
                     String.fromInt (abs offset) ++ " seconds"
+
+                else
+                    formatTime (abs offset)
 
             laterTimer : String
             laterTimer =
@@ -119,16 +122,18 @@ timerTimeOffsetView offset =
                     "Timer 2 is slow - add " ++ offsetDescription
         in
         warningAlert
-            [ text "There seems to be a difference of "
+            [ div [ class "clearfix" ] []
+            , text "There seems to be a difference of "
             , text offsetDescription
             , text " between the timers, with "
             , text laterTimer
             , text " being the one started later."
-            , smallButton (Msg.FixProblem (AdjustTimer TimerOne -offset)) [] timer1AdjustText
-            , text " "
-            , smallButton (Msg.FixProblem (AdjustTimer TimerTwo offset)) [] timer2AdjustText
-            , text " "
-            , smallButton (Msg.IgnoreProblem IgnoreTimerTimeOffsets) [] "Ignore timer time offset"
+            , div [ class "timer-offset-buttons" ]
+                [ normalButton (Msg.FixProblem (AdjustTimer TimerOne -offset)) [] timer1AdjustText
+                , normalButton (Msg.FixProblem (AdjustTimer TimerTwo offset)) [] timer2AdjustText
+                , normalButton (Msg.IgnoreProblem IgnoreTimerTimeOffsets) [] "Ignore timer time offset"
+                ]
+            , div [ class "clearfix" ] []
             ]
             |> Just
 
