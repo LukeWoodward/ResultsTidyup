@@ -41,12 +41,12 @@ timerOperationsDialogTitle =
 
 radioButton : String -> TimerOperation -> String -> TimerOperationEditDetails -> Grid.Column Msg
 radioButton elementId operation labelText editDetails =
-    sizedRadioButton Col.xs4 elementId operation labelText editDetails
+    sizedRadioButton [ Col.md4, Col.xs6 ] elementId operation labelText editDetails
 
 
-sizedRadioButton : Col.Option Msg -> String -> TimerOperation -> String -> TimerOperationEditDetails -> Grid.Column Msg
-sizedRadioButton size elementId operation labelText editDetails =
-    Grid.col [ size ]
+sizedRadioButton : List (Col.Option Msg) -> String -> TimerOperation -> String -> TimerOperationEditDetails -> Grid.Column Msg
+sizedRadioButton sizes elementId operation labelText editDetails =
+    Grid.col sizes
         [ Radio.radio
             [ Radio.id elementId
             , Radio.checked (editDetails.operation == operation)
@@ -58,7 +58,7 @@ sizedRadioButton size elementId operation labelText editDetails =
 
 checkBoxRowApplyToLabel : Grid.Column Msg
 checkBoxRowApplyToLabel =
-    Grid.col [ Col.xs2, Col.offsetXs1 ] [ text "Apply to:" ]
+    Grid.col [ Col.xs4, Col.md2, Col.offsetMd1 ] [ text "Apply to:" ]
 
 
 applyToTimerCheckbox : String -> OffsetType -> WhichTimer -> TimerOperationEditDetails -> Grid.Column Msg
@@ -100,7 +100,7 @@ applyToTimerCheckbox elementId offsetType timer editDetails =
                 SubtractOffset ->
                     SubtractTimerTimeOffset
     in
-    Grid.col [ Col.xs3 ]
+    Grid.col [ Col.xs4, Col.md2 ]
         [ Checkbox.checkbox
             [ Checkbox.id elementId
             , Checkbox.checked currentValue
@@ -132,15 +132,22 @@ inputTextFieldOptions rangeEntryGetter field option validator editDetails =
 inputTextField : (TimerOperationEditDetails -> Entry a) -> TimerField -> TimerOperation -> (TimerOperationEditDetails -> Bool) -> TimerOperationEditDetails -> Grid.Column Msg
 inputTextField rangeEntryGetter field option validator editDetails =
     Grid.col
-        [ Col.xs2 ]
+        [ Col.xs6, Col.md2 ]
         [ Input.text (inputTextFieldOptions rangeEntryGetter field option validator editDetails) ]
+
+
+inputNumberField : (TimerOperationEditDetails -> Entry a) -> TimerField -> TimerOperation -> (TimerOperationEditDetails -> Bool) -> TimerOperationEditDetails -> Grid.Column Msg
+inputNumberField rangeEntryGetter field option validator editDetails =
+    Grid.col
+        [ Col.xs6, Col.md2 ]
+        [ Input.number (inputTextFieldOptions rangeEntryGetter field option validator editDetails) ]
 
 
 distanceField : (TimerOperationEditDetails -> IntegerEntry) -> TimerField -> (TimerOperationEditDetails -> Bool) -> TimerOperationEditDetails -> Grid.Column Msg
 distanceField rangeEntryGetter field validator editDetails =
-    Grid.col [ Col.xs2 ]
+    Grid.col [ Col.xs6, Col.md2 ]
         [ InputGroup.config
-            (InputGroup.text (inputTextFieldOptions rangeEntryGetter field ApplyDistanceBasedTimerScaleFactor validator editDetails))
+            (InputGroup.number (inputTextFieldOptions rangeEntryGetter field ApplyDistanceBasedTimerScaleFactor validator editDetails))
             |> InputGroup.successors
                 [ InputGroup.span [] [ text "m" ] ]
             |> InputGroup.view
@@ -211,29 +218,29 @@ timerOperationsModalBody : TimerOperationEditDetails -> Html Msg
 timerOperationsModalBody editDetails =
     div []
         [ Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
-            [ radioButton "addOffsetRadioButton" AddTimerTimeOffset "Add offset to all times" editDetails
+            [ radioButton "addOffsetRadioButton" AddTimerTimeOffset "Add offset to all times:" editDetails
             , inputTextField (.addOffsetDetails >> .offset) AddOffsetField AddTimerTimeOffset isAddOffsetFieldInvalid editDetails
             ]
         , applyToTimerCheckboxesRow AddOffset "Add" editDetails
         , hr [] []
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
-            [ radioButton "subtractOffsetRadioButton" SubtractTimerTimeOffset "Subtract offset from all times" editDetails
+            [ radioButton "subtractOffsetRadioButton" SubtractTimerTimeOffset "Subtract offset from all times:" editDetails
             , inputTextField (.subtractOffsetDetails >> .offset) SubtractOffsetField SubtractTimerTimeOffset isSubtractOffsetFieldInvalid editDetails
             ]
         , applyToTimerCheckboxesRow SubtractOffset "Subtract" editDetails
         , hr [] []
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
             [ radioButton "applyScaleFactorRadioButton" ApplyTimerScaleFactor "Apply scale factor to all times:" editDetails
-            , inputTextField .manualScaleFactor ScaleFactorField ApplyTimerScaleFactor isScaleFactorFieldInvalid editDetails
+            , inputNumberField .manualScaleFactor ScaleFactorField ApplyTimerScaleFactor isScaleFactorFieldInvalid editDetails
             ]
         , hr [] []
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
-            [ sizedRadioButton Col.xs6 "applyDistanceBasedScaleFactorRadioButton" ApplyDistanceBasedTimerScaleFactor "Apply distance-based scale factor to all times:" editDetails
+            [ sizedRadioButton [ Col.xs12, Col.md6 ] "applyDistanceBasedScaleFactorRadioButton" ApplyDistanceBasedTimerScaleFactor "Apply distance-based scale factor to all times:" editDetails
             ]
         , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
-            [ Grid.col [ Col.xs3, Col.offsetXs1 ] [ text "Expected distance" ]
+            [ Grid.col [ Col.md3, Col.xs5, Col.offsetXs1 ] [ text "Expected distance" ]
             , distanceField .expectedDistance ExpectedDistanceManualField isExpectedDistanceFieldInvalid editDetails
-            , Grid.col [ Col.xs3 ] [ text "Actual distance" ]
+            , Grid.col [ Col.md3, Col.xs5, Col.offsetXs1 ] [ text "Actual distance" ]
             , distanceField .actualDistance ActualDistanceField isActualDistanceFieldInvalid editDetails
             ]
         , validationErrorRow editDetails.validationError
