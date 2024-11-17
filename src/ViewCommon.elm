@@ -1,9 +1,9 @@
-module ViewCommon exposing (athleteLink, intCell, normalButton, outlineButton, plainCell, smallButton, tableHeader, tableHeaderWithClass, tableHeaders)
+module ViewCommon exposing (athleteLink, iconButton, intCell, normalButton, outlineButton, plainCell, smallButton, tableHeader, tableHeaderWithClass, tableHeaders)
 
 import Bootstrap.Button as Button
 import Bootstrap.Table as Table
 import Html exposing (Html, a, text)
-import Html.Attributes exposing (class, href, rel, target)
+import Html.Attributes exposing (class, href, rel, target, title)
 import Msg exposing (Msg)
 
 
@@ -65,6 +65,16 @@ smallButton msg attributes contents =
         , Button.onClick msg
         ]
         [ text contents ]
+
+
+iconButton : Msg -> Button.Option Msg -> Html Msg -> List (Html.Attribute Msg) -> String -> Html Msg
+iconButton msg option icon attributes iconTitle =
+    Button.button
+        [ option
+        , Button.attrs (title iconTitle :: attributes)
+        , Button.onClick msg
+        ]
+        [ icon ]
 
 
 {-| Returns an HTML link that links to the athlete's full result history.

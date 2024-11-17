@@ -1,18 +1,20 @@
 module TimersView exposing (timersView)
 
 import BarcodeScanner exposing (AthleteAndTimePair, BarcodeScannerData, maxFinishToken)
+import Bootstrap.Button as Button
 import Bootstrap.Table as Table
 import Commands
 import Dict
-import Html exposing (Html, br, div, h3, input, label, text)
+import Html exposing (Html, div, h3, input, label, text)
 import Html.Attributes exposing (checked, class, for, id, title, type_)
 import Html.Events exposing (onClick)
+import Icons exposing (download, remove)
 import Msg exposing (Msg(..))
 import Problems exposing (Problems)
 import ProblemsView exposing (timerProblemsView)
 import TimeHandling exposing (formatTime)
 import Timer exposing (MergeEntry(..), MergedTableRow, TimerMatchSummary, Timers(..), WhichTimer(..))
-import ViewCommon exposing (athleteLink, intCell, normalButton, plainCell, smallButton)
+import ViewCommon exposing (athleteLink, iconButton, intCell, normalButton, plainCell)
 
 
 tableOptions : List (Table.TableOption a)
@@ -22,6 +24,8 @@ tableOptions =
 
 type alias TableHeaderButton =
     { change : Msg
+    , option : Button.Option Msg
+    , icon : Html Msg
     , buttonText : String
     }
 
@@ -105,20 +109,15 @@ checkboxCell time index included numberCheckerId highlightedNumberCheckerId =
 tableHeaderWithButtons : TableHeaderWithButtons -> Table.Cell Msg
 tableHeaderWithButtons { headerText, headerTooltip, buttonData } =
     let
-        textElement : Html Msg
-        textElement =
-            text headerText
-
         elements : List (Html Msg)
         elements =
-            (List.map (\{ change, buttonText } -> smallButton change [] buttonText) buttonData ++ [ textElement ])
-                |> List.intersperse (br [] [])
+            List.map (\{ change, option, icon, buttonText } -> iconButton change option icon [] buttonText) buttonData
     in
     Table.th
         [ Table.cellAttr (class "timer-header")
         , Table.cellAttr (title headerTooltip)
         ]
-        elements
+        [ div [ class "timer-header-buttons" ] elements, text headerText ]
 
 
 tableHeadersWithButtons : List TableHeaderWithButtons -> Table.THead Msg
@@ -129,6 +128,8 @@ tableHeadersWithButtons headerTexts =
 downloadTimerButton : WhichTimer -> TableHeaderButton
 downloadTimerButton which =
     { change = RequestCurrentDateAndTime (Commands.DownloadSingleTimer which)
+    , option = Button.primary
+    , icon = download
     , buttonText = "Download"
     }
 
@@ -136,6 +137,8 @@ downloadTimerButton which =
 removeTimerButton : WhichTimer -> TableHeaderButton
 removeTimerButton which =
     { change = RemoveTimer which
+    , option = Button.danger
+    , icon = remove
     , buttonText = "Remove"
     }
 
@@ -267,7 +270,7 @@ timerTable timers barcodeScannerData highlightedNumberCheckerId =
                     { options = tableOptions
                     , thead =
                         tableHeadersWithButtons
-                            (appendAthletesHeader [ TableHeaderWithButtons "Position" "" [] ])
+                            (appendAthletesHeader [ TableHeaderWithButtons "Pos" "" [] ])
                     , tbody = noTimerTableBody barcodeScannerData
                     }
 
@@ -277,7 +280,7 @@ timerTable timers barcodeScannerData highlightedNumberCheckerId =
                 , thead =
                     tableHeadersWithButtons
                         (appendAthletesHeader
-                            [ TableHeaderWithButtons "Position" "" []
+                            [ TableHeaderWithButtons "Pos" "" []
                             , TableHeaderWithButtons ("Timer 1: " ++ file.name) file.filename (timerButtons TimerOne)
                             ]
                         )
@@ -290,7 +293,7 @@ timerTable timers barcodeScannerData highlightedNumberCheckerId =
                 , thead =
                     tableHeadersWithButtons
                         (appendAthletesHeader
-                            [ TableHeaderWithButtons "Position" "" []
+                            [ TableHeaderWithButtons "Pos" "" []
                             , TableHeaderWithButtons ("Timer 1: " ++ doubleTimerData.file1.name) doubleTimerData.file1.filename (timerButtons TimerOne)
                             , TableHeaderWithButtons ("Timer 2: " ++ doubleTimerData.file2.name) doubleTimerData.file2.filename (timerButtons TimerTwo)
                             ]

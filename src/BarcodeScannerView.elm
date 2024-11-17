@@ -115,7 +115,7 @@ barcodeScannerView file =
             Table.simpleThead
                 [ tableHeader "Line #"
                 , tableHeader "Athlete"
-                , tableHeader "Position"
+                , tableHeader "Pos"
                 , tableHeaderWithClass "Date/Time" "scanner-date-cell"
                 ]
     in

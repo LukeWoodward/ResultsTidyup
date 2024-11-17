@@ -182,16 +182,22 @@ div.timer-buttons {
 
 div.barcode-scanner-buttons button,
 div.timer-buttons button,
-div.timer-offset-buttons button {
+div.timer-offset-buttons button,
+div.timer-header-buttons button {
     margin-left: 15px;
     margin-bottom: 10px;
 }
 
 div.barcode-scanner-buttons,
 div.timer-buttons,
-div.timer-offset-buttons {
+div.timer-offset-buttons,
+div.timer-header-buttons {
     margin-left: -15px;
     margin-bottom: -10px;
+}
+
+div.timer-header-buttons svg {
+    color: white;
 }
 
 /* Adapted from https://github.com/twbs/bootstrap/issues/21881#issuecomment-341972830 */
