@@ -24,23 +24,23 @@ hasFileAlreadyBeenUploaded newFileName timers =
             newFileName == doubleTimerData.file1.filename || newFileName == doubleTimerData.file2.filename
 
 
-handleTimerFileAdded : String -> String -> String -> Model -> Model
-handleTimerFileAdded fileName fileText name model =
+handleTimerFileAdded : AddedFile -> Model -> Model
+handleTimerFileAdded addedFile model =
     let
         makeTimerFile : String -> TimerFile
         makeTimerFile filename =
-            TimerFile filename name
+            TimerFile filename addedFile.name
     in
-    case readTimerData fileText of
+    case readTimerData addedFile.fileText of
         Ok (TimerData newTimer) ->
-            if hasFileAlreadyBeenUploaded fileName model.timers then
+            if hasFileAlreadyBeenUploaded addedFile.fileName model.timers then
                 { model
                     | lastErrors =
                         model.lastErrors
                             ++ [ FileError
                                     "TIMER_FILE_ALREADY_LOADED"
                                     "That timer data file has already been loaded"
-                                    fileName
+                                    addedFile.fileName
                                ]
                 }
 
@@ -49,14 +49,14 @@ handleTimerFileAdded fileName fileText name model =
                     newTimers =
                         case model.timers of
                             None ->
-                                Single (makeTimerFile fileName) newTimer
+                                Single (makeTimerFile addedFile.fileName) newTimer
 
                             Single existingFile firstTimer ->
-                                if fileName < existingFile.filename then
-                                    Double (createMergedTable newTimer firstTimer (makeTimerFile fileName) existingFile)
+                                if addedFile.fileName < existingFile.filename then
+                                    Double (createMergedTable newTimer firstTimer (makeTimerFile addedFile.fileName) existingFile)
 
                                 else
-                                    Double (createMergedTable firstTimer newTimer existingFile (makeTimerFile fileName))
+                                    Double (createMergedTable firstTimer newTimer existingFile (makeTimerFile addedFile.fileName))
 
                             Double _ ->
                                 model.timers
@@ -64,7 +64,7 @@ handleTimerFileAdded fileName fileText name model =
                 { model | timers = newTimers }
 
         Err error ->
-            { model | lastErrors = model.lastErrors ++ [ mapError fileName error ] }
+            { model | lastErrors = model.lastErrors ++ [ mapError addedFile.fileName error ] }
 
 
 barcodeScannerRegex : Regex
@@ -78,16 +78,16 @@ isPossibleBarcodeScannerFile fileText =
     Regex.contains barcodeScannerRegex fileText
 
 
-handleBarcodeScannerFileAdded : String -> String -> Model -> Model
-handleBarcodeScannerFileAdded fileName fileText model =
-    if List.any (\file -> file.name == fileName) model.barcodeScannerData.files then
+handleBarcodeScannerFileAdded : AddedFile -> Model -> Model
+handleBarcodeScannerFileAdded addedFile model =
+    if List.any (\file -> file.filename == addedFile.fileName) model.barcodeScannerData.files then
         { model
             | lastErrors =
                 model.lastErrors
                     ++ [ FileError
                             "BARCODE_DATA_ALREADY_LOADED"
                             "That barcode scanner file has already been loaded"
-                            fileName
+                            addedFile.fileName
                        ]
         }
 
@@ -95,7 +95,7 @@ handleBarcodeScannerFileAdded fileName fileText model =
         let
             result : Result Error BarcodeScannerData
             result =
-                readBarcodeScannerData fileName fileText
+                readBarcodeScannerData addedFile
         in
         case result of
             Ok scannerData ->
@@ -104,7 +104,7 @@ handleBarcodeScannerFileAdded fileName fileText model =
                 }
 
             Err error ->
-                { model | lastErrors = model.lastErrors ++ [ mapError fileName error ] }
+                { model | lastErrors = model.lastErrors ++ [ mapError addedFile.fileName error ] }
 
 
 isNumberCheckerCharacter : Char -> Bool
@@ -147,19 +147,19 @@ handleNumberCheckerFileAdded fileName fileText model =
 
 
 handleFileAdded : AddedFile -> Model -> Model
-handleFileAdded { fileName, name, fileText } model =
-    if String.startsWith "STARTOFEVENT" fileText || String.startsWith "I, CP" fileText then
-        handleTimerFileAdded fileName fileText name model
+handleFileAdded addedFile model =
+    if String.startsWith "STARTOFEVENT" addedFile.fileText || String.startsWith "I, CP" addedFile.fileText then
+        handleTimerFileAdded addedFile model
 
-    else if isPossibleNumberCheckerFile fileText then
-        handleNumberCheckerFileAdded fileName fileText model
+    else if isPossibleNumberCheckerFile addedFile.fileText then
+        handleNumberCheckerFileAdded addedFile.fileName addedFile.fileText model
 
-    else if isPossibleBarcodeScannerFile fileText then
-        handleBarcodeScannerFileAdded fileName fileText model
+    else if isPossibleBarcodeScannerFile addedFile.fileText then
+        handleBarcodeScannerFileAdded addedFile model
 
     else
         { model
-            | lastErrors = model.lastErrors ++ [ FileError "UNRECOGNISED_FILE" "File was unrecognised" fileName ]
+            | lastErrors = model.lastErrors ++ [ FileError "UNRECOGNISED_FILE" "File was unrecognised" addedFile.fileName ]
         }
 
 

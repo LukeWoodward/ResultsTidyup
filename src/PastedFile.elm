@@ -2,6 +2,7 @@ module PastedFile exposing (PastedFileDetails, PastedFileInterpretation(..), emp
 
 import BarcodeScanner exposing (readBarcodeScannerData)
 import Dict
+import FileHandling exposing (AddedFile)
 import Timer exposing (Timer(..), readTimerData)
 
 
@@ -42,7 +43,7 @@ interpretPastedFile contents =
                 UnrecognisedFilePasted
 
     else
-        case readBarcodeScannerData "filename" trimmedContents of
+        case readBarcodeScannerData (AddedFile "dummyFilename" "dummyName" trimmedContents) of
             Ok barcodeScannerData ->
                 let
                     count : Int

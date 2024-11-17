@@ -37,7 +37,7 @@ createBarcodeScannerDataForRemovingUnassociatedAthletes athletes =
                     )
                 |> List.concat
     in
-    regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines Nothing ] }
+    regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" "Name" fileLines Nothing ] }
 
 
 createBarcodeScannerDataForRemovingDuplicateScans : Int -> BarcodeScannerData
@@ -51,7 +51,7 @@ createBarcodeScannerDataForRemovingDuplicateScans numberOfTimes =
                         BarcodeScannerFileLine index (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" NotDeleted
                     )
     in
-    regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines defaultDateTime ] }
+    regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" "Name" fileLines defaultDateTime ] }
 
 
 deleteLinesWithinFile : (BarcodeScannerFileLine -> BarcodeScannerFileLine) -> List BarcodeScannerFile -> List BarcodeScannerFile
@@ -188,8 +188,8 @@ suite =
                         startingBarcodeScannerData =
                             { initialBarcodeScannerData
                                 | files =
-                                    [ BarcodeScannerFile "barcodes1.txt" [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ] defaultDateTime
-                                    , BarcodeScannerFile "barcodes2.txt" [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ] defaultDateTime
+                                    [ BarcodeScannerFile "barcodes1.txt" "Name1" [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ] defaultDateTime
+                                    , BarcodeScannerFile "barcodes2.txt" "Name2" [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ] defaultDateTime
                                     ]
                                 , lastScanDateTime = defaultDateTime
                             }
@@ -201,10 +201,12 @@ suite =
                                 , files =
                                     [ BarcodeScannerFile
                                         "barcodes1.txt"
+                                        "Name1"
                                         [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03" ]
                                         defaultDateTime
                                     , BarcodeScannerFile
                                         "barcodes2.txt"
+                                        "Name2"
                                         [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" (Deleted (DuplicateScan "A1234" 27)) ]
                                         defaultDateTime
                                     ]
@@ -243,6 +245,7 @@ suite =
                         file =
                             BarcodeScannerFile
                                 "barcodes1.txt"
+                                "Name1"
                                 [ ordinaryFileLine 1 "A1234" (Just 27) "14/03/2018 09:47:03"
                                 , ordinaryFileLine 2 "A5678" (Just 27) "14/03/2018 09:47:03"
                                 , ordinaryFileLine 3 "A3456" (Just 27) "14/03/2018 09:47:03"

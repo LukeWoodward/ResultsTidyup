@@ -90,6 +90,11 @@ expectDialogDetails dialogDetails ( model, _ ) =
     Expect.equal dialogDetails model.dialogDetails
 
 
+setNameInScannerFile : String -> String -> BarcodeScannerFile -> BarcodeScannerFile
+setNameInScannerFile filename name file =
+    { file | filename = filename, name = name }
+
+
 type Assertion
     = Command
     | Timers
@@ -190,7 +195,7 @@ createBarcodeScannerDataForRemovingUnassociatedAthletes athletes =
                 |> List.concat
     in
     { initModel
-        | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" fileLines Nothing ] }
+        | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" "Name1" fileLines Nothing ] }
         , problems = { noProblems | athletesWithAndWithoutPosition = List.indexedMap (\index athlete -> AthleteWithAndWithoutPositionProblem athlete 1 (index + 1)) athletes }
     }
 
@@ -225,7 +230,7 @@ getBarcodeScannerDataWithFiles numbers =
         files : List BarcodeScannerFile
         files =
             List.map String.fromInt numbers
-                |> List.map (\num -> BarcodeScannerFile (num ++ ".txt") [] defaultDateTime)
+                |> List.map (\num -> BarcodeScannerFile (num ++ ".txt") ("Name" ++ num) [] defaultDateTime)
 
         lastScanDateTime : Maybe Time.Posix
         lastScanDateTime =
@@ -259,22 +264,84 @@ suite =
                     update NoOp initModel
                         |> Expect.all defaultAssertions
             ]
-        , describe "File drop tests"
+        , describe "File dropping tests"
             [ describe "Barcode scanner file tests"
-                [ test "Can upload a single barcode scanner file" <|
+                [ test "Can drop a single barcode scanner file" <|
                     \() ->
-                        update (FilesDropped [ InteropFile "barcodes1.txt" validBarcodeScannerData1 ]) initModel
+                        let
+                            droppedFilename : String
+                            droppedFilename =
+                                "vv_Scanner_JoeBLOGGS_1234567_20240714103842.txt"
+
+                            expectedBarcodeScannerData : BarcodeScannerData
+                            expectedBarcodeScannerData =
+                                { parsedBarcodeScannerData1 | files = List.map (setNameInScannerFile droppedFilename "Joe BLOGGS") parsedBarcodeScannerData1.files }
+                        in
+                        update (FilesDropped [ InteropFile droppedFilename validBarcodeScannerData1 ]) initModel
+                            |> Expect.all
+                                (expectBarcodeScannerData expectedBarcodeScannerData
+                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
+                                )
+                , test "Can drop a single barcode scanner file where the first line in the file is incomplete" <|
+                    \() ->
+                        let
+                            droppedFilename : String
+                            droppedFilename =
+                                "vv_Scanner_JaneDOE_7654321_20240714104206.txt"
+
+                            expectedBarcodeScannerData : BarcodeScannerData
+                            expectedBarcodeScannerData =
+                                { parsedBarcodeScannerDataWithIncompleteRecordFirst
+                                    | files = List.map (setNameInScannerFile droppedFilename "Jane DOE") parsedBarcodeScannerDataWithIncompleteRecordFirst.files
+                                }
+                        in
+                        update (FilesDropped [ InteropFile droppedFilename validBarcodeScannerDataWithIncompleteRecordFirst ]) initModel
+                            |> Expect.all
+                                (expectBarcodeScannerData expectedBarcodeScannerData
+                                    :: expectProblems { noProblems | athletesMissingPosition = [ "A2044293" ] }
+                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems ]
+                                )
+                ]
+            , describe "Timer file tests"
+                [ test "Can drop a single timer file" <|
+                    \() ->
+                        let
+                            droppedFilename : String
+                            droppedFilename =
+                                "vv_Stopwatch_JoeBLOGGS_1234567_20240714103842.csv"
+                        in
+                        update (FilesDropped [ InteropFile droppedFilename sampleTimerData ]) initModel
+                            |> Expect.all
+                                (expectTimers (Single (TimerFile droppedFilename "Joe BLOGGS") parsedTimerTimes1)
+                                    :: defaultAssertionsExcept [ Timers ]
+                                )
+                ]
+            ]
+        , describe "File adding tests"
+            [ describe "Barcode scanner file tests"
+                [ test "Can add a single barcode scanner file" <|
+                    \() ->
+                        update (FilesAdded [ AddedFile "barcodes1.txt" "Name1" validBarcodeScannerData1 ]) initModel
                             |> Expect.all
                                 (expectBarcodeScannerData parsedBarcodeScannerData1
                                     :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
                                 )
-                , test "Can upload a single barcode scanner file where the first line in the file is incomplete" <|
+                , test "Can add a single barcode scanner file where the first line in the file is incomplete" <|
                     \() ->
-                        update (FilesDropped [ InteropFile "barcodes1.txt" validBarcodeScannerDataWithIncompleteRecordFirst ]) initModel
+                        update (FilesAdded [ AddedFile "barcodes1.txt" "Name1" validBarcodeScannerDataWithIncompleteRecordFirst ]) initModel
                             |> Expect.all
                                 (expectBarcodeScannerData parsedBarcodeScannerDataWithIncompleteRecordFirst
                                     :: expectProblems { noProblems | athletesMissingPosition = [ "A2044293" ] }
                                     :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems ]
+                                )
+                ]
+            , describe "Timer file tests"
+                [ test "Can add a timer file" <|
+                    \() ->
+                        update (FilesAdded [ AddedFile "timer1.txt" "Name1" sampleTimerData ]) initModel
+                            |> Expect.all
+                                (expectTimers singleTimer
+                                    :: defaultAssertionsExcept [ Timers ]
                                 )
                 ]
             ]
@@ -766,6 +833,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
+                                    "Name6"
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
@@ -777,6 +845,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
+                                    "Name6"
                                     [ ordinaryFileLine 1 "A2022807" (Just 31) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
@@ -803,6 +872,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
+                                    "Name6"
                                     [ lineToDelete
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
@@ -814,6 +884,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
+                                    "Name6"
                                     [ { lineToDelete | deletionStatus = Deleted DeletedByUser }
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
@@ -882,6 +953,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
+                                    "Name6"
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
@@ -893,6 +965,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
+                                    "Name6"
                                     [ ordinaryFileLine 1 "A2022807" (Just 31) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]

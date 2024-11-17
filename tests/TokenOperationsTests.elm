@@ -59,7 +59,7 @@ makeBarcodeScannerData items =
 
         files : List BarcodeScannerFile
         files =
-            [ { name = "file1.txt", lines = lines, maxScanDateTime = Nothing } ]
+            [ { filename = "file1.txt", name = "Name", lines = lines, maxScanDateTime = Nothing } ]
     in
     regenerate { empty | files = files }
 

@@ -257,6 +257,7 @@ parsedBarcodeScannerData1 =
     BarcodeScannerData
         [ BarcodeScannerFile
             "barcodes1.txt"
+            "Name1"
             [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
             defaultDateTime
         ]
@@ -272,10 +273,12 @@ parsedBarcodeScannerData1And2 =
     BarcodeScannerData
         [ BarcodeScannerFile
             "barcodes1.txt"
+            "Name1"
             [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
             defaultDateTime
         , BarcodeScannerFile
             "barcodes2.txt"
+            "Name2"
             [ ordinaryFileLine 1 "A2044293" (Just 59) "14/03/2018 09:49:44" ]
             (toPosix "2018-03-14T09:49:44.000Z")
         ]
@@ -295,6 +298,7 @@ parsedBarcodeScannerDataWithIncompleteRecordFirst =
     BarcodeScannerData
         [ BarcodeScannerFile
             "barcodes1.txt"
+            "Name1"
             [ ordinaryFileLine 1 "A2044293" Nothing "14/03/2018 09:44:06"
             , ordinaryFileLine 2 "A4580442" (Just 47) "14/03/2018 09:47:03"
             ]
@@ -310,7 +314,7 @@ parsedBarcodeScannerDataWithIncompleteRecordFirst =
 parsedInvalidBarcodeScannerData : BarcodeScannerData
 parsedInvalidBarcodeScannerData =
     BarcodeScannerData
-        [ BarcodeScannerFile "invalid.txt" [] Nothing ]
+        [ BarcodeScannerFile "invalid.txt" "Invalid" [] Nothing ]
         Dict.empty
         []
         []

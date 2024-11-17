@@ -12,7 +12,7 @@ import BarcodeScannerEditing exposing (BarcodeScannerRowEditLocation)
 import Bootstrap.Tab as Tab
 import Bootstrap.Table as Table
 import Commands
-import Html exposing (Attribute, Html, div, h3, small, text)
+import Html exposing (Attribute, Html, div, h3, span, text)
 import Html.Attributes exposing (class, colspan, title)
 import Html.Events exposing (onDoubleClick)
 import Model exposing (Model)
@@ -112,13 +112,13 @@ barcodeScannerView file =
     div []
         [ div
             [ class "barcode-scanner-buttons" ]
-            [ smallButton (RequestCurrentDateAndTime (Commands.DownloadBarcodeScannerFile file.name)) [] "Download"
-            , smallButton (RemoveBarcodeScannerFile file.name) [] "Remove"
+            [ smallButton (RequestCurrentDateAndTime (Commands.DownloadBarcodeScannerFile file.filename)) [] "Download"
+            , smallButton (RemoveBarcodeScannerFile file.filename) [] "Remove"
             ]
         , Table.table
             { options = [ Table.bordered, Table.small, Table.hover, Table.attr (class "barcode-scanner-table") ]
             , thead = tableHeaders [ "Line #", "Athlete", "Position", "Date/Time" ]
-            , tbody = Table.tbody [] (List.map (barcodeScannerViewRow file.name) file.lines)
+            , tbody = Table.tbody [] (List.map (barcodeScannerViewRow file.filename) file.lines)
             }
         ]
 
@@ -167,7 +167,7 @@ barcodeScannerTabView : Int -> BarcodeScannerFile -> Tab.Item Msg
 barcodeScannerTabView index file =
     Tab.item
         { id = "barcodeScannerTab" ++ String.fromInt index
-        , link = Tab.link [ class (getBarcodeScannerTabClass file) ] [ small [] [ text file.name ] ]
+        , link = Tab.link [ class (getBarcodeScannerTabClass file) ] [ span [ title file.filename ] [ text file.name ] ]
         , pane = Tab.pane [] [ barcodeScannerView file ]
         }
 

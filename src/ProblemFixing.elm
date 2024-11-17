@@ -105,7 +105,7 @@ deleteDuplicateScansWithinFile athlete position file startingFound =
                 |> List.maximum
                 |> Maybe.map Time.millisToPosix
     in
-    ( BarcodeScannerFile file.name transformedLines newMaxScanDateTime, finalFound )
+    ( BarcodeScannerFile file.filename file.name transformedLines newMaxScanDateTime, finalFound )
 
 
 deleteDuplicateScansWithinFilesInternal : String -> Int -> List BarcodeScannerFile -> Bool -> ( List BarcodeScannerFile, Bool )

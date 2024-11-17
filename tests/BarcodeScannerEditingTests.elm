@@ -283,6 +283,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
+                                    "Name6"
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
@@ -294,6 +295,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
+                                    "Name6"
                                     [ ordinaryFileLine 1 "A2022807" (Just 37) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]

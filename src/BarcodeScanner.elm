@@ -24,7 +24,7 @@ module BarcodeScanner exposing
 import DateHandling exposing (dateTimeStringToPosix)
 import Dict exposing (Dict)
 import Error exposing (Error)
-import FileHandling exposing (crlf, isPossibleBinary, splitLines)
+import FileHandling exposing (AddedFile, crlf, isPossibleBinary, splitLines)
 import Parser exposing ((|.), (|=), Parser, end, int, run, symbol)
 import Parsers exposing (digitsRange)
 import Result.Extra
@@ -76,7 +76,8 @@ type alias BarcodeScannerFileLine =
 
 
 type alias BarcodeScannerFile =
-    { name : String
+    { filename : String
+    , name : String
     , lines : List BarcodeScannerFileLine
     , maxScanDateTime : Maybe Posix
     }
@@ -298,9 +299,9 @@ withLastScanDateTime barcodeScannerData =
     { barcodeScannerData | lastScanDateTime = lastScanDateTime }
 
 
-withFile : String -> List BarcodeScannerFileLine -> BarcodeScannerData -> BarcodeScannerData
-withFile filename lines barcodeScannerData =
-    { barcodeScannerData | files = barcodeScannerData.files ++ [ BarcodeScannerFile filename lines barcodeScannerData.lastScanDateTime ] }
+withFile : String -> String -> List BarcodeScannerFileLine -> BarcodeScannerData -> BarcodeScannerData
+withFile filename name lines barcodeScannerData =
+    { barcodeScannerData | files = barcodeScannerData.files ++ [ BarcodeScannerFile filename name lines barcodeScannerData.lastScanDateTime ] }
 
 
 mergeScannerData : BarcodeScannerData -> BarcodeScannerData -> BarcodeScannerData
@@ -314,9 +315,9 @@ mergeScannerData data1 data2 =
         (maxDate data1.lastScanDateTime data2.lastScanDateTime)
 
 
-readBarcodeScannerData : String -> String -> Result Error BarcodeScannerData
-readBarcodeScannerData filename text =
-    if isPossibleBinary text then
+readBarcodeScannerData : AddedFile -> Result Error BarcodeScannerData
+readBarcodeScannerData addedFile =
+    if isPossibleBinary addedFile.fileText then
         Error "BINARY_FILE" "File appears to be a binary file"
             |> Err
 
@@ -324,7 +325,7 @@ readBarcodeScannerData filename text =
         let
             lines : List (Result UnrecognisedLine BarcodeScannerFileLine)
             lines =
-                text
+                addedFile.fileText
                     |> splitLines
                     |> List.filter (not << String.isEmpty)
                     |> List.indexedMap (\index line -> readLine (index + 1) line)
@@ -349,7 +350,7 @@ readBarcodeScannerData filename text =
             mergeEntries validLines
                 |> withUnrecognisedLines
                 |> withLastScanDateTime
-                |> withFile filename validLines
+                |> withFile addedFile.fileName addedFile.name validLines
                 |> Ok
 
 
@@ -462,7 +463,7 @@ applyBarcodeScannerDataModification modifier fileName lineNumber barcodeScannerD
 
         applyFileModification : BarcodeScannerFile -> BarcodeScannerFile
         applyFileModification file =
-            if file.name == fileName then
+            if file.filename == fileName then
                 { file | lines = List.map applyLineModification file.lines }
 
             else

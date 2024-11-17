@@ -252,7 +252,7 @@ createSingleBarcodeScannerData fileName files zone time =
     let
         fileToDownload : Maybe BarcodeScannerFile
         fileToDownload =
-            List.filter (\file -> file.name == fileName) files
+            List.filter (\file -> file.filename == fileName) files
                 |> List.head
     in
     case fileToDownload of
@@ -296,7 +296,7 @@ removeBarcodeScannerFileWithName fileName model =
     in
     identifyProblemsIn
         { model
-            | barcodeScannerData = regenerate { barcodeScannerData | files = List.filter (\file -> file.name /= fileName) model.barcodeScannerData.files }
+            | barcodeScannerData = regenerate { barcodeScannerData | files = List.filter (\file -> file.filename /= fileName) model.barcodeScannerData.files }
         }
 
 

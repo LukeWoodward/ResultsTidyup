@@ -24,7 +24,7 @@ import Dict exposing (Dict)
 import Error exposing (Error)
 import Errors exposing (expectError)
 import Expect exposing (Expectation)
-import FileHandling exposing (crlf)
+import FileHandling exposing (AddedFile, crlf)
 import Set
 import Test exposing (Test, describe, test)
 import TestData exposing (createBarcodeScannerDataFromFiles, ordinaryFileLine, toPosix)
@@ -83,13 +83,13 @@ expectSingleUnrecognisedLine expectedValidLineCount expectedLine expectedCode ba
 
 expectSingleUnrecognisedLineFor : String -> String -> Expectation
 expectSingleUnrecognisedLineFor line expectedCode =
-    readBarcodeScannerData "barcodes.txt" line
+    readBarcodeScannerData (AddedFile "barcodes.txt" "Name" line)
         |> expectSingleUnrecognisedLine 0 line expectedCode
 
 
 expectSingleValidLineAndSingleUnrecognisedLineFor : String -> String -> String -> Expectation
 expectSingleValidLineAndSingleUnrecognisedLineFor validLine unrecognisedLine expectedCode =
-    readBarcodeScannerData "barcodes.txt" (validLine ++ "\n" ++ unrecognisedLine)
+    readBarcodeScannerData (AddedFile "barcodes.txt" "Name" (validLine ++ "\n" ++ unrecognisedLine))
         |> expectSingleUnrecognisedLine 1 unrecognisedLine expectedCode
 
 
@@ -118,20 +118,21 @@ suite =
         , describe "readBarcodeScannerData tests"
             [ test "readBarcodeScannerData of a valid single-line string with athlete and finish token is valid" <|
                 \() ->
-                    readBarcodeScannerData "barcodes1.txt" "A4580442,P0047,14/03/2018 09:47:03"
+                    readBarcodeScannerData (AddedFile "barcodes1.txt" "Name1" "A4580442,P0047,14/03/2018 09:47:03")
                         |> Expect.equal (Ok TestData.parsedBarcodeScannerData1)
             , test "readBarcodeScannerData of a valid single-line string with athlete and finish token and with whitespace is valid" <|
                 \() ->
-                    readBarcodeScannerData "barcodes1.txt" "   \t  A4580442  \t,    P0047   ,   \t 14/03/2018 09:47:03     "
+                    readBarcodeScannerData (AddedFile "barcodes1.txt" "Name1" "   \t  A4580442  \t,    P0047   ,   \t 14/03/2018 09:47:03     ")
                         |> Expect.equal (Ok TestData.parsedBarcodeScannerData1)
             , test "readBarcodeScannerData of a valid single-line string with athlete only is valid" <|
                 \() ->
-                    readBarcodeScannerData "barcodes2.txt" "A4580442,,14/03/2018 09:47:03"
+                    readBarcodeScannerData (AddedFile "barcodes2.txt" "Name2" "A4580442,,14/03/2018 09:47:03")
                         |> Expect.equal
                             (Ok
                                 (BarcodeScannerData
                                     [ BarcodeScannerFile
                                         "barcodes2.txt"
+                                        "Name2"
                                         [ ordinaryFileLine 1 "A4580442" Nothing "14/03/2018 09:47:03" ]
                                         (toPosix "2018-03-14T09:47:03.000Z")
                                     ]
@@ -144,12 +145,13 @@ suite =
                             )
             , test "readBarcodeScannerData of a valid single-line string with athlete and null position is valid" <|
                 \() ->
-                    readBarcodeScannerData "barcodes2.txt" "A4580442,null,14/03/2018 09:47:03"
+                    readBarcodeScannerData (AddedFile "barcodes2.txt" "Name2" "A4580442,null,14/03/2018 09:47:03")
                         |> Expect.equal
                             (Ok
                                 (BarcodeScannerData
                                     [ BarcodeScannerFile
                                         "barcodes2.txt"
+                                        "Name2"
                                         [ ordinaryFileLine 1 "A4580442" Nothing "14/03/2018 09:47:03" ]
                                         (toPosix "2018-03-14T09:47:03.000Z")
                                     ]
@@ -162,12 +164,13 @@ suite =
                             )
             , test "readBarcodeScannerData of a valid single-line string with finish token only is valid but empty" <|
                 \() ->
-                    readBarcodeScannerData "barcodes3.txt" ",P0047,14/03/2018 09:47:03"
+                    readBarcodeScannerData (AddedFile "barcodes3.txt" "Name3" ",P0047,14/03/2018 09:47:03")
                         |> Expect.equal
                             (Ok
                                 (BarcodeScannerData
                                     [ BarcodeScannerFile
                                         "barcodes3.txt"
+                                        "Name3"
                                         [ ordinaryFileLine 1 "" (Just 47) "14/03/2018 09:47:03" ]
                                         Nothing
                                     ]
@@ -180,12 +183,13 @@ suite =
                             )
             , test "readBarcodeScannerData of a valid single-line string with null athlete and finish token only is valid but empty" <|
                 \() ->
-                    readBarcodeScannerData "barcodes3.txt" "null,P0047,14/03/2018 09:47:03"
+                    readBarcodeScannerData (AddedFile "barcodes3.txt" "Name3" "null,P0047,14/03/2018 09:47:03")
                         |> Expect.equal
                             (Ok
                                 (BarcodeScannerData
                                     [ BarcodeScannerFile
                                         "barcodes3.txt"
+                                        "Name3"
                                         [ ordinaryFileLine 1 "" (Just 47) "14/03/2018 09:47:03" ]
                                         Nothing
                                     ]
@@ -198,12 +202,13 @@ suite =
                             )
             , test "readBarcodeScannerData of a valid single-line string with mis-scanned item only is valid" <|
                 \() ->
-                    readBarcodeScannerData "barcodes4.txt" "&d084,14/03/2018 09:47:03"
+                    readBarcodeScannerData (AddedFile "barcodes4.txt" "Name4" "&d084,14/03/2018 09:47:03")
                         |> Expect.equal
                             (Ok
                                 (BarcodeScannerData
                                     [ BarcodeScannerFile
                                         "barcodes4.txt"
+                                        "Name4"
                                         [ BarcodeScannerFileLine 1 (MisScan "&d084") "14/03/2018 09:47:03" NotDeleted ]
                                         (toPosix "2018-03-14T09:47:03.000Z")
                                     ]
@@ -216,16 +221,17 @@ suite =
                             )
             , test "readBarcodeScannerData of a valid single-line string with athlete and finish token and blank lines is valid" <|
                 \() ->
-                    readBarcodeScannerData "barcodes1.txt" "\n\n\n\n\nA4580442,P0047,14/03/2018 09:47:03\n\n\n\n"
+                    readBarcodeScannerData (AddedFile "barcodes1.txt" "Name1" "\n\n\n\n\nA4580442,P0047,14/03/2018 09:47:03\n\n\n\n")
                         |> Expect.equal (Ok TestData.parsedBarcodeScannerData1)
             , test "readBarcodeScannerData of a valid multiline string with two different finish tokens is valid" <|
                 \() ->
-                    readBarcodeScannerData "barcodes6.txt" "A4580442,P0047,14/03/2018 09:47:03\nA1866207,P0047,14/03/2018 09:48:44"
+                    readBarcodeScannerData (AddedFile "barcodes6.txt" "Name6" "A4580442,P0047,14/03/2018 09:47:03\nA1866207,P0047,14/03/2018 09:48:44")
                         |> Expect.equal
                             (Ok
                                 (BarcodeScannerData
                                     [ BarcodeScannerFile
                                         "barcodes6.txt"
+                                        "Name6"
                                         [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
                                         , ordinaryFileLine 2 "A1866207" (Just 47) "14/03/2018 09:48:44"
                                         ]
@@ -244,7 +250,7 @@ suite =
                             )
             , test "readBarcodeScannerData of an empty string is not valid" <|
                 \() ->
-                    readBarcodeScannerData "empty.txt" ""
+                    readBarcodeScannerData (AddedFile "empty.txt" "Empty" "")
                         |> expectError "NO_RESULTS"
             , test "readBarcodeScannerData of a string with an invalid athlete barcode is not valid" <|
                 \() ->
@@ -269,7 +275,7 @@ suite =
                     expectSingleUnrecognisedLineFor "A4580442,P0000,14/03/2018 09:47:03" "INVALID_POSITION_ZERO"
             , test "readBarcodeScannerData of a string containing binary data is not valid" <|
                 \() ->
-                    readBarcodeScannerData "binary.txt" "\u{0000}\u{0000}\u{0000}Z\u{0001}j\u{0007}\u{0000}\u{0003}\u{0000}$\u{0000}"
+                    readBarcodeScannerData (AddedFile "binary.txt" "Binary" "\u{0000}\u{0000}\u{0000}Z\u{0001}j\u{0007}\u{0000}\u{0003}\u{0000}$\u{0000}")
                         |> expectError "BINARY_FILE"
             ]
         , describe "maxFinishToken tests"
@@ -289,33 +295,34 @@ suite =
         , describe "generateDownloadText tests"
             [ test "generateDownloadText returns an empty string for empty data" <|
                 \() ->
-                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [] Nothing)
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" "Name" [] Nothing)
                         |> Expect.equal ""
             , test "generateDownloadText returns a string for a single scanned barcode" <|
                 \() ->
-                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03" ] Nothing)
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" "Name" [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03" ] Nothing)
                         |> Expect.equal ("A123456,P0047,14/03/2018 09:47:03" ++ crlf)
             , test "generateDownloadText returns a string for a single athlete with no finish token" <|
                 \() ->
-                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ ordinaryFileLine 1 "A123456" Nothing "19/09/2018 09:33:37" ] Nothing)
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" "Name" [ ordinaryFileLine 1 "A123456" Nothing "19/09/2018 09:33:37" ] Nothing)
                         |> Expect.equal ("A123456,,19/09/2018 09:33:37" ++ crlf)
             , test "generateDownloadText returns a string for a single finish token with no athlete" <|
                 \() ->
-                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ ordinaryFileLine 1 "" (Just 47) "19/09/2018 09:40:09" ] Nothing)
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" "Name" [ ordinaryFileLine 1 "" (Just 47) "19/09/2018 09:40:09" ] Nothing)
                         |> Expect.equal (",P0047,19/09/2018 09:40:09" ++ crlf)
             , test "generateDownloadText returns a string for a single mis-scanned item" <|
                 \() ->
-                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ BarcodeScannerFileLine 1 (MisScan "&d084") "04/07/2018 09:42:22" NotDeleted ] Nothing)
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" "Name" [ BarcodeScannerFileLine 1 (MisScan "&d084") "04/07/2018 09:42:22" NotDeleted ] Nothing)
                         |> Expect.equal ("&d084,04/07/2018 09:42:22" ++ crlf)
             , test "generateDownloadText returns an empty string for a deleted record" <|
                 \() ->
-                    generateDownloadText (BarcodeScannerFile "barcodes.txt" [ BarcodeScannerFileLine 1 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted DeletedByUser) ] Nothing)
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" "Name" [ BarcodeScannerFileLine 1 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted DeletedByUser) ] Nothing)
                         |> Expect.equal ""
             , test "generateDownloadText returns the correct string for multiple items" <|
                 \() ->
                     generateDownloadText
                         (BarcodeScannerFile
                             "barcodes.txt"
+                            "Name"
                             [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03"
                             , ordinaryFileLine 2 "A123456" Nothing "19/09/2018 09:33:37"
                             , ordinaryFileLine 3 "" (Just 47) "19/09/2018 09:40:09"
@@ -342,13 +349,14 @@ suite =
                         |> Expect.equal ""
             , test "generateDownloadTextForAllScanners returns a string for a single scanned barcode" <|
                 \() ->
-                    generateDownloadTextForAllScanners [ BarcodeScannerFile "barcodes.txt" [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03" ] Nothing ]
+                    generateDownloadTextForAllScanners [ BarcodeScannerFile "barcodes.txt" "Name" [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03" ] Nothing ]
                         |> Expect.equal ("A123456,P0047,14/03/2018 09:47:03" ++ crlf)
             , test "generateDownloadTextForAllScanners returns the correct string for multiple files" <|
                 \() ->
                     generateDownloadTextForAllScanners
                         [ BarcodeScannerFile
                             "barcodes1.txt"
+                            "Name1"
                             [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03"
                             , ordinaryFileLine 2 "A123456" Nothing "19/09/2018 09:33:37"
                             , ordinaryFileLine 3 "" (Just 47) "19/09/2018 09:40:09"
@@ -356,6 +364,7 @@ suite =
                             Nothing
                         , BarcodeScannerFile
                             "barcodes2.txt"
+                            "Name2"
                             [ BarcodeScannerFileLine 4 (MisScan "&d084") "04/07/2018 09:42:22" NotDeleted
                             , BarcodeScannerFileLine 5 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted DeletedByUser)
                             ]
@@ -381,6 +390,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
+                                    "Name6"
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
@@ -392,6 +402,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
+                                    "Name6"
                                     [ ordinaryFileLine 1 "A2022807" (Just 37) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
@@ -411,6 +422,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
+                                    "Name6"
                                     [ markAsDeleted (ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03")
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
@@ -422,6 +434,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
+                                    "Name6"
                                     [ ordinaryFileLine 1 "A2022807" (Just 37) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
@@ -437,10 +450,12 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes1.txt"
+                                    "Name1"
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
                                     (toPosix "2018-03-14T09:47:03.000Z")
                                 , BarcodeScannerFile
                                     "barcodes2.txt"
+                                    "Name2"
                                     [ ordinaryFileLine 1 "A1866207" (Just 58) "14/03/2018 09:48:44" ]
                                     (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
@@ -450,10 +465,12 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes1.txt"
+                                    "Name1"
                                     [ ordinaryFileLine 1 "A2022807" (Just 31) "14/03/2018 09:47:03" ]
                                     (toPosix "2018-03-14T09:47:03.000Z")
                                 , BarcodeScannerFile
                                     "barcodes2.txt"
+                                    "Name2"
                                     [ ordinaryFileLine 1 "A1866207" (Just 58) "14/03/2018 09:48:44" ]
                                     (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
@@ -467,6 +484,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
+                                    "Name6"
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
@@ -482,6 +500,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
+                                    "Name6"
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 47) "14/03/2018 09:48:44"
                                     ]
@@ -499,6 +518,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
+                                    "Name6"
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
@@ -510,6 +530,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
+                                    "Name6"
                                     [ deleteByUser (ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03")
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
@@ -525,10 +546,12 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes1.txt"
+                                    "Name1"
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
                                     (toPosix "2018-03-14T09:47:03.000Z")
                                 , BarcodeScannerFile
                                     "barcodes2.txt"
+                                    "Name2"
                                     [ ordinaryFileLine 1 "A1866207" (Just 58) "14/03/2018 09:48:44" ]
                                     (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
@@ -538,10 +561,12 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes1.txt"
+                                    "Name1"
                                     [ deleteByUser (ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03") ]
                                     (toPosix "2018-03-14T09:47:03.000Z")
                                 , BarcodeScannerFile
                                     "barcodes2.txt"
+                                    "Name2"
                                     [ ordinaryFileLine 1 "A1866207" (Just 58) "14/03/2018 09:48:44" ]
                                     (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
@@ -555,6 +580,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
+                                    "Name6"
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
@@ -570,6 +596,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes6.txt"
+                                    "Name6"
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 47) "14/03/2018 09:48:44"
                                     ]
@@ -591,6 +618,7 @@ suite =
                             createBarcodeScannerDataFromFiles
                                 [ BarcodeScannerFile
                                     "barcodes.txt"
+                                    "Name"
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 39) "14/03/2018 09:48:44"
                                     ]

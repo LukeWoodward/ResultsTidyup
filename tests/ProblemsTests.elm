@@ -92,8 +92,8 @@ suite =
                         barcodeScannerData : BarcodeScannerData
                         barcodeScannerData =
                             BarcodeScannerData
-                                [ BarcodeScannerFile "barcodes1.txt" [] (toPosix "2018-03-14T09:47:03.000Z")
-                                , BarcodeScannerFile "barcodes2.txt" [] (toPosix "2018-03-14T09:49:08.000Z")
+                                [ BarcodeScannerFile "barcodes1.txt" "Name1" [] (toPosix "2018-03-14T09:47:03.000Z")
+                                , BarcodeScannerFile "barcodes2.txt" "Name2" [] (toPosix "2018-03-14T09:49:08.000Z")
                                 ]
                                 Dict.empty
                                 []
@@ -350,6 +350,7 @@ suite =
                         None
                         (createBarcodeScannerDataFromFiles
                             [ BarcodeScannerFile "barcodes1.txt"
+                                "Name1"
                                 [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
                                 (toPosix "2018-03-14T09:47:03.000Z")
                             ]
