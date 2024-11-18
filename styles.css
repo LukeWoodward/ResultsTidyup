@@ -60,7 +60,10 @@ table.table.barcode-scanner-table>tbody>tr>td {
 }
 
 table.table.timer-times>tbody>tr>td>input[type=checkbox] {
-    margin: 0;
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: 5px;
+    margin-bottom: 0;
 }
 
 table.table.timer-times>tbody>tr>td>label {
