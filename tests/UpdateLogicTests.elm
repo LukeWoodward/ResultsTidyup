@@ -918,6 +918,15 @@ suite =
                                 :: defaultAssertionsExcept [ Command, DialogDetailsAssertion ]
                             )
             ]
+        , describe "OpenConfirmClearEverythingDialog tests"
+            [ test "Can open the clear-everything confirmation dialog" <|
+                \() ->
+                    update OpenConfirmClearEverythingDialog initModel
+                        |> Expect.all
+                            (expectDialogDetails ConfirmClearEverythingDialog
+                                :: defaultAssertionsExcept [ DialogDetailsAssertion ]
+                            )
+            ]
         , describe "PastedFileChanged tests"
             [ test "Can update the text" <|
                 \() ->

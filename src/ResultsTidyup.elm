@@ -30,7 +30,7 @@ import Time
 import Timer exposing (Timers(..))
 import TimersView exposing (timersView)
 import UpdateLogic exposing (update)
-import ViewCommon exposing (normalButton)
+import ViewCommon exposing (dangerButton, normalButton)
 
 
 type alias FlagsRecord =
@@ -187,7 +187,7 @@ actionsPanelView model =
         [ id "actionsPanelContainer" ]
         [ normalButton OpenUploadFileDialog [] "Upload files..."
         , normalButton OpenPasteFileDialog [] "Paste..."
-        , normalButton ClearAllData [ disabled noData ] "Clear everything"
+        , dangerButton OpenConfirmClearEverythingDialog [ disabled noData ] "Clear everything"
         ]
 
 

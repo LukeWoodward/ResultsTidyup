@@ -37,6 +37,7 @@ type DialogDetails
     | TimerOperationsDialog TimerOperationEditDetails
     | TokenOperationsDialog TokenOperationEditDetails
     | PasteFileDialog PastedFileDetails
+    | ConfirmClearEverythingDialog
 
 
 type alias Model =

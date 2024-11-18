@@ -2,6 +2,7 @@ module Modals exposing (showModalDialog)
 
 import BarcodeScannerEditModal exposing (barcodeScannerDialogSizer, barcodeScannerDialogTitle, barcodeScannerEditButtons, editBarcodeScannerRowModalBody)
 import Bootstrap.Modal as Modal
+import ConfirmClearEverythingModal exposing (confirmClearEverythingDialogSizer, confirmClearEverythingModalBody, confirmClearEverythingModalButtons, confirmClearEverythingModalTitle)
 import Html exposing (Html, div, text)
 import Model exposing (DialogDetails(..), Model)
 import Msg exposing (Msg(..))
@@ -34,6 +35,9 @@ dialogTitle dialogDetails =
         PasteFileDialog _ ->
             pasteFileDialogTitle
 
+        ConfirmClearEverythingDialog ->
+            confirmClearEverythingModalTitle
+
         NoDialog ->
             ""
 
@@ -52,6 +56,9 @@ dialogBody dialogDetails =
 
         PasteFileDialog pastedFileDetails ->
             pasteFileModalBody pastedFileDetails
+
+        ConfirmClearEverythingDialog ->
+            confirmClearEverythingModalBody
 
         NoDialog ->
             div [] []
@@ -75,6 +82,9 @@ showModalDialog model =
                 PasteFileDialog pastedFileDetails ->
                     pasteFileButtons pastedFileDetails
 
+                ConfirmClearEverythingDialog ->
+                    confirmClearEverythingModalButtons
+
                 NoDialog ->
                     []
 
@@ -92,6 +102,9 @@ showModalDialog model =
 
                 PasteFileDialog _ ->
                     pasteFileDialogSizer
+
+                ConfirmClearEverythingDialog ->
+                    confirmClearEverythingDialogSizer
 
                 NoDialog ->
                     identity

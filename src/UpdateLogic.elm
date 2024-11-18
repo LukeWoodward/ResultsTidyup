@@ -567,6 +567,11 @@ update msg model =
             , FocusElement PasteFileDialogTextArea
             )
 
+        OpenConfirmClearEverythingDialog ->
+            ( { model | dialogDetails = ConfirmClearEverythingDialog }
+            , NoCommand
+            )
+
         PastedFileChanged newContents ->
             ( { model | dialogDetails = PasteFileDialog (PastedFileDetails newContents (interpretPastedFile newContents)) }
             , NoCommand
@@ -615,5 +620,7 @@ update msg model =
                     ( tryApplyTokenOperation tokenOperationEditDetails model, NoCommand )
 
                 PasteFileDialog _ ->
-                    -- TODOO
+                    ( model, NoCommand )
+
+                ConfirmClearEverythingDialog ->
                     ( model, NoCommand )

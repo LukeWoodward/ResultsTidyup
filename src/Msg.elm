@@ -60,6 +60,7 @@ type Msg
     | CloseModal
     | OpenUploadFileDialog
     | OpenPasteFileDialog
+    | OpenConfirmClearEverythingDialog
     | PastedFileChanged String
     | PastedFileUploaded String Zone Posix
     | FilesUploaded File (List File)

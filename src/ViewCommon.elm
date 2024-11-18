@@ -1,4 +1,16 @@
-module ViewCommon exposing (athleteLink, iconButton, intCell, normalButton, outlineButton, plainCell, smallButton, tableHeader, tableHeaderWithClass, tableHeaders)
+module ViewCommon exposing
+    ( athleteLink
+    , dangerButton
+    , iconButton
+    , intCell
+    , normalButton
+    , outlineButton
+    , plainCell
+    , smallButton
+    , tableHeader
+    , tableHeaderWithClass
+    , tableHeaders
+    )
 
 import Bootstrap.Button as Button
 import Bootstrap.Table as Table
@@ -41,6 +53,16 @@ normalButton : Msg -> List (Html.Attribute Msg) -> String -> Html Msg
 normalButton msg attributes contents =
     Button.button
         [ Button.primary
+        , Button.attrs attributes
+        , Button.onClick msg
+        ]
+        [ text contents ]
+
+
+dangerButton : Msg -> List (Html.Attribute Msg) -> String -> Html Msg
+dangerButton msg attributes contents =
+    Button.button
+        [ Button.danger
         , Button.attrs attributes
         , Button.onClick msg
         ]
