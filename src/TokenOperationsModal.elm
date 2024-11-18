@@ -8,7 +8,7 @@ import Bootstrap.Grid.Row as Row
 import Bootstrap.Modal as Modal
 import DataEntry exposing (RangeEntry, rangeToString)
 import Html exposing (Html, div, text)
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (class, classList)
 import Msg exposing (Msg(..))
 import TokenOperations
     exposing
@@ -33,16 +33,8 @@ tokenOperationsDialogTitle =
 
 textRow : TokenOperationOption -> TokenOperationEditDetails -> String -> Html Msg
 textRow changeType tokenOperationEditDetails textContents =
-    let
-        classes : String
-        classes =
-            if tokenOperationEditDetails.operation == changeType then
-                "token-operation-help-text selected"
-
-            else
-                "token-operation-help-text"
-    in
-    div [ class classes ] [ text textContents ]
+    div [ class "token-operation-help-text", classList [ ( "selected", tokenOperationEditDetails.operation == changeType ) ] ]
+        [ text textContents ]
 
 
 radioButton : String -> TokenOperationOption -> String -> TokenOperationEditDetails -> Grid.Column Msg
