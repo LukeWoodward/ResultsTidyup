@@ -22,8 +22,10 @@ who encounter problems with the results.  It's something that several times
 I have wished I had available to me when I've been processing results myself.
 
 It attempts to detect problems with timer and scanner files dropped into it,
-and provide ways to fix some of the problems it identifies. If you need to,
-you can then download modified files and upload them in to EMS.
+and provide ways to fix some of the problems it identifies. You can then use
+it to find out what adjustments you need to make to the results in EMS.
+Alternatively, you can download modified timer and scanner files and upload
+them in to EMS.
 
 ### Where is it?
 
@@ -32,22 +34,17 @@ It can be found [here](http://lack-of.org.uk/results-tidyup).
 ### How to use it?
 
 Before you can use Results Tidyup, you must first download from EMS any files
-you wish to use with it. Do this by clicking the timer or scanner icon to
-view the contents of the file in EMS. Then click Save. Save this somewhere
-on your computer or phone.
+you wish to use with it. On the page in EMS that lists the files that have
+been uploaded, click or tap the timer or scanner icon to view the contents
+of the file. Then click/tap Save. Save this somewhere on your computer or
+phone.
 
 You can then load the timer and/or scanner files into the application, using
-the 'Upload files...' button at the top.  You can also drag files into the
+the 'Upload files...' button at the top. You can also drag files into the
 browser window, but note that some browser antivirus plugins will block this.
-Times should then appear on the left and barcodes scanned on the right.
 
 You don't have to upload both timer and scanner files.  You can upload only
 timer files, or upload only scanner files, or upload both.
-
-You can either look at Results Tidyup to see what changes to make to the
-results, or download the files from Results Tidyup and upload them back in
-to EMS. Note that if you do the latter, you must deselect the original files
-in EMS.
 
 ### How to...
 
@@ -55,12 +52,12 @@ in EMS.
 
 - Upload two timer files.
 - If an offset is detected between the times on the two timers, choose to
-  apply the offset to one timer.  (If this happens, it usually means that
+  apply the offset to one timer. (If this happens, it usually means that
   one of the timers was started late, so choose to add the offset to the
   slow timer.)
 - Review the list of times in the list on the left.  Untick any times
   recorded on one timer that are incorrect.
-- Download the merged list of times using the button to the right of the times.
+- Download the merged list of times using the button above the times.
 
 #### Apply a scale factor to all times
 
@@ -72,7 +69,7 @@ expected distance and actual distance using the
 
 To do this:
 - Upload one or two timer files.
-- Click 'Timer Operations'
+- Click 'Timer Operations'.
 - Use the options in this window to specify the scale factor, or the expected
   and actual distances.
 - Click 'Apply scale factor'.
@@ -91,8 +88,10 @@ To do this:
 - In the dialog that opens, click 'Swap token(s)' and enter 201-300 in one of
   the two fields and 301-400 in the other.
 - Click 'Swap tokens'.
-- Download all barcode data using the 'Download all scanned barcodes' button.
-  This downloads one file containing all scanned barcodes.
+
+After making a large-scale change to tokens like this, you can download a
+single file containing all of the scanned barcodes. You would then upload this
+into EMS and deselect all of the others.
 
 #### Reverse a range of tokens
 
@@ -108,8 +107,6 @@ previous step:
 - In the dialog that opens, click 'Reverse tokens' and enter 51-75 in the
   field.
 - Click 'Reverse tokens'.
-- Download all barcode data using the 'Download all scanned barcodes' button.
-  This downloads one scanner file containing all scanned barcodes.
 
 ### Problems
 
@@ -120,18 +117,18 @@ the page.
 Results Tidyup can identify the following problems with the files uploaded:
 
 - Time offsets detected between the times in two timer files, indicating the
-  timers weren't started at the same time.  You can fix this by adding or
+  timers weren't started at the same time. You can fix this by adding or
   subtracting the detected time offset from all times on one of the timers.
 
 - The same athlete barcode scanned with and without a finish token. EMS will
-  report an error in the scanner file for an athlete-barcode scan without
+  report a warning in the scanner file for an athlete-barcode scan without
   a corresponding finish-token scan, so you might think that this athlete
-  had scanned in but won't get a result.  However, we can ignore the row
+  had scanned in but won't get a result. However, we can ignore the row
   without a finish token.
 
 - The same athlete barcode scanned with multiple different finish tokens.
   Results Tidyup can't by itself tell which finish position is correct for
-  that athlete: you will have to figure this out for yourself.  To help you,
+  that athlete: you will have to figure this out for yourself. To help you,
   the athlete IDs link to the athlete's results history. If you've loaded
   one or more timer files, then the times recorded against the positions
   are also shown, allowing you to judge which of the finish positions is
@@ -172,7 +169,9 @@ barcode, but I'll leave this check in just in case.
 
 ### What this doesn't do but may do in the future
 
-This tool has so far been based on what I've seen happen when processing results.  Doubtless there are other things which Results Tidyup could include support for, such as:
+This tool has so far been based on what I've seen happen when processing
+results.  Doubtless there are other things which Results Tidyup could include
+support for, such as:
 
 - Handling three or more timers. (Do events often use three or more timers?)
 
@@ -182,7 +181,7 @@ Results Tidyup will never magically fix all results-processing problems at an
 event. It can detect a number of problems, but it never makes any corrections
 if you don't tell it to. As a results processor you will always need to
 understand what has gone on during the event and use your judgement to decide
-what modifications to make to the results, if any.  Some modifications
+what modifications to make to the results, if any. Some modifications
 suggested by Results Tidyup may in fact be incorrect.
 
 Results Tidyup will never be able to look up athlete names from athlete
