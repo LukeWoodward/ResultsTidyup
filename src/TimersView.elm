@@ -6,7 +6,7 @@ import Bootstrap.Table as Table
 import Commands
 import Dict
 import Html exposing (Html, div, h3, input, label, text)
-import Html.Attributes exposing (checked, class, for, id, title, type_)
+import Html.Attributes exposing (checked, class, classList, for, id, title, type_)
 import Html.Events exposing (onClick)
 import Icons exposing (download, remove)
 import Msg exposing (Msg(..))
@@ -80,14 +80,6 @@ checkboxCell time index included numberCheckerId highlightedNumberCheckerId =
         idText : String
         idText =
             "toggle_checkbox_" ++ String.fromInt index
-
-        labelClassName : String
-        labelClassName =
-            if included then
-                "timer-time-label"
-
-            else
-                "timer-time-label excluded"
     in
     Table.td
         (numberCheckerUnderlineAttributes (Just "mismatch") numberCheckerId highlightedNumberCheckerId)
@@ -100,7 +92,8 @@ checkboxCell time index included numberCheckerId highlightedNumberCheckerId =
             []
         , label
             [ for idText
-            , class labelClassName
+            , class "timer-time-label"
+            , classList [ ( "excluded", not included ) ]
             ]
             [ text (formatTime time) ]
         ]
