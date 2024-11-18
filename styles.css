@@ -248,6 +248,7 @@ div.token-operation-help-text {
 
 div.problems-container {
     padding-top: 15px;
+    clear: both;
 }
 
 textarea#pasteFileDialogTextArea {

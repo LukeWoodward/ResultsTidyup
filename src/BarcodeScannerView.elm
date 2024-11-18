@@ -207,7 +207,6 @@ barcodeScannersView model =
     in
     div []
         [ h3 [] [ text "Scanners", div [ class "barcode-scanner-buttons" ] buttons ]
-        , div [ class "clearfix" ] []
         , scannerProblemsView model.problems
         , Tab.config ChangeBarcodeScannerTab
             |> Tab.items (List.indexedMap barcodeScannerTabView model.barcodeScannerData.files)

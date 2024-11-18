@@ -479,7 +479,6 @@ timersView timers barcodeScannerData problems highlightedNumberCheckerId =
     div
         []
         [ h3 [] [ text headerText, div [ class "timer-buttons" ] buttons ]
-        , div [ class "clearfix" ] []
         , timerProblemsView problems
         , timerTable timers barcodeScannerData highlightedNumberCheckerId
         , div

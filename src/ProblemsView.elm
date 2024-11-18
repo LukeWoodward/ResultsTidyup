@@ -122,8 +122,7 @@ timerTimeOffsetView offset =
                     "Timer 2 is slow - add " ++ offsetDescription
         in
         warningAlert
-            [ div [ class "clearfix" ] []
-            , text "There seems to be a difference of "
+            [ text "There seems to be a difference of "
             , text offsetDescription
             , text " between the timers, with "
             , text laterTimer
@@ -133,7 +132,6 @@ timerTimeOffsetView offset =
                 , normalButton (Msg.FixProblem (AdjustTimer TimerTwo offset)) [] timer2AdjustText
                 , normalButton (Msg.IgnoreProblem IgnoreTimerTimeOffsets) [] "Ignore timer time offset"
                 ]
-            , div [ class "clearfix" ] []
             ]
             |> Just
 
