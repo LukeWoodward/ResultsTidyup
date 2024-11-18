@@ -12,7 +12,7 @@
 * [What this doesn't do but may do in the future](#what-this-doesnt-do-but-may-do-in-the-future)
 * [What this won't do](#what-this-wont-do)
 * [What this isn't](#what-this-isnt)
-* [Privacy/cookies notices](#privacy-cookies-notices)
+* [Privacy/cookies notices](#privacycookies-notices)
 * [Questions](#questions)
 
 ### What is it?
