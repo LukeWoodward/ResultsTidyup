@@ -89,11 +89,11 @@ smallButton msg attributes contents =
         [ text contents ]
 
 
-iconButton : Msg -> Button.Option Msg -> Html Msg -> List (Html.Attribute Msg) -> String -> Html Msg
-iconButton msg option icon attributes iconTitle =
+iconButton : Msg -> Button.Option Msg -> Html Msg -> String -> Html Msg
+iconButton msg option icon iconTooltip =
     Button.button
         [ option
-        , Button.attrs (title iconTitle :: attributes)
+        , Button.attrs [ title iconTooltip ]
         , Button.onClick msg
         ]
         [ icon ]

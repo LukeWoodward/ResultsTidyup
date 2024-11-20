@@ -26,7 +26,7 @@ type alias TableHeaderButton =
     { change : Msg
     , option : Button.Option Msg
     , icon : Html Msg
-    , buttonText : String
+    , buttonTooltip : String
     }
 
 
@@ -104,7 +104,7 @@ tableHeaderWithButtons { headerText, headerTooltip, buttonData } =
     let
         elements : List (Html Msg)
         elements =
-            List.map (\{ change, option, icon, buttonText } -> iconButton change option icon [] buttonText) buttonData
+            List.map (\{ change, option, icon, buttonTooltip } -> iconButton change option icon buttonTooltip) buttonData
     in
     Table.th
         [ Table.cellAttr (class "timer-header")
@@ -123,7 +123,7 @@ downloadTimerButton which =
     { change = RequestCurrentDateAndTime (Commands.DownloadSingleTimer which)
     , option = Button.primary
     , icon = download
-    , buttonText = "Download"
+    , buttonTooltip = "Download"
     }
 
 
@@ -132,7 +132,7 @@ removeTimerButton which =
     { change = RemoveTimer which
     , option = Button.danger
     , icon = remove
-    , buttonText = "Remove"
+    , buttonTooltip = "Remove"
     }
 
 

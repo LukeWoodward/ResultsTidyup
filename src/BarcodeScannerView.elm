@@ -9,16 +9,18 @@ import BarcodeScanner
         , LineContents(..)
         )
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditLocation)
+import Bootstrap.Button as Button
 import Bootstrap.Tab as Tab
 import Bootstrap.Table as Table
 import Commands
 import Html exposing (Attribute, Html, div, h3, span, text)
 import Html.Attributes exposing (class, colspan, title)
 import Html.Events exposing (onDoubleClick)
+import Icons exposing (download, remove)
 import Model exposing (Model)
 import Msg exposing (Msg(..))
 import ProblemsView exposing (scannerProblemsView)
-import ViewCommon exposing (athleteLink, normalButton, smallButton, tableHeader, tableHeaderWithClass)
+import ViewCommon exposing (athleteLink, iconButton, normalButton, tableHeader, tableHeaderWithClass)
 
 
 maybeIntToString : Maybe Int -> String
@@ -122,8 +124,8 @@ barcodeScannerView file =
     div []
         [ div
             [ class "barcode-scanner-buttons" ]
-            [ smallButton (RequestCurrentDateAndTime (Commands.DownloadBarcodeScannerFile file.filename)) [] "Download"
-            , smallButton (RemoveBarcodeScannerFile file.filename) [] "Remove"
+            [ iconButton (RequestCurrentDateAndTime (Commands.DownloadBarcodeScannerFile file.filename)) Button.primary download "Download"
+            , iconButton (RemoveBarcodeScannerFile file.filename) Button.danger remove "Remove"
             ]
         , Table.table
             { options = [ Table.bordered, Table.small, Table.hover, Table.attr (class "barcode-scanner-table") ]
