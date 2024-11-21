@@ -21,6 +21,7 @@ import Problems
         , PositionAndTime
         , PositionOffEndOfTimesProblem
         , PositionWithMultipleAthletesProblem
+        , TimerTimesOutOfOrder
         , identifyProblems
         , noIgnoredProblems
         , noProblems
@@ -418,5 +419,83 @@ suite =
                         BarcodeScanner.empty
                         { noIgnoredProblems | ignoreTimerTimeOffsets = True }
                         |> Expect.equal noProblems
+            , test "identifyProblems returns a problem for timer times out of order when a single timer" <|
+                \() ->
+                    identifyProblems (Single (TimerFile "timer1.txt" "Name1") [ 1000, 1200, 1080 ]) BarcodeScanner.empty noIgnoredProblems
+                        |> Expect.equal { noProblems | timerTimesOutOfOrder = [ TimerTimesOutOfOrder TimerOne "20:00" "18:00" ] }
+            , test "identifyProblems returns a problem for multiple timer times out of order when a single timer" <|
+                \() ->
+                    identifyProblems (Single (TimerFile "timer1.txt" "Name1") [ 1000, 1200, 1080, 3784, 3696 ]) BarcodeScanner.empty noIgnoredProblems
+                        |> Expect.equal
+                            { noProblems
+                                | timerTimesOutOfOrder =
+                                    [ TimerTimesOutOfOrder TimerOne "20:00" "18:00"
+                                    , TimerTimesOutOfOrder TimerOne "01:03:04" "01:01:36"
+                                    ]
+                            }
+            , test "identifyProblems returns a problem for multiple timer times out of order on timer 1 of 2" <|
+                \() ->
+                    identifyProblems
+                        (Double
+                            { times1 = [ 1000, 1200, 1080, 3784, 3696 ]
+                            , times2 = [ 1000, 1080, 1200, 3696, 3784 ]
+                            , file1 = TimerFile "timer1.txt" "Name1"
+                            , file2 = TimerFile "timer2.txt" "Name2"
+                            , mergedTableRows = []
+                            , matchSummary = TimerMatchSummary 0 0 0 0 0
+                            }
+                        )
+                        BarcodeScanner.empty
+                        noIgnoredProblems
+                        |> Expect.equal
+                            { noProblems
+                                | timerTimesOutOfOrder =
+                                    [ TimerTimesOutOfOrder TimerOne "20:00" "18:00"
+                                    , TimerTimesOutOfOrder TimerOne "01:03:04" "01:01:36"
+                                    ]
+                            }
+            , test "identifyProblems returns a problem for multiple timer times out of order on timer 2 of 2" <|
+                \() ->
+                    identifyProblems
+                        (Double
+                            { times1 = [ 1000, 1080, 1200, 3696, 3784 ]
+                            , times2 = [ 1000, 1200, 1080, 3784, 3696 ]
+                            , file1 = TimerFile "timer1.txt" "Name1"
+                            , file2 = TimerFile "timer2.txt" "Name2"
+                            , mergedTableRows = []
+                            , matchSummary = TimerMatchSummary 0 0 0 0 0
+                            }
+                        )
+                        BarcodeScanner.empty
+                        noIgnoredProblems
+                        |> Expect.equal
+                            { noProblems
+                                | timerTimesOutOfOrder =
+                                    [ TimerTimesOutOfOrder TimerTwo "20:00" "18:00"
+                                    , TimerTimesOutOfOrder TimerTwo "01:03:04" "01:01:36"
+                                    ]
+                            }
+            , test "identifyProblems returns a problem for multiple timer times out of order on both timers" <|
+                \() ->
+                    identifyProblems
+                        (Double
+                            { times1 = [ 1000, 1080, 1200, 3784, 3696 ]
+                            , times2 = [ 1000, 1200, 1080, 3784, 3696 ]
+                            , file1 = TimerFile "timer1.txt" "Name1"
+                            , file2 = TimerFile "timer2.txt" "Name2"
+                            , mergedTableRows = []
+                            , matchSummary = TimerMatchSummary 0 0 0 0 0
+                            }
+                        )
+                        BarcodeScanner.empty
+                        noIgnoredProblems
+                        |> Expect.equal
+                            { noProblems
+                                | timerTimesOutOfOrder =
+                                    [ TimerTimesOutOfOrder TimerOne "01:03:04" "01:01:36"
+                                    , TimerTimesOutOfOrder TimerTwo "20:00" "18:00"
+                                    , TimerTimesOutOfOrder TimerTwo "01:03:04" "01:01:36"
+                                    ]
+                            }
             ]
         ]

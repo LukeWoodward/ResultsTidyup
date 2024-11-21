@@ -14,6 +14,7 @@ import Problems
         , PositionOffEndOfTimesProblem
         , PositionWithMultipleAthletesProblem
         , Problems
+        , TimerTimesOutOfOrder
         )
 import TimeHandling exposing (formatTime)
 import Timer exposing (WhichTimer(..))
@@ -310,12 +311,62 @@ unrecognisedBarcodeScannerLinesView unrecognisedBarcodeScannerLines =
                 ]
 
 
+timerTimesOutOfOrderView : List TimerTimesOutOfOrder -> Maybe (Html Msg)
+timerTimesOutOfOrderView timerTimesOutOfOrder =
+    let
+        formatTimer : WhichTimer -> String
+        formatTimer whichTimer =
+            case whichTimer of
+                TimerOne ->
+                    "timer 1"
+
+                TimerTwo ->
+                    "timer 2"
+    in
+    case timerTimesOutOfOrder of
+        [] ->
+            Nothing
+
+        { whichTimer, timeBefore, timeAfter } :: [] ->
+            dangerAlert [ text ("Times " ++ timeBefore ++ " and " ++ timeAfter ++ " recorded by " ++ formatTimer whichTimer ++ " are out of order.") ]
+                |> Just
+
+        firstOutOfOrder :: rest ->
+            let
+                allOnFirstTimer : Bool
+                allOnFirstTimer =
+                    List.all (\item -> item.whichTimer == firstOutOfOrder.whichTimer) rest
+
+                formatTimePairNoTimer : TimerTimesOutOfOrder -> Html Msg
+                formatTimePairNoTimer timerTimes =
+                    li [] [ text (timerTimes.timeBefore ++ " and " ++ timerTimes.timeAfter) ]
+
+                formatTimePair : TimerTimesOutOfOrder -> Html Msg
+                formatTimePair timerTimes =
+                    li [] [ text (timerTimes.timeBefore ++ " and " ++ timerTimes.timeAfter ++ ", recorded by " ++ formatTimer timerTimes.whichTimer) ]
+            in
+            if allOnFirstTimer then
+                dangerAlert
+                    [ text ("The following times recorded by " ++ formatTimer firstOutOfOrder.whichTimer ++ " are out of order:")
+                    , ul [] (List.map formatTimePairNoTimer timerTimesOutOfOrder)
+                    ]
+                    |> Just
+
+            else
+                dangerAlert
+                    [ text "The following times recorded by the timers are out of order:"
+                    , ul [] (List.map formatTimePair timerTimesOutOfOrder)
+                    ]
+                    |> Just
+
+
 timerProblemsView : Problems -> Html Msg
 timerProblemsView problems =
     let
         problemViewSections : List (Maybe (Html Msg))
         problemViewSections =
             [ Maybe.andThen timerTimeOffsetView problems.timerTimeOffset
+            , timerTimesOutOfOrderView problems.timerTimesOutOfOrder
             , Maybe.map positionOffEndOfTimesView problems.positionOffEndOfTimes
             ]
     in

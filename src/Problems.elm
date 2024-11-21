@@ -8,6 +8,7 @@ module Problems exposing
     , PositionOffEndOfTimesProblem
     , PositionWithMultipleAthletesProblem
     , Problems
+    , TimerTimesOutOfOrder
     , identifyProblems
     , noIgnoredProblems
     , noProblems
@@ -17,7 +18,8 @@ import Array exposing (Array)
 import BarcodeScanner exposing (BarcodeScannerData, DeletionStatus(..), LineContents(..), MisScannedItem, UnrecognisedLine)
 import Dict exposing (Dict)
 import Set exposing (Set)
-import Timer exposing (MergeEntry(..), Timers(..))
+import TimeHandling exposing (formatTime)
+import Timer exposing (MergeEntry(..), Timers(..), WhichTimer(..))
 import TimerOffsetDetection exposing (getTimerTimeOffset)
 
 
@@ -82,9 +84,17 @@ type alias MisScannedAthleteBarcodeProblem =
     }
 
 
+type alias TimerTimesOutOfOrder =
+    { whichTimer : WhichTimer
+    , timeBefore : String
+    , timeAfter : String
+    }
+
+
 type alias Problems =
     { athletesWithAndWithoutPosition : List AthleteWithAndWithoutPositionProblem
     , timerTimeOffset : Maybe Int
+    , timerTimesOutOfOrder : List TimerTimesOutOfOrder
     , athletesWithMultiplePositions : List AthleteWithMultiplePositionsProblem
     , positionsWithMultipleAthletes : List PositionWithMultipleAthletesProblem
     , positionOffEndOfTimes : Maybe PositionOffEndOfTimesProblem
@@ -101,6 +111,7 @@ noProblems : Problems
 noProblems =
     { athletesWithAndWithoutPosition = []
     , timerTimeOffset = Nothing
+    , timerTimesOutOfOrder = []
     , athletesWithMultiplePositions = []
     , positionsWithMultipleAthletes = []
     , positionOffEndOfTimes = Nothing
@@ -361,6 +372,37 @@ getTimes timers =
                 |> timesListToArray
 
 
+identifyTimesOutOfOrder : WhichTimer -> List Int -> List TimerTimesOutOfOrder
+identifyTimesOutOfOrder whichTimer times =
+    case times of
+        [] ->
+            []
+
+        _ :: [] ->
+            []
+
+        first :: second :: rest ->
+            if second < first then
+                TimerTimesOutOfOrder whichTimer (formatTime first) (formatTime second) :: identifyTimesOutOfOrder whichTimer (second :: rest)
+
+            else
+                identifyTimesOutOfOrder whichTimer (second :: rest)
+
+
+identifyTimerTimesOutOfOrder : Timers -> List TimerTimesOutOfOrder
+identifyTimerTimesOutOfOrder timers =
+    case timers of
+        None ->
+            []
+
+        Single _ times ->
+            identifyTimesOutOfOrder TimerOne times
+
+        Double doubleTimerData ->
+            identifyTimesOutOfOrder TimerOne doubleTimerData.times1
+                ++ identifyTimesOutOfOrder TimerTwo doubleTimerData.times2
+
+
 identifyProblems : Timers -> BarcodeScannerData -> IgnoredProblems -> Problems
 identifyProblems timers barcodeScannerData ignoredProblems =
     let
@@ -397,6 +439,7 @@ identifyProblems timers barcodeScannerData ignoredProblems =
 
         else
             replaceZeroOffset (getTimerTimeOffset timers)
+    , timerTimesOutOfOrder = identifyTimerTimesOutOfOrder timers
     , athletesWithMultiplePositions = identifyAthletesWithMultiplePositions times athleteToPositionsDict
     , positionsWithMultipleAthletes = identifyPositionsWithMultipleAthletes positionToAthletesDict
     , positionOffEndOfTimes = identifyPositionsOffEndOfTimes timers positionToAthletesDict
