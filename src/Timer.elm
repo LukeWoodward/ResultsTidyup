@@ -581,20 +581,20 @@ merge : Int -> Int -> List Int -> List Int -> List MergeEntry
 merge maxNearMatchDistance maxNotNearMatchDistance times1 times2 =
     let
         createTimes : List Int -> List Int -> List MergeEntry
-        createTimes sortedTimes1 sortedTimes2 =
-            case ( sortedTimes1, sortedTimes2 ) of
+        createTimes timesLeft1 timesLeft2 =
+            case ( timesLeft1, timesLeft2 ) of
                 ( [], [] ) ->
                     []
 
                 ( _, [] ) ->
-                    List.map (OneWatchOnly TimerOne) sortedTimes1
+                    List.map (OneWatchOnly TimerOne) timesLeft1
 
                 ( [], _ ) ->
-                    List.map (OneWatchOnly TimerTwo) sortedTimes2
+                    List.map (OneWatchOnly TimerTwo) timesLeft2
 
                 ( first1 :: rest1, first2 :: rest2 ) ->
                     if first1 < first2 - maxNearMatchDistance then
-                        OneWatchOnly TimerOne first1 :: createTimes rest1 sortedTimes2
+                        OneWatchOnly TimerOne first1 :: createTimes rest1 timesLeft2
 
                     else if first2 - maxNearMatchDistance <= first1 && first1 < first2 then
                         if
@@ -605,7 +605,7 @@ merge maxNearMatchDistance maxNotNearMatchDistance times1 times2 =
                             -- on timer 1 and the next time on timer 2 isn't particularly near.
                             -- So it's likely that this time is on watch 1 only and the time on watch 2
                             -- will match a nearer time on watch 1.
-                            OneWatchOnly TimerOne first1 :: createTimes rest1 sortedTimes2
+                            OneWatchOnly TimerOne first1 :: createTimes rest1 timesLeft2
 
                         else
                             NearMatch first1 first2 :: createTimes rest1 rest2
@@ -618,14 +618,14 @@ merge maxNearMatchDistance maxNotNearMatchDistance times1 times2 =
                             isHeadInRange rest2 (first2 + 1) first1
                                 && not (isHeadInRange rest1 first1 (first1 + maxNearMatchDistance))
                         then
-                            OneWatchOnly TimerTwo first2 :: createTimes sortedTimes1 rest2
+                            OneWatchOnly TimerTwo first2 :: createTimes timesLeft1 rest2
 
                         else
                             NearMatch first1 first2 :: createTimes rest1 rest2
 
                     else
                         -- first1 > first2 + maxNearMatchDistance
-                        OneWatchOnly TimerTwo first2 :: createTimes sortedTimes1 rest2
+                        OneWatchOnly TimerTwo first2 :: createTimes timesLeft1 rest2
     in
-    createTimes (List.sort times1) (List.sort times2)
+    createTimes times1 times2
         |> addNotNearMatches maxNotNearMatchDistance
