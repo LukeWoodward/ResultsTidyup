@@ -2,7 +2,7 @@ module DateHandling exposing (dateTimeStringToPosix, generateFilenameDatePart, g
 
 import Iso8601
 import List.Extra
-import Parser exposing ((|.), (|=), Parser, end, keyword, oneOf, run, spaces, symbol)
+import Parser exposing ((|.), Parser, end, keyword, oneOf, run, spaces, symbol)
 import Parsers exposing (digits)
 import Result.Extra
 import Time exposing (Month(..), Posix, Zone)

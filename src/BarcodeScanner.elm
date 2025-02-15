@@ -25,7 +25,7 @@ import DateHandling exposing (dateTimeStringToPosix)
 import Dict exposing (Dict)
 import Error exposing (Error)
 import FileHandling exposing (AddedFile, crlf, isPossibleBinary, splitLines)
-import Parser exposing ((|.), (|=), Parser, end, int, run, symbol)
+import Parser exposing ((|.), Parser, end, int, run, symbol)
 import Parsers exposing (digitsRange)
 import Result.Extra
 import Set exposing (Set)
