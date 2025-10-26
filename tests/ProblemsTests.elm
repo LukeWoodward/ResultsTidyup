@@ -7,7 +7,6 @@ import BarcodeScanner
         , DeletionReason(..)
         , DeletionStatus(..)
         , LineContents(..)
-        , MisScannedItem
         , UnrecognisedLine
         )
 import BarcodeScannerTests exposing (createBarcodeScannerData)
@@ -97,7 +96,6 @@ suite =
                                 , BarcodeScannerFile "barcodes2.txt" "Name2" [] (toPosix "2018-03-14T09:49:08.000Z")
                                 ]
                                 Dict.empty
-                                []
                                 []
                                 []
                                 Nothing
@@ -301,18 +299,11 @@ suite =
                         (createBarcodeScannerData (Dict.fromList [ ( 12, [ "A123456" ] ), ( 16, [ "A252525" ] ), ( 19, [ "A987654" ] ) ]) [ "A505479977654" ])
                         noIgnoredProblems
                         |> Expect.equal { noProblems | athletesMissingPosition = [ "A505479977654" ] }
-            , test "identifyProblems returns a problem for a mis-scanned item" <|
-                \() ->
-                    identifyProblems
-                        None
-                        (BarcodeScannerData [] Dict.empty [] [ MisScannedItem "&d084" "14/03/2018 09:47:03" ] [] Nothing)
-                        noIgnoredProblems
-                        |> Expect.equal { noProblems | misScans = [ "&d084" ] }
             , test "identifyProblems returns a problem for an unrecognised barcode-scanner line" <|
                 \() ->
                     identifyProblems
                         None
-                        (BarcodeScannerData [] Dict.empty [] [] [ UnrecognisedLine "This is not a valid line" "code" "message" ] Nothing)
+                        (BarcodeScannerData [] Dict.empty [] [ UnrecognisedLine "This is not a valid line" "code" "message" ] Nothing)
                         noIgnoredProblems
                         |> Expect.equal { noProblems | unrecognisedBarcodeScannerLines = [ "This is not a valid line" ] }
             , test "identifyProblems returns a fixable problem for an athlete with a position and with a missing position" <|

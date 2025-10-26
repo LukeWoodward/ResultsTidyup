@@ -15,7 +15,7 @@ module Problems exposing
     )
 
 import Array exposing (Array)
-import BarcodeScanner exposing (BarcodeScannerData, DeletionStatus(..), LineContents(..), MisScannedItem, UnrecognisedLine)
+import BarcodeScanner exposing (BarcodeScannerData, DeletionStatus(..), LineContents(..), UnrecognisedLine)
 import Dict exposing (Dict)
 import Set exposing (Set)
 import TimeHandling exposing (formatTime)
@@ -100,7 +100,6 @@ type alias Problems =
     , positionOffEndOfTimes : Maybe PositionOffEndOfTimesProblem
     , athletesMissingPosition : List String
     , misScannedAthleteBarcodes : List MisScannedAthleteBarcodeProblem
-    , misScans : List String
     , unrecognisedBarcodeScannerLines : List String
     , timersInconsistentWithNumberChecker : Bool
     , timersAndFinishTokensInconsistentWithNumberChecker : Bool
@@ -117,7 +116,6 @@ noProblems =
     , positionOffEndOfTimes = Nothing
     , athletesMissingPosition = []
     , misScannedAthleteBarcodes = []
-    , misScans = []
     , unrecognisedBarcodeScannerLines = []
     , timersInconsistentWithNumberChecker = False
     , timersAndFinishTokensInconsistentWithNumberChecker = False
@@ -260,11 +258,6 @@ identifyAthletesWithNoPositions unpairedAthletes athleteToPositionsDict athletes
     deduplicate unpairedAthletes
         |> List.filter (\athlete -> not (Set.member athlete athletesToExclude))
         |> List.filter (\athlete -> not (Dict.member athlete athleteToPositionsDict))
-
-
-identifyMisScannedItems : List MisScannedItem -> List String
-identifyMisScannedItems misScannedItems =
-    List.map .scannedText misScannedItems
 
 
 identifyUnrecognisedBarcodeScannerLines : List UnrecognisedLine -> List String
@@ -445,7 +438,6 @@ identifyProblems timers barcodeScannerData ignoredProblems =
     , positionOffEndOfTimes = identifyPositionsOffEndOfTimes timers positionToAthletesDict
     , athletesMissingPosition = identifyAthletesWithNoPositions athleteBarcodesOnly athleteToPositionsDict misScannedAthleteBarcodesSet
     , misScannedAthleteBarcodes = misScannedAthleteBarcodes
-    , misScans = identifyMisScannedItems barcodeScannerData.misScannedItems
     , unrecognisedBarcodeScannerLines = identifyUnrecognisedBarcodeScannerLines barcodeScannerData.unrecognisedLines
     , timersInconsistentWithNumberChecker = False
     , timersAndFinishTokensInconsistentWithNumberChecker = False

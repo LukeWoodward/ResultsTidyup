@@ -8,7 +8,6 @@ module Model exposing
 
 import BarcodeScanner exposing (BarcodeScannerData)
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails)
-import Bootstrap.Tab as Tab
 import DataEntry exposing (IntegerEntry, emptyEntry)
 import Error exposing (FileError)
 import NumberChecker exposing (AnnotatedNumberCheckerEntry)
@@ -50,8 +49,8 @@ type alias Model =
     , problems : Problems
     , ignoredProblems : IgnoredProblems
     , numberCheckerManualEntryRow : NumberCheckerManualEntryRow
-    , secondTab : Tab.State
-    , barcodeScannerTab : Tab.State
+    , secondTab : Maybe String
+    , barcodeScannerTab : Maybe String
     , dialogDetails : DialogDetails
     }
 
@@ -67,7 +66,7 @@ initModel =
     , problems = Problems.noProblems
     , ignoredProblems = Problems.noIgnoredProblems
     , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
-    , secondTab = Tab.initialState
-    , barcodeScannerTab = Tab.initialState
+    , secondTab = Nothing
+    , barcodeScannerTab = Nothing
     , dialogDetails = NoDialog
     }

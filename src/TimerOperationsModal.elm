@@ -1,16 +1,9 @@
-module TimerOperationsModal exposing (timerOperationsButtons, timerOperationsDialogSizer, timerOperationsDialogTitle, timerOperationsModalBody)
+module TimerOperationsModal exposing (timerOperationsButtons, timerOperationsDialogSize, timerOperationsDialogTitle, timerOperationsModalBody)
 
-import Bootstrap.Form.Checkbox as Checkbox
-import Bootstrap.Form.Input as Input
-import Bootstrap.Form.InputGroup as InputGroup
-import Bootstrap.Form.Radio as Radio
-import Bootstrap.Grid as Grid
-import Bootstrap.Grid.Col as Col
-import Bootstrap.Grid.Row as Row
-import Bootstrap.Modal as Modal
 import DataEntry exposing (Entry, IntegerEntry)
-import Html exposing (Html, div, hr, text)
-import Html.Attributes exposing (class)
+import Html exposing (Html, div, hr, input, label, span, text)
+import Html.Attributes exposing (checked, class, disabled, for, id, type_, value)
+import Html.Events exposing (onCheck, onClick, onInput)
 import Msg exposing (Msg(..))
 import TimeHandling exposing (formatTime)
 import Timer exposing (WhichTimer(..))
@@ -31,7 +24,7 @@ import TimerOperations
         , isScaleFactorFieldInvalid
         , isSubtractOffsetFieldInvalid
         )
-import ViewCommon exposing (normalButton, outlineButton)
+import ViewCommon exposing (ModalSize(..), normalButton, outlineButton)
 
 
 timerOperationsDialogTitle : String
@@ -39,29 +32,32 @@ timerOperationsDialogTitle =
     "Timer operations"
 
 
-radioButton : String -> TimerOperation -> String -> TimerOperationEditDetails -> Grid.Column Msg
+radioButton : String -> TimerOperation -> String -> TimerOperationEditDetails -> Html Msg
 radioButton elementId operation labelText editDetails =
-    sizedRadioButton [ Col.md4, Col.xs6 ] elementId operation labelText editDetails
+    sizedRadioButton "col-6 col-md-4" elementId operation labelText editDetails
 
 
-sizedRadioButton : List (Col.Option Msg) -> String -> TimerOperation -> String -> TimerOperationEditDetails -> Grid.Column Msg
-sizedRadioButton sizes elementId operation labelText editDetails =
-    Grid.col sizes
-        [ Radio.radio
-            [ Radio.id elementId
-            , Radio.checked (editDetails.operation == operation)
-            , Radio.onClick (TimerOperationEdit (ChangeOperation operation))
+sizedRadioButton : String -> String -> TimerOperation -> String -> TimerOperationEditDetails -> Html Msg
+sizedRadioButton classNames elementId operation labelText editDetails =
+    div [ class "col form-check", class classNames ]
+        [ input
+            [ id elementId
+            , type_ "radio"
+            , class "form-check-input"
+            , checked (editDetails.operation == operation)
+            , onClick (TimerOperationEdit (ChangeOperation operation))
             ]
-            labelText
+            []
+        , label [ for elementId, class "form-check-label" ] [ text labelText ]
         ]
 
 
-checkBoxRowApplyToLabel : Grid.Column Msg
+checkBoxRowApplyToLabel : Html Msg
 checkBoxRowApplyToLabel =
-    Grid.col [ Col.xs4, Col.md2, Col.offsetMd1 ] [ text "Apply to:" ]
+    div [ class "col-4 col-md-2 offset-md-1 col-form-label" ] [ text "Apply to:" ]
 
 
-applyToTimerCheckbox : String -> OffsetType -> WhichTimer -> TimerOperationEditDetails -> Grid.Column Msg
+applyToTimerCheckbox : String -> OffsetType -> WhichTimer -> TimerOperationEditDetails -> Html Msg
 applyToTimerCheckbox elementId offsetType timer editDetails =
     let
         offset : OffsetDetails
@@ -100,57 +96,62 @@ applyToTimerCheckbox elementId offsetType timer editDetails =
                 SubtractOffset ->
                     SubtractTimerTimeOffset
     in
-    Grid.col [ Col.xs4, Col.md2 ]
-        [ Checkbox.checkbox
-            [ Checkbox.id elementId
-            , Checkbox.checked currentValue
-            , Checkbox.onCheck (TimerOperationEdit << TimerCheckboxChanged offsetType timer)
-            , Checkbox.disabled (editDetails.operation /= matchingOperation)
+    div [ class "col-4 col-md-2 col-form-label form-check" ]
+        [ input
+            [ id elementId
+            , type_ "checkbox"
+            , class "form-check-input"
+            , checked currentValue
+            , disabled (editDetails.operation /= matchingOperation)
+            , onCheck (TimerOperationEdit << TimerCheckboxChanged offsetType timer)
             ]
-            labelText
+            []
+        , label [ for elementId, class "form-check-label" ]
+            [ text labelText ]
         ]
 
 
-inputTextFieldOptions : (TimerOperationEditDetails -> Entry a) -> TimerField -> TimerOperation -> (TimerOperationEditDetails -> Bool) -> TimerOperationEditDetails -> List (Input.Option Msg)
-inputTextFieldOptions rangeEntryGetter field option validator editDetails =
+inputTextFieldOptions : String -> (TimerOperationEditDetails -> Entry a) -> TimerField -> TimerOperation -> (TimerOperationEditDetails -> Bool) -> TimerOperationEditDetails -> List (Html.Attribute Msg)
+inputTextFieldOptions inputType rangeEntryGetter field option validator editDetails =
     let
-        dangerAttributes : List (Input.Option Msg)
-        dangerAttributes =
+        validationAttributes : List (Html.Attribute Msg)
+        validationAttributes =
             if validator editDetails then
-                [ Input.danger ]
+                [ class "is-invalid" ]
 
             else
                 []
     in
-    [ Input.value (rangeEntryGetter editDetails).enteredValue
-    , Input.onInput (TimerOperationEdit << TimerFieldEdited field)
-    , Input.disabled (editDetails.operation /= option)
-    ]
-        ++ dangerAttributes
+    type_ inputType
+        :: class "form-control"
+        :: value (rangeEntryGetter editDetails).enteredValue
+        :: onInput (TimerOperationEdit << TimerFieldEdited field)
+        :: disabled (editDetails.operation /= option)
+        :: validationAttributes
 
 
-inputTextField : (TimerOperationEditDetails -> Entry a) -> TimerField -> TimerOperation -> (TimerOperationEditDetails -> Bool) -> TimerOperationEditDetails -> Grid.Column Msg
+inputTextField : (TimerOperationEditDetails -> Entry a) -> TimerField -> TimerOperation -> (TimerOperationEditDetails -> Bool) -> TimerOperationEditDetails -> Html Msg
 inputTextField rangeEntryGetter field option validator editDetails =
-    Grid.col
-        [ Col.xs6, Col.md2 ]
-        [ Input.text (inputTextFieldOptions rangeEntryGetter field option validator editDetails) ]
+    div [ class "col-6 col-md-2" ]
+        [ input (inputTextFieldOptions "text" rangeEntryGetter field option validator editDetails) [] ]
 
 
-inputNumberField : (TimerOperationEditDetails -> Entry a) -> TimerField -> TimerOperation -> (TimerOperationEditDetails -> Bool) -> TimerOperationEditDetails -> Grid.Column Msg
+bareInputNumberField : (TimerOperationEditDetails -> Entry a) -> TimerField -> TimerOperation -> (TimerOperationEditDetails -> Bool) -> TimerOperationEditDetails -> Html Msg
+bareInputNumberField rangeEntryGetter field option validator editDetails =
+    input (inputTextFieldOptions "number" rangeEntryGetter field option validator editDetails) []
+
+
+inputNumberField : (TimerOperationEditDetails -> Entry a) -> TimerField -> TimerOperation -> (TimerOperationEditDetails -> Bool) -> TimerOperationEditDetails -> Html Msg
 inputNumberField rangeEntryGetter field option validator editDetails =
-    Grid.col
-        [ Col.xs6, Col.md2 ]
-        [ Input.number (inputTextFieldOptions rangeEntryGetter field option validator editDetails) ]
+    div [ class "col-6 col-md-2" ]
+        [ bareInputNumberField rangeEntryGetter field option validator editDetails ]
 
 
-distanceField : (TimerOperationEditDetails -> IntegerEntry) -> TimerField -> (TimerOperationEditDetails -> Bool) -> TimerOperationEditDetails -> Grid.Column Msg
+distanceField : (TimerOperationEditDetails -> IntegerEntry) -> TimerField -> (TimerOperationEditDetails -> Bool) -> TimerOperationEditDetails -> Html Msg
 distanceField rangeEntryGetter field validator editDetails =
-    Grid.col [ Col.xs6, Col.md2 ]
-        [ InputGroup.config
-            (InputGroup.number (inputTextFieldOptions rangeEntryGetter field ApplyDistanceBasedTimerScaleFactor validator editDetails))
-            |> InputGroup.successors
-                [ InputGroup.span [] [ text "m" ] ]
-            |> InputGroup.view
+    div [ class "input-group" ]
+        [ bareInputNumberField rangeEntryGetter field ApplyDistanceBasedTimerScaleFactor validator editDetails
+        , span [ class "input-group-text" ] [ text "m" ]
         ]
 
 
@@ -207,7 +208,7 @@ applyToTimerCheckboxesRow offsetType offsetTypeAsString editDetails =
             text ""
 
         TwoTimers ->
-            Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
+            div [ class "row mb-3" ]
                 [ checkBoxRowApplyToLabel
                 , applyToTimerCheckbox ("apply" ++ offsetTypeAsString ++ "OffsetToTimer1Checkbox") offsetType TimerOne editDetails
                 , applyToTimerCheckbox ("apply" ++ offsetTypeAsString ++ "OffsetToTimer2Checkbox") offsetType TimerTwo editDetails
@@ -216,32 +217,32 @@ applyToTimerCheckboxesRow offsetType offsetTypeAsString editDetails =
 
 timerOperationsModalBody : TimerOperationEditDetails -> Html Msg
 timerOperationsModalBody editDetails =
-    div []
-        [ Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
+    div [ class "container-fluid" ]
+        [ div [ class "row mb-3" ]
             [ radioButton "addOffsetRadioButton" AddTimerTimeOffset "Add offset to all times:" editDetails
             , inputTextField (.addOffsetDetails >> .offset) AddOffsetField AddTimerTimeOffset isAddOffsetFieldInvalid editDetails
             ]
         , applyToTimerCheckboxesRow AddOffset "Add" editDetails
         , hr [] []
-        , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
+        , div [ class "row mb-3" ]
             [ radioButton "subtractOffsetRadioButton" SubtractTimerTimeOffset "Subtract offset from all times:" editDetails
             , inputTextField (.subtractOffsetDetails >> .offset) SubtractOffsetField SubtractTimerTimeOffset isSubtractOffsetFieldInvalid editDetails
             ]
         , applyToTimerCheckboxesRow SubtractOffset "Subtract" editDetails
         , hr [] []
-        , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
+        , div [ class "row mb-3" ]
             [ radioButton "applyScaleFactorRadioButton" ApplyTimerScaleFactor "Apply scale factor to all times:" editDetails
             , inputNumberField .manualScaleFactor ScaleFactorField ApplyTimerScaleFactor isScaleFactorFieldInvalid editDetails
             ]
         , hr [] []
-        , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
-            [ sizedRadioButton [ Col.xs12, Col.md6 ] "applyDistanceBasedScaleFactorRadioButton" ApplyDistanceBasedTimerScaleFactor "Apply distance-based scale factor to all times:" editDetails
+        , div [ class "row mb-3" ]
+            [ sizedRadioButton "col-12 col-md-6" "applyDistanceBasedScaleFactorRadioButton" ApplyDistanceBasedTimerScaleFactor "Apply distance-based scale factor to all times:" editDetails
             ]
-        , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
-            [ Grid.col [ Col.md3, Col.xs5, Col.offsetXs1 ] [ text "Expected distance" ]
-            , distanceField .expectedDistance ExpectedDistanceManualField isExpectedDistanceFieldInvalid editDetails
-            , Grid.col [ Col.md3, Col.xs5, Col.offsetXs1 ] [ text "Actual distance" ]
-            , distanceField .actualDistance ActualDistanceField isActualDistanceFieldInvalid editDetails
+        , div [ class "row mb-4" ]
+            [ div [ class "col-5 col-md-3 offset-1" ] [ text "Expected distance" ]
+            , div [ class "col-6 col-md-2" ] [ distanceField .expectedDistance ExpectedDistanceManualField isExpectedDistanceFieldInvalid editDetails ]
+            , div [ class "col-5 col-md-3 offset-1" ] [ text "Actual distance" ]
+            , div [ class "col-6 col-md-2" ] [ distanceField .actualDistance ActualDistanceField isActualDistanceFieldInvalid editDetails ]
             ]
         , validationErrorRow editDetails.validationError
         ]
@@ -285,6 +286,6 @@ timerOperationsButtons editDetails =
     processButtons ++ [ outlineButton CloseModal [] "Close" ]
 
 
-timerOperationsDialogSizer : Modal.Config Msg -> Modal.Config Msg
-timerOperationsDialogSizer =
-    Modal.large
+timerOperationsDialogSize : ModalSize
+timerOperationsDialogSize =
+    Large

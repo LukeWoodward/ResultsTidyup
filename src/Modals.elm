@@ -1,23 +1,16 @@
-module Modals exposing (showModalDialog)
+module Modals exposing (modalBackdrop, showModalDialog)
 
-import BarcodeScannerEditModal exposing (barcodeScannerDialogSizer, barcodeScannerDialogTitle, barcodeScannerEditButtons, editBarcodeScannerRowModalBody)
-import Bootstrap.Modal as Modal
-import ConfirmClearEverythingModal exposing (confirmClearEverythingDialogSizer, confirmClearEverythingModalBody, confirmClearEverythingModalButtons, confirmClearEverythingModalTitle)
-import Html exposing (Html, div, text)
+import BarcodeScannerEditModal exposing (barcodeScannerDialogSize, barcodeScannerDialogTitle, barcodeScannerEditButtons, editBarcodeScannerRowModalBody)
+import ConfirmClearEverythingModal exposing (confirmClearEverythingDialogSize, confirmClearEverythingModalBody, confirmClearEverythingModalButtons, confirmClearEverythingModalTitle)
+import Html exposing (Html, div, h5, text)
+import Html.Attributes exposing (class, classList, style, tabindex)
+import Html.Events exposing (onClick)
 import Model exposing (DialogDetails(..), Model)
 import Msg exposing (Msg(..))
-import PasteFileModal exposing (pasteFileButtons, pasteFileDialogSizer, pasteFileDialogTitle, pasteFileModalBody)
-import TimerOperationsModal exposing (timerOperationsButtons, timerOperationsDialogSizer, timerOperationsDialogTitle, timerOperationsModalBody)
-import TokenOperationsModal exposing (tokenOperationsButtons, tokenOperationsDialogSizer, tokenOperationsDialogTitle, tokenOperationsModalBody)
-
-
-dialogVisibility : DialogDetails -> Modal.Visibility
-dialogVisibility dialogDetails =
-    if dialogDetails == NoDialog then
-        Modal.hidden
-
-    else
-        Modal.shown
+import PasteFileModal exposing (pasteFileButtons, pasteFileDialogSize, pasteFileDialogTitle, pasteFileModalBody)
+import TimerOperationsModal exposing (timerOperationsButtons, timerOperationsDialogSize, timerOperationsDialogTitle, timerOperationsModalBody)
+import TokenOperationsModal exposing (tokenOperationsButtons, tokenOperationsDialogSize, tokenOperationsDialogTitle, tokenOperationsModalBody)
+import ViewCommon exposing (ModalSize(..), role)
 
 
 dialogTitle : DialogDetails -> String
@@ -88,30 +81,75 @@ showModalDialog model =
                 NoDialog ->
                     []
 
-        sizer : Modal.Config Msg -> Modal.Config Msg
-        sizer =
+        size : ModalSize
+        size =
             case model.dialogDetails of
                 BarcodeScannerRowEditDialog _ ->
-                    barcodeScannerDialogSizer
+                    barcodeScannerDialogSize
 
                 TokenOperationsDialog _ ->
-                    tokenOperationsDialogSizer
+                    tokenOperationsDialogSize
 
                 TimerOperationsDialog _ ->
-                    timerOperationsDialogSizer
+                    timerOperationsDialogSize
 
                 PasteFileDialog _ ->
-                    pasteFileDialogSizer
+                    pasteFileDialogSize
 
                 ConfirmClearEverythingDialog ->
-                    confirmClearEverythingDialogSizer
+                    confirmClearEverythingDialogSize
 
                 NoDialog ->
-                    identity
+                    Standard
+
+        visible : Bool
+        visible =
+            model.dialogDetails /= NoDialog
+
+        extraStyle : Html.Attribute Msg
+        extraStyle =
+            if visible then
+                style "pointer-events" "none"
+
+            else
+                style "height" "0px"
+
+        modalClassAttribute : Html.Attribute Msg
+        modalClassAttribute =
+            classList [ ( "modal-lg", size == Large ) ]
     in
-    Modal.config CloseModal
-        |> Modal.h5 [] [ text (dialogTitle model.dialogDetails) ]
-        |> Modal.body [] [ dialogBody model.dialogDetails ]
-        |> Modal.footer [] buttons
-        |> sizer
-        |> Modal.view (dialogVisibility model.dialogDetails)
+    div
+        [ tabindex -1
+        , style "display" "block"
+        , extraStyle
+        , class "modal"
+        , role "dialog"
+        , classList [ ( "show", visible ) ]
+        ]
+        [ div
+            [ class "modal-dialog"
+            , style "pointer-events" "auto"
+            , modalClassAttribute
+            ]
+            [ div
+                [ class "modal-content" ]
+                [ div [ class "modal-header" ] [ h5 [] [ text (dialogTitle model.dialogDetails) ] ]
+                , div [ class "modal-body" ] [ dialogBody model.dialogDetails ]
+                , div [ class "modal-footer" ] buttons
+                ]
+            ]
+        ]
+
+
+modalBackdrop : DialogDetails -> Html Msg
+modalBackdrop dialogDetails =
+    let
+        visible : Bool
+        visible =
+            dialogDetails /= NoDialog
+    in
+    div
+        [ classList [ ( "modal-backdrop", visible ), ( "show", visible ) ]
+        , onClick CloseModal
+        ]
+        []

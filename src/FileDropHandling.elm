@@ -88,15 +88,25 @@ handleBarcodeScannerFileAdded addedFile model =
         }
 
     else
-        let
-            result : Result Error BarcodeScannerData
-            result =
-                readBarcodeScannerData addedFile
-        in
-        case result of
+        case readBarcodeScannerData addedFile of
             Ok scannerData ->
+                let
+                    mergedScannerData : BarcodeScannerData
+                    mergedScannerData =
+                        mergeScannerData model.barcodeScannerData scannerData
+
+                    newBarcodeScannerTab : Maybe String
+                    newBarcodeScannerTab =
+                        if model.barcodeScannerTab == Nothing then
+                            List.head mergedScannerData.files
+                                |> Maybe.map .filename
+
+                        else
+                            model.barcodeScannerTab
+                in
                 { model
-                    | barcodeScannerData = mergeScannerData model.barcodeScannerData scannerData
+                    | barcodeScannerData = mergedScannerData
+                    , barcodeScannerTab = newBarcodeScannerTab
                 }
 
             Err error ->

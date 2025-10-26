@@ -9,7 +9,6 @@ import BarcodeScanner
         , DeletionReason(..)
         , DeletionStatus(..)
         , LineContents(..)
-        , MisScannedItem
         , allTokensUsed
         , deleteBarcodeScannerLine
         , empty
@@ -50,7 +49,6 @@ createBarcodeScannerData athleteToPositionsDict athleteBarcodesOnly =
         []
         athletesToPosition
         (List.map wrapAthlete athleteBarcodesOnly)
-        []
         []
         Nothing
 
@@ -139,7 +137,6 @@ suite =
                                     Dict.empty
                                     [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]
                                     []
-                                    []
                                     (toPosix "2018-03-14T09:47:03.000Z")
                                 )
                             )
@@ -158,7 +155,6 @@ suite =
                                     Dict.empty
                                     [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ]
                                     []
-                                    []
                                     (toPosix "2018-03-14T09:47:03.000Z")
                                 )
                             )
@@ -175,7 +171,6 @@ suite =
                                         Nothing
                                     ]
                                     Dict.empty
-                                    []
                                     []
                                     []
                                     Nothing
@@ -196,27 +191,7 @@ suite =
                                     Dict.empty
                                     []
                                     []
-                                    []
                                     Nothing
-                                )
-                            )
-            , test "readBarcodeScannerData of a valid single-line string with mis-scanned item only is valid" <|
-                \() ->
-                    readBarcodeScannerData (AddedFile "barcodes4.txt" "Name4" "&d084,14/03/2018 09:47:03")
-                        |> Expect.equal
-                            (Ok
-                                (BarcodeScannerData
-                                    [ BarcodeScannerFile
-                                        "barcodes4.txt"
-                                        "Name4"
-                                        [ BarcodeScannerFileLine 1 (MisScan "&d084") "14/03/2018 09:47:03" NotDeleted ]
-                                        (toPosix "2018-03-14T09:47:03.000Z")
-                                    ]
-                                    Dict.empty
-                                    []
-                                    [ MisScannedItem "&d084" "14/03/2018 09:47:03" ]
-                                    []
-                                    (toPosix "2018-03-14T09:47:03.000Z")
                                 )
                             )
             , test "readBarcodeScannerData of a valid single-line string with athlete and finish token and blank lines is valid" <|
@@ -242,7 +217,6 @@ suite =
                                         , AthleteAndTimePair "A1866207" "14/03/2018 09:48:44"
                                         ]
                                     )
-                                    []
                                     []
                                     []
                                     (toPosix "2018-03-14T09:48:44.000Z")
@@ -309,10 +283,6 @@ suite =
                 \() ->
                     generateDownloadText (BarcodeScannerFile "barcodes.txt" "Name" [ ordinaryFileLine 1 "" (Just 47) "19/09/2018 09:40:09" ] Nothing)
                         |> Expect.equal (",P0047,19/09/2018 09:40:09" ++ crlf)
-            , test "generateDownloadText returns a string for a single mis-scanned item" <|
-                \() ->
-                    generateDownloadText (BarcodeScannerFile "barcodes.txt" "Name" [ BarcodeScannerFileLine 1 (MisScan "&d084") "04/07/2018 09:42:22" NotDeleted ] Nothing)
-                        |> Expect.equal ("&d084,04/07/2018 09:42:22" ++ crlf)
             , test "generateDownloadText returns an empty string for a deleted record" <|
                 \() ->
                     generateDownloadText (BarcodeScannerFile "barcodes.txt" "Name" [ BarcodeScannerFileLine 1 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted DeletedByUser) ] Nothing)
@@ -326,7 +296,6 @@ suite =
                             [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03"
                             , ordinaryFileLine 2 "A123456" Nothing "19/09/2018 09:33:37"
                             , ordinaryFileLine 3 "" (Just 47) "19/09/2018 09:40:09"
-                            , BarcodeScannerFileLine 4 (MisScan "&d084") "04/07/2018 09:42:22" NotDeleted
                             , BarcodeScannerFileLine 5 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted DeletedByUser)
                             ]
                             Nothing
@@ -337,8 +306,6 @@ suite =
                                 ++ "A123456,,19/09/2018 09:33:37"
                                 ++ crlf
                                 ++ ",P0047,19/09/2018 09:40:09"
-                                ++ crlf
-                                ++ "&d084,04/07/2018 09:42:22"
                                 ++ crlf
                             )
             ]
@@ -365,15 +332,12 @@ suite =
                         , BarcodeScannerFile
                             "barcodes2.txt"
                             "Name2"
-                            [ BarcodeScannerFileLine 4 (MisScan "&d084") "04/07/2018 09:42:22" NotDeleted
-                            , BarcodeScannerFileLine 5 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted DeletedByUser)
+                            [ BarcodeScannerFileLine 5 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted DeletedByUser)
                             ]
                             Nothing
                         ]
                         |> Expect.equal
                             ("A123456,P0047,14/03/2018 09:47:03"
-                                ++ crlf
-                                ++ "&d084,04/07/2018 09:42:22"
                                 ++ crlf
                                 ++ "A123456,,19/09/2018 09:33:37"
                                 ++ crlf

@@ -8,7 +8,6 @@ import Timer exposing (WhichTimer)
 type ElementToFocus
     = NumberCheckerManualEntryRowFirstCell
     | BarcodeScannerEditingAthleteInput
-    | BarcodeScannerEditingAthleteRadioButton
     | PasteFileDialogTextArea
 
 

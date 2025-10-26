@@ -11,7 +11,7 @@ import BarcodeScanner
         , empty
         , regenerate
         )
-import BarcodeScannerEditing exposing (BarcodeScannerFieldBeingEdited(..), BarcodeScannerRowEditDetails, BarcodeScannerRowEditLocation)
+import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, BarcodeScannerRowEditLocation)
 import BarcodeScannerTests exposing (createBarcodeScannerData)
 import Commands exposing (Command(..), ElementToFocus(..))
 import DataEntry exposing (IntegerEntry, emptyEntry)
@@ -250,7 +250,6 @@ makeBarcodeScannerRowEditDetails location athlete finishPosition =
         (Ordinary "" Nothing)
         (IntegerEntry "" athlete)
         (IntegerEntry "" finishPosition)
-        Both
         Nothing
         False
 
@@ -424,7 +423,6 @@ suite =
                         , problems =
                             { noProblems
                                 | athletesWithAndWithoutPosition = [ AthleteWithAndWithoutPositionProblem "A123" 2 5 ]
-                                , misScans = [ "something" ]
                             }
                         , ignoredProblems =
                             { noIgnoredProblems | ignoreTimerTimeOffsets = True }

@@ -46,9 +46,6 @@ deleteUnassociatedAthlete athlete line =
         Ordinary _ _ ->
             line
 
-        BarcodeScanner.MisScan _ ->
-            line
-
 
 
 -- The following functions are used to delete duplicate scans (i.e. two identical
@@ -70,9 +67,6 @@ deleteDuplicateScansWithinLine athlete position line found =
 
             else
                 ( line, found )
-
-        BarcodeScanner.MisScan _ ->
-            ( line, found )
 
 
 deleteDuplicateScansWithinFile : String -> Int -> BarcodeScannerFile -> Bool -> ( BarcodeScannerFile, Bool )

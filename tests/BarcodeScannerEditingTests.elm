@@ -4,7 +4,6 @@ import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, LineCont
 import BarcodeScannerEditing
     exposing
         ( BarcodeScannerEditDetails(..)
-        , BarcodeScannerFieldBeingEdited(..)
         , BarcodeScannerRowEditDetails
         , BarcodeScannerRowEditLocation
         , BarcodeScannerValidationError(..)
@@ -29,7 +28,6 @@ initialDetails =
         (Ordinary "A229804" (Just 22))
         (IntegerEntry "A229804" (Just 229804))
         (IntegerEntry "22" (Just 22))
-        Both
         Nothing
         False
 
@@ -63,20 +61,6 @@ suite =
                                 (Ordinary "A182095" (Just 47))
                                 (IntegerEntry "A182095" (Just 182095))
                                 (IntegerEntry "47" (Just 47))
-                                Both
-                                Nothing
-                                False
-                            )
-            , test "Can start editing with a mis-scanned item" <|
-                \() ->
-                    startEditing (BarcodeScannerRowEditLocation "file.txt" 51) (MisScan "d&084") False
-                        |> Expect.equal
-                            (BarcodeScannerRowEditDetails
-                                (BarcodeScannerRowEditLocation "file.txt" 51)
-                                (MisScan "d&084")
-                                (IntegerEntry "" Nothing)
-                                (IntegerEntry "" Nothing)
-                                Neither
                                 Nothing
                                 False
                             )
@@ -86,87 +70,9 @@ suite =
                 \() ->
                     elementToFocusWhenOpening (Ordinary "A4580442" (Just 47))
                         |> Expect.equal BarcodeScannerEditingAthleteInput
-            , test "Focuses radio button when opening to edit a mis-scanned item" <|
-                \() ->
-                    elementToFocusWhenOpening (MisScan "&d084")
-                        |> Expect.equal BarcodeScannerEditingAthleteRadioButton
             ]
         , describe "updateEditDetails tests"
-            [ describe "ChangeWhatsBeingEdited tests"
-                [ test "Attempting to change what's being edited when both selected has no effect" <|
-                    \() ->
-                        let
-                            fields : List BarcodeScannerFieldBeingEdited
-                            fields =
-                                [ Neither, AthleteOnly, FinishPositionOnly, Both ]
-                        in
-                        fields
-                            |> List.map (\field -> updateEditDetails (ChangeWhatsBeingEdited field) initialDetails)
-                            |> Expect.equal (List.repeat 4 initialDetails)
-                , test "Can change whats being edited to a single field" <|
-                    \() ->
-                        let
-                            fields : List ( BarcodeScannerFieldBeingEdited, BarcodeScannerFieldBeingEdited )
-                            fields =
-                                [ ( Neither, AthleteOnly )
-                                , ( AthleteOnly, AthleteOnly )
-                                , ( FinishPositionOnly, AthleteOnly )
-                                , ( Neither, FinishPositionOnly )
-                                , ( AthleteOnly, FinishPositionOnly )
-                                , ( FinishPositionOnly, FinishPositionOnly )
-                                ]
-
-                            actualValues : List BarcodeScannerRowEditDetails
-                            actualValues =
-                                List.map
-                                    (\( oldField, newField ) ->
-                                        { initialDetails | fieldBeingEdited = oldField }
-                                            |> updateEditDetails (ChangeWhatsBeingEdited newField)
-                                    )
-                                    fields
-
-                            expectedValues : List BarcodeScannerRowEditDetails
-                            expectedValues =
-                                List.map
-                                    (\( _, newField ) ->
-                                        { initialDetails | fieldBeingEdited = newField }
-                                    )
-                                    fields
-                        in
-                        Expect.equal expectedValues actualValues
-                , test "Cannot change whats being edited to Neither or Both" <|
-                    \() ->
-                        let
-                            fields : List ( BarcodeScannerFieldBeingEdited, BarcodeScannerFieldBeingEdited )
-                            fields =
-                                [ ( Neither, Neither )
-                                , ( AthleteOnly, Neither )
-                                , ( FinishPositionOnly, Neither )
-                                , ( Neither, Both )
-                                , ( AthleteOnly, Both )
-                                , ( FinishPositionOnly, Both )
-                                ]
-
-                            actualValues : List BarcodeScannerRowEditDetails
-                            actualValues =
-                                List.map
-                                    (\( oldField, newField ) ->
-                                        { initialDetails | fieldBeingEdited = oldField }
-                                            |> updateEditDetails (ChangeWhatsBeingEdited newField)
-                                    )
-                                    fields
-
-                            expectedValues : List BarcodeScannerRowEditDetails
-                            expectedValues =
-                                List.map
-                                    (\( oldField, _ ) ->
-                                        { initialDetails | fieldBeingEdited = oldField }
-                                    )
-                                    fields
-                        in
-                        Expect.equal expectedValues actualValues
-                ]
-            , describe "AthleteChanged tests"
+            [ describe "AthleteChanged tests"
                 [ test "Can change an athlete to a valid value" <|
                     \() ->
                         updateEditDetails (AthleteChanged "A769422") initialDetails
@@ -192,43 +98,26 @@ suite =
                 ]
             ]
         , describe "validate tests"
-            [ test "Returns validation error for neither selected" <|
-                \() ->
-                    runValidationTest (Just NeitherSelected) { initialDetails | fieldBeingEdited = Neither }
-            , test "Returns no validation error for athlete selected and valid entry" <|
-                \() ->
-                    runValidationTest Nothing { initialDetails | fieldBeingEdited = AthleteOnly, athleteEntered = validIntegerEntry }
-            , test "Returns validation error for athlete selected and invalid entry" <|
-                \() ->
-                    runValidationTest (Just InvalidAthleteNumber) { initialDetails | fieldBeingEdited = AthleteOnly, athleteEntered = invalidIntegerEntry }
-            , test "Returns no validation error for finish position selected and valid entry" <|
-                \() ->
-                    runValidationTest Nothing { initialDetails | fieldBeingEdited = FinishPositionOnly, finishPositionEntered = validIntegerEntry }
-            , test "Returns validation error for finish position selected and invalid entry" <|
-                \() ->
-                    runValidationTest
-                        (Just InvalidFinishPosition)
-                        { initialDetails | fieldBeingEdited = FinishPositionOnly, finishPositionEntered = invalidIntegerEntry }
-            , test "Returns no validation error for both selected and both valid entries" <|
+            [ test "Returns no validation error for both valid entries" <|
                 \() ->
                     runValidationTest
                         Nothing
-                        { initialDetails | fieldBeingEdited = Both, athleteEntered = validIntegerEntry, finishPositionEntered = validIntegerEntry }
-            , test "Returns validation error for both selected, invalid athlete and valid finish position" <|
+                        { initialDetails | athleteEntered = validIntegerEntry, finishPositionEntered = validIntegerEntry }
+            , test "Returns validation error for invalid athlete and valid finish position" <|
                 \() ->
                     runValidationTest
                         (Just InvalidAthleteNumber)
-                        { initialDetails | fieldBeingEdited = Both, athleteEntered = invalidIntegerEntry, finishPositionEntered = validIntegerEntry }
-            , test "Returns validation error for both selected, valid athlete and invalid finish position" <|
+                        { initialDetails | athleteEntered = invalidIntegerEntry, finishPositionEntered = validIntegerEntry }
+            , test "Returns validation error for valid athlete and invalid finish position" <|
                 \() ->
                     runValidationTest
                         (Just InvalidFinishPosition)
-                        { initialDetails | fieldBeingEdited = Both, athleteEntered = validIntegerEntry, finishPositionEntered = invalidIntegerEntry }
-            , test "Returns validation error for both selected and both invalid entries" <|
+                        { initialDetails | athleteEntered = validIntegerEntry, finishPositionEntered = invalidIntegerEntry }
+            , test "Returns validation error for both invalid entries" <|
                 \() ->
                     runValidationTest
                         (Just InvalidAthleteNumberAndFinishPosition)
-                        { initialDetails | fieldBeingEdited = Both, athleteEntered = invalidIntegerEntry, finishPositionEntered = invalidIntegerEntry }
+                        { initialDetails | athleteEntered = invalidIntegerEntry, finishPositionEntered = invalidIntegerEntry }
             ]
         , describe "isValidAthlete tests"
             [ test "Athlete not valid if validation error for the athlete" <|
@@ -243,10 +132,6 @@ suite =
                 \() ->
                     isValidAthlete { initialDetails | validationError = Just InvalidAthleteNumberAndFinishPosition }
                         |> Expect.equal False
-            , test "Athlete valid if validation error for neither selected" <|
-                \() ->
-                    isValidAthlete { initialDetails | validationError = Just NeitherSelected }
-                        |> Expect.equal True
             , test "Athlete valid if no validation error" <|
                 \() ->
                     isValidAthlete initialDetails
@@ -265,10 +150,6 @@ suite =
                 \() ->
                     isValidFinishPosition { initialDetails | validationError = Just InvalidAthleteNumberAndFinishPosition }
                         |> Expect.equal False
-            , test "Finish position valid if validation error for neither selected" <|
-                \() ->
-                    isValidFinishPosition { initialDetails | validationError = Just NeitherSelected }
-                        |> Expect.equal True
             , test "Finish position valid if no validation error" <|
                 \() ->
                     isValidFinishPosition initialDetails
@@ -309,7 +190,6 @@ suite =
                                 (Ordinary "A4580442" (Just 47))
                                 (IntegerEntry "A2022807" (Just 2022807))
                                 (IntegerEntry "37" (Just 37))
-                                Both
                                 Nothing
                                 False
                     in
@@ -317,7 +197,7 @@ suite =
                         |> Expect.equal (Ok expectedBarcodeScannerData)
             , test "Updating barcode scanner line when unsuccessful returns validation error" <|
                 \() ->
-                    tryUpdateBarcodeScannerLine { initialDetails | fieldBeingEdited = Neither } BarcodeScanner.empty
-                        |> Expect.equal (Err NeitherSelected)
+                    tryUpdateBarcodeScannerLine { initialDetails | athleteEntered = invalidIntegerEntry } BarcodeScanner.empty
+                        |> Expect.equal (Err InvalidAthleteNumber)
             ]
         ]

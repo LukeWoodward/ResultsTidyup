@@ -146,19 +146,19 @@ suite =
                 [ test "Can upload a single barcode scanner file" <|
                     \() ->
                         handleFilesAdded [ AddedFile "barcodes1.txt" "Name1" validBarcodeScannerData1 ] initModel
-                            |> Expect.equal { initModel | barcodeScannerData = parsedBarcodeScannerData1 }
+                            |> Expect.equal { initModel | barcodeScannerData = parsedBarcodeScannerData1, barcodeScannerTab = Just "barcodes1.txt" }
                 , test "Can upload a single barcode scanner file with position token without leading zeroes" <|
                     \() ->
                         handleFilesAdded [ AddedFile "barcodes1.txt" "Name1" (String.replace "P0047" "P47" validBarcodeScannerData1) ] initModel
-                            |> Expect.equal { initModel | barcodeScannerData = parsedBarcodeScannerData1 }
+                            |> Expect.equal { initModel | barcodeScannerData = parsedBarcodeScannerData1, barcodeScannerTab = Just "barcodes1.txt" }
                 , test "Can upload a single barcode scanner file where the first line in the file is incomplete" <|
                     \() ->
                         handleFilesAdded [ AddedFile "barcodes1.txt" "Name1" validBarcodeScannerDataWithIncompleteRecordFirst ] initModel
-                            |> Expect.equal { initModel | barcodeScannerData = parsedBarcodeScannerDataWithIncompleteRecordFirst }
+                            |> Expect.equal { initModel | barcodeScannerData = parsedBarcodeScannerDataWithIncompleteRecordFirst, barcodeScannerTab = Just "barcodes1.txt" }
                 , test "Can upload a single invalid barcode scanner file" <|
                     \() ->
                         handleFilesAdded [ AddedFile "invalid.txt" "Invalid" invalidBarcodeScannerData ] initModel
-                            |> Expect.equal { initModel | barcodeScannerData = parsedInvalidBarcodeScannerData }
+                            |> Expect.equal { initModel | barcodeScannerData = parsedInvalidBarcodeScannerData, barcodeScannerTab = Just "invalid.txt" }
                 , test "Cannot upload the same barcode scanner file twice" <|
                     \() ->
                         let
@@ -174,7 +174,7 @@ suite =
                             , AddedFile "barcodes2.txt" "Name2" validBarcodeScannerData2
                             ]
                             initModel
-                            |> Expect.equal { initModel | barcodeScannerData = parsedBarcodeScannerData1And2 }
+                            |> Expect.equal { initModel | barcodeScannerData = parsedBarcodeScannerData1And2, barcodeScannerTab = Just "barcodes1.txt" }
                 , test "Cannot upload an invalid barcode scanner file" <|
                     \() ->
                         runTestWithSingleError

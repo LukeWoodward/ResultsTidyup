@@ -1,6 +1,5 @@
 module ProblemsView exposing (scannerProblemsView, timerProblemsView)
 
-import Bootstrap.Alert as Alert
 import Html exposing (Html, div, li, span, text, ul)
 import Html.Attributes exposing (class)
 import Msg exposing (Msg)
@@ -18,17 +17,17 @@ import Problems
         )
 import TimeHandling exposing (formatTime)
 import Timer exposing (WhichTimer(..))
-import ViewCommon exposing (athleteLink, normalButton, smallButton)
+import ViewCommon exposing (athleteLink, normalButton, role, smallButton)
 
 
 warningAlert : List (Html Msg) -> Html Msg
 warningAlert contents =
-    Alert.simpleWarning [ class "warning-condensed" ] contents
+    div [ class "alert alert-warning warning-condensed", role "alert" ] contents
 
 
 dangerAlert : List (Html Msg) -> Html Msg
 dangerAlert contents =
-    Alert.simpleDanger [ class "warning-condensed" ] contents
+    div [ class "alert alert-danger warning-condensed", role "alert" ] contents
 
 
 generateButton : ProblemFix -> String -> Html Msg
@@ -273,25 +272,6 @@ hideIfEmpty viewer list =
         Just (viewer list)
 
 
-misScannedItemsView : List String -> Html Msg
-misScannedItemsView misScans =
-    let
-        generateRow : String -> Html Msg
-        generateRow misScanText =
-            li [] [ text misScanText ]
-    in
-    case misScans of
-        [ singleMisScan ] ->
-            dangerAlert
-                [ text ("An unrecognised item  '" ++ singleMisScan ++ "' was scanned.") ]
-
-        _ ->
-            dangerAlert
-                [ text "The following unrecognised items were scanned:"
-                , ul [] (List.map generateRow misScans)
-                ]
-
-
 unrecognisedBarcodeScannerLinesView : List String -> Html Msg
 unrecognisedBarcodeScannerLinesView unrecognisedBarcodeScannerLines =
     let
@@ -384,7 +364,6 @@ scannerProblemsView problems =
             , Maybe.map positionOffEndOfTimesView problems.positionOffEndOfTimes
             , hideIfEmpty athletesMissingPositionView problems.athletesMissingPosition
             , hideIfEmpty misScannedAthleteBarcodesView problems.misScannedAthleteBarcodes
-            , hideIfEmpty misScannedItemsView problems.misScans
             , hideIfEmpty unrecognisedBarcodeScannerLinesView problems.unrecognisedBarcodeScannerLines
             ]
     in

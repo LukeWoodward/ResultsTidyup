@@ -1,102 +1,96 @@
 module ViewCommon exposing
-    ( athleteLink
+    ( ModalSize(..)
+    , athleteLink
     , dangerButton
-    , iconButton
+    , dangerIconButton
     , intCell
     , normalButton
+    , normalIconButton
     , outlineButton
     , plainCell
+    , role
     , smallButton
     , tableHeader
     , tableHeaderWithClass
     , tableHeaders
     )
 
-import Bootstrap.Button as Button
-import Bootstrap.Table as Table
-import Html exposing (Html, a, text)
-import Html.Attributes exposing (class, href, rel, target, title)
+import Html exposing (Html, a, button, td, text, th, thead)
+import Html.Attributes exposing (attribute, class, href, rel, target, title)
+import Html.Events exposing (onClick)
 import Msg exposing (Msg)
+
+
+role : String -> Html.Attribute a
+role =
+    attribute "role"
 
 
 urlResultsPrefix : String
 urlResultsPrefix =
-    "http://www.parkrun.org.uk/parkrunner/"
+    "https://www.parkrun.org.uk/parkrunner/"
 
 
-plainCell : String -> Table.Cell a
+plainCell : String -> Html a
 plainCell contents =
-    Table.td [] [ text contents ]
+    td [] [ text contents ]
 
 
-intCell : Int -> Table.Cell a
+intCell : Int -> Html a
 intCell contents =
     plainCell (String.fromInt contents)
 
 
-tableHeader : String -> Table.Cell a
+tableHeader : String -> Html a
 tableHeader headerText =
-    Table.th [] [ text headerText ]
+    th [] [ text headerText ]
 
 
-tableHeaderWithClass : String -> String -> Table.Cell a
+tableHeaderWithClass : String -> String -> Html a
 tableHeaderWithClass headerText className =
-    Table.th [ Table.cellAttr (class className) ] [ text headerText ]
+    th [ class className ] [ text headerText ]
 
 
-tableHeaders : List String -> Table.THead a
+tableHeaders : List String -> Html a
 tableHeaders headerTexts =
-    Table.simpleThead (List.map tableHeader headerTexts)
+    thead [] (List.map tableHeader headerTexts)
+
+
+buttonWithClass : String -> Msg -> List (Html.Attribute Msg) -> Html Msg -> Html Msg
+buttonWithClass className msg attributes contents =
+    button
+        (class ("btn " ++ className) :: onClick msg :: attributes)
+        [ contents ]
 
 
 normalButton : Msg -> List (Html.Attribute Msg) -> String -> Html Msg
 normalButton msg attributes contents =
-    Button.button
-        [ Button.primary
-        , Button.attrs attributes
-        , Button.onClick msg
-        ]
-        [ text contents ]
+    buttonWithClass "btn-primary" msg attributes (text contents)
 
 
 dangerButton : Msg -> List (Html.Attribute Msg) -> String -> Html Msg
 dangerButton msg attributes contents =
-    Button.button
-        [ Button.danger
-        , Button.attrs attributes
-        , Button.onClick msg
-        ]
-        [ text contents ]
+    buttonWithClass "btn-danger" msg attributes (text contents)
 
 
 outlineButton : Msg -> List (Html.Attribute Msg) -> String -> Html Msg
 outlineButton msg attributes contents =
-    Button.button
-        [ Button.outlinePrimary
-        , Button.attrs attributes
-        , Button.onClick msg
-        ]
-        [ text contents ]
+    buttonWithClass "btn-outline-primary" msg attributes (text contents)
 
 
 smallButton : Msg -> List (Html.Attribute Msg) -> String -> Html Msg
 smallButton msg attributes contents =
-    Button.button
-        [ Button.primary
-        , Button.attrs (class "btn-xs" :: attributes)
-        , Button.onClick msg
-        ]
-        [ text contents ]
+    buttonWithClass "btn-primary btn-xs" msg attributes (text contents)
 
 
-iconButton : Msg -> Button.Option Msg -> Html Msg -> String -> Html Msg
-iconButton msg option icon iconTooltip =
-    Button.button
-        [ option
-        , Button.attrs [ title iconTooltip ]
-        , Button.onClick msg
-        ]
-        [ icon ]
+normalIconButton : Msg -> Html Msg -> String -> Html Msg
+normalIconButton msg icon iconTooltip =
+    buttonWithClass "btn-primary" msg [ title iconTooltip ] icon
+
+
+dangerIconButton : Msg -> Html Msg -> String -> Html Msg
+dangerIconButton msg icon iconTooltip =
+    buttonWithClass "btn-danger" msg [ title iconTooltip ] icon
 
 
 {-| Returns an HTML link that links to the athlete's full result history.
@@ -110,3 +104,8 @@ athleteLink athleteId =
         , target "_blank"
         ]
         [ text athleteId ]
+
+
+type ModalSize
+    = Standard
+    | Large

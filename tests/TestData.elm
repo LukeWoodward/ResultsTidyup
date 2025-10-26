@@ -11,7 +11,6 @@ module TestData exposing
     , flippedDoubleTimers
     , invalidBarcodeScannerData
     , invalidNumberCheckerData
-    , misScanFileLine
     , ordinaryFileLine
     , parsedBarcodeScannerData1
     , parsedBarcodeScannerData1And2
@@ -120,11 +119,6 @@ defaultMatchSummary =
 ordinaryFileLine : Int -> String -> Maybe Int -> String -> BarcodeScannerFileLine
 ordinaryFileLine lineNumber athlete finishToken scanTime =
     BarcodeScannerFileLine lineNumber (Ordinary athlete finishToken) scanTime NotDeleted
-
-
-misScanFileLine : Int -> String -> String -> BarcodeScannerFileLine
-misScanFileLine lineNumber misScannedText scanTime =
-    BarcodeScannerFileLine lineNumber (MisScan misScannedText) scanTime NotDeleted
 
 
 toPosix : String -> Maybe Posix
@@ -264,7 +258,6 @@ parsedBarcodeScannerData1 =
         (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
         []
         []
-        []
         defaultDateTime
 
 
@@ -289,7 +282,6 @@ parsedBarcodeScannerData1And2 =
         )
         []
         []
-        []
         (toPosix "2018-03-14T09:49:44.000Z")
 
 
@@ -307,7 +299,6 @@ parsedBarcodeScannerDataWithIncompleteRecordFirst =
         (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
         [ AthleteAndTimePair "A2044293" "14/03/2018 09:44:06" ]
         []
-        []
         defaultDateTime
 
 
@@ -316,7 +307,6 @@ parsedInvalidBarcodeScannerData =
     BarcodeScannerData
         [ BarcodeScannerFile "invalid.txt" "Invalid" [] Nothing ]
         Dict.empty
-        []
         []
         [ { errorCode = "INVALID_POSITION_ZERO"
           , errorMessage = "Invalid position record 'P0000' found in barcode scanner file"
@@ -544,5 +534,5 @@ createNumberCheckerManualEntryRow timer1 timer2 finishTokens =
 
 createBarcodeScannerDataFromFiles : List BarcodeScannerFile -> BarcodeScannerData
 createBarcodeScannerDataFromFiles files =
-    BarcodeScannerData files Dict.empty [] [] [] Nothing
+    BarcodeScannerData files Dict.empty [] [] Nothing
         |> regenerate

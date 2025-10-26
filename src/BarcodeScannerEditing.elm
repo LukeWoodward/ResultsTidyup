@@ -1,6 +1,5 @@
 module BarcodeScannerEditing exposing
     ( BarcodeScannerEditDetails(..)
-    , BarcodeScannerFieldBeingEdited(..)
     , BarcodeScannerRowEditDetails
     , BarcodeScannerRowEditLocation
     , BarcodeScannerValidationError(..)
@@ -18,7 +17,6 @@ import Commands exposing (ElementToFocus(..))
 import DataEntry
     exposing
         ( IntegerEntry
-        , emptyEntry
         , integerEntryFromAthleteNumber
         , integerEntryFromMaybeInt
         , integerEntryFromString
@@ -32,18 +30,10 @@ type alias BarcodeScannerRowEditLocation =
     }
 
 
-type BarcodeScannerFieldBeingEdited
-    = Neither
-    | AthleteOnly
-    | FinishPositionOnly
-    | Both
-
-
 type BarcodeScannerValidationError
     = InvalidAthleteNumber
     | InvalidFinishPosition
     | InvalidAthleteNumberAndFinishPosition
-    | NeitherSelected
 
 
 type alias BarcodeScannerRowEditDetails =
@@ -51,15 +41,13 @@ type alias BarcodeScannerRowEditDetails =
     , currentContents : LineContents
     , athleteEntered : IntegerEntry
     , finishPositionEntered : IntegerEntry
-    , fieldBeingEdited : BarcodeScannerFieldBeingEdited
     , validationError : Maybe BarcodeScannerValidationError
     , isDeleted : Bool
     }
 
 
 type BarcodeScannerEditDetails
-    = ChangeWhatsBeingEdited BarcodeScannerFieldBeingEdited
-    | AthleteChanged String
+    = AthleteChanged String
     | FinishPositionChanged String
 
 
@@ -67,10 +55,7 @@ startEditing : BarcodeScannerRowEditLocation -> LineContents -> Bool -> BarcodeS
 startEditing location contents isDeleted =
     case contents of
         Ordinary athlete finishPosition ->
-            BarcodeScannerRowEditDetails location contents (integerEntryFromAthleteNumber athlete) (integerEntryFromMaybeInt finishPosition) Both Nothing isDeleted
-
-        MisScan _ ->
-            BarcodeScannerRowEditDetails location contents emptyEntry emptyEntry Neither Nothing isDeleted
+            BarcodeScannerRowEditDetails location contents (integerEntryFromAthleteNumber athlete) (integerEntryFromMaybeInt finishPosition) Nothing isDeleted
 
 
 elementToFocusWhenOpening : LineContents -> ElementToFocus
@@ -79,9 +64,6 @@ elementToFocusWhenOpening contents =
         Ordinary _ _ ->
             BarcodeScannerEditingAthleteInput
 
-        MisScan _ ->
-            BarcodeScannerEditingAthleteRadioButton
-
 
 updateEditDetails : BarcodeScannerEditDetails -> BarcodeScannerRowEditDetails -> BarcodeScannerRowEditDetails
 updateEditDetails editDetails currentDetails =
@@ -89,24 +71,6 @@ updateEditDetails editDetails currentDetails =
         updatedDetails : BarcodeScannerRowEditDetails
         updatedDetails =
             case editDetails of
-                ChangeWhatsBeingEdited newEditedField ->
-                    if currentDetails.fieldBeingEdited == Both then
-                        currentDetails
-
-                    else
-                        case newEditedField of
-                            AthleteOnly ->
-                                { currentDetails | fieldBeingEdited = AthleteOnly }
-
-                            FinishPositionOnly ->
-                                { currentDetails | fieldBeingEdited = FinishPositionOnly }
-
-                            Both ->
-                                currentDetails
-
-                            Neither ->
-                                currentDetails
-
                 AthleteChanged newAthlete ->
                     { currentDetails | athleteEntered = integerEntryFromAthleteNumber newAthlete }
 
@@ -128,9 +92,6 @@ isValidAthlete rowEditDetails =
         Just InvalidAthleteNumberAndFinishPosition ->
             False
 
-        Just NeitherSelected ->
-            True
-
         Nothing ->
             True
 
@@ -147,46 +108,24 @@ isValidFinishPosition rowEditDetails =
         Just InvalidAthleteNumberAndFinishPosition ->
             False
 
-        Just NeitherSelected ->
-            True
-
         Nothing ->
             True
 
 
 validate : BarcodeScannerRowEditDetails -> Maybe BarcodeScannerValidationError
 validate currentDetails =
-    case currentDetails.fieldBeingEdited of
-        Neither ->
-            Just NeitherSelected
+    case ( isValidEntry currentDetails.athleteEntered, isValidEntry currentDetails.finishPositionEntered ) of
+        ( False, False ) ->
+            Just InvalidAthleteNumberAndFinishPosition
 
-        AthleteOnly ->
-            if isValidEntry currentDetails.athleteEntered then
-                Nothing
+        ( False, True ) ->
+            Just InvalidAthleteNumber
 
-            else
-                Just InvalidAthleteNumber
+        ( True, False ) ->
+            Just InvalidFinishPosition
 
-        FinishPositionOnly ->
-            if isValidEntry currentDetails.finishPositionEntered then
-                Nothing
-
-            else
-                Just InvalidFinishPosition
-
-        Both ->
-            case ( isValidEntry currentDetails.athleteEntered, isValidEntry currentDetails.finishPositionEntered ) of
-                ( False, False ) ->
-                    Just InvalidAthleteNumberAndFinishPosition
-
-                ( False, True ) ->
-                    Just InvalidAthleteNumber
-
-                ( True, False ) ->
-                    Just InvalidFinishPosition
-
-                ( True, True ) ->
-                    Nothing
+        ( True, True ) ->
+            Nothing
 
 
 tryUpdateBarcodeScannerLine : BarcodeScannerRowEditDetails -> BarcodeScannerData -> Result BarcodeScannerValidationError BarcodeScannerData

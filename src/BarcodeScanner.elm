@@ -6,7 +6,6 @@ module BarcodeScanner exposing
     , DeletionReason(..)
     , DeletionStatus(..)
     , LineContents(..)
-    , MisScannedItem
     , UnrecognisedLine
     , allTokensUsed
     , deleteBarcodeScannerLine
@@ -38,12 +37,6 @@ type alias AthleteAndTimePair =
     }
 
 
-type alias MisScannedItem =
-    { scannedText : String
-    , scanDateTime : String
-    }
-
-
 type alias UnrecognisedLine =
     { line : String
     , errorCode : String
@@ -64,7 +57,6 @@ type DeletionStatus
 
 type LineContents
     = Ordinary String (Maybe Int)
-    | MisScan String
 
 
 type alias BarcodeScannerFileLine =
@@ -87,7 +79,6 @@ type alias BarcodeScannerData =
     { files : List BarcodeScannerFile
     , scannedBarcodes : Dict Int (List AthleteAndTimePair)
     , athleteBarcodesOnly : List AthleteAndTimePair
-    , misScannedItems : List MisScannedItem
     , unrecognisedLines : List UnrecognisedLine
     , lastScanDateTime : Maybe Posix
     }
@@ -105,7 +96,7 @@ toMaybeError result =
 
 empty : BarcodeScannerData
 empty =
-    BarcodeScannerData [] Dict.empty [] [] [] Nothing
+    BarcodeScannerData [] Dict.empty [] [] Nothing
 
 
 isEmpty : BarcodeScannerData -> Bool
@@ -205,9 +196,6 @@ readLine lineNumber line =
             else
                 okDefaultFileLine lineNumber (Ordinary athlete positionNumber) time
 
-        [ misScannedText, time ] ->
-            okDefaultFileLine lineNumber (MisScan misScannedText) time
-
         _ ->
             unrecognisedLine "NOT_TWO_OR_THREE_PARTS" ("Line " ++ line ++ " does not contain the expected two or three comma-separated parts")
 
@@ -232,9 +220,6 @@ mergeEntry line barcodeData =
                         |> Just
             in
             { barcodeData | scannedBarcodes = Dict.update pos updater barcodeData.scannedBarcodes }
-
-        MisScan misScannedText ->
-            { barcodeData | misScannedItems = List.append barcodeData.misScannedItems [ MisScannedItem misScannedText line.scanDateTime ] }
 
 
 mergeEntries : List BarcodeScannerFileLine -> BarcodeScannerData
@@ -285,7 +270,6 @@ withLastScanDateTime barcodeScannerData =
                     |> List.concat
                     |> List.map .scanDateTime
                 , List.map .scanDateTime barcodeScannerData.athleteBarcodesOnly
-                , List.map .scanDateTime barcodeScannerData.misScannedItems
                 ]
 
         lastScanDateTime : Maybe Posix
@@ -310,7 +294,6 @@ mergeScannerData data1 data2 =
         (data1.files ++ data2.files)
         (mergeScannerDicts data1.scannedBarcodes data2.scannedBarcodes)
         (data1.athleteBarcodesOnly ++ data2.athleteBarcodesOnly)
-        (data1.misScannedItems ++ data2.misScannedItems)
         (data1.unrecognisedLines ++ data2.unrecognisedLines)
         (maxDate data1.lastScanDateTime data2.lastScanDateTime)
 
@@ -414,9 +397,6 @@ lineContentsToString contents =
 
         Ordinary athlete (Just position) ->
             athlete ++ "," ++ formatPosition position
-
-        MisScan text ->
-            text
 
 
 lineToString : BarcodeScannerFileLine -> String

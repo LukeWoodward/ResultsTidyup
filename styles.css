@@ -3,7 +3,7 @@ button.btn.nav-link.barcode-scanner-file-ok {
 }
 
 td.exact-match,
-tr.barcode-scanner-row-ok,
+tr.barcode-scanner-row-ok>td,
 button.btn.nav-link.active.barcode-scanner-file-ok {
     background-color: #ccffcc;
 }
@@ -13,7 +13,7 @@ button.btn.nav-link.barcode-scanner-file-warning {
 }
 
 td.near-match,
-tr.barcode-scanner-row-warning,
+tr.barcode-scanner-row-warning>td,
 button.btn.nav-link.active.barcode-scanner-file-warning {
     background-color: #ffffcc;
 }
@@ -24,7 +24,6 @@ button.btn.nav-link.barcode-scanner-file-error {
 
 td.not-near-match,
 td.mismatch,
-tr.barcode-scanner-row-error,
 button.btn.nav-link.active.barcode-scanner-file-error {
     background-color: #ffcccc;
 }
@@ -161,11 +160,6 @@ input#eventTimeBox {
 
 button.event-time-button {
     margin-left: 3px;
-}
-
-.misscanned {
-    font-weight: bold;
-    text-align: center;
 }
 
 tr.deleted-barcode-scanner-row {

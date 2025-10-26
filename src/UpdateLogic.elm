@@ -10,7 +10,6 @@ import BarcodeScanner
         , regenerate
         )
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, BarcodeScannerValidationError, tryUpdateBarcodeScannerLine)
-import Bootstrap.Tab as Tab
 import Commands exposing (Command(..), ElementToFocus(..))
 import DateHandling exposing (generateFilenameDatePart, generateNameOfPastedFile)
 import File exposing (File)
@@ -198,7 +197,7 @@ clearAllData model =
         , problems = noProblems
         , ignoredProblems = noIgnoredProblems
         , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
-        , barcodeScannerTab = Tab.initialState
+        , barcodeScannerTab = Nothing
         , dialogDetails = NoDialog
     }
 
@@ -293,10 +292,21 @@ removeBarcodeScannerFileWithName fileName model =
         barcodeScannerData : BarcodeScannerData
         barcodeScannerData =
             model.barcodeScannerData
+
+        newBarcodeScannerTab : Maybe String
+        newBarcodeScannerTab =
+            if Just fileName == model.barcodeScannerTab then
+                -- The barcode scanner file we deleted was the one selected.
+                List.head model.barcodeScannerData.files
+                    |> Maybe.map .filename
+
+            else
+                model.barcodeScannerTab
     in
     identifyProblemsIn
         { model
             | barcodeScannerData = regenerate { barcodeScannerData | files = List.filter (\file -> file.filename /= fileName) model.barcodeScannerData.files }
+            , barcodeScannerTab = newBarcodeScannerTab
         }
 
 
@@ -464,7 +474,7 @@ update msg model =
             ( { model | secondTab = newSecondTab }, NoCommand )
 
         ChangeBarcodeScannerTab newBarcodeScannerTab ->
-            ( { model | barcodeScannerTab = newBarcodeScannerTab }, NoCommand )
+            ( { model | barcodeScannerTab = Just newBarcodeScannerTab }, NoCommand )
 
         ClearErrors ->
             ( { model | lastErrors = [] }, NoCommand )

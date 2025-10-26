@@ -1,8 +1,7 @@
 module NumberCheckerView exposing (firstManualEntryCellId, numberCheckerView)
 
-import Bootstrap.Table as Table
 import DataEntry exposing (IntegerEntry)
-import Html exposing (Attribute, Html, div, h3, input, text)
+import Html exposing (Attribute, Html, div, h3, input, table, tbody, td, text, tr)
 import Html.Attributes exposing (class, colspan, disabled, id, type_, value)
 import Html.Events exposing (keyCode, on, onInput, onMouseEnter, onMouseLeave)
 import Json.Decode as Json
@@ -40,19 +39,19 @@ onEnterKeypress msg =
     on "keydown" (Json.andThen isEnter keyCode)
 
 
-actionButtonsCell : Int -> Table.Cell Msg
+actionButtonsCell : Int -> Html Msg
 actionButtonsCell entryNumber =
-    Table.td
-        [ Table.cellAttr (class "delete-button-cell") ]
+    td
+        [ class "delete-button-cell" ]
         [ smallButton (EditNumberCheckerRow entryNumber) [ class "number-checker-command" ] "Edit"
         , smallButton (DeleteNumberCheckerRow entryNumber) [ class "number-checker-command" ] "Delete"
         ]
 
 
-deltaCell : Int -> Table.Cell Msg
+deltaCell : Int -> Html Msg
 deltaCell delta =
     if delta == 0 then
-        Table.td [ Table.cellAttr (class "zero-delta") ] [ text "0" ]
+        td [ class "zero-delta" ] [ text "0" ]
 
     else
         let
@@ -64,12 +63,12 @@ deltaCell delta =
                 else
                     minus ++ String.fromInt -delta
         in
-        Table.td [ Table.cellAttr (class "nonzero-delta") ] [ text stringDelta ]
+        td [ class "nonzero-delta" ] [ text stringDelta ]
 
 
-actualEntryCell : AnnotatedNumberCheckerEntry -> Table.Cell Msg
+actualEntryCell : AnnotatedNumberCheckerEntry -> Html Msg
 actualEntryCell entry =
-    Table.td []
+    td []
         [ text (String.fromInt entry.actual)
         , text " "
         , smallButton (IncrementNumberCheckerRowActualCount entry.entryNumber) [ class "number-checker-command" ] "+"
@@ -77,11 +76,11 @@ actualEntryCell entry =
         ]
 
 
-numberCheckerRow : AnnotatedNumberCheckerEntry -> Table.Row Msg
+numberCheckerRow : AnnotatedNumberCheckerEntry -> Html Msg
 numberCheckerRow entry =
-    Table.tr
-        [ Table.rowAttr (onMouseEnter (MouseEnterNumberCheckerRow entry.entryNumber))
-        , Table.rowAttr (onMouseLeave (MouseLeaveNumberCheckerRow entry.entryNumber))
+    tr
+        [ onMouseEnter (MouseEnterNumberCheckerRow entry.entryNumber)
+        , onMouseLeave (MouseLeaveNumberCheckerRow entry.entryNumber)
         ]
         [ intCell entry.timer1
         , deltaCell entry.timer1Delta
@@ -110,10 +109,10 @@ isManualEntryAddButtonDisabled manualEntryRow =
         || (manualEntryRow.finishTokens.parsedValue == Nothing)
 
 
-enterNewRow : NumberCheckerManualEntryRow -> Table.Row Msg
+enterNewRow : NumberCheckerManualEntryRow -> Html Msg
 enterNewRow manualEntryRow =
-    Table.tr [ Table.rowAttr (class "number-checker-manual-entry-row") ]
-        [ Table.td [ Table.cellAttr (colspan 2) ]
+    tr [ class "number-checker-manual-entry-row" ]
+        [ td [ colspan 2 ]
             [ input
                 [ type_ "text"
                 , id firstManualEntryCellId
@@ -124,7 +123,7 @@ enterNewRow manualEntryRow =
                 ]
                 []
             ]
-        , Table.td [ Table.cellAttr (colspan 2) ]
+        , td [ colspan 2 ]
             [ input
                 [ type_ "text"
                 , class (manualEntryFieldClass manualEntryRow.timer2)
@@ -134,7 +133,7 @@ enterNewRow manualEntryRow =
                 ]
                 []
             ]
-        , Table.td [ Table.cellAttr (colspan 2) ]
+        , td [ colspan 2 ]
             [ input
                 [ type_ "text"
                 , class (manualEntryFieldClass manualEntryRow.finishTokens)
@@ -144,8 +143,8 @@ enterNewRow manualEntryRow =
                 ]
                 []
             ]
-        , Table.td [] []
-        , Table.td []
+        , td [] []
+        , td []
             [ smallButton
                 AddNumberCheckerRow
                 [ class "number-checker-command"
@@ -159,11 +158,11 @@ enterNewRow manualEntryRow =
 numberCheckerTable : List AnnotatedNumberCheckerEntry -> NumberCheckerManualEntryRow -> Html Msg
 numberCheckerTable entries manualEntryRow =
     let
-        emptyRows : List (Table.Row Msg)
+        emptyRows : List (Html Msg)
         emptyRows =
             if List.isEmpty entries then
-                [ Table.tr []
-                    [ Table.td [ Table.cellAttr (colspan 8) ]
+                [ tr []
+                    [ td [ colspan 8 ]
                         [ div [ class "no-number-checker-entries" ]
                             [ text "No number-checker data has been loaded." ]
                         ]
@@ -173,14 +172,12 @@ numberCheckerTable entries manualEntryRow =
             else
                 []
     in
-    Table.table
-        { options = [ Table.bordered, Table.small, Table.hover, Table.attr (class "number-checker-table") ]
-        , thead = tableHeaders [ "Timer 1", plusOrMinus, "Timer 2", plusOrMinus, "Finish tokens", plusOrMinus, "Actual", "" ]
-        , tbody =
-            Table.tbody
-                []
-                (emptyRows ++ List.map numberCheckerRow entries ++ [ enterNewRow manualEntryRow ])
-        }
+    table [ class "table table-bordered table-hover number-checker-table " ]
+        [ tableHeaders [ "Timer 1", plusOrMinus, "Timer 2", plusOrMinus, "Finish tokens", plusOrMinus, "Actual", "" ]
+        , tbody
+            []
+            (emptyRows ++ List.map numberCheckerRow entries ++ [ enterNewRow manualEntryRow ])
+        ]
 
 
 numberCheckerView : List AnnotatedNumberCheckerEntry -> NumberCheckerManualEntryRow -> Html Msg

@@ -1,14 +1,9 @@
-module TokenOperationsModal exposing (tokenOperationsButtons, tokenOperationsDialogSizer, tokenOperationsDialogTitle, tokenOperationsModalBody)
+module TokenOperationsModal exposing (tokenOperationsButtons, tokenOperationsDialogSize, tokenOperationsDialogTitle, tokenOperationsModalBody)
 
-import Bootstrap.Form.Input as Input
-import Bootstrap.Form.Radio as Radio
-import Bootstrap.Grid as Grid
-import Bootstrap.Grid.Col as Col
-import Bootstrap.Grid.Row as Row
-import Bootstrap.Modal as Modal
 import DataEntry exposing (RangeEntry, rangeToString)
-import Html exposing (Html, div, text)
-import Html.Attributes exposing (class, classList)
+import Html exposing (Html, div, input, label, text)
+import Html.Attributes exposing (checked, class, classList, disabled, for, id, type_, value)
+import Html.Events exposing (onClick, onInput)
 import Msg exposing (Msg(..))
 import TokenOperations
     exposing
@@ -23,7 +18,7 @@ import TokenOperations
         , isSwapTokenRange1FieldInvalid
         , isSwapTokenRange2FieldInvalid
         )
-import ViewCommon exposing (normalButton, outlineButton)
+import ViewCommon exposing (ModalSize(..), normalButton, outlineButton)
 
 
 tokenOperationsDialogTitle : String
@@ -37,37 +32,35 @@ textRow changeType tokenOperationEditDetails textContents =
         [ text textContents ]
 
 
-radioButton : String -> TokenOperationOption -> String -> TokenOperationEditDetails -> Grid.Column Msg
+radioButton : String -> TokenOperationOption -> String -> TokenOperationEditDetails -> Html Msg
 radioButton elementId option labelText tokenOperationEditDetails =
-    Grid.col [ Col.xs6, Col.md3 ]
-        [ Radio.radio
-            [ Radio.id elementId
-            , Radio.checked (tokenOperationEditDetails.operation == option)
-            , Radio.onClick (TokenOperationEdit (ChangeOperation option))
-            ]
-            labelText
+    div [ class "col-6 col-md-3 col-form-label form-check" ]
+        [ input [ id elementId, class "form-check-input", type_ "radio", checked (tokenOperationEditDetails.operation == option), onClick (TokenOperationEdit (ChangeOperation option)) ] []
+        , label [ for elementId, class "form-check-label" ] [ text labelText ]
         ]
 
 
-inputTextField : (TokenOperationEditDetails -> RangeEntry) -> TokenRangeField -> TokenOperationOption -> (TokenOperationEditDetails -> Bool) -> TokenOperationEditDetails -> Grid.Column Msg
+inputTextField : (TokenOperationEditDetails -> RangeEntry) -> TokenRangeField -> TokenOperationOption -> (TokenOperationEditDetails -> Bool) -> TokenOperationEditDetails -> Html Msg
 inputTextField rangeEntryGetter field option validator tokenOperationEditDetails =
     let
-        dangerAttributes : List (Input.Option Msg)
-        dangerAttributes =
+        validationAttributes : List (Html.Attribute Msg)
+        validationAttributes =
             if validator tokenOperationEditDetails then
-                [ Input.danger ]
+                [ class "is-invalid" ]
 
             else
                 []
     in
-    Grid.col [ Col.xs6, Col.md3 ]
-        [ Input.text
-            ([ Input.value (rangeEntryGetter tokenOperationEditDetails).enteredValue
-             , Input.onInput (TokenOperationEdit << RangeEdited field)
-             , Input.disabled (tokenOperationEditDetails.operation /= option)
-             ]
-                ++ dangerAttributes
+    div [ class "col-6 col-md-3" ]
+        [ input
+            (type_ "text"
+                :: class "form-control"
+                :: value (rangeEntryGetter tokenOperationEditDetails).enteredValue
+                :: onInput (TokenOperationEdit << RangeEdited field)
+                :: disabled (tokenOperationEditDetails.operation /= option)
+                :: validationAttributes
             )
+            []
         ]
 
 
@@ -135,8 +128,8 @@ validationErrorRow validationError =
 
 tokenOperationsModalBody : TokenOperationEditDetails -> Html Msg
 tokenOperationsModalBody tokenOperationEditDetails =
-    div []
-        [ Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
+    div [ class "container-fluid" ]
+        [ div [ class "row mb-3" ]
             [ radioButton "insertTokensRadioButtonId" InsertTokensOption "Insert token(s)" tokenOperationEditDetails
             , inputTextField .insertTokenRange InsertTokenRangeField InsertTokensOption isInsertTokenRangeFieldInvalid tokenOperationEditDetails
             ]
@@ -145,7 +138,7 @@ tokenOperationsModalBody tokenOperationEditDetails =
             ("Use this option if a token should have been given out, but wasn't, e.g. due to a funnel ducker or "
                 ++ "a person declined to take a finish token and a token wasn't put aside for that finisher."
             )
-        , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
+        , div [ class "row mb-3" ]
             [ radioButton "removeTokensRadioButtonId" RemoveTokensOption "Remove token(s)" tokenOperationEditDetails
             , inputTextField .removeTokenRange RemoveTokenRangeField RemoveTokensOption isRemoveTokenRangeFieldInvalid tokenOperationEditDetails
             ]
@@ -155,10 +148,10 @@ tokenOperationsModalBody tokenOperationEditDetails =
                 ++ "started, they were dropped during the event by the finish token volunteers and not given out, "
                 ++ "or more than one token was given to a finisher."
             )
-        , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
+        , div [ class "row mb-3" ]
             [ radioButton "swapTokensRadioButtonId" SwapTokenRangeOption "Swap token(s)" tokenOperationEditDetails
             , inputTextField .swapTokenRange1 SwapTokenRangeField1 SwapTokenRangeOption isSwapTokenRange1FieldInvalid tokenOperationEditDetails
-            , Grid.col [ Col.xs5, Col.offsetXs1, Col.md1, Col.offsetMd0 ] [ text " and " ]
+            , div [ class "col-5 offset-1 col-md-1 offset-md-0 col-form-label" ] [ text " and " ]
             , inputTextField .swapTokenRange2 SwapTokenRangeField2 SwapTokenRangeOption isSwapTokenRange2FieldInvalid tokenOperationEditDetails
             ]
         , textRow SwapTokenRangeOption
@@ -166,7 +159,7 @@ tokenOperationsModalBody tokenOperationEditDetails =
             ("Use this option if you give out tokens in batches (e.g. 25, 50 or 100 tokens) but one or more of "
                 ++ "these batches were given out in the wrong order."
             )
-        , Grid.row [ Row.attrs [ class "form-group align-items-center" ] ]
+        , div [ class "row mb-3" ]
             [ radioButton "reverseTokensRadioButtonId" ReverseTokenRangeOption "Reverse tokens" tokenOperationEditDetails
             , inputTextField .reverseTokenRange ReverseTokenRangeField ReverseTokenRangeOption isReverseTokenRangeFieldInvalid tokenOperationEditDetails
             ]
@@ -213,6 +206,6 @@ tokenOperationsButtons tokenOperationEditDetails =
     processButtons ++ [ outlineButton CloseModal [] "Close" ]
 
 
-tokenOperationsDialogSizer : Modal.Config Msg -> Modal.Config Msg
-tokenOperationsDialogSizer =
-    Modal.large
+tokenOperationsDialogSize : ModalSize
+tokenOperationsDialogSize =
+    Large

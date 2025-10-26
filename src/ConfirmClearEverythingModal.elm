@@ -1,11 +1,10 @@
-module ConfirmClearEverythingModal exposing (confirmClearEverythingDialogSizer, confirmClearEverythingModalBody, confirmClearEverythingModalButtons, confirmClearEverythingModalTitle)
+module ConfirmClearEverythingModal exposing (confirmClearEverythingDialogSize, confirmClearEverythingModalBody, confirmClearEverythingModalButtons, confirmClearEverythingModalTitle)
 
-import Bootstrap.Modal as Modal
 import Commands exposing (CurrentDateAndTimeOperation(..))
 import Html exposing (Html, div, text)
 import Msg exposing (Msg(..))
 import PastedFile exposing (PastedFileInterpretation(..))
-import ViewCommon exposing (dangerButton, outlineButton)
+import ViewCommon exposing (ModalSize(..), dangerButton, outlineButton)
 
 
 confirmClearEverythingModalTitle : String
@@ -26,6 +25,6 @@ confirmClearEverythingModalButtons =
     ]
 
 
-confirmClearEverythingDialogSizer : Modal.Config Msg -> Modal.Config Msg
-confirmClearEverythingDialogSizer =
-    identity
+confirmClearEverythingDialogSize : ModalSize
+confirmClearEverythingDialogSize =
+    Standard

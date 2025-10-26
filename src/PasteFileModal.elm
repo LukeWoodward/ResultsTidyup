@@ -1,19 +1,18 @@
 module PasteFileModal exposing
     ( pasteFileButtons
-    , pasteFileDialogSizer
+    , pasteFileDialogSize
     , pasteFileDialogTextAreaId
     , pasteFileDialogTitle
     , pasteFileModalBody
     )
 
-import Bootstrap.Modal as Modal
 import Commands exposing (CurrentDateAndTimeOperation(..))
 import Html exposing (Html, div, text, textarea)
 import Html.Attributes exposing (disabled, id, placeholder)
 import Html.Events exposing (onInput)
 import Msg exposing (Msg(..))
 import PastedFile exposing (PastedFileDetails, PastedFileInterpretation(..))
-import ViewCommon exposing (normalButton, outlineButton)
+import ViewCommon exposing (ModalSize(..), normalButton, outlineButton)
 
 
 pasteFileDialogTextAreaId : String
@@ -87,6 +86,6 @@ pasteFileButtons pastedFileDetails =
     ]
 
 
-pasteFileDialogSizer : Modal.Config Msg -> Modal.Config Msg
-pasteFileDialogSizer =
-    identity
+pasteFileDialogSize : ModalSize
+pasteFileDialogSize =
+    Standard

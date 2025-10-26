@@ -3,10 +3,6 @@ module ResultsTidyup exposing (main)
 import BarcodeScanner
 import BarcodeScannerEditModal
 import BarcodeScannerView exposing (barcodeScannersView)
-import Bootstrap.Alert as Alert
-import Bootstrap.Badge as Badge
-import Bootstrap.Grid as Grid
-import Bootstrap.Grid.Col as Col
 import Browser
 import Browser.Dom
 import Commands exposing (Command(..), ElementToFocus(..))
@@ -19,7 +15,7 @@ import Html exposing (Html, a, div, h1, span, text)
 import Html.Attributes exposing (class, disabled, href, id, target)
 import Html.Events exposing (on, onClick)
 import Json.Decode exposing (Decoder, andThen, fail, field, int, succeed)
-import Modals exposing (showModalDialog)
+import Modals exposing (modalBackdrop, showModalDialog)
 import Model exposing (Model, initModel)
 import Msg exposing (Msg(..))
 import NumberCheckerView
@@ -30,7 +26,7 @@ import Time
 import Timer exposing (Timers(..))
 import TimersView exposing (timersView)
 import UpdateLogic exposing (update)
-import ViewCommon exposing (dangerButton, normalButton)
+import ViewCommon exposing (dangerButton, normalButton, role)
 
 
 type alias FlagsRecord =
@@ -74,8 +70,7 @@ errorsView errors =
         text ""
 
     else
-        Alert.simpleDanger
-            []
+        div [ class "alert alert-danger", role "alert" ]
             (span [ class "close", onClick ClearErrors ] [ text "×" ]
                 :: List.map errorView errors
             )
@@ -92,9 +87,6 @@ focus elementToFocus =
 
                 BarcodeScannerEditingAthleteInput ->
                     BarcodeScannerEditModal.athleteInputId
-
-                BarcodeScannerEditingAthleteRadioButton ->
-                    BarcodeScannerEditModal.athleteRadioButtonId
 
                 PasteFileDialogTextArea ->
                     PasteFileModal.pasteFileDialogTextAreaId
@@ -197,7 +189,7 @@ view model =
         badge : Html Msg
         badge =
             if model.isBeta then
-                Badge.badgePrimary [] [ text "BETA" ]
+                span [ class "badge text-bg-primary" ] [ text "BETA" ]
 
             else
                 text ""
@@ -221,15 +213,15 @@ view model =
         noFilesUploaded : Html Msg
         noFilesUploaded =
             if model.timers == None && BarcodeScanner.isEmpty model.barcodeScannerData then
-                Alert.simpleInfo [ class "no-files-uploaded" ] [ text "No files have been uploaded.  Get started by uploading some timer or scanner files." ]
+                div [ class "alert alert-info no-files-uploaded" ] [ text "No files have been uploaded. Get started by uploading some timer or scanner files." ]
 
             else
                 text ""
     in
     div
         [ on "keyup" keyDecoder ]
-        [ Grid.row []
-            [ Grid.col [ Col.xs12, Col.md6 ]
+        [ div [ class "row" ]
+            [ div [ class "col-12 col-md-6" ]
                 [ div
                     [ class "clearfix" ]
                     [ h1 [ id "header" ] [ text "Results Tidyup" ]
@@ -242,10 +234,11 @@ view model =
                 , errorsView model.lastErrors
                 ]
             ]
-        , Grid.row []
+        , div [ class "row" ]
             ([ timersItem, scannersItem ]
-                |> List.map (\element -> Grid.col [ Col.xs12, Col.md6 ] [ element ])
+                |> List.map (\element -> div [ class "col-12 col-md-6" ] [ element ])
             )
         , noFilesUploaded
         , showModalDialog model
+        , modalBackdrop model.dialogDetails
         ]

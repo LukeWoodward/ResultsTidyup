@@ -9,18 +9,15 @@ import BarcodeScanner
         , LineContents(..)
         )
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditLocation)
-import Bootstrap.Button as Button
-import Bootstrap.Tab as Tab
-import Bootstrap.Table as Table
 import Commands
-import Html exposing (Attribute, Html, div, h3, span, text)
-import Html.Attributes exposing (class, colspan, title)
-import Html.Events exposing (onDoubleClick)
+import Html exposing (Attribute, Html, button, div, h3, li, span, table, tbody, td, text, th, thead, tr, ul)
+import Html.Attributes exposing (class, classList, title)
+import Html.Events exposing (onClick, onDoubleClick)
 import Icons exposing (download, remove)
 import Model exposing (Model)
 import Msg exposing (Msg(..))
 import ProblemsView exposing (scannerProblemsView)
-import ViewCommon exposing (athleteLink, iconButton, normalButton, tableHeader, tableHeaderWithClass)
+import ViewCommon exposing (athleteLink, dangerIconButton, normalButton, normalIconButton)
 
 
 maybeIntToString : Maybe Int -> String
@@ -46,7 +43,7 @@ deletionReasonToString reason =
             "You deleted this line"
 
 
-barcodeScannerContents : LineContents -> DeletionStatus -> List (Table.Cell Msg)
+barcodeScannerContents : LineContents -> DeletionStatus -> List (Html Msg)
 barcodeScannerContents contents deletionStatus =
     case contents of
         Ordinary athlete position ->
@@ -60,15 +57,12 @@ barcodeScannerContents contents deletionStatus =
                         Deleted _ ->
                             text athlete
             in
-            [ Table.td [] [ athleteContents ]
-            , Table.td [] [ text (maybeIntToString position) ]
+            [ td [] [ athleteContents ]
+            , td [] [ text (maybeIntToString position) ]
             ]
 
-        MisScan misScannedText ->
-            [ Table.td [ Table.cellAttr (colspan 2), Table.cellAttr (class "misscanned"), Table.cellAttr (title "This item was not scanned properly.") ] [ text misScannedText ] ]
 
-
-barcodeScannerViewRow : String -> BarcodeScannerFileLine -> Table.Row Msg
+barcodeScannerViewRow : String -> BarcodeScannerFileLine -> Html Msg
 barcodeScannerViewRow fileName line =
     let
         rowAttributes : List (Attribute Msg)
@@ -79,9 +73,6 @@ barcodeScannerViewRow fileName line =
                         className : String
                         className =
                             case line.contents of
-                                MisScan _ ->
-                                    "barcode-scanner-row-error"
-
                                 Ordinary _ Nothing ->
                                     "barcode-scanner-row-warning"
 
@@ -101,53 +92,44 @@ barcodeScannerViewRow fileName line =
                     , onDoubleClick (ShowBarcodeScannerEditModal (BarcodeScannerRowEditLocation fileName line.lineNumber) line.contents True)
                     ]
     in
-    Table.tr
-        (List.map Table.rowAttr rowAttributes)
-        (Table.td [] [ text (String.fromInt line.lineNumber) ]
+    tr
+        rowAttributes
+        (td [] [ text (String.fromInt line.lineNumber) ]
             :: barcodeScannerContents line.contents line.deletionStatus
-            ++ [ Table.td [ Table.cellAttr (class "scanner-date-cell") ] [ text line.scanDateTime ] ]
+            ++ [ td [ class "scanner-date-cell" ] [ text line.scanDateTime ] ]
         )
 
 
 barcodeScannerView : BarcodeScannerFile -> Html Msg
 barcodeScannerView file =
     let
-        thead : Table.THead a
-        thead =
-            Table.simpleThead
-                [ tableHeader "Line #"
-                , tableHeader "Athlete"
-                , tableHeader "Pos"
-                , tableHeaderWithClass "Date/Time" "scanner-date-cell"
+        header : Html a
+        header =
+            thead []
+                [ tr []
+                    [ th [] [ text "Line #" ]
+                    , th [] [ text "Athlete" ]
+                    , th [] [ text "Pos" ]
+                    , th [ class "scanner-date-cell" ] [ text "Date/Time" ]
+                    ]
                 ]
     in
     div []
         [ div
             [ class "barcode-scanner-buttons" ]
-            [ iconButton (RequestCurrentDateAndTime (Commands.DownloadBarcodeScannerFile file.filename)) Button.primary download "Download"
-            , iconButton (RemoveBarcodeScannerFile file.filename) Button.danger remove "Remove"
+            [ normalIconButton (RequestCurrentDateAndTime (Commands.DownloadBarcodeScannerFile file.filename)) download "Download"
+            , dangerIconButton (RemoveBarcodeScannerFile file.filename) remove "Remove"
             ]
-        , Table.table
-            { options = [ Table.bordered, Table.small, Table.hover, Table.attr (class "barcode-scanner-table") ]
-            , thead = thead
-            , tbody = Table.tbody [] (List.map (barcodeScannerViewRow file.filename) file.lines)
-            }
+        , table [ class "table table-bordered table-hover barcode-scanner-table" ]
+            [ header
+            , tbody [] (List.map (barcodeScannerViewRow file.filename) file.lines)
+            ]
         ]
 
 
 isNotDeleted : BarcodeScannerFileLine -> Bool
 isNotDeleted line =
     line.deletionStatus == NotDeleted
-
-
-isMisScan : BarcodeScannerFileLine -> Bool
-isMisScan line =
-    case line.contents of
-        Ordinary _ _ ->
-            False
-
-        MisScan _ ->
-            isNotDeleted line
 
 
 hasMissingItem : BarcodeScannerFileLine -> Bool
@@ -165,23 +147,30 @@ hasMissingItem line =
 
 getBarcodeScannerTabClass : BarcodeScannerFile -> String
 getBarcodeScannerTabClass file =
-    if List.any isMisScan file.lines then
-        "barcode-scanner-file-error"
-
-    else if List.any hasMissingItem file.lines then
+    if List.any hasMissingItem file.lines then
         "barcode-scanner-file-warning"
 
     else
         "barcode-scanner-file-ok"
 
 
-barcodeScannerTabView : Int -> BarcodeScannerFile -> Tab.Item Msg
-barcodeScannerTabView index file =
-    Tab.item
-        { id = "barcodeScannerTab" ++ String.fromInt index
-        , link = Tab.link [ class (getBarcodeScannerTabClass file) ] [ span [ title file.filename ] [ text file.name ] ]
-        , pane = Tab.pane [] [ barcodeScannerView file ]
-        }
+tabBar : Maybe String -> List BarcodeScannerFile -> Html Msg
+tabBar selectedTab files =
+    let
+        tabItem : BarcodeScannerFile -> Html Msg
+        tabItem file =
+            li
+                [ class "nav-item" ]
+                [ button
+                    [ class "nav-link btn btn-link"
+                    , class (getBarcodeScannerTabClass file)
+                    , classList [ ( "active", selectedTab == Just file.filename ) ]
+                    , onClick (ChangeBarcodeScannerTab file.filename)
+                    ]
+                    [ span [ title file.filename ] [ text file.name ] ]
+                ]
+    in
+    ul [ class "nav nav-tabs" ] (List.map tabItem files)
 
 
 barcodeScannersView : Model -> Html Msg
@@ -206,11 +195,20 @@ barcodeScannersView model =
                     [ title "Downloads a file containing all barcode data from all scanners" ]
                     "Download all scanned barcodes"
                 ]
+
+        selectedBarcodeScannerFile : Maybe BarcodeScannerFile
+        selectedBarcodeScannerFile =
+            List.filter (\i -> Just i.filename == model.barcodeScannerTab) model.barcodeScannerData.files
+                |> List.head
+
+        selectedBarcodeScannerView : Html Msg
+        selectedBarcodeScannerView =
+            Maybe.map barcodeScannerView selectedBarcodeScannerFile
+                |> Maybe.withDefault (text "")
     in
     div []
         [ h3 [] [ text "Scanners", div [ class "barcode-scanner-buttons" ] buttons ]
         , scannerProblemsView model.problems
-        , Tab.config ChangeBarcodeScannerTab
-            |> Tab.items (List.indexedMap barcodeScannerTabView model.barcodeScannerData.files)
-            |> Tab.view model.barcodeScannerTab
+        , tabBar model.barcodeScannerTab model.barcodeScannerData.files
+        , selectedBarcodeScannerView
         ]

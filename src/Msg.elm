@@ -2,7 +2,6 @@ module Msg exposing (Msg(..), NumberCheckerFieldChange(..))
 
 import BarcodeScanner exposing (LineContents)
 import BarcodeScannerEditing exposing (BarcodeScannerEditDetails, BarcodeScannerRowEditDetails, BarcodeScannerRowEditLocation)
-import Bootstrap.Tab as Tab
 import Commands exposing (CurrentDateAndTimeOperation)
 import File exposing (File)
 import FileHandling exposing (AddedFile, InteropFile)
@@ -40,8 +39,8 @@ type Msg
     | DecrementNumberCheckerRowActualCount Int
     | FixProblem ProblemFix
     | IgnoreProblem ProblemIgnorance
-    | ChangeSecondTab Tab.State
-    | ChangeBarcodeScannerTab Tab.State
+    | ChangeSecondTab (Maybe String)
+    | ChangeBarcodeScannerTab String
     | ClearErrors
     | DownloadBarcodeScannerFile String Zone Posix
     | DownloadAllBarcodeScannerData Zone Posix

@@ -22,7 +22,6 @@ module Timer exposing
     , underlineTable
     )
 
-import Bootstrap.Form exposing (row)
 import Dict exposing (Dict)
 import Error exposing (Error)
 import FileHandling exposing (crlf, isPossibleBinary, splitLines)
