@@ -1,4 +1,4 @@
-module Msg exposing (Msg(..), NumberCheckerFieldChange(..))
+module Msg exposing (Msg(..))
 
 import BarcodeScanner exposing (LineContents)
 import BarcodeScannerEditing exposing (BarcodeScannerEditDetails, BarcodeScannerRowEditDetails, BarcodeScannerRowEditLocation)
@@ -12,12 +12,6 @@ import TimerOperations exposing (TimerOperationChangeType, TimerOperationEditDet
 import TokenOperations exposing (TokenOperationChangeType(..), TokenOperationEditDetails)
 
 
-type NumberCheckerFieldChange
-    = Timer1
-    | Timer2
-    | FinishTokens
-
-
 type Msg
     = NoOp
     | FilesDropped (List InteropFile)
@@ -29,17 +23,8 @@ type Msg
     | ClearAllData
     | RequestCurrentDateAndTime CurrentDateAndTimeOperation
     | DownloadMergedTimerData Zone Posix
-    | MouseEnterNumberCheckerRow Int
-    | MouseLeaveNumberCheckerRow Int
-    | DeleteNumberCheckerRow Int
-    | NumberCheckerFieldChanged NumberCheckerFieldChange String
-    | AddNumberCheckerRow
-    | EditNumberCheckerRow Int
-    | IncrementNumberCheckerRowActualCount Int
-    | DecrementNumberCheckerRowActualCount Int
     | FixProblem ProblemFix
     | IgnoreProblem ProblemIgnorance
-    | ChangeSecondTab (Maybe String)
     | ChangeBarcodeScannerTab String
     | ClearErrors
     | DownloadBarcodeScannerFile String Zone Posix

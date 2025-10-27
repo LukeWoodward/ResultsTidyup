@@ -101,8 +101,6 @@ type alias Problems =
     , athletesMissingPosition : List String
     , misScannedAthleteBarcodes : List MisScannedAthleteBarcodeProblem
     , unrecognisedBarcodeScannerLines : List String
-    , timersInconsistentWithNumberChecker : Bool
-    , timersAndFinishTokensInconsistentWithNumberChecker : Bool
     }
 
 
@@ -117,8 +115,6 @@ noProblems =
     , athletesMissingPosition = []
     , misScannedAthleteBarcodes = []
     , unrecognisedBarcodeScannerLines = []
-    , timersInconsistentWithNumberChecker = False
-    , timersAndFinishTokensInconsistentWithNumberChecker = False
     }
 
 
@@ -439,6 +435,4 @@ identifyProblems timers barcodeScannerData ignoredProblems =
     , athletesMissingPosition = identifyAthletesWithNoPositions athleteBarcodesOnly athleteToPositionsDict misScannedAthleteBarcodesSet
     , misScannedAthleteBarcodes = misScannedAthleteBarcodes
     , unrecognisedBarcodeScannerLines = identifyUnrecognisedBarcodeScannerLines barcodeScannerData.unrecognisedLines
-    , timersInconsistentWithNumberChecker = False
-    , timersAndFinishTokensInconsistentWithNumberChecker = False
     }

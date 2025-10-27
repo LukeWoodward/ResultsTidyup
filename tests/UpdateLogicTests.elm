@@ -23,12 +23,9 @@ import Model
     exposing
         ( DialogDetails(..)
         , Model
-        , NumberCheckerManualEntryRow
-        , emptyNumberCheckerManualEntryRow
         , initModel
         )
-import Msg exposing (Msg(..), NumberCheckerFieldChange(..))
-import NumberChecker exposing (AnnotatedNumberCheckerEntry)
+import Msg exposing (Msg(..))
 import PastedFile exposing (PastedFileDetails, PastedFileInterpretation(..))
 import PastedFileTests exposing (timerFileContents)
 import ProblemFixing exposing (ProblemFix(..), ProblemIgnorance(..))
@@ -55,16 +52,6 @@ expectTimers expectedTimers ( model, _ ) =
     Expect.equal expectedTimers model.timers
 
 
-expectNumberCheckerEntries : List AnnotatedNumberCheckerEntry -> ( Model, Command ) -> Expectation
-expectNumberCheckerEntries expectedNumberCheckerEntries ( model, _ ) =
-    Expect.equal expectedNumberCheckerEntries model.numberCheckerEntries
-
-
-expectHighlightedNumberCheckerId : Maybe Int -> ( Model, Command ) -> Expectation
-expectHighlightedNumberCheckerId expectedHighlightedNumberCheckerId ( model, _ ) =
-    Expect.equal expectedHighlightedNumberCheckerId model.highlightedNumberCheckerId
-
-
 expectBarcodeScannerData : BarcodeScannerData -> ( Model, Command ) -> Expectation
 expectBarcodeScannerData expectedBarcodeScannerData ( model, _ ) =
     Expect.equal expectedBarcodeScannerData model.barcodeScannerData
@@ -73,11 +60,6 @@ expectBarcodeScannerData expectedBarcodeScannerData ( model, _ ) =
 expectProblems : Problems -> ( Model, Command ) -> Expectation
 expectProblems expectedProblems ( model, _ ) =
     Expect.equal expectedProblems model.problems
-
-
-expectNumberCheckerManualEntryRow : NumberCheckerManualEntryRow -> ( Model, Command ) -> Expectation
-expectNumberCheckerManualEntryRow expectedManualEntryRow ( model, _ ) =
-    Expect.equal expectedManualEntryRow model.numberCheckerManualEntryRow
 
 
 expectIgnoredProblems : IgnoredProblems -> ( Model, Command ) -> Expectation
@@ -99,11 +81,8 @@ type Assertion
     = Command
     | Timers
     | LastError
-    | NumberCheckerEntries
-    | HighlightedNumberCheckerId
     | BarcodeScannerDataAssertion
     | Problems
-    | NumberCheckerManualEntryRowAssertion
     | IgnoredProblemsAssertion
     | DialogDetailsAssertion
 
@@ -128,16 +107,6 @@ defaultAssertionsExcept exceptions =
 
               else
                 Just (\( model, _ ) -> Expect.equal [] model.lastErrors)
-            , if List.member NumberCheckerEntries exceptions then
-                Nothing
-
-              else
-                Just (expectNumberCheckerEntries [])
-            , if List.member HighlightedNumberCheckerId exceptions then
-                Nothing
-
-              else
-                Just (expectHighlightedNumberCheckerId Nothing)
             , if List.member BarcodeScannerDataAssertion exceptions then
                 Nothing
 
@@ -148,11 +117,6 @@ defaultAssertionsExcept exceptions =
 
               else
                 Just (expectProblems noProblems)
-            , if List.member NumberCheckerManualEntryRowAssertion exceptions then
-                Nothing
-
-              else
-                Just (expectNumberCheckerManualEntryRow emptyNumberCheckerManualEntryRow)
             , if List.member IgnoredProblemsAssertion exceptions then
                 Nothing
 
@@ -417,9 +381,6 @@ suite =
                         | barcodeScannerData = createBarcodeScannerData (Dict.singleton 47 [ "A4580484" ]) [ "A123456" ]
                         , timers = doubleTimers
                         , lastErrors = [ FileError "TEST_ERROR" "Some test error message" "somefile.txt" ]
-                        , highlightedNumberCheckerId = Just 2
-                        , numberCheckerEntries = [ AnnotatedNumberCheckerEntry 2 2 0 2 0 2 0 2 ]
-                        , numberCheckerManualEntryRow = NumberCheckerManualEntryRow (IntegerEntry "2" (Just 2)) (IntegerEntry "2" (Just 2)) (IntegerEntry "2" (Just 2))
                         , problems =
                             { noProblems
                                 | athletesWithAndWithoutPosition = [ AthleteWithAndWithoutPositionProblem "A123" 2 5 ]
@@ -523,161 +484,6 @@ suite =
                             (expectCommand (DownloadFile timerFileMimeType (InteropFile "results_tidyup_timer_20170714024000.txt" expectedDownloadedTimerData2))
                                 :: expectTimers doubleTimers
                                 :: defaultAssertionsExcept [ Timers, Command ]
-                            )
-            ]
-        , describe "Mouse enter number-checker row tests"
-            [ test "Can enter a number-checker row" <|
-                \() ->
-                    update (MouseEnterNumberCheckerRow 6) initModel
-                        |> Expect.all
-                            (expectHighlightedNumberCheckerId (Just 6)
-                                :: defaultAssertionsExcept [ HighlightedNumberCheckerId ]
-                            )
-            , test "Can leave a number-checker row that has been entered" <|
-                \() ->
-                    { initModel | highlightedNumberCheckerId = Just 6 }
-                        |> update (MouseLeaveNumberCheckerRow 6)
-                        |> Expect.all defaultAssertions
-            , test "Attempting to leave a number-checker row that has not been entered has no effect" <|
-                \() ->
-                    { initModel | highlightedNumberCheckerId = Just 8 }
-                        |> update (MouseLeaveNumberCheckerRow 6)
-                        |> Expect.all
-                            (expectHighlightedNumberCheckerId (Just 8)
-                                :: defaultAssertionsExcept [ HighlightedNumberCheckerId ]
-                            )
-            ]
-        , describe "Delete number checker row tests"
-            [ test "Can delete a number-checker row when no timers loaded" <|
-                \() ->
-                    { initModel | numberCheckerEntries = sampleNumberCheckerData }
-                        |> update (DeleteNumberCheckerRow 2)
-                        |> Expect.all
-                            (expectNumberCheckerEntries sampleNumberCheckerDataWithSecondItemRemoved
-                                :: defaultAssertionsExcept [ NumberCheckerEntries ]
-                            )
-            ]
-        , describe "Number checker field changed tests"
-            [ test "Entering a valid value for timer 1 sets the value" <|
-                \() ->
-                    update (NumberCheckerFieldChanged Timer1 "24") initModel
-                        |> Expect.all
-                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow (IntegerEntry "24" (Just 24)) emptyEntry emptyEntry)
-                                :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
-                            )
-            , test "Entering a valid value for timer 2 sets the value" <|
-                \() ->
-                    update (NumberCheckerFieldChanged Timer2 "38") initModel
-                        |> Expect.all
-                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyEntry (IntegerEntry "38" (Just 38)) emptyEntry)
-                                :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
-                            )
-            , test "Entering a valid value for finish tokens sets the value" <|
-                \() ->
-                    update (NumberCheckerFieldChanged FinishTokens "17") initModel
-                        |> Expect.all
-                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyEntry emptyEntry (IntegerEntry "17" (Just 17)))
-                                :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
-                            )
-            , test "Entering a negative value for timer 1 sets a blank value" <|
-                \() ->
-                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow (IntegerEntry "24" (Just 24)) emptyEntry emptyEntry }
-                        |> update (NumberCheckerFieldChanged Timer1 "-2")
-                        |> Expect.all
-                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow (IntegerEntry "-2" Nothing) emptyEntry emptyEntry)
-                                :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
-                            )
-            , test "Entering a negative value for timer 2 sets a blank value" <|
-                \() ->
-                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow emptyEntry (IntegerEntry "38" (Just 38)) emptyEntry }
-                        |> update (NumberCheckerFieldChanged Timer2 "-3")
-                        |> Expect.all
-                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyEntry (IntegerEntry "-3" Nothing) emptyEntry)
-                                :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
-                            )
-            , test "Entering a negative value for finish tokens sets a blank value" <|
-                \() ->
-                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow emptyEntry emptyEntry (IntegerEntry "17" (Just 17)) }
-                        |> update (NumberCheckerFieldChanged FinishTokens "-1")
-                        |> Expect.all
-                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyEntry emptyEntry (IntegerEntry "-1" Nothing))
-                                :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
-                            )
-            , test "Entering an invalid value for timer 1 sets a blank value" <|
-                \() ->
-                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow (IntegerEntry "24" (Just 24)) emptyEntry emptyEntry }
-                        |> update (NumberCheckerFieldChanged Timer1 "nonsense")
-                        |> Expect.all
-                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow (IntegerEntry "nonsense" Nothing) emptyEntry emptyEntry)
-                                :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
-                            )
-            , test "Entering an invalid value for timer 2 sets a blank value" <|
-                \() ->
-                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow emptyEntry (IntegerEntry "38" (Just 38)) emptyEntry }
-                        |> update (NumberCheckerFieldChanged Timer2 "nonsense")
-                        |> Expect.all
-                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyEntry (IntegerEntry "nonsense" Nothing) emptyEntry)
-                                :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
-                            )
-            , test "Entering an invalid value for finish tokens sets a blank value" <|
-                \() ->
-                    { initModel | numberCheckerManualEntryRow = NumberCheckerManualEntryRow emptyEntry emptyEntry (IntegerEntry "17" (Just 17)) }
-                        |> update (NumberCheckerFieldChanged FinishTokens "nonsense")
-                        |> Expect.all
-                            (expectNumberCheckerManualEntryRow (NumberCheckerManualEntryRow emptyEntry emptyEntry (IntegerEntry "nonsense" Nothing))
-                                :: defaultAssertionsExcept [ NumberCheckerManualEntryRowAssertion ]
-                            )
-            ]
-        , describe "Add number checker row tests"
-            [ test "Can enter a number-checker row with all valid values" <|
-                \() ->
-                    { initModel | numberCheckerManualEntryRow = createNumberCheckerManualEntryRow 12 12 12 }
-                        |> update AddNumberCheckerRow
-                        |> Expect.all
-                            (expectNumberCheckerEntries
-                                [ { entryNumber = 1
-                                  , finishTokens = 12
-                                  , finishTokensDelta = 0
-                                  , timer1 = 12
-                                  , timer1Delta = 0
-                                  , timer2 = 12
-                                  , timer2Delta = 0
-                                  , actual = 12
-                                  }
-                                ]
-                                :: expectCommand (FocusElement NumberCheckerManualEntryRowFirstCell)
-                                :: defaultAssertionsExcept [ Command, NumberCheckerEntries ]
-                            )
-            ]
-        , describe "IncrementNumberCheckerRow tests"
-            [ test "Can increment an actual entry of a number-checker row" <|
-                \() ->
-                    { initModel | numberCheckerEntries = sampleNumberCheckerData }
-                        |> update (IncrementNumberCheckerRowActualCount 2)
-                        |> Expect.all
-                            (expectNumberCheckerEntries sampleNumberCheckerDataIncremented
-                                :: defaultAssertionsExcept [ NumberCheckerEntries ]
-                            )
-            ]
-        , describe "DecrementNumberCheckerRow tests"
-            [ test "Can decrement an actual entry of a number-checker row" <|
-                \() ->
-                    { initModel | numberCheckerEntries = sampleNumberCheckerData }
-                        |> update (DecrementNumberCheckerRowActualCount 2)
-                        |> Expect.all
-                            (expectNumberCheckerEntries sampleNumberCheckerDataDecremented
-                                :: defaultAssertionsExcept [ NumberCheckerEntries ]
-                            )
-            ]
-        , describe "Edit number checker row tests"
-            [ test "Can edit a number-checker row when no timers loaded" <|
-                \() ->
-                    { initModel | numberCheckerEntries = sampleNumberCheckerData }
-                        |> update (EditNumberCheckerRow 2)
-                        |> Expect.all
-                            (expectNumberCheckerEntries sampleNumberCheckerDataWithSecondItemRemoved
-                                :: expectNumberCheckerManualEntryRow (createNumberCheckerManualEntryRow 11 10 11)
-                                :: defaultAssertionsExcept [ NumberCheckerEntries, NumberCheckerManualEntryRowAssertion ]
                             )
             ]
         , describe "Fixing problems tests"
@@ -991,7 +797,3 @@ suite =
                             )
             ]
         ]
-
-
-
--- TODO: some tests with everything: timers, barcodes and number-checker data.

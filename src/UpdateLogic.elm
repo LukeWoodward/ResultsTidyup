@@ -15,16 +15,8 @@ import DateHandling exposing (generateFilenameDatePart, generateNameOfPastedFile
 import File exposing (File)
 import FileDropHandling exposing (handleFilesAdded)
 import FileHandling exposing (AddedFile, InteropFile, deduceNameFromFilename)
-import Model exposing (DialogDetails(..), Model, emptyNumberCheckerManualEntryRow)
+import Model exposing (DialogDetails(..), Model)
 import Msg exposing (Msg(..))
-import NumberCheckerEditing
-    exposing
-        ( addNumberCheckerRow
-        , deleteNumberCheckerEntry
-        , editNumberCheckerRow
-        , handleNumberCheckerFieldChange
-        , modifyNumberCheckerRows
-        )
 import PastedFile exposing (PastedFileDetails, interpretPastedFile)
 import ProblemFixing exposing (fixProblem, ignoreProblem)
 import Problems exposing (Problems, identifyProblems, noIgnoredProblems, noProblems)
@@ -40,7 +32,6 @@ import Timer
         , outputMergedTable
         , outputSingleTimerData
         , toggleRowInTable
-        , underlineTable
         )
 import TimerOperations exposing (TimerOperationEditDetails, tryApplyOperationToTimerData)
 import TokenOperations exposing (TokenOperationEditDetails, TokenOperationValidationError(..), tryApplyTokenOperationToBarcodeScannerData)
@@ -88,7 +79,6 @@ toggleTableRow index model =
                 newMergedTable =
                     doubleTimerData.mergedTableRows
                         |> toggleRowInTable index
-                        |> underlineTable model.numberCheckerEntries
             in
             { model
                 | timers = Double { doubleTimerData | mergedTableRows = newMergedTable }
@@ -171,7 +161,6 @@ flipTimers model =
                 newMergedTableRows =
                     oldDoubleTimerData.mergedTableRows
                         |> flipTable
-                        |> underlineTable model.numberCheckerEntries
 
                 newDoubleTimerData : DoubleTimerData
                 newDoubleTimerData =
@@ -191,12 +180,9 @@ clearAllData model =
     { model
         | timers = None
         , lastErrors = []
-        , numberCheckerEntries = []
-        , highlightedNumberCheckerId = Nothing
         , barcodeScannerData = BarcodeScanner.empty
         , problems = noProblems
         , ignoredProblems = noIgnoredProblems
-        , numberCheckerManualEntryRow = emptyNumberCheckerManualEntryRow
         , barcodeScannerTab = Nothing
         , dialogDetails = NoDialog
     }
@@ -224,26 +210,6 @@ createMergedTimerDataFile zone time model =
         Double doubleTimerData ->
             createTimerFileForDownload zone time (outputMergedTable doubleTimerData.mergedTableRows)
                 |> DownloadFile timerFileMimeType
-
-
-reunderlineTimerTable : Model -> Model
-reunderlineTimerTable model =
-    case model.timers of
-        Double doubleTimerData ->
-            let
-                newMergedTable : List MergedTableRow
-                newMergedTable =
-                    underlineTable model.numberCheckerEntries doubleTimerData.mergedTableRows
-            in
-            { model
-                | timers = Double { doubleTimerData | mergedTableRows = newMergedTable }
-            }
-
-        Single _ _ ->
-            model
-
-        None ->
-            model
 
 
 createSingleBarcodeScannerData : String -> List BarcodeScannerFile -> Zone -> Posix -> Command
@@ -308,15 +274,6 @@ removeBarcodeScannerFileWithName fileName model =
             | barcodeScannerData = regenerate { barcodeScannerData | files = List.filter (\file -> file.filename /= fileName) model.barcodeScannerData.files }
             , barcodeScannerTab = newBarcodeScannerTab
         }
-
-
-select : Bool -> a -> a -> a
-select condition trueValue falseValue =
-    if condition then
-        trueValue
-
-    else
-        falseValue
 
 
 tryUpdateRowFromBarcodeScannerEditModal : BarcodeScannerRowEditDetails -> Model -> Model
@@ -385,14 +342,12 @@ update msg model =
             in
             ( handleFilesAdded addedFiles model
                 |> identifyProblemsIn
-                |> reunderlineTimerTable
             , NoCommand
             )
 
         FilesAdded files ->
             ( handleFilesAdded files model
                 |> identifyProblemsIn
-                |> reunderlineTimerTable
             , NoCommand
             )
 
@@ -417,61 +372,14 @@ update msg model =
         DownloadMergedTimerData zone time ->
             ( model, createMergedTimerDataFile zone time model )
 
-        MouseEnterNumberCheckerRow highlightRow ->
-            ( { model | highlightedNumberCheckerId = Just highlightRow }, NoCommand )
-
-        MouseLeaveNumberCheckerRow unhighlightRow ->
-            let
-                newModel : Model
-                newModel =
-                    if model.highlightedNumberCheckerId == Just unhighlightRow then
-                        { model | highlightedNumberCheckerId = Nothing }
-
-                    else
-                        -- Ignore an un-highlight command when the row to
-                        -- unhighlight isn't the highlighted one.
-                        model
-            in
-            ( newModel, NoCommand )
-
-        EditNumberCheckerRow entryNumber ->
-            ( reunderlineTimerTable (editNumberCheckerRow entryNumber model), NoCommand )
-
-        DeleteNumberCheckerRow entryNumber ->
-            ( reunderlineTimerTable (deleteNumberCheckerEntry entryNumber model), NoCommand )
-
-        NumberCheckerFieldChanged fieldChange newValue ->
-            ( handleNumberCheckerFieldChange fieldChange newValue model, NoCommand )
-
-        AddNumberCheckerRow ->
-            let
-                ( addedToModel, issueFocusCommand ) =
-                    addNumberCheckerRow model
-
-                command : Command
-                command =
-                    select issueFocusCommand (FocusElement NumberCheckerManualEntryRowFirstCell) NoCommand
-            in
-            ( reunderlineTimerTable addedToModel, command )
-
-        IncrementNumberCheckerRowActualCount entryNumber ->
-            ( reunderlineTimerTable (modifyNumberCheckerRows 1 entryNumber model), NoCommand )
-
-        DecrementNumberCheckerRowActualCount entryNumber ->
-            ( reunderlineTimerTable (modifyNumberCheckerRows -1 entryNumber model), NoCommand )
-
         FixProblem problemFix ->
             ( fixProblem problemFix model
                 |> identifyProblemsIn
-                |> reunderlineTimerTable
             , NoCommand
             )
 
         IgnoreProblem problemIgnorance ->
             ( identifyProblemsIn { model | ignoredProblems = ignoreProblem problemIgnorance model.ignoredProblems }, NoCommand )
-
-        ChangeSecondTab newSecondTab ->
-            ( { model | secondTab = newSecondTab }, NoCommand )
 
         ChangeBarcodeScannerTab newBarcodeScannerTab ->
             ( { model | barcodeScannerTab = Just newBarcodeScannerTab }, NoCommand )
@@ -599,7 +507,6 @@ update msg model =
             in
             ( handleFilesAdded [ AddedFile fileName name contents ] { model | dialogDetails = NoDialog }
                 |> identifyProblemsIn
-                |> reunderlineTimerTable
             , NoCommand
             )
 

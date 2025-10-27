@@ -45,31 +45,31 @@ athleteItem athleteAndTimePair =
     div [] [ athleteLink athleteAndTimePair.athlete ]
 
 
-barcodeScannerCell : BarcodeScannerData -> Int -> Maybe Int -> Maybe Int -> Html a
-barcodeScannerCell barcodeScannerData position numberCheckerId highlightedNumberCheckerId =
+barcodeScannerCell : BarcodeScannerData -> Int -> Html a
+barcodeScannerCell barcodeScannerData position =
     case Dict.get position barcodeScannerData.scannedBarcodes of
         Just athleteAndTimePairs ->
             td
-                (numberCheckerUnderlineAttributes (Just "scanned-athlete") numberCheckerId highlightedNumberCheckerId)
+                []
                 (List.map athleteItem athleteAndTimePairs)
 
         Nothing ->
-            emptyBarcodeScannerCell numberCheckerId highlightedNumberCheckerId
+            emptyBarcodeScannerCell
 
 
-cell : String -> Maybe Int -> Maybe Int -> Html a
-cell contents numberCheckerId highlightedNumberCheckerId =
-    td (numberCheckerUnderlineAttributes Nothing numberCheckerId highlightedNumberCheckerId) [ text contents ]
+cell : String -> Html a
+cell contents =
+    td [] [ text contents ]
 
 
-timeCell : String -> Int -> Maybe Int -> Maybe Int -> Html a
-timeCell className time numberCheckerId highlightedNumberCheckerId =
-    td (numberCheckerUnderlineAttributes (Just className) numberCheckerId highlightedNumberCheckerId) [ text (formatTime time) ]
+timeCell : String -> Int -> Html a
+timeCell className time =
+    td [ class className ] [ text (formatTime time) ]
 
 
-emptyBarcodeScannerCell : Maybe Int -> Maybe Int -> Html a
-emptyBarcodeScannerCell maybeNumberCheckerId highlightedNumberCheckerId =
-    td (numberCheckerUnderlineAttributes (Just "no-scanned-athlete") maybeNumberCheckerId highlightedNumberCheckerId) [ text "−" ]
+emptyBarcodeScannerCell : Html a
+emptyBarcodeScannerCell =
+    td [ class "no-scanned-athlete" ] [ text "−" ]
 
 
 emptyNumberCell : Html a
@@ -77,15 +77,15 @@ emptyNumberCell =
     td [ class "empty-cell" ] [ text "–" ]
 
 
-checkboxCell : Int -> Int -> Bool -> Maybe Int -> Maybe Int -> Html Msg
-checkboxCell time index included numberCheckerId highlightedNumberCheckerId =
+checkboxCell : Int -> Int -> Bool -> Html Msg
+checkboxCell time index included =
     let
         idText : String
         idText =
             "toggle_checkbox_" ++ String.fromInt index
     in
     td
-        (numberCheckerUnderlineAttributes (Just "mismatch") numberCheckerId highlightedNumberCheckerId)
+        [ class "mismatch" ]
         [ input
             [ type_ "checkbox"
             , checked included
@@ -148,36 +148,6 @@ removeTimerButton which =
     }
 
 
-numberCheckerUnderlineClass : Int -> Maybe Int -> String
-numberCheckerUnderlineClass numberCheckerId highlightedNumberCheckerId =
-    let
-        highlightClassPrefix : String
-        highlightClassPrefix =
-            if highlightedNumberCheckerId == Just numberCheckerId then
-                "highlighted "
-
-            else
-                ""
-    in
-    highlightClassPrefix ++ "underlined number-checker-row-" ++ String.fromInt numberCheckerId
-
-
-numberCheckerUnderlineAttributes : Maybe String -> Maybe Int -> Maybe Int -> List (Html.Attribute a)
-numberCheckerUnderlineAttributes className numberCheckerId highlightedNumberCheckerId =
-    case ( className, numberCheckerId ) of
-        ( Just someClass, Just someNumberCheckerId ) ->
-            [ class (someClass ++ " " ++ numberCheckerUnderlineClass someNumberCheckerId highlightedNumberCheckerId) ]
-
-        ( Nothing, Just someNumberCheckerId ) ->
-            [ class (numberCheckerUnderlineClass someNumberCheckerId highlightedNumberCheckerId) ]
-
-        ( Just someClass, Nothing ) ->
-            [ class someClass ]
-
-        ( Nothing, Nothing ) ->
-            []
-
-
 rowWithNoTimerTime : BarcodeScannerData -> Int -> Int -> Html Msg
 rowWithNoTimerTime barcodeScannerData blankTimeColumns position =
     let
@@ -185,7 +155,7 @@ rowWithNoTimerTime barcodeScannerData blankTimeColumns position =
         cells =
             intCell position
                 :: List.repeat blankTimeColumns (plainCell "")
-                ++ [ barcodeScannerCell barcodeScannerData position Nothing Nothing ]
+                ++ [ barcodeScannerCell barcodeScannerData position ]
     in
     tr [] cells
 
@@ -223,8 +193,8 @@ singleTimerTableBody timerTimes barcodeScannerData =
     tbody [] (rowsWithTimers ++ additionalRows)
 
 
-mergedTableBody : Maybe Int -> BarcodeScannerData -> List MergedTableRow -> Html Msg
-mergedTableBody highlightedNumberCheckerId barcodeScannerData mergedTable =
+mergedTableBody : BarcodeScannerData -> List MergedTableRow -> Html Msg
+mergedTableBody barcodeScannerData mergedTable =
     let
         maxPosition : Int
         maxPosition =
@@ -239,7 +209,7 @@ mergedTableBody highlightedNumberCheckerId barcodeScannerData mergedTable =
 
         rowsWithTimers : List (Html Msg)
         rowsWithTimers =
-            List.map (mergedTimerRow highlightedNumberCheckerId barcodeScannerData) mergedTable
+            List.map (mergedTimerRow barcodeScannerData) mergedTable
 
         additionalRows : List (Html Msg)
         additionalRows =
@@ -254,8 +224,8 @@ timerButtons whichTimer =
     [ downloadTimerButton whichTimer, removeTimerButton whichTimer ]
 
 
-timerTable : Timers -> BarcodeScannerData -> Maybe Int -> Html Msg
-timerTable timers barcodeScannerData highlightedNumberCheckerId =
+timerTable : Timers -> BarcodeScannerData -> Html Msg
+timerTable timers barcodeScannerData =
     let
         appendAthletesHeader : List TableHeaderWithButtons -> List TableHeaderWithButtons
         appendAthletesHeader headers =
@@ -300,7 +270,7 @@ timerTable timers barcodeScannerData highlightedNumberCheckerId =
                         , TableHeaderWithButtons ("Timer 2: " ++ doubleTimerData.file2.name) doubleTimerData.file2.filename (timerButtons TimerTwo)
                         ]
                     )
-                , mergedTableBody highlightedNumberCheckerId barcodeScannerData doubleTimerData.mergedTableRows
+                , mergedTableBody barcodeScannerData doubleTimerData.mergedTableRows
                 ]
 
 
@@ -367,19 +337,19 @@ timerRow barcodeScannerData index time =
                 firstTwoCells
 
             else
-                firstTwoCells ++ [ barcodeScannerCell barcodeScannerData (index + 1) Nothing Nothing ]
+                firstTwoCells ++ [ barcodeScannerCell barcodeScannerData (index + 1) ]
     in
     tr [] rowCells
 
 
-mergedTimerRow : Maybe Int -> BarcodeScannerData -> MergedTableRow -> Html Msg
-mergedTimerRow highlightedNumberCheckerId barcodeScannerData row =
+mergedTimerRow : BarcodeScannerData -> MergedTableRow -> Html Msg
+mergedTimerRow barcodeScannerData row =
     let
         indexCell : Html Msg
         indexCell =
             case row.rowNumber of
                 Just num ->
-                    cell (String.fromInt num) row.underlines.actual highlightedNumberCheckerId
+                    cell (String.fromInt num)
 
                 Nothing ->
                     emptyNumberCell
@@ -388,10 +358,10 @@ mergedTimerRow highlightedNumberCheckerId barcodeScannerData row =
         thisBarcodeScannerCell =
             case row.rowNumber of
                 Just num ->
-                    barcodeScannerCell barcodeScannerData num row.underlines.position highlightedNumberCheckerId
+                    barcodeScannerCell barcodeScannerData num
 
                 Nothing ->
-                    emptyBarcodeScannerCell Nothing Nothing
+                    emptyBarcodeScannerCell
 
         appendScannerCell : List (Html Msg) -> List (Html Msg)
         appendScannerCell cells =
@@ -407,8 +377,8 @@ mergedTimerRow highlightedNumberCheckerId barcodeScannerData row =
                 firstThreeCells : List (Html Msg)
                 firstThreeCells =
                     [ indexCell
-                    , timeCell className time1 row.underlines.timer1 highlightedNumberCheckerId
-                    , timeCell className time2 row.underlines.timer2 highlightedNumberCheckerId
+                    , timeCell className time1
+                    , timeCell className time2
                     ]
             in
             tr [] (appendScannerCell firstThreeCells)
@@ -428,7 +398,7 @@ mergedTimerRow highlightedNumberCheckerId barcodeScannerData row =
                 []
                 (appendScannerCell
                     [ indexCell
-                    , checkboxCell time1 row.index row.included row.underlines.timer1 highlightedNumberCheckerId
+                    , checkboxCell time1 row.index row.included
                     , plainCell ""
                     ]
                 )
@@ -439,13 +409,13 @@ mergedTimerRow highlightedNumberCheckerId barcodeScannerData row =
                 (appendScannerCell
                     [ indexCell
                     , plainCell ""
-                    , checkboxCell time2 row.index row.included row.underlines.timer2 highlightedNumberCheckerId
+                    , checkboxCell time2 row.index row.included
                     ]
                 )
 
 
-timersView : Timers -> BarcodeScannerData -> Problems -> Maybe Int -> Html Msg
-timersView timers barcodeScannerData problems highlightedNumberCheckerId =
+timersView : Timers -> BarcodeScannerData -> Problems -> Html Msg
+timersView timers barcodeScannerData problems =
     let
         flipTimersButton : Html Msg
         flipTimersButton =
@@ -482,7 +452,7 @@ timersView timers barcodeScannerData problems highlightedNumberCheckerId =
         []
         [ h3 [] [ text headerText, div [ class "timer-buttons" ] buttons ]
         , timerProblemsView problems
-        , timerTable timers barcodeScannerData highlightedNumberCheckerId
+        , timerTable timers barcodeScannerData
         , div
             []
             [ timerMatchSummaryView timers ]

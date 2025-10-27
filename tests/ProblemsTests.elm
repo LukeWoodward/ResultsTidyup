@@ -27,7 +27,7 @@ import Problems
         )
 import Test exposing (Test, describe, test)
 import TestData exposing (createBarcodeScannerDataFromFiles, doubleTimers, ordinaryFileLine, toPosix)
-import Timer exposing (MergeEntry(..), MergedTableRow, TimerFile, TimerMatchSummary, Timers(..), WhichTimer(..), noUnderlines)
+import Timer exposing (MergeEntry(..), MergedTableRow, TimerFile, TimerMatchSummary, Timers(..), WhichTimer(..))
 
 
 wrapMergeEntriesInTable : List MergeEntry -> List MergedTableRow
@@ -35,7 +35,7 @@ wrapMergeEntriesInTable entries =
     let
         wrapRow : Int -> MergeEntry -> MergedTableRow
         wrapRow index entry =
-            MergedTableRow index (Just (index + 1)) entry True noUnderlines
+            MergedTableRow index (Just (index + 1)) entry True
     in
     List.indexedMap wrapRow entries
 
@@ -45,12 +45,12 @@ doubleTimersForTimeLookupTests =
     let
         expectedEntries : List MergedTableRow
         expectedEntries =
-            [ { index = 0, rowNumber = Just 1, entry = ExactMatch 191, included = True, underlines = noUnderlines }
-            , { index = 1, rowNumber = Just 2, entry = NotNearMatch 469 463, included = True, underlines = noUnderlines }
-            , { index = 2, rowNumber = Nothing, entry = OneWatchOnly TimerOne 603, included = False, underlines = noUnderlines }
-            , { index = 3, rowNumber = Just 3, entry = ExactMatch 746, included = True, underlines = noUnderlines }
-            , { index = 4, rowNumber = Nothing, entry = OneWatchOnly TimerTwo 791, included = False, underlines = noUnderlines }
-            , { index = 5, rowNumber = Just 4, entry = ExactMatch 882, included = True, underlines = noUnderlines }
+            [ { index = 0, rowNumber = Just 1, entry = ExactMatch 191, included = True }
+            , { index = 1, rowNumber = Just 2, entry = NotNearMatch 469 463, included = True }
+            , { index = 2, rowNumber = Nothing, entry = OneWatchOnly TimerOne 603, included = False }
+            , { index = 3, rowNumber = Just 3, entry = ExactMatch 746, included = True }
+            , { index = 4, rowNumber = Nothing, entry = OneWatchOnly TimerTwo 791, included = False }
+            , { index = 5, rowNumber = Just 4, entry = ExactMatch 882, included = True }
             ]
 
         expectedMatchSummary : TimerMatchSummary

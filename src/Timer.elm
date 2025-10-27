@@ -14,18 +14,14 @@ module Timer exposing
     , generateInitialTable
     , header
     , merge
-    , noUnderlines
     , outputMergedTable
     , outputSingleTimerData
     , readTimerData
     , toggleRowInTable
-    , underlineTable
     )
 
-import Dict exposing (Dict)
 import Error exposing (Error)
 import FileHandling exposing (crlf, isPossibleBinary, splitLines)
-import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import Result.Extra
 import TimeHandling exposing (formatTimeWithHours, parseTime)
 
@@ -84,26 +80,12 @@ type Timers
     | Double DoubleTimerData
 
 
-type alias Underlines =
-    { position : Maybe Int
-    , timer1 : Maybe Int
-    , timer2 : Maybe Int
-    , actual : Maybe Int
-    }
-
-
 type alias MergedTableRow =
     { index : Int
     , rowNumber : Maybe Int
     , entry : MergeEntry
     , included : Bool
-    , underlines : Underlines
     }
-
-
-noUnderlines : Underlines
-noUnderlines =
-    Underlines Nothing Nothing Nothing Nothing
 
 
 ignorableLinePrefixes : List String
@@ -180,7 +162,7 @@ defaultMaxNotNearMatchDistance =
 
 createInitialTableRow : Int -> MergeEntry -> MergedTableRow
 createInitialTableRow index entry =
-    MergedTableRow index (Just (index + 1)) entry True noUnderlines
+    MergedTableRow index (Just (index + 1)) entry True
 
 
 generateInitialTable : List MergeEntry -> List MergedTableRow
@@ -309,143 +291,6 @@ flipMatchSummary matchSummary =
         | timer1Only = matchSummary.timer2Only
         , timer2Only = matchSummary.timer1Only
     }
-
-
-
--- Each dictionary maps an index within the timer-1, timer-2 and
--- finish-tokens positions to the number-checker entry ID associated.
-
-
-type alias NumberDicts =
-    { timer1 : Dict Int Int
-    , timer2 : Dict Int Int
-    , finishTokens : Dict Int Int
-    , actual : Dict Int Int
-    }
-
-
-getNextEntry : Int -> Int -> Dict Int Int -> Maybe Int
-getNextEntry currentPosn nextPosn numberDict =
-    if nextPosn > currentPosn then
-        Dict.get nextPosn numberDict
-
-    else
-        Nothing
-
-
-underlineTableInternal : NumberDicts -> Int -> Int -> Int -> Int -> List MergedTableRow -> List MergedTableRow
-underlineTableInternal numberDicts sw1Posn sw2Posn ftoksPosn actualPosn mergedRows =
-    case mergedRows of
-        [] ->
-            []
-
-        firstRow :: restRows ->
-            let
-                nextSw1Posn : Int
-                nextSw1Posn =
-                    case firstRow.entry of
-                        ExactMatch _ ->
-                            sw1Posn + 1
-
-                        NearMatch _ _ ->
-                            sw1Posn + 1
-
-                        NotNearMatch _ _ ->
-                            sw1Posn + 1
-
-                        OneWatchOnly TimerOne _ ->
-                            sw1Posn + 1
-
-                        OneWatchOnly TimerTwo _ ->
-                            sw1Posn
-
-                nextSw2Posn : Int
-                nextSw2Posn =
-                    case firstRow.entry of
-                        ExactMatch _ ->
-                            sw2Posn + 1
-
-                        NearMatch _ _ ->
-                            sw2Posn + 1
-
-                        NotNearMatch _ _ ->
-                            sw2Posn + 1
-
-                        OneWatchOnly TimerOne _ ->
-                            sw2Posn
-
-                        OneWatchOnly TimerTwo _ ->
-                            sw2Posn + 1
-
-                nextFtoksPosn : Int
-                nextFtoksPosn =
-                    if firstRow.included then
-                        ftoksPosn + 1
-
-                    else
-                        ftoksPosn
-
-                nextActualPosn : Int
-                nextActualPosn =
-                    if firstRow.included then
-                        actualPosn + 1
-
-                    else
-                        actualPosn
-
-                newUnderlines : Underlines
-                newUnderlines =
-                    { timer1 = getNextEntry sw1Posn nextSw1Posn numberDicts.timer1
-                    , timer2 = getNextEntry sw2Posn nextSw2Posn numberDicts.timer2
-                    , position = getNextEntry ftoksPosn nextFtoksPosn numberDicts.finishTokens
-                    , actual = getNextEntry actualPosn nextActualPosn numberDicts.actual
-                    }
-
-                underlinedFirstRow : MergedTableRow
-                underlinedFirstRow =
-                    { firstRow | underlines = newUnderlines }
-
-                underlinedRestRows : List MergedTableRow
-                underlinedRestRows =
-                    underlineTableInternal numberDicts nextSw1Posn nextSw2Posn nextFtoksPosn nextActualPosn restRows
-            in
-            underlinedFirstRow :: underlinedRestRows
-
-
-createMappingDict : List Int -> Dict Int Int
-createMappingDict nums =
-    List.indexedMap (\index num -> ( num, index + 1 )) nums
-        |> Dict.fromList
-
-
-underlineTable : List AnnotatedNumberCheckerEntry -> List MergedTableRow -> List MergedTableRow
-underlineTable numberCheckerEntries mergedRows =
-    let
-        timer1Numbers : Dict Int Int
-        timer1Numbers =
-            numberCheckerEntries
-                |> List.map .timer1
-                |> createMappingDict
-
-        timer2Numbers : Dict Int Int
-        timer2Numbers =
-            numberCheckerEntries
-                |> List.map .timer2
-                |> createMappingDict
-
-        finishTokensNumbers : Dict Int Int
-        finishTokensNumbers =
-            numberCheckerEntries
-                |> List.map .finishTokens
-                |> createMappingDict
-
-        actualNumbers : Dict Int Int
-        actualNumbers =
-            numberCheckerEntries
-                |> List.map .actual
-                |> createMappingDict
-    in
-    underlineTableInternal (NumberDicts timer1Numbers timer2Numbers finishTokensNumbers actualNumbers) 0 0 0 0 mergedRows
 
 
 header : List String

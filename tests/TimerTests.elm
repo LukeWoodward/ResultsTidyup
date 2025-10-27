@@ -35,17 +35,17 @@ entry5 =
 
 sampleMergedTable : List MergedTableRow
 sampleMergedTable =
-    [ MergedTableRow 0 (Just 1) entry1 True noUnderlines
-    , MergedTableRow 1 (Just 2) entry2 True noUnderlines
-    , MergedTableRow 2 (Just 3) entry3 True noUnderlines
-    , MergedTableRow 3 (Just 4) entry4 True noUnderlines
-    , MergedTableRow 4 (Just 5) entry5 True noUnderlines
+    [ MergedTableRow 0 (Just 1) entry1 True
+    , MergedTableRow 1 (Just 2) entry2 True
+    , MergedTableRow 2 (Just 3) entry3 True
+    , MergedTableRow 3 (Just 4) entry4 True
+    , MergedTableRow 4 (Just 5) entry5 True
     ]
 
 
 wrapEntry : MergeEntry -> MergedTableRow
 wrapEntry entry =
-    MergedTableRow 0 (Just 1) entry True noUnderlines
+    MergedTableRow 0 (Just 1) entry True
 
 
 suite : Test
@@ -113,7 +113,7 @@ suite =
             , test "generates singleton table from single list of merge entries" <|
                 \() ->
                     generateInitialTable [ entry1 ]
-                        |> Expect.equal [ MergedTableRow 0 (Just 1) entry1 True noUnderlines ]
+                        |> Expect.equal [ MergedTableRow 0 (Just 1) entry1 True ]
             , test "generates table with three rows from list of three merge entries" <|
                 \() ->
                     generateInitialTable [ entry1, entry2, entry3, entry4, entry5 ]
@@ -132,31 +132,31 @@ suite =
                 \() ->
                     toggleRowInTable 3 sampleMergedTable
                         |> Expect.equal
-                            [ MergedTableRow 0 (Just 1) entry1 True noUnderlines
-                            , MergedTableRow 1 (Just 2) entry2 True noUnderlines
-                            , MergedTableRow 2 (Just 3) entry3 True noUnderlines
-                            , MergedTableRow 3 Nothing entry4 False noUnderlines
-                            , MergedTableRow 4 (Just 4) entry5 True noUnderlines
+                            [ MergedTableRow 0 (Just 1) entry1 True
+                            , MergedTableRow 1 (Just 2) entry2 True
+                            , MergedTableRow 2 (Just 3) entry3 True
+                            , MergedTableRow 3 Nothing entry4 False
+                            , MergedTableRow 4 (Just 4) entry5 True
                             ]
             , test "toggles out watch-2-only row and renumbers remaining rows" <|
                 \() ->
                     toggleRowInTable 2 sampleMergedTable
                         |> Expect.equal
-                            [ MergedTableRow 0 (Just 1) entry1 True noUnderlines
-                            , MergedTableRow 1 (Just 2) entry2 True noUnderlines
-                            , MergedTableRow 2 Nothing entry3 False noUnderlines
-                            , MergedTableRow 3 (Just 3) entry4 True noUnderlines
-                            , MergedTableRow 4 (Just 4) entry5 True noUnderlines
+                            [ MergedTableRow 0 (Just 1) entry1 True
+                            , MergedTableRow 1 (Just 2) entry2 True
+                            , MergedTableRow 2 Nothing entry3 False
+                            , MergedTableRow 3 (Just 3) entry4 True
+                            , MergedTableRow 4 (Just 4) entry5 True
                             ]
             , test "toggles back in watch-1-only row" <|
                 \() ->
                     let
                         previousData =
-                            [ MergedTableRow 0 (Just 1) entry1 True noUnderlines
-                            , MergedTableRow 1 (Just 2) entry2 True noUnderlines
-                            , MergedTableRow 2 (Just 3) entry3 True noUnderlines
-                            , MergedTableRow 3 Nothing entry4 False noUnderlines
-                            , MergedTableRow 4 (Just 4) entry5 True noUnderlines
+                            [ MergedTableRow 0 (Just 1) entry1 True
+                            , MergedTableRow 1 (Just 2) entry2 True
+                            , MergedTableRow 2 (Just 3) entry3 True
+                            , MergedTableRow 3 Nothing entry4 False
+                            , MergedTableRow 4 (Just 4) entry5 True
                             ]
                     in
                     toggleRowInTable 3 previousData
@@ -165,11 +165,11 @@ suite =
                 \() ->
                     let
                         previousData =
-                            [ MergedTableRow 0 (Just 1) entry1 True noUnderlines
-                            , MergedTableRow 1 (Just 2) entry2 True noUnderlines
-                            , MergedTableRow 2 Nothing entry3 False noUnderlines
-                            , MergedTableRow 3 (Just 3) entry4 True noUnderlines
-                            , MergedTableRow 4 (Just 4) entry5 True noUnderlines
+                            [ MergedTableRow 0 (Just 1) entry1 True
+                            , MergedTableRow 1 (Just 2) entry2 True
+                            , MergedTableRow 2 Nothing entry3 False
+                            , MergedTableRow 3 (Just 3) entry4 True
+                            , MergedTableRow 4 (Just 4) entry5 True
                             ]
                     in
                     toggleRowInTable 2 previousData
@@ -437,47 +437,47 @@ suite =
                         |> Expect.equal (String.join crlf (header ++ [ footer ]))
             , test "outputMergedTable of a single exact-match time is the time" <|
                 \() ->
-                    outputMergedTable [ MergedTableRow 1 (Just 1) (ExactMatch 517) True noUnderlines ]
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (ExactMatch 517) True ]
                         |> Expect.equal (String.join crlf (header ++ [ "1,01/01/2001 00:08:37,00:08:37", footer ]))
             , test "outputMergedTable of a single near-match time with the first smaller is the first time" <|
                 \() ->
-                    outputMergedTable [ MergedTableRow 1 (Just 1) (NearMatch 662 663) True noUnderlines ]
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (NearMatch 662 663) True ]
                         |> Expect.equal (String.join crlf (header ++ [ "1,01/01/2001 00:11:02,00:11:02", footer ]))
             , test "outputMergedTable of a single near-match time with the second smaller is the second time" <|
                 \() ->
-                    outputMergedTable [ MergedTableRow 1 (Just 1) (NearMatch 663 662) True noUnderlines ]
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (NearMatch 663 662) True ]
                         |> Expect.equal (String.join crlf (header ++ [ "1,01/01/2001 00:11:02,00:11:02", footer ]))
             , test "outputMergedTable of a single not-near-match time with the first smaller is the first time" <|
                 \() ->
-                    outputMergedTable [ MergedTableRow 1 (Just 1) (NotNearMatch 772 779) True noUnderlines ]
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (NotNearMatch 772 779) True ]
                         |> Expect.equal (String.join crlf (header ++ [ "1,01/01/2001 00:12:52,00:12:52", footer ]))
             , test "outputMergedTable of a single not-near-match time with the second smaller is the second time" <|
                 \() ->
-                    outputMergedTable [ MergedTableRow 1 (Just 1) (NotNearMatch 779 772) True noUnderlines ]
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (NotNearMatch 779 772) True ]
                         |> Expect.equal (String.join crlf (header ++ [ "1,01/01/2001 00:12:52,00:12:52", footer ]))
             , test "outputMergedTable of a single time only on timer 1 is the single time" <|
                 \() ->
-                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneWatchOnly TimerOne 588) True noUnderlines ]
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneWatchOnly TimerOne 588) True ]
                         |> Expect.equal (String.join crlf (header ++ [ "1,01/01/2001 00:09:48,00:09:48", footer ]))
             , test "outputMergedTable of a single time only on timer 2 is the single time" <|
                 \() ->
-                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneWatchOnly TimerTwo 588) True noUnderlines ]
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneWatchOnly TimerTwo 588) True ]
                         |> Expect.equal (String.join crlf (header ++ [ "1,01/01/2001 00:09:48,00:09:48", footer ]))
             , test "outputMergedTable of a non-included single time only on timer 1 is empty" <|
                 \() ->
-                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneWatchOnly TimerOne 588) False noUnderlines ]
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneWatchOnly TimerOne 588) False ]
                         |> Expect.equal (String.join crlf (header ++ [ footer ]))
             , test "outputMergedTable of a non-included single time only on timer 2 is empty" <|
                 \() ->
-                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneWatchOnly TimerTwo 588) False noUnderlines ]
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneWatchOnly TimerTwo 588) False ]
                         |> Expect.equal (String.join crlf (header ++ [ footer ]))
             , test "outputMergedTable of a single time on timer 1 with no row number is empty" <|
                 \() ->
-                    outputMergedTable [ MergedTableRow 1 Nothing (OneWatchOnly TimerOne 588) True noUnderlines ]
+                    outputMergedTable [ MergedTableRow 1 Nothing (OneWatchOnly TimerOne 588) True ]
                         |> Expect.equal (String.join crlf (header ++ [ footer ]))
             , test "outputMergedTable of a single time on timer 2 with no row number is empty" <|
                 \() ->
-                    outputMergedTable [ MergedTableRow 1 Nothing (OneWatchOnly TimerTwo 588) True noUnderlines ]
+                    outputMergedTable [ MergedTableRow 1 Nothing (OneWatchOnly TimerTwo 588) True ]
                         |> Expect.equal (String.join crlf (header ++ [ footer ]))
             ]
         ]

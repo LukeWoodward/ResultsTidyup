@@ -6,8 +6,7 @@ import Timer exposing (WhichTimer)
 
 
 type ElementToFocus
-    = NumberCheckerManualEntryRowFirstCell
-    | BarcodeScannerEditingAthleteInput
+    = BarcodeScannerEditingAthleteInput
     | PasteFileDialogTextArea
 
 

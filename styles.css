@@ -33,13 +33,11 @@ table.table.timer-times {
 }
 
 table.table.timer-times,
-table.table.number-checker-table,
 table.table.barcode-scanner-table {
     width: auto;
 }
 
-table.table.timer-times>tbody>tr>td,
-table.table.number-checker-table>tbody>tr>td {
+table.table.timer-times>tbody>tr>td {
     text-align: right;
 }
 
@@ -71,14 +69,6 @@ table.table.timer-times>tbody>tr>td>label {
 
 td.empty-cell {
     color: #dddddd;
-}
-
-.table-bordered>tbody>tr>td.underlined {
-    border-bottom: 5px solid black;
-}
-
-.table-bordered>tbody>tr>td.underlined.highlighted {
-    border-bottom: 5px solid red;
 }
 
 td.zero-delta {
@@ -124,32 +114,6 @@ input#eventTimeBox.time-error {
 input#eventDateBox.date-error:focus,
 input#eventTimeBox.time-error:focus {
     background-color: inherit;
-}
-
-div.no-number-checker-entries {
-    text-align: left;
-}
-
-input.number-checker-manual-entry {
-    max-width: 120px;
-    width: 120px;
-}
-
-input.number-checker-manual-entry.number-error {
-    background-color: #ffdddd;
-}
-
-input.number-checker-manual-entry.number-error:focus {
-    background-color: inherit;
-}
-
-table.table.number-checker-table>tbody>tr.number-checker-manual-entry-row>td {
-    text-align: left;
-}
-
-button.number-checker-command {
-    margin-left: 3px;
-    margin-right: 3px;
 }
 
 input#eventTimeBox {

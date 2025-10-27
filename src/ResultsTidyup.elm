@@ -18,7 +18,6 @@ import Json.Decode exposing (Decoder, andThen, fail, field, int, succeed)
 import Modals exposing (modalBackdrop, showModalDialog)
 import Model exposing (Model, initModel)
 import Msg exposing (Msg(..))
-import NumberCheckerView
 import PasteFileModal
 import Ports exposing (filesDropped)
 import Task exposing (Task)
@@ -82,9 +81,6 @@ focus elementToFocus =
         elementId : String
         elementId =
             case elementToFocus of
-                NumberCheckerManualEntryRowFirstCell ->
-                    NumberCheckerView.firstManualEntryCellId
-
                 BarcodeScannerEditingAthleteInput ->
                     BarcodeScannerEditModal.athleteInputId
 
@@ -200,7 +196,7 @@ view model =
                 div [] []
 
             else
-                timersView model.timers model.barcodeScannerData model.problems model.highlightedNumberCheckerId
+                timersView model.timers model.barcodeScannerData model.problems
 
         scannersItem : Html Msg
         scannersItem =

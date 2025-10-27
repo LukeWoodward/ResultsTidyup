@@ -183,14 +183,5 @@ suite =
                             (validBarcodeScannerData1 ++ "\u{0000}\u{0000}\u{0000}Z\u{0001}j\u{0007}\u{0000}\u{0003}\u{0000}$\u{0000}")
                             "BINARY_FILE"
                 ]
-            , describe "Number checker file tests"
-                [ test "Can upload a single number checker file" <|
-                    \() ->
-                        handleFilesAdded [ AddedFile "numberChecker1.txt" "Name1" validNumberCheckerData ] initModel
-                            |> Expect.equal { initModel | numberCheckerEntries = parsedNumberCheckerData }
-                , test "Cannot upload an invalid number checker file" <|
-                    \() ->
-                        runTestWithSingleError initModel "numberChecker1.txt" invalidNumberCheckerData "WRONG_PART_COUNT"
-                ]
             ]
         ]

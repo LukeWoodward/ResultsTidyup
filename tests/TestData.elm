@@ -1,6 +1,5 @@
 module TestData exposing
     ( createBarcodeScannerDataFromFiles
-    , createNumberCheckerManualEntryRow
     , defaultDateTime
     , defaultMatchSummary
     , doubleTimers
@@ -10,21 +9,15 @@ module TestData exposing
     , expectedParsedSampleTimerData
     , flippedDoubleTimers
     , invalidBarcodeScannerData
-    , invalidNumberCheckerData
     , ordinaryFileLine
     , parsedBarcodeScannerData1
     , parsedBarcodeScannerData1And2
     , parsedBarcodeScannerDataWithIncompleteRecordFirst
     , parsedInvalidBarcodeScannerData
-    , parsedNumberCheckerData
     , parsedTimerTimes1
     , parsedTimerTimes2
     , recentTime
     , sampleDownloadedTimerData
-    , sampleNumberCheckerData
-    , sampleNumberCheckerDataDecremented
-    , sampleNumberCheckerDataIncremented
-    , sampleNumberCheckerDataWithSecondItemRemoved
     , sampleTimerData
     , sampleTimerData2
     , singleTimer
@@ -33,7 +26,6 @@ module TestData exposing
     , validBarcodeScannerData1
     , validBarcodeScannerData2
     , validBarcodeScannerDataWithIncompleteRecordFirst
-    , validNumberCheckerData
     )
 
 import BarcodeScanner
@@ -46,12 +38,9 @@ import BarcodeScanner
         , LineContents(..)
         , regenerate
         )
-import DataEntry exposing (integerEntryFromInt)
 import Dict
 import FileHandling exposing (crlf)
 import Iso8601
-import Model exposing (NumberCheckerManualEntryRow)
-import NumberChecker exposing (AnnotatedNumberCheckerEntry)
 import Time exposing (Posix)
 import Timer
     exposing
@@ -62,7 +51,6 @@ import Timer
         , TimerMatchSummary
         , Timers(..)
         , WhichTimer(..)
-        , noUnderlines
         )
 
 
@@ -163,13 +151,13 @@ doubleTimers =
     let
         expectedEntries : List MergedTableRow
         expectedEntries =
-            [ { index = 0, rowNumber = Just 1, entry = ExactMatch 191, included = True, underlines = noUnderlines }
-            , { index = 1, rowNumber = Just 2, entry = NearMatch 464 463, included = True, underlines = noUnderlines }
-            , { index = 2, rowNumber = Just 3, entry = OneWatchOnly TimerOne 603, included = True, underlines = noUnderlines }
-            , { index = 3, rowNumber = Just 4, entry = ExactMatch 746, included = True, underlines = noUnderlines }
-            , { index = 4, rowNumber = Just 5, entry = OneWatchOnly TimerTwo 791, included = True, underlines = noUnderlines }
-            , { index = 5, rowNumber = Just 6, entry = ExactMatch 882, included = True, underlines = noUnderlines }
-            , { index = 6, rowNumber = Just 7, entry = OneWatchOnly TimerOne 1029, included = True, underlines = noUnderlines }
+            [ { index = 0, rowNumber = Just 1, entry = ExactMatch 191, included = True }
+            , { index = 1, rowNumber = Just 2, entry = NearMatch 464 463, included = True }
+            , { index = 2, rowNumber = Just 3, entry = OneWatchOnly TimerOne 603, included = True }
+            , { index = 3, rowNumber = Just 4, entry = ExactMatch 746, included = True }
+            , { index = 4, rowNumber = Just 5, entry = OneWatchOnly TimerTwo 791, included = True }
+            , { index = 5, rowNumber = Just 6, entry = ExactMatch 882, included = True }
+            , { index = 6, rowNumber = Just 7, entry = OneWatchOnly TimerOne 1029, included = True }
             ]
 
         expectedMatchSummary : TimerMatchSummary
@@ -191,13 +179,13 @@ flippedDoubleTimers =
     let
         expectedEntries : List MergedTableRow
         expectedEntries =
-            [ { index = 0, rowNumber = Just 1, entry = ExactMatch 191, included = True, underlines = noUnderlines }
-            , { index = 1, rowNumber = Just 2, entry = NearMatch 463 464, included = True, underlines = noUnderlines }
-            , { index = 2, rowNumber = Just 3, entry = OneWatchOnly TimerTwo 603, included = True, underlines = noUnderlines }
-            , { index = 3, rowNumber = Just 4, entry = ExactMatch 746, included = True, underlines = noUnderlines }
-            , { index = 4, rowNumber = Just 5, entry = OneWatchOnly TimerOne 791, included = True, underlines = noUnderlines }
-            , { index = 5, rowNumber = Just 6, entry = ExactMatch 882, included = True, underlines = noUnderlines }
-            , { index = 6, rowNumber = Just 7, entry = OneWatchOnly TimerTwo 1029, included = True, underlines = noUnderlines }
+            [ { index = 0, rowNumber = Just 1, entry = ExactMatch 191, included = True }
+            , { index = 1, rowNumber = Just 2, entry = NearMatch 463 464, included = True }
+            , { index = 2, rowNumber = Just 3, entry = OneWatchOnly TimerTwo 603, included = True }
+            , { index = 3, rowNumber = Just 4, entry = ExactMatch 746, included = True }
+            , { index = 4, rowNumber = Just 5, entry = OneWatchOnly TimerOne 791, included = True }
+            , { index = 5, rowNumber = Just 6, entry = ExactMatch 882, included = True }
+            , { index = 6, rowNumber = Just 7, entry = OneWatchOnly TimerTwo 1029, included = True }
             ]
 
         expectedMatchSummary : TimerMatchSummary
@@ -316,30 +304,6 @@ parsedInvalidBarcodeScannerData =
         Nothing
 
 
-validNumberCheckerData : String
-validNumberCheckerData =
-    "5,4,5"
-
-
-invalidNumberCheckerData : String
-invalidNumberCheckerData =
-    "1,2,3,4,5,6"
-
-
-parsedNumberCheckerData : List AnnotatedNumberCheckerEntry
-parsedNumberCheckerData =
-    [ { entryNumber = 1
-      , timer1 = 5
-      , timer1Delta = 0
-      , timer2 = 4
-      , timer2Delta = -1
-      , finishTokens = 5
-      , finishTokensDelta = 0
-      , actual = 5
-      }
-    ]
-
-
 recentTime : Time.Posix
 recentTime =
     Time.millisToPosix 1500000000000
@@ -406,130 +370,6 @@ expectedDownloadedTimerData2 =
         ++ "5,01/01/2001 00:14:42,00:14:42"
         ++ crlf
         ++ "ENDOFEVENT,01/01/2001 01:59:59"
-
-
-sampleNumberCheckerData : List AnnotatedNumberCheckerEntry
-sampleNumberCheckerData =
-    [ { entryNumber = 1
-      , timer1 = 5
-      , timer1Delta = 0
-      , timer2 = 4
-      , timer2Delta = -1
-      , finishTokens = 5
-      , finishTokensDelta = 0
-      , actual = 5
-      }
-    , { entryNumber = 2
-      , timer1 = 11
-      , timer1Delta = 0
-      , timer2 = 10
-      , timer2Delta = 0
-      , finishTokens = 11
-      , finishTokensDelta = 0
-      , actual = 11
-      }
-    , { entryNumber = 3
-      , timer1 = 18
-      , timer1Delta = 0
-      , timer2 = 17
-      , timer2Delta = 0
-      , finishTokens = 17
-      , finishTokensDelta = -1
-      , actual = 18
-      }
-    ]
-
-
-sampleNumberCheckerDataIncremented : List AnnotatedNumberCheckerEntry
-sampleNumberCheckerDataIncremented =
-    [ { entryNumber = 1
-      , timer1 = 5
-      , timer1Delta = 0
-      , timer2 = 4
-      , timer2Delta = -1
-      , finishTokens = 5
-      , finishTokensDelta = 0
-      , actual = 5
-      }
-    , { entryNumber = 2
-      , timer1 = 11
-      , timer1Delta = -1
-      , timer2 = 10
-      , timer2Delta = -1
-      , finishTokens = 11
-      , finishTokensDelta = -1
-      , actual = 12
-      }
-    , { entryNumber = 3
-      , timer1 = 18
-      , timer1Delta = 0
-      , timer2 = 17
-      , timer2Delta = 0
-      , finishTokens = 17
-      , finishTokensDelta = -1
-      , actual = 19
-      }
-    ]
-
-
-sampleNumberCheckerDataDecremented : List AnnotatedNumberCheckerEntry
-sampleNumberCheckerDataDecremented =
-    [ { entryNumber = 1
-      , timer1 = 5
-      , timer1Delta = 0
-      , timer2 = 4
-      , timer2Delta = -1
-      , finishTokens = 5
-      , finishTokensDelta = 0
-      , actual = 5
-      }
-    , { entryNumber = 2
-      , timer1 = 11
-      , timer1Delta = 1
-      , timer2 = 10
-      , timer2Delta = 1
-      , finishTokens = 11
-      , finishTokensDelta = 1
-      , actual = 10
-      }
-    , { entryNumber = 3
-      , timer1 = 18
-      , timer1Delta = 0
-      , timer2 = 17
-      , timer2Delta = 0
-      , finishTokens = 17
-      , finishTokensDelta = -1
-      , actual = 17
-      }
-    ]
-
-
-sampleNumberCheckerDataWithSecondItemRemoved : List AnnotatedNumberCheckerEntry
-sampleNumberCheckerDataWithSecondItemRemoved =
-    [ { entryNumber = 1
-      , timer1 = 5
-      , timer1Delta = 0
-      , timer2 = 4
-      , timer2Delta = -1
-      , finishTokens = 5
-      , finishTokensDelta = 0
-      , actual = 5
-      }
-    , { entryNumber = 2
-      , timer1 = 18
-      , timer1Delta = 0
-      , timer2 = 17
-      , timer2Delta = 0
-      , finishTokens = 17
-      , finishTokensDelta = -1
-      , actual = 18
-      }
-    ]
-
-
-createNumberCheckerManualEntryRow : Int -> Int -> Int -> NumberCheckerManualEntryRow
-createNumberCheckerManualEntryRow timer1 timer2 finishTokens =
-    NumberCheckerManualEntryRow (integerEntryFromInt timer1) (integerEntryFromInt timer2) (integerEntryFromInt finishTokens)
 
 
 createBarcodeScannerDataFromFiles : List BarcodeScannerFile -> BarcodeScannerData

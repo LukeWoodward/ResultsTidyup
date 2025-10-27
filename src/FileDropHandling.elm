@@ -4,7 +4,6 @@ import BarcodeScanner exposing (BarcodeScannerData, mergeScannerData, readBarcod
 import Error exposing (Error, FileError, mapError)
 import FileHandling exposing (AddedFile)
 import Model exposing (Model)
-import NumberChecker exposing (AnnotatedNumberCheckerEntry, NumberCheckerEntry, annotate, parseNumberCheckerFile)
 import Parser exposing ((|.), Parser, chompIf, chompWhile, end, run)
 import Regex exposing (Regex)
 import Result.Extra
@@ -113,52 +112,10 @@ handleBarcodeScannerFileAdded addedFile model =
                 { model | lastErrors = model.lastErrors ++ [ mapError addedFile.fileName error ] }
 
 
-isNumberCheckerCharacter : Char -> Bool
-isNumberCheckerCharacter c =
-    Char.isDigit c || c == '\u{000D}' || c == '\n' || c == ','
-
-
-numberCheckerParser : Parser ()
-numberCheckerParser =
-    chompIf isNumberCheckerCharacter
-        |. chompWhile isNumberCheckerCharacter
-        |. end
-
-
-isPossibleNumberCheckerFile : String -> Bool
-isPossibleNumberCheckerFile fileText =
-    Result.Extra.isOk (run numberCheckerParser fileText)
-
-
-handleNumberCheckerFileAdded : String -> String -> Model -> Model
-handleNumberCheckerFileAdded fileName fileText model =
-    let
-        result : Result Error (List NumberCheckerEntry)
-        result =
-            parseNumberCheckerFile fileText
-    in
-    case result of
-        Ok entries ->
-            let
-                annotatedEntries : List AnnotatedNumberCheckerEntry
-                annotatedEntries =
-                    annotate entries
-            in
-            { model | numberCheckerEntries = annotatedEntries }
-
-        Err error ->
-            { model
-                | lastErrors = model.lastErrors ++ [ mapError fileName error ]
-            }
-
-
 handleFileAdded : AddedFile -> Model -> Model
 handleFileAdded addedFile model =
     if String.startsWith "STARTOFEVENT" addedFile.fileText || String.startsWith "I, CP" addedFile.fileText then
         handleTimerFileAdded addedFile model
-
-    else if isPossibleNumberCheckerFile addedFile.fileText then
-        handleNumberCheckerFileAdded addedFile.fileName addedFile.fileText model
 
     else if isPossibleBarcodeScannerFile addedFile.fileText then
         handleBarcodeScannerFileAdded addedFile model
