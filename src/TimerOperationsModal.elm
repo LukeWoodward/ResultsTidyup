@@ -3,7 +3,7 @@ module TimerOperationsModal exposing (timerOperationsButtons, timerOperationsDia
 import DataEntry exposing (Entry, IntegerEntry)
 import Html exposing (Html, div, hr, input, label, span, text)
 import Html.Attributes exposing (checked, class, disabled, for, id, type_, value)
-import Html.Events exposing (onCheck, onClick, onInput)
+import Html.Events exposing (onCheck, onInput)
 import Msg exposing (Msg(..))
 import TimeHandling exposing (formatTime)
 import Timer exposing (WhichTimer(..))
@@ -24,7 +24,7 @@ import TimerOperations
         , isScaleFactorFieldInvalid
         , isSubtractOffsetFieldInvalid
         )
-import ViewCommon exposing (ModalSize(..), normalButton, outlineButton)
+import ViewCommon exposing (ModalSize(..), normalButton, outlineButton, radioButton)
 
 
 timerOperationsDialogTitle : String
@@ -32,24 +32,9 @@ timerOperationsDialogTitle =
     "Timer operations"
 
 
-radioButton : String -> TimerOperation -> String -> TimerOperationEditDetails -> Html Msg
-radioButton elementId operation labelText editDetails =
-    sizedRadioButton "col-6 col-md-4" elementId operation labelText editDetails
-
-
-sizedRadioButton : String -> String -> TimerOperation -> String -> TimerOperationEditDetails -> Html Msg
-sizedRadioButton classNames elementId operation labelText editDetails =
-    div [ class "col form-check", class classNames ]
-        [ input
-            [ id elementId
-            , type_ "radio"
-            , class "form-check-input"
-            , checked (editDetails.operation == operation)
-            , onClick (TimerOperationEdit (ChangeOperation operation))
-            ]
-            []
-        , label [ for elementId, class "form-check-label" ] [ text labelText ]
-        ]
+timerRadioButton : String -> String -> String -> TimerOperation -> TimerOperationEditDetails -> Html Msg
+timerRadioButton containerClass elementId labelText operation editDetails =
+    radioButton containerClass elementId (editDetails.operation == operation) labelText (TimerOperationEdit (ChangeOperation operation))
 
 
 checkBoxRowApplyToLabel : Html Msg
@@ -217,31 +202,31 @@ applyToTimerCheckboxesRow offsetType offsetTypeAsString editDetails =
 
 timerOperationsModalBody : TimerOperationEditDetails -> Html Msg
 timerOperationsModalBody editDetails =
-    div [ class "container-fluid" ]
+    div []
         [ div [ class "row mb-3" ]
-            [ radioButton "addOffsetRadioButton" AddTimerTimeOffset "Add offset to all times:" editDetails
+            [ timerRadioButton "col-6 col-md-4" "addOffsetRadioButton" "Add offset to all times:" AddTimerTimeOffset editDetails
             , inputTextField (.addOffsetDetails >> .offset) AddOffsetField AddTimerTimeOffset isAddOffsetFieldInvalid editDetails
             ]
         , applyToTimerCheckboxesRow AddOffset "Add" editDetails
         , hr [] []
         , div [ class "row mb-3" ]
-            [ radioButton "subtractOffsetRadioButton" SubtractTimerTimeOffset "Subtract offset from all times:" editDetails
+            [ timerRadioButton "col-6 col-md-4" "subtractOffsetRadioButton" "Subtract offset from all times:" SubtractTimerTimeOffset editDetails
             , inputTextField (.subtractOffsetDetails >> .offset) SubtractOffsetField SubtractTimerTimeOffset isSubtractOffsetFieldInvalid editDetails
             ]
         , applyToTimerCheckboxesRow SubtractOffset "Subtract" editDetails
         , hr [] []
         , div [ class "row mb-3" ]
-            [ radioButton "applyScaleFactorRadioButton" ApplyTimerScaleFactor "Apply scale factor to all times:" editDetails
+            [ timerRadioButton "col-6 col-md-4" "applyScaleFactorRadioButton" "Apply scale factor to all times:" ApplyTimerScaleFactor editDetails
             , inputNumberField .manualScaleFactor ScaleFactorField ApplyTimerScaleFactor isScaleFactorFieldInvalid editDetails
             ]
         , hr [] []
         , div [ class "row mb-3" ]
-            [ sizedRadioButton "col-12 col-md-6" "applyDistanceBasedScaleFactorRadioButton" ApplyDistanceBasedTimerScaleFactor "Apply distance-based scale factor to all times:" editDetails
+            [ timerRadioButton "col-12 col-md-6" "applyDistanceBasedScaleFactorRadioButton" "Apply distance-based scale factor to all times:" ApplyDistanceBasedTimerScaleFactor editDetails
             ]
         , div [ class "row mb-4" ]
-            [ div [ class "col-5 col-md-3 offset-1" ] [ text "Expected distance" ]
+            [ div [ class "col-5 col-md-3 offset-1 col-form-label" ] [ text "Expected distance" ]
             , div [ class "col-6 col-md-2" ] [ distanceField .expectedDistance ExpectedDistanceManualField isExpectedDistanceFieldInvalid editDetails ]
-            , div [ class "col-5 col-md-3 offset-1" ] [ text "Actual distance" ]
+            , div [ class "col-5 col-md-3 offset-1 col-form-label" ] [ text "Actual distance" ]
             , div [ class "col-6 col-md-2" ] [ distanceField .actualDistance ActualDistanceField isActualDistanceFieldInvalid editDetails ]
             ]
         , validationErrorRow editDetails.validationError

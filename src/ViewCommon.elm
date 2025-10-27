@@ -8,6 +8,7 @@ module ViewCommon exposing
     , normalIconButton
     , outlineButton
     , plainCell
+    , radioButton
     , role
     , smallButton
     , tableHeader
@@ -15,8 +16,8 @@ module ViewCommon exposing
     , tableHeaders
     )
 
-import Html exposing (Html, a, button, td, text, th, thead)
-import Html.Attributes exposing (attribute, class, href, rel, target, title)
+import Html exposing (Html, a, button, div, input, label, td, text, th, thead)
+import Html.Attributes exposing (attribute, checked, class, for, href, id, rel, target, title, type_)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg)
 
@@ -109,3 +110,20 @@ athleteLink athleteId =
 type ModalSize
     = Standard
     | Large
+
+
+radioButton : String -> String -> Bool -> String -> Msg -> Html Msg
+radioButton containerClass elementId isChecked labelText clickMsg =
+    div [ class containerClass, class "col-form-label" ]
+        [ div [ class "form-check" ]
+            [ input
+                [ type_ "radio"
+                , id elementId
+                , class "form-check-input"
+                , checked isChecked
+                , onClick clickMsg
+                ]
+                []
+            , label [ for elementId, class "form-check-label" ] [ text labelText ]
+            ]
+        ]

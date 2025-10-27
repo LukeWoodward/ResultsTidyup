@@ -1,9 +1,9 @@
 module TokenOperationsModal exposing (tokenOperationsButtons, tokenOperationsDialogSize, tokenOperationsDialogTitle, tokenOperationsModalBody)
 
 import DataEntry exposing (RangeEntry, rangeToString)
-import Html exposing (Html, div, input, label, text)
-import Html.Attributes exposing (checked, class, classList, disabled, for, id, type_, value)
-import Html.Events exposing (onClick, onInput)
+import Html exposing (Html, div, input, text)
+import Html.Attributes exposing (class, classList, disabled, type_, value)
+import Html.Events exposing (onInput)
 import Msg exposing (Msg(..))
 import TokenOperations
     exposing
@@ -18,7 +18,7 @@ import TokenOperations
         , isSwapTokenRange1FieldInvalid
         , isSwapTokenRange2FieldInvalid
         )
-import ViewCommon exposing (ModalSize(..), normalButton, outlineButton)
+import ViewCommon exposing (ModalSize(..), normalButton, outlineButton, radioButton)
 
 
 tokenOperationsDialogTitle : String
@@ -32,12 +32,9 @@ textRow changeType tokenOperationEditDetails textContents =
         [ text textContents ]
 
 
-radioButton : String -> TokenOperationOption -> String -> TokenOperationEditDetails -> Html Msg
-radioButton elementId option labelText tokenOperationEditDetails =
-    div [ class "col-6 col-md-3 col-form-label form-check" ]
-        [ input [ id elementId, class "form-check-input", type_ "radio", checked (tokenOperationEditDetails.operation == option), onClick (TokenOperationEdit (ChangeOperation option)) ] []
-        , label [ for elementId, class "form-check-label" ] [ text labelText ]
-        ]
+tokensRadioButton : String -> TokenOperationOption -> String -> TokenOperationEditDetails -> Html Msg
+tokensRadioButton elementId option labelText tokenOperationEditDetails =
+    radioButton "col-6 col-md-3" elementId (tokenOperationEditDetails.operation == option) labelText (TokenOperationEdit (ChangeOperation option))
 
 
 inputTextField : (TokenOperationEditDetails -> RangeEntry) -> TokenRangeField -> TokenOperationOption -> (TokenOperationEditDetails -> Bool) -> TokenOperationEditDetails -> Html Msg
@@ -130,7 +127,7 @@ tokenOperationsModalBody : TokenOperationEditDetails -> Html Msg
 tokenOperationsModalBody tokenOperationEditDetails =
     div [ class "container-fluid" ]
         [ div [ class "row mb-3" ]
-            [ radioButton "insertTokensRadioButtonId" InsertTokensOption "Insert token(s)" tokenOperationEditDetails
+            [ tokensRadioButton "insertTokensRadioButtonId" InsertTokensOption "Insert token(s)" tokenOperationEditDetails
             , inputTextField .insertTokenRange InsertTokenRangeField InsertTokensOption isInsertTokenRangeFieldInvalid tokenOperationEditDetails
             ]
         , textRow InsertTokensOption
@@ -139,7 +136,7 @@ tokenOperationsModalBody tokenOperationEditDetails =
                 ++ "a person declined to take a finish token and a token wasn't put aside for that finisher."
             )
         , div [ class "row mb-3" ]
-            [ radioButton "removeTokensRadioButtonId" RemoveTokensOption "Remove token(s)" tokenOperationEditDetails
+            [ tokensRadioButton "removeTokensRadioButtonId" RemoveTokensOption "Remove token(s)" tokenOperationEditDetails
             , inputTextField .removeTokenRange RemoveTokenRangeField RemoveTokensOption isRemoveTokenRangeFieldInvalid tokenOperationEditDetails
             ]
         , textRow RemoveTokensOption
@@ -149,7 +146,7 @@ tokenOperationsModalBody tokenOperationEditDetails =
                 ++ "or more than one token was given to a finisher."
             )
         , div [ class "row mb-3" ]
-            [ radioButton "swapTokensRadioButtonId" SwapTokenRangeOption "Swap token(s)" tokenOperationEditDetails
+            [ tokensRadioButton "swapTokensRadioButtonId" SwapTokenRangeOption "Swap token(s)" tokenOperationEditDetails
             , inputTextField .swapTokenRange1 SwapTokenRangeField1 SwapTokenRangeOption isSwapTokenRange1FieldInvalid tokenOperationEditDetails
             , div [ class "col-5 offset-1 col-md-1 offset-md-0 col-form-label" ] [ text " and " ]
             , inputTextField .swapTokenRange2 SwapTokenRangeField2 SwapTokenRangeOption isSwapTokenRange2FieldInvalid tokenOperationEditDetails
@@ -160,7 +157,7 @@ tokenOperationsModalBody tokenOperationEditDetails =
                 ++ "these batches were given out in the wrong order."
             )
         , div [ class "row mb-3" ]
-            [ radioButton "reverseTokensRadioButtonId" ReverseTokenRangeOption "Reverse tokens" tokenOperationEditDetails
+            [ tokensRadioButton "reverseTokensRadioButtonId" ReverseTokenRangeOption "Reverse tokens" tokenOperationEditDetails
             , inputTextField .reverseTokenRange ReverseTokenRangeField ReverseTokenRangeOption isReverseTokenRangeFieldInvalid tokenOperationEditDetails
             ]
         , textRow ReverseTokenRangeOption tokenOperationEditDetails "Use this option if a range of tokens was given out in the reverse order."
