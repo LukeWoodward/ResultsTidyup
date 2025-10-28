@@ -55,6 +55,15 @@ deduceNameFromFilename fileName =
                 _ ->
                     fileName
 
+        dropFirstIfA : List Char -> List Char
+        dropFirstIfA chars =
+            case chars of
+                'A' :: rest ->
+                    rest
+
+                _ ->
+                    chars
+
         replaceTrailingNumberIfNotEntireString : String -> String
         replaceTrailingNumberIfNotEntireString value =
             let
@@ -83,23 +92,40 @@ deduceNameFromFilename fileName =
                 value
 
             else
-                List.reverse trimmedLeadingDigits
+                dropFirstIfA trimmedLeadingDigits
+                    |> List.reverse
                     |> String.fromList
 
         lowerThenUpperLetterRegex : Regex
         lowerThenUpperLetterRegex =
             Regex.fromString "([a-z])([A-Z])"
                 |> Maybe.withDefault Regex.never
+
+        oldVirtualVolunteerPrefix : String
+        oldVirtualVolunteerPrefix =
+            "parkrun Virtual Volunteer - "
+
+        mostlyTidiedFilename : String
+        mostlyTidiedFilename =
+            fileName
+                |> String.replace "vv_Stopwatch_" ""
+                |> String.replace "vv_Scanner_" ""
+                |> String.replace "parkrun_timer_" ""
+                |> String.replace "parkrun_barcode_" ""
+                |> String.replace "junsd_stopwatch" ""
+                |> String.replace oldVirtualVolunteerPrefix ""
+                |> String.replace ".txt" ""
+                |> String.replace ".csv" ""
+                |> Regex.replace lowerThenUpperLetterRegex addSpace
+
+        fileNameMinusAnyAthleteIdSuffix : String
+        fileNameMinusAnyAthleteIdSuffix =
+            if String.startsWith oldVirtualVolunteerPrefix fileName then
+                mostlyTidiedFilename
+
+            else
+                replaceTrailingNumberIfNotEntireString mostlyTidiedFilename
     in
-    fileName
-        |> String.replace "vv_Stopwatch_" ""
-        |> String.replace "vv_Scanner_" ""
-        |> String.replace "parkrun_timer_" ""
-        |> String.replace "parkrun_barcode_" ""
-        |> String.replace "junsd_stopwatch" ""
-        |> String.replace ".txt" ""
-        |> String.replace ".csv" ""
-        |> Regex.replace lowerThenUpperLetterRegex addSpace
-        |> replaceTrailingNumberIfNotEntireString
+    fileNameMinusAnyAthleteIdSuffix
         |> String.replace "_" " "
         |> String.trim

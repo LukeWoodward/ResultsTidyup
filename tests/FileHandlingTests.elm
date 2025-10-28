@@ -49,6 +49,9 @@ suite =
         , test "adjusts a realistic timer file name with barcode number" <|
             \() ->
                 Expect.equal "Joe BLOGGS" (deduceNameFromFilename "vv_Stopwatch_JoeBLOGGS_1234567_20210419110843.csv")
+        , test "adjusts a realistic timer file name with barcode number with A" <|
+            \() ->
+                Expect.equal "Joe BLOGGS" (deduceNameFromFilename "vv_Stopwatch_JoeBLOGGS_A1234567_20210419110843.csv")
         , test "adjusts a realistic timer file name without barcode number" <|
             \() ->
                 Expect.equal "Jane Doe" (deduceNameFromFilename "vv_Stopwatch_JaneDoe__20210419110843.csv")
@@ -61,4 +64,7 @@ suite =
         , test "adjusts an old scanner file name" <|
             \() ->
                 Expect.equal "13042019101640" (deduceNameFromFilename "parkrun_barcode_13042019101640.txt")
+        , test "adjusts an old Virtual Volunteer file name" <|
+            \() ->
+                Expect.equal "Timer Results - 2021-09-16 10-07-54" (deduceNameFromFilename "parkrun Virtual Volunteer - Timer Results - 2021-09-16_10-07-54.csv")
         ]
