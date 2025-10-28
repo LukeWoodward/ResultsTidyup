@@ -25,11 +25,11 @@ type Msg
     | DownloadMergedTimerData Zone Posix
     | FixProblem ProblemFix
     | IgnoreProblem ProblemIgnorance
-    | ChangeBarcodeScannerTab String
+    | ChangeBarcodeScannerTab Int
     | ClearErrors
     | DownloadBarcodeScannerFile String Zone Posix
     | DownloadAllBarcodeScannerData Zone Posix
-    | RemoveBarcodeScannerFile String
+    | RemoveBarcodeScannerFile Int
     | ShowBarcodeScannerEditModal BarcodeScannerRowEditLocation LineContents Bool
     | BarcodeScannerEdit BarcodeScannerEditDetails
     | UpdateRowFromBarcodeScannerEditModal BarcodeScannerRowEditDetails

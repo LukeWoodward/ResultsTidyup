@@ -252,26 +252,47 @@ createAllBarcodeScannerData files zone time =
     DownloadFile barcodeScannerFileMimeType (InteropFile downloadFileName downloadFileContents)
 
 
-removeBarcodeScannerFileWithName : String -> Model -> Model
-removeBarcodeScannerFileWithName fileName model =
+removeBarcodeScannerFileWithIndex : Int -> Model -> Model
+removeBarcodeScannerFileWithIndex index model =
     let
         barcodeScannerData : BarcodeScannerData
         barcodeScannerData =
             model.barcodeScannerData
 
-        newBarcodeScannerTab : Maybe String
+        remainingScannerFiles : List BarcodeScannerFile
+        remainingScannerFiles =
+            List.indexedMap Tuple.pair model.barcodeScannerData.files
+                |> List.filter (\( ix, _ ) -> ix /= index)
+                |> List.map Tuple.second
+
+        determineNewTabIndex : Int -> Maybe Int
+        determineNewTabIndex ix =
+            let
+                remainingFileCount : Int
+                remainingFileCount =
+                    List.length remainingScannerFiles
+            in
+            if remainingFileCount == 0 then
+                Nothing
+
+            else if ix >= remainingFileCount then
+                Just (remainingFileCount - 1)
+
+            else
+                Just index
+
+        newBarcodeScannerTab : Maybe Int
         newBarcodeScannerTab =
-            if Just fileName == model.barcodeScannerTab then
+            if Just index == model.barcodeScannerTab then
                 -- The barcode scanner file we deleted was the one selected.
-                List.head model.barcodeScannerData.files
-                    |> Maybe.map .filename
+                determineNewTabIndex index
 
             else
                 model.barcodeScannerTab
     in
     identifyProblemsIn
         { model
-            | barcodeScannerData = regenerate { barcodeScannerData | files = List.filter (\file -> file.filename /= fileName) model.barcodeScannerData.files }
+            | barcodeScannerData = regenerate { barcodeScannerData | files = remainingScannerFiles }
             , barcodeScannerTab = newBarcodeScannerTab
         }
 
@@ -394,7 +415,7 @@ update msg model =
             ( model, createAllBarcodeScannerData model.barcodeScannerData.files zone time )
 
         RemoveBarcodeScannerFile fileName ->
-            ( removeBarcodeScannerFileWithName fileName model, NoCommand )
+            ( removeBarcodeScannerFileWithIndex fileName model, NoCommand )
 
         ShowBarcodeScannerEditModal location contents isDeleted ->
             ( { model

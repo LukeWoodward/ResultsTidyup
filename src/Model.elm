@@ -30,7 +30,7 @@ type alias Model =
     , barcodeScannerData : BarcodeScannerData
     , problems : Problems
     , ignoredProblems : IgnoredProblems
-    , barcodeScannerTab : Maybe String
+    , barcodeScannerTab : Maybe Int
     , dialogDetails : DialogDetails
     }
 

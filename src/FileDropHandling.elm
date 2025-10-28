@@ -92,11 +92,10 @@ handleBarcodeScannerFileAdded addedFile model =
                     mergedScannerData =
                         mergeScannerData model.barcodeScannerData scannerData
 
-                    newBarcodeScannerTab : Maybe String
+                    newBarcodeScannerTab : Maybe Int
                     newBarcodeScannerTab =
                         if model.barcodeScannerTab == Nothing then
-                            List.head mergedScannerData.files
-                                |> Maybe.map .filename
+                            Just 0
 
                         else
                             model.barcodeScannerTab

@@ -100,8 +100,8 @@ barcodeScannerViewRow fileName line =
         )
 
 
-barcodeScannerView : BarcodeScannerFile -> Html Msg
-barcodeScannerView file =
+barcodeScannerView : Int -> BarcodeScannerFile -> Html Msg
+barcodeScannerView index file =
     let
         header : Html a
         header =
@@ -118,7 +118,7 @@ barcodeScannerView file =
         [ div
             [ class "barcode-scanner-buttons" ]
             [ normalIconButton (RequestCurrentDateAndTime (Commands.DownloadBarcodeScannerFile file.filename)) download "Download"
-            , dangerIconButton (RemoveBarcodeScannerFile file.filename) remove "Remove"
+            , dangerIconButton (RemoveBarcodeScannerFile index) remove "Remove"
             ]
         , table [ class "table table-bordered table-hover barcode-scanner-table" ]
             [ header
@@ -154,23 +154,23 @@ getBarcodeScannerTabClass file =
         "barcode-scanner-file-ok"
 
 
-tabBar : Maybe String -> List BarcodeScannerFile -> Html Msg
+tabBar : Maybe Int -> List BarcodeScannerFile -> Html Msg
 tabBar selectedTab files =
     let
-        tabItem : BarcodeScannerFile -> Html Msg
-        tabItem file =
+        tabItem : Int -> BarcodeScannerFile -> Html Msg
+        tabItem index file =
             li
                 [ class "nav-item" ]
                 [ button
                     [ class "nav-link btn btn-link"
                     , class (getBarcodeScannerTabClass file)
-                    , classList [ ( "active", selectedTab == Just file.filename ) ]
-                    , onClick (ChangeBarcodeScannerTab file.filename)
+                    , classList [ ( "active", selectedTab == Just index ) ]
+                    , onClick (ChangeBarcodeScannerTab index)
                     ]
                     [ span [ title file.filename ] [ text file.name ] ]
                 ]
     in
-    ul [ class "nav nav-tabs" ] (List.map tabItem files)
+    ul [ class "nav nav-tabs" ] (List.indexedMap tabItem files)
 
 
 barcodeScannersView : Model -> Html Msg
@@ -198,12 +198,17 @@ barcodeScannersView model =
 
         selectedBarcodeScannerFile : Maybe BarcodeScannerFile
         selectedBarcodeScannerFile =
-            List.filter (\i -> Just i.filename == model.barcodeScannerTab) model.barcodeScannerData.files
-                |> List.head
+            case model.barcodeScannerTab of
+                Just index ->
+                    List.drop index model.barcodeScannerData.files
+                        |> List.head
+
+                Nothing ->
+                    Nothing
 
         selectedBarcodeScannerView : Html Msg
         selectedBarcodeScannerView =
-            Maybe.map barcodeScannerView selectedBarcodeScannerFile
+            Maybe.map2 barcodeScannerView model.barcodeScannerTab selectedBarcodeScannerFile
                 |> Maybe.withDefault (text "")
     in
     div []

@@ -72,6 +72,11 @@ expectDialogDetails dialogDetails ( model, _ ) =
     Expect.equal dialogDetails model.dialogDetails
 
 
+expectBarcodeScannerTab : Maybe Int -> ( Model, Command ) -> Expectation
+expectBarcodeScannerTab barcodeScannerTab ( model, _ ) =
+    Expect.equal barcodeScannerTab model.barcodeScannerTab
+
+
 setNameInScannerFile : String -> String -> BarcodeScannerFile -> BarcodeScannerFile
 setNameInScannerFile filename name file =
     { file | filename = filename, name = name }
@@ -85,6 +90,7 @@ type Assertion
     | Problems
     | IgnoredProblemsAssertion
     | DialogDetailsAssertion
+    | BarcodeScannerTabAssertion
 
 
 defaultAssertionsExcept : List Assertion -> List (( Model, Command ) -> Expectation)
@@ -127,6 +133,11 @@ defaultAssertionsExcept exceptions =
 
               else
                 Just (expectDialogDetails NoDialog)
+            , if List.member BarcodeScannerTabAssertion exceptions then
+                Nothing
+
+              else
+                Just (expectBarcodeScannerTab Nothing)
             ]
     in
     List.filterMap identity allMaybeAssertions
@@ -243,7 +254,8 @@ suite =
                         update (FilesDropped [ InteropFile droppedFilename validBarcodeScannerData1 ]) initModel
                             |> Expect.all
                                 (expectBarcodeScannerData expectedBarcodeScannerData
-                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
+                                    :: expectBarcodeScannerTab (Just 0)
+                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, BarcodeScannerTabAssertion ]
                                 )
                 , test "Can drop a single barcode scanner file where the first line in the file is incomplete" <|
                     \() ->
@@ -261,8 +273,9 @@ suite =
                         update (FilesDropped [ InteropFile droppedFilename validBarcodeScannerDataWithIncompleteRecordFirst ]) initModel
                             |> Expect.all
                                 (expectBarcodeScannerData expectedBarcodeScannerData
+                                    :: expectBarcodeScannerTab (Just 0)
                                     :: expectProblems { noProblems | athletesMissingPosition = [ "A2044293" ] }
-                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems ]
+                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems, BarcodeScannerTabAssertion ]
                                 )
                 ]
             , describe "Timer file tests"
@@ -287,15 +300,17 @@ suite =
                         update (FilesAdded [ AddedFile "barcodes1.txt" "Name1" validBarcodeScannerData1 ]) initModel
                             |> Expect.all
                                 (expectBarcodeScannerData parsedBarcodeScannerData1
-                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
+                                    :: expectBarcodeScannerTab (Just 0)
+                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, BarcodeScannerTabAssertion ]
                                 )
                 , test "Can add a single barcode scanner file where the first line in the file is incomplete" <|
                     \() ->
                         update (FilesAdded [ AddedFile "barcodes1.txt" "Name1" validBarcodeScannerDataWithIncompleteRecordFirst ]) initModel
                             |> Expect.all
                                 (expectBarcodeScannerData parsedBarcodeScannerDataWithIncompleteRecordFirst
+                                    :: expectBarcodeScannerTab (Just 0)
                                     :: expectProblems { noProblems | athletesMissingPosition = [ "A2044293" ] }
-                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems ]
+                                    :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, Problems, BarcodeScannerTabAssertion ]
                                 )
                 ]
             , describe "Timer file tests"
@@ -589,41 +604,44 @@ suite =
         , describe "RemoveBarcodeScannerFile tests"
             [ test "RemoveBarcodeScannerFile does nothing for empty data" <|
                 \() ->
-                    update (RemoveBarcodeScannerFile "1.txt") initModel
+                    update (RemoveBarcodeScannerFile 0) initModel
                         |> Expect.all defaultAssertions
             , test "RemoveBarcodeScannerFile deletes single file" <|
                 \() ->
-                    { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1 ] }
-                        |> update (RemoveBarcodeScannerFile "1.txt")
+                    { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1 ], barcodeScannerTab = Just 0 }
+                        |> update (RemoveBarcodeScannerFile 0)
                         |> Expect.all defaultAssertions
             , test "RemoveBarcodeScannerFile deletes file at first index of three" <|
                 \() ->
-                    { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
-                        |> update (RemoveBarcodeScannerFile "1.txt")
+                    { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ], barcodeScannerTab = Just 0 }
+                        |> update (RemoveBarcodeScannerFile 0)
                         |> Expect.all
                             (expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 2, 3 ])
-                                :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
+                                :: expectBarcodeScannerTab (Just 0)
+                                :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, BarcodeScannerTabAssertion ]
                             )
             , test "RemoveBarcodeScannerFile deletes file at middle index of three" <|
                 \() ->
-                    { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
-                        |> update (RemoveBarcodeScannerFile "2.txt")
+                    { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ], barcodeScannerTab = Just 1 }
+                        |> update (RemoveBarcodeScannerFile 1)
                         |> Expect.all
                             (expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 3 ])
-                                :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
+                                :: expectBarcodeScannerTab (Just 1)
+                                :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, BarcodeScannerTabAssertion ]
                             )
             , test "RemoveBarcodeScannerFile deletes file at last index of three" <|
                 \() ->
-                    { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
-                        |> update (RemoveBarcodeScannerFile "3.txt")
+                    { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ], barcodeScannerTab = Just 2 }
+                        |> update (RemoveBarcodeScannerFile 2)
                         |> Expect.all
                             (expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2 ])
-                                :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
+                                :: expectBarcodeScannerTab (Just 1)
+                                :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, BarcodeScannerTabAssertion ]
                             )
             , test "RemoveBarcodeScannerFile does nothing with non-existent filename" <|
                 \() ->
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
-                        |> update (RemoveBarcodeScannerFile "nonexistent.txt")
+                        |> update (RemoveBarcodeScannerFile 999)
                         |> Expect.all
                             (expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2, 3 ])
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
