@@ -14,7 +14,7 @@ import BarcodeScanner
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditDetails, BarcodeScannerRowEditLocation)
 import BarcodeScannerTests exposing (createBarcodeScannerData)
 import Commands exposing (Command(..), ElementToFocus(..))
-import DataEntry exposing (IntegerEntry, emptyEntry)
+import DataEntry exposing (IntegerEntry)
 import Dict
 import Error exposing (FileError)
 import Expect exposing (Expectation)

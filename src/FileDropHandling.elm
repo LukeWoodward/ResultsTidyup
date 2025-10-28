@@ -1,12 +1,10 @@
 module FileDropHandling exposing (handleFilesAdded)
 
 import BarcodeScanner exposing (BarcodeScannerData, mergeScannerData, readBarcodeScannerData)
-import Error exposing (Error, FileError, mapError)
+import Error exposing (FileError, mapError)
 import FileHandling exposing (AddedFile)
 import Model exposing (Model)
-import Parser exposing ((|.), Parser, chompIf, chompWhile, end, run)
 import Regex exposing (Regex)
-import Result.Extra
 import Timer exposing (Timer(..), TimerFile, Timers(..), createMergedTable, readTimerData)
 
 
