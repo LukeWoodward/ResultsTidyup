@@ -160,25 +160,25 @@ validationErrorToString validationError =
             "Please select a timer operation"
 
         InvalidOffset _ ->
-            "The offset entered is not valid.  Please enter a valid offset in minutes and seconds, e.g 02:17"
+            "The offset entered is not valid.  Please enter a valid offset in minutes and seconds, e.g. 02:17."
 
         NoTimersToApplyOffsetTo _ ->
-            "No timers have been selected to apply the offset to.  Please select one or both timers"
+            "No timers have been selected to apply the offset to.  Please select one or both timers."
 
         SubtractOffsetTooLarge fastestTime offset ->
-            "It is not possible to subtract an offset of " ++ formatTime offset ++ " from the times because the fastest time is " ++ formatTime fastestTime
+            "It is not possible to subtract an offset of " ++ formatTime offset ++ " from the times because the fastest time is " ++ formatTime fastestTime ++ "."
 
         InvalidScaleFactor ->
-            "The scale factor entered is not valid.  Please enter a valid scale factor, e.g. 1.23"
+            "The scale factor entered is not valid.  Please enter a valid scale factor, e.g. 1.23."
 
         ScaleFactorOne ->
-            "The scale factor to apply cannot be 1.  Please choose another number"
+            "The scale factor to apply cannot be 1.  Please choose another number."
 
         InvalidDistance distanceType ->
-            "The " ++ distanceTypeToString distanceType ++ " is not valid.  Please enter a valid distance as a whole number of metres"
+            "The " ++ distanceTypeToString distanceType ++ " is not valid.  Please enter a valid distance as a whole number of metres."
 
         ActualDistanceEqualsExpectedDistance ->
-            "The actual distance and expected distance are equal.  Please enter two different distances"
+            "The actual distance and expected distance are equal.  Please enter two different distances."
 
 
 validationErrorRow : TimerOperationValidationError -> Html Msg

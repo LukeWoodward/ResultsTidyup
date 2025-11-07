@@ -68,25 +68,25 @@ validationErrorToString validationError =
             ""
 
         TokenOperationNotSelected ->
-            "Please select a token operation"
+            "Please select a token operation."
 
         InvalidRange _ ->
-            "Please enter a valid token or a range of tokens, e.g. 47 or 81-90"
+            "Please enter a valid token or a range of tokens, e.g. 47 or 81-90."
 
         EmptyRange _ ->
-            "Please enter token ranges with the lower end of the range first, e.g. 81-90"
+            "Please enter token ranges with the lower end of the range first, e.g. 81-90."
 
         ZeroInRange _ ->
-            "Token number 0 cannot be used"
+            "Token number 0 cannot be used. Please use tokens with numbers bigger than 0."
 
         TokenOffEndOfTokens lastToken token _ ->
-            "Token " ++ String.fromInt token ++ " is beyond the last token used (" ++ String.fromInt lastToken ++ ")"
+            "Token " ++ String.fromInt token ++ " is beyond the last token used (" ++ String.fromInt lastToken ++ ")."
 
         InsertRangeOffEndOfTokens lastToken range ->
-            "The range " ++ rangeToString range ++ " is entirely beyond the last token used (" ++ String.fromInt lastToken ++ ")"
+            "The range " ++ rangeToString range ++ " is entirely beyond the last token used (" ++ String.fromInt lastToken ++ ")."
 
         RemovingExistingToken token ->
-            "Token " ++ String.fromInt token ++ " cannot be removed because it is used"
+            "Token " ++ String.fromInt token ++ " cannot be removed because it is used."
 
         RemovingExistingTokens tokens range ->
             let
@@ -103,19 +103,19 @@ validationErrorToString validationError =
                                    )
                                 ++ " are used"
             in
-            "Tokens " ++ rangeToString range ++ " cannot be removed because " ++ reason
+            "Tokens " ++ rangeToString range ++ " cannot be removed because " ++ reason ++ "."
 
         RangeOffEndOfTokens lastToken range _ ->
-            "The range " ++ rangeToString range ++ " goes beyond the last token used (" ++ String.fromInt lastToken ++ ")"
+            "The range " ++ rangeToString range ++ " goes beyond the last token used (" ++ String.fromInt lastToken ++ ")."
 
         SwapTokenRangesOfDifferentSizes ->
             "The ranges of tokens to swap are of different sizes.  Please enter two ranges of tokens that are the same size."
 
         SwapTokenRangesOverlap ->
-            "The ranges of tokens to swap overlap.  Please enter two non-overlapping ranges of tokens"
+            "The ranges of tokens to swap overlap.  Please enter two non-overlapping ranges of tokens."
 
         ReverseTokenRangeSingleToken ->
-            "You cannot reverse a single token.  Please specify a range of tokens to reverse"
+            "You cannot reverse a single token.  Please specify a range of tokens to reverse."
 
 
 validationErrorRow : TokenOperationValidationError -> Html Msg
