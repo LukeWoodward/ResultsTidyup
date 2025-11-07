@@ -29,7 +29,7 @@ type Msg
     | ClearErrors
     | DownloadBarcodeScannerFile String Zone Posix
     | DownloadAllBarcodeScannerData Zone Posix
-    | RemoveBarcodeScannerFile Int
+    | RemoveCurrentBarcodeScannerFile
     | ShowBarcodeScannerEditModal BarcodeScannerRowEditLocation LineContents Bool
     | BarcodeScannerEdit BarcodeScannerEditDetails
     | UpdateRowFromBarcodeScannerEditModal BarcodeScannerRowEditDetails

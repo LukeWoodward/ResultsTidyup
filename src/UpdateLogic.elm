@@ -252,8 +252,8 @@ createAllBarcodeScannerData files zone time =
     DownloadFile barcodeScannerFileMimeType (InteropFile downloadFileName downloadFileContents)
 
 
-removeBarcodeScannerFileWithIndex : Int -> Model -> Model
-removeBarcodeScannerFileWithIndex index model =
+removeCurrentBarcodeScannerFile : Model -> Model
+removeCurrentBarcodeScannerFile model =
     let
         barcodeScannerData : BarcodeScannerData
         barcodeScannerData =
@@ -262,7 +262,7 @@ removeBarcodeScannerFileWithIndex index model =
         remainingScannerFiles : List BarcodeScannerFile
         remainingScannerFiles =
             List.indexedMap Tuple.pair model.barcodeScannerData.files
-                |> List.filter (\( ix, _ ) -> ix /= index)
+                |> List.filter (\( ix, _ ) -> Just ix /= model.barcodeScannerTab)
                 |> List.map Tuple.second
 
         determineNewTabIndex : Int -> Maybe Int
@@ -279,21 +279,12 @@ removeBarcodeScannerFileWithIndex index model =
                 Just (remainingFileCount - 1)
 
             else
-                Just index
-
-        newBarcodeScannerTab : Maybe Int
-        newBarcodeScannerTab =
-            if Just index == model.barcodeScannerTab then
-                -- The barcode scanner file we deleted was the one selected.
-                determineNewTabIndex index
-
-            else
                 model.barcodeScannerTab
     in
     identifyProblemsIn
         { model
             | barcodeScannerData = regenerate { barcodeScannerData | files = remainingScannerFiles }
-            , barcodeScannerTab = newBarcodeScannerTab
+            , barcodeScannerTab = Maybe.andThen determineNewTabIndex model.barcodeScannerTab
         }
 
 
@@ -414,8 +405,8 @@ update msg model =
         DownloadAllBarcodeScannerData zone time ->
             ( model, createAllBarcodeScannerData model.barcodeScannerData.files zone time )
 
-        RemoveBarcodeScannerFile fileName ->
-            ( removeBarcodeScannerFileWithIndex fileName model, NoCommand )
+        RemoveCurrentBarcodeScannerFile ->
+            ( removeCurrentBarcodeScannerFile model, NoCommand )
 
         ShowBarcodeScannerEditModal location contents isDeleted ->
             ( { model

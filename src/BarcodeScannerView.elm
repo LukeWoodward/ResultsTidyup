@@ -100,8 +100,8 @@ barcodeScannerViewRow fileName line =
         )
 
 
-barcodeScannerView : Int -> BarcodeScannerFile -> Html Msg
-barcodeScannerView index file =
+barcodeScannerView : BarcodeScannerFile -> Html Msg
+barcodeScannerView file =
     let
         header : Html a
         header =
@@ -118,7 +118,7 @@ barcodeScannerView index file =
         [ div
             [ class "barcode-scanner-buttons" ]
             [ normalIconButton (RequestCurrentDateAndTime (Commands.DownloadBarcodeScannerFile file.filename)) download "Download"
-            , dangerIconButton (RemoveBarcodeScannerFile index) remove "Remove"
+            , dangerIconButton RemoveCurrentBarcodeScannerFile remove "Remove"
             ]
         , table [ class "table table-bordered table-hover barcode-scanner-table" ]
             [ header
@@ -196,19 +196,16 @@ barcodeScannersView model =
                     "Download all scanned barcodes"
                 ]
 
-        selectedBarcodeScannerFile : Maybe BarcodeScannerFile
-        selectedBarcodeScannerFile =
-            case model.barcodeScannerTab of
-                Just index ->
-                    List.drop index model.barcodeScannerData.files
-                        |> List.head
-
-                Nothing ->
-                    Nothing
+        determineSelectedBarcodeScannerFile : Int -> Maybe BarcodeScannerFile
+        determineSelectedBarcodeScannerFile oldIndex =
+            List.drop oldIndex model.barcodeScannerData.files
+                |> List.head
 
         selectedBarcodeScannerView : Html Msg
         selectedBarcodeScannerView =
-            Maybe.map2 barcodeScannerView model.barcodeScannerTab selectedBarcodeScannerFile
+            model.barcodeScannerTab
+                |> Maybe.andThen determineSelectedBarcodeScannerFile
+                |> Maybe.map barcodeScannerView
                 |> Maybe.withDefault (text "")
     in
     div []

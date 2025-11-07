@@ -604,17 +604,17 @@ suite =
         , describe "RemoveBarcodeScannerFile tests"
             [ test "RemoveBarcodeScannerFile does nothing for empty data" <|
                 \() ->
-                    update (RemoveBarcodeScannerFile 0) initModel
+                    update RemoveCurrentBarcodeScannerFile initModel
                         |> Expect.all defaultAssertions
             , test "RemoveBarcodeScannerFile deletes single file" <|
                 \() ->
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1 ], barcodeScannerTab = Just 0 }
-                        |> update (RemoveBarcodeScannerFile 0)
+                        |> update RemoveCurrentBarcodeScannerFile
                         |> Expect.all defaultAssertions
             , test "RemoveBarcodeScannerFile deletes file at first index of three" <|
                 \() ->
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ], barcodeScannerTab = Just 0 }
-                        |> update (RemoveBarcodeScannerFile 0)
+                        |> update RemoveCurrentBarcodeScannerFile
                         |> Expect.all
                             (expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 2, 3 ])
                                 :: expectBarcodeScannerTab (Just 0)
@@ -623,7 +623,7 @@ suite =
             , test "RemoveBarcodeScannerFile deletes file at middle index of three" <|
                 \() ->
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ], barcodeScannerTab = Just 1 }
-                        |> update (RemoveBarcodeScannerFile 1)
+                        |> update RemoveCurrentBarcodeScannerFile
                         |> Expect.all
                             (expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 3 ])
                                 :: expectBarcodeScannerTab (Just 1)
@@ -632,16 +632,16 @@ suite =
             , test "RemoveBarcodeScannerFile deletes file at last index of three" <|
                 \() ->
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ], barcodeScannerTab = Just 2 }
-                        |> update (RemoveBarcodeScannerFile 2)
+                        |> update RemoveCurrentBarcodeScannerFile
                         |> Expect.all
                             (expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2 ])
                                 :: expectBarcodeScannerTab (Just 1)
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion, BarcodeScannerTabAssertion ]
                             )
-            , test "RemoveBarcodeScannerFile does nothing with non-existent filename" <|
+            , test "RemoveBarcodeScannerFile does nothing with no current scanner file" <|
                 \() ->
                     { initModel | barcodeScannerData = getBarcodeScannerDataWithFiles [ 1, 2, 3 ] }
-                        |> update (RemoveBarcodeScannerFile 999)
+                        |> update RemoveCurrentBarcodeScannerFile
                         |> Expect.all
                             (expectBarcodeScannerData (getBarcodeScannerDataWithFiles [ 1, 2, 3 ])
                                 :: defaultAssertionsExcept [ BarcodeScannerDataAssertion ]
