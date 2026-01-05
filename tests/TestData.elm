@@ -1,6 +1,5 @@
 module TestData exposing
     ( createBarcodeScannerDataFromFiles
-    , defaultDateTime
     , defaultMatchSummary
     , doubleTimers
     , expectedDownloadedTimerData1
@@ -22,7 +21,6 @@ module TestData exposing
     , sampleTimerData2
     , singleTimer
     , timersForAdjusting
-    , toPosix
     , validBarcodeScannerData1
     , validBarcodeScannerData2
     , validBarcodeScannerDataWithIncompleteRecordFirst
@@ -52,11 +50,6 @@ import Timer
         , Timers(..)
         , WhichTimer(..)
         )
-
-
-defaultDateTime : Maybe Time.Posix
-defaultDateTime =
-    toPosix "2018-03-14T09:47:03.000Z"
 
 
 sampleTimerData : String
@@ -107,26 +100,6 @@ defaultMatchSummary =
 ordinaryFileLine : Int -> String -> Maybe Int -> String -> BarcodeScannerFileLine
 ordinaryFileLine lineNumber athlete finishToken scanTime =
     BarcodeScannerFileLine lineNumber (Ordinary athlete finishToken) scanTime NotDeleted
-
-
-toPosix : String -> Maybe Posix
-toPosix timeString =
-    let
-        parsedTime : Maybe Posix
-        parsedTime =
-            Iso8601.toTime timeString
-                |> Result.toMaybe
-    in
-    case parsedTime of
-        Just _ ->
-            parsedTime
-
-        Nothing ->
-            let
-                _ =
-                    Debug.log "Warning: time did not parse as ISO-8601 date string" timeString
-            in
-            Nothing
 
 
 sampleTimerData2 : String
@@ -241,12 +214,10 @@ parsedBarcodeScannerData1 =
             "barcodes1.txt"
             "Name1"
             [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
-            defaultDateTime
         ]
         (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
         []
         []
-        defaultDateTime
 
 
 parsedBarcodeScannerData1And2 : BarcodeScannerData
@@ -256,12 +227,10 @@ parsedBarcodeScannerData1And2 =
             "barcodes1.txt"
             "Name1"
             [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
-            defaultDateTime
         , BarcodeScannerFile
             "barcodes2.txt"
             "Name2"
             [ ordinaryFileLine 1 "A2044293" (Just 59) "14/03/2018 09:49:44" ]
-            (toPosix "2018-03-14T09:49:44.000Z")
         ]
         (Dict.fromList
             [ ( 47, [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ] )
@@ -270,7 +239,6 @@ parsedBarcodeScannerData1And2 =
         )
         []
         []
-        (toPosix "2018-03-14T09:49:44.000Z")
 
 
 parsedBarcodeScannerDataWithIncompleteRecordFirst : BarcodeScannerData
@@ -282,18 +250,16 @@ parsedBarcodeScannerDataWithIncompleteRecordFirst =
             [ ordinaryFileLine 1 "A2044293" Nothing "14/03/2018 09:44:06"
             , ordinaryFileLine 2 "A4580442" (Just 47) "14/03/2018 09:47:03"
             ]
-            defaultDateTime
         ]
         (Dict.singleton 47 [ AthleteAndTimePair "A4580442" "14/03/2018 09:47:03" ])
         [ AthleteAndTimePair "A2044293" "14/03/2018 09:44:06" ]
         []
-        defaultDateTime
 
 
 parsedInvalidBarcodeScannerData : BarcodeScannerData
 parsedInvalidBarcodeScannerData =
     BarcodeScannerData
-        [ BarcodeScannerFile "invalid.txt" "Invalid" [] Nothing ]
+        [ BarcodeScannerFile "invalid.txt" "Invalid" [] ]
         Dict.empty
         []
         [ { errorCode = "INVALID_POSITION_ZERO"
@@ -301,7 +267,6 @@ parsedInvalidBarcodeScannerData =
           , line = "A4580442,P0000,14/03/2018 09:47:03"
           }
         ]
-        Nothing
 
 
 recentTime : Time.Posix
@@ -374,5 +339,5 @@ expectedDownloadedTimerData2 =
 
 createBarcodeScannerDataFromFiles : List BarcodeScannerFile -> BarcodeScannerData
 createBarcodeScannerDataFromFiles files =
-    BarcodeScannerData files Dict.empty [] [] Nothing
+    BarcodeScannerData files Dict.empty [] []
         |> regenerate

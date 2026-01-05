@@ -18,7 +18,7 @@ import Commands exposing (ElementToFocus(..))
 import DataEntry exposing (IntegerEntry)
 import Expect exposing (Expectation)
 import Test exposing (Test, describe, test)
-import TestData exposing (createBarcodeScannerDataFromFiles, ordinaryFileLine, toPosix)
+import TestData exposing (createBarcodeScannerDataFromFiles, ordinaryFileLine)
 
 
 initialDetails : BarcodeScannerRowEditDetails
@@ -168,7 +168,6 @@ suite =
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
-                                    (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
 
                         expectedBarcodeScannerData : BarcodeScannerData
@@ -180,7 +179,6 @@ suite =
                                     [ ordinaryFileLine 1 "A2022807" (Just 37) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
-                                    (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
 
                         rowEditDetails : BarcodeScannerRowEditDetails

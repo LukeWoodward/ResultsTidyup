@@ -26,7 +26,7 @@ import Problems
         , noProblems
         )
 import Test exposing (Test, describe, test)
-import TestData exposing (createBarcodeScannerDataFromFiles, doubleTimers, ordinaryFileLine, toPosix)
+import TestData exposing (doubleTimers)
 import Timer exposing (MergeEntry(..), MergedTableRow, TimerFile, TimerMatchSummary, Timers(..), WhichTimer(..))
 
 
@@ -92,13 +92,12 @@ suite =
                         barcodeScannerData : BarcodeScannerData
                         barcodeScannerData =
                             BarcodeScannerData
-                                [ BarcodeScannerFile "barcodes1.txt" "Name1" [] (toPosix "2018-03-14T09:47:03.000Z")
-                                , BarcodeScannerFile "barcodes2.txt" "Name2" [] (toPosix "2018-03-14T09:49:08.000Z")
+                                [ BarcodeScannerFile "barcodes1.txt" "Name1" []
+                                , BarcodeScannerFile "barcodes2.txt" "Name2" []
                                 ]
                                 Dict.empty
                                 []
                                 []
-                                Nothing
                     in
                     identifyProblems
                         None
@@ -303,7 +302,7 @@ suite =
                 \() ->
                     identifyProblems
                         None
-                        (BarcodeScannerData [] Dict.empty [] [ UnrecognisedLine "This is not a valid line" "code" "message" ] Nothing)
+                        (BarcodeScannerData [] Dict.empty [] [ UnrecognisedLine "This is not a valid line" "code" "message" ])
                         noIgnoredProblems
                         |> Expect.equal { noProblems | unrecognisedBarcodeScannerLines = [ "This is not a valid line" ] }
             , test "identifyProblems returns a fixable problem for an athlete with a position and with a missing position" <|
@@ -336,19 +335,6 @@ suite =
                         )
                         noIgnoredProblems
                         |> Expect.equal { noProblems | athletesWithAndWithoutPosition = [ AthleteWithAndWithoutPositionProblem "A252525" 3 16, AthleteWithAndWithoutPositionProblem "A987654" 1 19 ] }
-            , test "identifyProblems returns no problems for a scanned barcode with its scan time after the event start" <|
-                \() ->
-                    identifyProblems
-                        None
-                        (createBarcodeScannerDataFromFiles
-                            [ BarcodeScannerFile "barcodes1.txt"
-                                "Name1"
-                                [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03" ]
-                                (toPosix "2018-03-14T09:47:03.000Z")
-                            ]
-                        )
-                        noIgnoredProblems
-                        |> Expect.equal noProblems
             , test "identifyProblems returns no problems for timers almost in sync" <|
                 \() ->
                     identifyProblems

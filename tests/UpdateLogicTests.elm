@@ -170,7 +170,7 @@ createBarcodeScannerDataForRemovingUnassociatedAthletes athletes =
                 |> List.concat
     in
     { initModel
-        | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" "Name1" fileLines Nothing ] }
+        | barcodeScannerData = regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" "Name1" fileLines ] }
         , problems = { noProblems | athletesWithAndWithoutPosition = List.indexedMap (\index athlete -> AthleteWithAndWithoutPositionProblem athlete 1 (index + 1)) athletes }
     }
 
@@ -205,17 +205,9 @@ getBarcodeScannerDataWithFiles numbers =
         files : List BarcodeScannerFile
         files =
             List.map String.fromInt numbers
-                |> List.map (\num -> BarcodeScannerFile (num ++ ".txt") ("Name" ++ num) [] defaultDateTime)
-
-        lastScanDateTime : Maybe Time.Posix
-        lastScanDateTime =
-            if List.isEmpty numbers then
-                Nothing
-
-            else
-                defaultDateTime
+                |> List.map (\num -> BarcodeScannerFile (num ++ ".txt") ("Name" ++ num) [])
     in
-    { empty | files = files, lastScanDateTime = lastScanDateTime }
+    { empty | files = files }
 
 
 makeBarcodeScannerRowEditDetails : BarcodeScannerRowEditLocation -> Maybe Int -> Maybe Int -> BarcodeScannerRowEditDetails
@@ -660,7 +652,6 @@ suite =
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
-                                    (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
 
                         expectedBarcodeScannerData : BarcodeScannerData
@@ -672,7 +663,6 @@ suite =
                                     [ ordinaryFileLine 1 "A2022807" (Just 31) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
-                                    (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
                     in
                     { initModel | barcodeScannerData = initialBarcodeScannerData }
@@ -699,7 +689,6 @@ suite =
                                     [ lineToDelete
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
-                                    (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
 
                         expectedBarcodeScannerData : BarcodeScannerData
@@ -711,7 +700,6 @@ suite =
                                     [ { lineToDelete | deletionStatus = Deleted DeletedByUser }
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
-                                    (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
                     in
                     { initModel | barcodeScannerData = initialBarcodeScannerData }
@@ -789,7 +777,6 @@ suite =
                                     [ ordinaryFileLine 1 "A4580442" (Just 47) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
-                                    (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
 
                         expectedBarcodeScannerData : BarcodeScannerData
@@ -801,7 +788,6 @@ suite =
                                     [ ordinaryFileLine 1 "A2022807" (Just 31) "14/03/2018 09:47:03"
                                     , ordinaryFileLine 2 "A1866207" (Just 58) "14/03/2018 09:48:44"
                                     ]
-                                    (toPosix "2018-03-14T09:48:44.000Z")
                                 ]
                     in
                     { initModel
