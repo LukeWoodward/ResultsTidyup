@@ -393,7 +393,7 @@ mergedTimerRow barcodeScannerData row =
         NotNearMatch time1 time2 ->
             generateTwoTimeRow "not-near-match" time1 time2
 
-        OneWatchOnly TimerOne time1 ->
+        OneTimerOnly TimerOne time1 ->
             tr
                 []
                 (appendScannerCell
@@ -403,7 +403,7 @@ mergedTimerRow barcodeScannerData row =
                     ]
                 )
 
-        OneWatchOnly TimerTwo time2 ->
+        OneTimerOnly TimerTwo time2 ->
             tr
                 []
                 (appendScannerCell

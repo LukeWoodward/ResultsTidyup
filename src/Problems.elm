@@ -336,7 +336,7 @@ mergeEntryToTime entry =
         NotNearMatch time1 time2 ->
             min time1 time2
 
-        OneWatchOnly _ time ->
+        OneTimerOnly _ time ->
             time
 
 

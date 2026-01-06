@@ -43,7 +43,7 @@ type MergeEntry
     = ExactMatch Int
     | NearMatch Int Int
     | NotNearMatch Int Int
-    | OneWatchOnly WhichTimer Int
+    | OneTimerOnly WhichTimer Int
 
 
 type alias TimerMatchSummary =
@@ -182,10 +182,10 @@ addItemToSummary tableRow summary =
         NotNearMatch _ _ ->
             { summary | notNearMatches = summary.notNearMatches + 1 }
 
-        OneWatchOnly TimerOne _ ->
+        OneTimerOnly TimerOne _ ->
             { summary | timer1Only = summary.timer1Only + 1 }
 
-        OneWatchOnly TimerTwo _ ->
+        OneTimerOnly TimerTwo _ ->
             { summary | timer2Only = summary.timer2Only + 1 }
 
 
@@ -206,7 +206,7 @@ isSingleTimeEntry entry =
         NotNearMatch _ _ ->
             False
 
-        OneWatchOnly _ _ ->
+        OneTimerOnly _ _ ->
             True
 
 
@@ -276,8 +276,8 @@ flipRow row =
         NotNearMatch time1 time2 ->
             { row | entry = NotNearMatch time2 time1 }
 
-        OneWatchOnly watch time ->
-            { row | entry = OneWatchOnly (flipTimer watch) time }
+        OneTimerOnly watch time ->
+            { row | entry = OneTimerOnly (flipTimer watch) time }
 
 
 flipTable : List MergedTableRow -> List MergedTableRow
@@ -346,7 +346,7 @@ outputMergedRow row =
                     NotNearMatch time1 time2 ->
                         formatRow rowNum (min time1 time2)
 
-                    OneWatchOnly _ time ->
+                    OneTimerOnly _ time ->
                         if row.included then
                             formatRow rowNum time
 
@@ -403,19 +403,19 @@ addNotNearMatches maxNotNearMatchDistance entries =
         [] ->
             []
 
-        (OneWatchOnly TimerOne time1) :: (OneWatchOnly TimerTwo time2) :: rest ->
+        (OneTimerOnly TimerOne time1) :: (OneTimerOnly TimerTwo time2) :: rest ->
             if abs (time1 - time2) <= maxNotNearMatchDistance then
                 NotNearMatch time1 time2 :: addNotNearMatches maxNotNearMatchDistance rest
 
             else
-                OneWatchOnly TimerOne time1 :: addNotNearMatches maxNotNearMatchDistance (OneWatchOnly TimerTwo time2 :: rest)
+                OneTimerOnly TimerOne time1 :: addNotNearMatches maxNotNearMatchDistance (OneTimerOnly TimerTwo time2 :: rest)
 
-        (OneWatchOnly TimerTwo time2) :: (OneWatchOnly TimerOne time1) :: rest ->
+        (OneTimerOnly TimerTwo time2) :: (OneTimerOnly TimerOne time1) :: rest ->
             if abs (time1 - time2) <= maxNotNearMatchDistance then
                 NotNearMatch time1 time2 :: addNotNearMatches maxNotNearMatchDistance rest
 
             else
-                OneWatchOnly TimerTwo time2 :: addNotNearMatches maxNotNearMatchDistance (OneWatchOnly TimerOne time1 :: rest)
+                OneTimerOnly TimerTwo time2 :: addNotNearMatches maxNotNearMatchDistance (OneTimerOnly TimerOne time1 :: rest)
 
         first :: rest ->
             first :: addNotNearMatches maxNotNearMatchDistance rest
@@ -431,14 +431,14 @@ merge maxNearMatchDistance maxNotNearMatchDistance times1 times2 =
                     []
 
                 ( _, [] ) ->
-                    List.map (OneWatchOnly TimerOne) timesLeft1
+                    List.map (OneTimerOnly TimerOne) timesLeft1
 
                 ( [], _ ) ->
-                    List.map (OneWatchOnly TimerTwo) timesLeft2
+                    List.map (OneTimerOnly TimerTwo) timesLeft2
 
                 ( first1 :: rest1, first2 :: rest2 ) ->
                     if first1 < first2 - maxNearMatchDistance then
-                        OneWatchOnly TimerOne first1 :: createTimes rest1 timesLeft2
+                        OneTimerOnly TimerOne first1 :: createTimes rest1 timesLeft2
 
                     else if first2 - maxNearMatchDistance <= first1 && first1 < first2 then
                         if
@@ -449,7 +449,7 @@ merge maxNearMatchDistance maxNotNearMatchDistance times1 times2 =
                             -- on timer 1 and the next time on timer 2 isn't particularly near.
                             -- So it's likely that this time is on watch 1 only and the time on watch 2
                             -- will match a nearer time on watch 1.
-                            OneWatchOnly TimerOne first1 :: createTimes rest1 timesLeft2
+                            OneTimerOnly TimerOne first1 :: createTimes rest1 timesLeft2
 
                         else
                             NearMatch first1 first2 :: createTimes rest1 rest2
@@ -462,14 +462,14 @@ merge maxNearMatchDistance maxNotNearMatchDistance times1 times2 =
                             isHeadInRange rest2 (first2 + 1) first1
                                 && not (isHeadInRange rest1 first1 (first1 + maxNearMatchDistance))
                         then
-                            OneWatchOnly TimerTwo first2 :: createTimes timesLeft1 rest2
+                            OneTimerOnly TimerTwo first2 :: createTimes timesLeft1 rest2
 
                         else
                             NearMatch first1 first2 :: createTimes rest1 rest2
 
                     else
                         -- first1 > first2 + maxNearMatchDistance
-                        OneWatchOnly TimerTwo first2 :: createTimes timesLeft1 rest2
+                        OneTimerOnly TimerTwo first2 :: createTimes timesLeft1 rest2
     in
     createTimes times1 times2
         |> addNotNearMatches maxNotNearMatchDistance

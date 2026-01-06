@@ -20,12 +20,12 @@ entry2 =
 
 entry3 : MergeEntry
 entry3 =
-    OneWatchOnly TimerTwo 303
+    OneTimerOnly TimerTwo 303
 
 
 entry4 : MergeEntry
 entry4 =
-    OneWatchOnly TimerOne 355
+    OneTimerOnly TimerOne 355
 
 
 entry5 : MergeEntry
@@ -187,8 +187,8 @@ suite =
                             (List.map wrapEntry
                                 [ entry1
                                 , NearMatch 285 284
-                                , OneWatchOnly TimerOne 303
-                                , OneWatchOnly TimerTwo 355
+                                , OneTimerOnly TimerOne 303
+                                , OneTimerOnly TimerTwo 355
                                 , NotNearMatch 419 406
                                 ]
                             )
@@ -215,32 +215,32 @@ suite =
             , test "merging two lists with the same repeated result with first longer than second returns correct result" <|
                 \() ->
                     merge 1 10 [ 5, 5, 5 ] [ 5, 5 ]
-                        |> Expect.equal [ ExactMatch 5, ExactMatch 5, OneWatchOnly TimerOne 5 ]
+                        |> Expect.equal [ ExactMatch 5, ExactMatch 5, OneTimerOnly TimerOne 5 ]
             , test "merging two lists with the same repeated result with first shorter than second returns correct result" <|
                 \() ->
                     merge 1 10 [ 5, 5 ] [ 5, 5, 5 ]
-                        |> Expect.equal [ ExactMatch 5, ExactMatch 5, OneWatchOnly TimerTwo 5 ]
+                        |> Expect.equal [ ExactMatch 5, ExactMatch 5, OneTimerOnly TimerTwo 5 ]
             , test "merging two lists with no common numbers returns correct result" <|
                 \() ->
                     merge 1 5 [ 10, 30, 50 ] [ 20, 40, 60 ]
                         |> Expect.equal
-                            [ OneWatchOnly TimerOne 10
-                            , OneWatchOnly TimerTwo 20
-                            , OneWatchOnly TimerOne 30
-                            , OneWatchOnly TimerTwo 40
-                            , OneWatchOnly TimerOne 50
-                            , OneWatchOnly TimerTwo 60
+                            [ OneTimerOnly TimerOne 10
+                            , OneTimerOnly TimerTwo 20
+                            , OneTimerOnly TimerOne 30
+                            , OneTimerOnly TimerTwo 40
+                            , OneTimerOnly TimerOne 50
+                            , OneTimerOnly TimerTwo 60
                             ]
             , test "merging two lists with no common numbers returns correct result 2" <|
                 \() ->
                     merge 1 5 [ 20, 40, 60 ] [ 10, 30, 50 ]
                         |> Expect.equal
-                            [ OneWatchOnly TimerTwo 10
-                            , OneWatchOnly TimerOne 20
-                            , OneWatchOnly TimerTwo 30
-                            , OneWatchOnly TimerOne 40
-                            , OneWatchOnly TimerTwo 50
-                            , OneWatchOnly TimerOne 60
+                            [ OneTimerOnly TimerTwo 10
+                            , OneTimerOnly TimerOne 20
+                            , OneTimerOnly TimerTwo 30
+                            , OneTimerOnly TimerOne 40
+                            , OneTimerOnly TimerTwo 50
+                            , OneTimerOnly TimerOne 60
                             ]
             , test "merging two lists with near-matches returns expected result" <|
                 \() ->
@@ -249,19 +249,19 @@ suite =
             , test "merging two lists with a near-match and a nearer match returns expected result 1" <|
                 \() ->
                     merge 2 10 [ 10, 29, 30, 50 ] [ 10, 31, 50 ]
-                        |> Expect.equal [ ExactMatch 10, OneWatchOnly TimerOne 29, NearMatch 30 31, ExactMatch 50 ]
+                        |> Expect.equal [ ExactMatch 10, OneTimerOnly TimerOne 29, NearMatch 30 31, ExactMatch 50 ]
             , test "merging two lists with a near-match and a nearer match returns expected result 2" <|
                 \() ->
                     merge 2 10 [ 10, 31, 50 ] [ 10, 29, 30, 50 ]
-                        |> Expect.equal [ ExactMatch 10, OneWatchOnly TimerTwo 29, NearMatch 31 30, ExactMatch 50 ]
+                        |> Expect.equal [ ExactMatch 10, OneTimerOnly TimerTwo 29, NearMatch 31 30, ExactMatch 50 ]
             , test "merging two lists with a near-match and a nearer match returns expected result 3" <|
                 \() ->
                     merge 2 10 [ 10, 32, 33, 50 ] [ 10, 31, 50 ]
-                        |> Expect.equal [ ExactMatch 10, NearMatch 32 31, OneWatchOnly TimerOne 33, ExactMatch 50 ]
+                        |> Expect.equal [ ExactMatch 10, NearMatch 32 31, OneTimerOnly TimerOne 33, ExactMatch 50 ]
             , test "merging two lists with a near-match and a nearer match returns expected result 4" <|
                 \() ->
                     merge 2 10 [ 10, 31, 50 ] [ 10, 32, 33, 50 ]
-                        |> Expect.equal [ ExactMatch 10, NearMatch 31 32, OneWatchOnly TimerTwo 33, ExactMatch 50 ]
+                        |> Expect.equal [ ExactMatch 10, NearMatch 31 32, OneTimerOnly TimerTwo 33, ExactMatch 50 ]
             , test "merging two lists with a not-near-match at the start returns expected result" <|
                 \() ->
                     merge 2 10 [ 8, 30, 50 ] [ 14, 30, 50 ]
@@ -289,11 +289,11 @@ suite =
             , test "merging two lists with times on alternating timers returns expected result 1" <|
                 \() ->
                     merge 2 5 [ 10, 30, 48, 61 ] [ 10, 30, 54 ]
-                        |> Expect.equal [ ExactMatch 10, ExactMatch 30, OneWatchOnly TimerOne 48, OneWatchOnly TimerTwo 54, OneWatchOnly TimerOne 61 ]
+                        |> Expect.equal [ ExactMatch 10, ExactMatch 30, OneTimerOnly TimerOne 48, OneTimerOnly TimerTwo 54, OneTimerOnly TimerOne 61 ]
             , test "merging two lists with times on alternating timers returns expected result 2" <|
                 \() ->
                     merge 2 5 [ 10, 30, 54 ] [ 10, 30, 48, 61 ]
-                        |> Expect.equal [ ExactMatch 10, ExactMatch 30, OneWatchOnly TimerTwo 48, OneWatchOnly TimerOne 54, OneWatchOnly TimerTwo 61 ]
+                        |> Expect.equal [ ExactMatch 10, ExactMatch 30, OneTimerOnly TimerTwo 48, OneTimerOnly TimerOne 54, OneTimerOnly TimerTwo 61 ]
             , test "merging two lists with a near-match and followed by an exact match returns expected result" <|
                 \() ->
                     merge 2 10 [ 118, 127, 127 ] [ 118, 126, 127 ]
@@ -457,27 +457,27 @@ suite =
                         |> Expect.equal (String.join crlf (header ++ [ "1,01/01/2001 00:12:52,00:12:52", footer ]))
             , test "outputMergedTable of a single time only on timer 1 is the single time" <|
                 \() ->
-                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneWatchOnly TimerOne 588) True ]
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneTimerOnly TimerOne 588) True ]
                         |> Expect.equal (String.join crlf (header ++ [ "1,01/01/2001 00:09:48,00:09:48", footer ]))
             , test "outputMergedTable of a single time only on timer 2 is the single time" <|
                 \() ->
-                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneWatchOnly TimerTwo 588) True ]
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneTimerOnly TimerTwo 588) True ]
                         |> Expect.equal (String.join crlf (header ++ [ "1,01/01/2001 00:09:48,00:09:48", footer ]))
             , test "outputMergedTable of a non-included single time only on timer 1 is empty" <|
                 \() ->
-                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneWatchOnly TimerOne 588) False ]
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneTimerOnly TimerOne 588) False ]
                         |> Expect.equal (String.join crlf (header ++ [ footer ]))
             , test "outputMergedTable of a non-included single time only on timer 2 is empty" <|
                 \() ->
-                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneWatchOnly TimerTwo 588) False ]
+                    outputMergedTable [ MergedTableRow 1 (Just 1) (OneTimerOnly TimerTwo 588) False ]
                         |> Expect.equal (String.join crlf (header ++ [ footer ]))
             , test "outputMergedTable of a single time on timer 1 with no row number is empty" <|
                 \() ->
-                    outputMergedTable [ MergedTableRow 1 Nothing (OneWatchOnly TimerOne 588) True ]
+                    outputMergedTable [ MergedTableRow 1 Nothing (OneTimerOnly TimerOne 588) True ]
                         |> Expect.equal (String.join crlf (header ++ [ footer ]))
             , test "outputMergedTable of a single time on timer 2 with no row number is empty" <|
                 \() ->
-                    outputMergedTable [ MergedTableRow 1 Nothing (OneWatchOnly TimerTwo 588) True ]
+                    outputMergedTable [ MergedTableRow 1 Nothing (OneTimerOnly TimerTwo 588) True ]
                         |> Expect.equal (String.join crlf (header ++ [ footer ]))
             ]
         ]

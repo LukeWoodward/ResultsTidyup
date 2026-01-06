@@ -125,11 +125,11 @@ doubleTimers =
         expectedEntries =
             [ { index = 0, rowNumber = Just 1, entry = ExactMatch 191, included = True }
             , { index = 1, rowNumber = Just 2, entry = NearMatch 464 463, included = True }
-            , { index = 2, rowNumber = Just 3, entry = OneWatchOnly TimerOne 603, included = True }
+            , { index = 2, rowNumber = Just 3, entry = OneTimerOnly TimerOne 603, included = True }
             , { index = 3, rowNumber = Just 4, entry = ExactMatch 746, included = True }
-            , { index = 4, rowNumber = Just 5, entry = OneWatchOnly TimerTwo 791, included = True }
+            , { index = 4, rowNumber = Just 5, entry = OneTimerOnly TimerTwo 791, included = True }
             , { index = 5, rowNumber = Just 6, entry = ExactMatch 882, included = True }
-            , { index = 6, rowNumber = Just 7, entry = OneWatchOnly TimerOne 1029, included = True }
+            , { index = 6, rowNumber = Just 7, entry = OneTimerOnly TimerOne 1029, included = True }
             ]
 
         expectedMatchSummary : TimerMatchSummary
@@ -153,11 +153,11 @@ flippedDoubleTimers =
         expectedEntries =
             [ { index = 0, rowNumber = Just 1, entry = ExactMatch 191, included = True }
             , { index = 1, rowNumber = Just 2, entry = NearMatch 463 464, included = True }
-            , { index = 2, rowNumber = Just 3, entry = OneWatchOnly TimerTwo 603, included = True }
+            , { index = 2, rowNumber = Just 3, entry = OneTimerOnly TimerTwo 603, included = True }
             , { index = 3, rowNumber = Just 4, entry = ExactMatch 746, included = True }
-            , { index = 4, rowNumber = Just 5, entry = OneWatchOnly TimerOne 791, included = True }
+            , { index = 4, rowNumber = Just 5, entry = OneTimerOnly TimerOne 791, included = True }
             , { index = 5, rowNumber = Just 6, entry = ExactMatch 882, included = True }
-            , { index = 6, rowNumber = Just 7, entry = OneWatchOnly TimerTwo 1029, included = True }
+            , { index = 6, rowNumber = Just 7, entry = OneTimerOnly TimerTwo 1029, included = True }
             ]
 
         expectedMatchSummary : TimerMatchSummary

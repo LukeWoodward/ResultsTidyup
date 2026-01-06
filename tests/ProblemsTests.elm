@@ -47,9 +47,9 @@ doubleTimersForTimeLookupTests =
         expectedEntries =
             [ { index = 0, rowNumber = Just 1, entry = ExactMatch 191, included = True }
             , { index = 1, rowNumber = Just 2, entry = NotNearMatch 469 463, included = True }
-            , { index = 2, rowNumber = Nothing, entry = OneWatchOnly TimerOne 603, included = False }
+            , { index = 2, rowNumber = Nothing, entry = OneTimerOnly TimerOne 603, included = False }
             , { index = 3, rowNumber = Just 3, entry = ExactMatch 746, included = True }
-            , { index = 4, rowNumber = Nothing, entry = OneWatchOnly TimerTwo 791, included = False }
+            , { index = 4, rowNumber = Nothing, entry = OneTimerOnly TimerTwo 791, included = False }
             , { index = 5, rowNumber = Just 4, entry = ExactMatch 882, included = True }
             ]
 
@@ -360,12 +360,12 @@ suite =
                             , file2 = TimerFile "timer2.txt" "Name2"
                             , mergedTableRows =
                                 wrapMergeEntriesInTable
-                                    [ OneWatchOnly TimerOne 1000
-                                    , OneWatchOnly TimerTwo 1005
-                                    , OneWatchOnly TimerOne 1100
-                                    , OneWatchOnly TimerTwo 1105
-                                    , OneWatchOnly TimerOne 1200
-                                    , OneWatchOnly TimerTwo 1205
+                                    [ OneTimerOnly TimerOne 1000
+                                    , OneTimerOnly TimerTwo 1005
+                                    , OneTimerOnly TimerOne 1100
+                                    , OneTimerOnly TimerTwo 1105
+                                    , OneTimerOnly TimerOne 1200
+                                    , OneTimerOnly TimerTwo 1205
                                     ]
                             , matchSummary = TimerMatchSummary 0 0 0 3 3
                             }
@@ -383,12 +383,12 @@ suite =
                             , file2 = TimerFile "timer2.txt" "Name2"
                             , mergedTableRows =
                                 wrapMergeEntriesInTable
-                                    [ OneWatchOnly TimerOne 1000
-                                    , OneWatchOnly TimerTwo 1005
-                                    , OneWatchOnly TimerOne 1100
-                                    , OneWatchOnly TimerTwo 1105
-                                    , OneWatchOnly TimerOne 1200
-                                    , OneWatchOnly TimerTwo 1205
+                                    [ OneTimerOnly TimerOne 1000
+                                    , OneTimerOnly TimerTwo 1005
+                                    , OneTimerOnly TimerOne 1100
+                                    , OneTimerOnly TimerTwo 1105
+                                    , OneTimerOnly TimerOne 1200
+                                    , OneTimerOnly TimerTwo 1205
                                     ]
                             , matchSummary = TimerMatchSummary 0 0 0 3 3
                             }
