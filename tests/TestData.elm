@@ -38,8 +38,7 @@ import BarcodeScanner
         )
 import Dict
 import FileHandling exposing (crlf)
-import Iso8601
-import Time exposing (Posix)
+import Time
 import Timer
     exposing
         ( MergeEntry(..)
