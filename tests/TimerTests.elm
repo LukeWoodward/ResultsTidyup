@@ -128,7 +128,7 @@ suite =
                 \() ->
                     toggleRowInTable 1 sampleMergedTable
                         |> Expect.equal sampleMergedTable
-            , test "toggles out watch-1-only row and renumbers remaining rows" <|
+            , test "toggles out timer-1-only row and renumbers remaining rows" <|
                 \() ->
                     toggleRowInTable 3 sampleMergedTable
                         |> Expect.equal
@@ -138,7 +138,7 @@ suite =
                             , MergedTableRow 3 Nothing entry4 False
                             , MergedTableRow 4 (Just 4) entry5 True
                             ]
-            , test "toggles out watch-2-only row and renumbers remaining rows" <|
+            , test "toggles out timer-2-only row and renumbers remaining rows" <|
                 \() ->
                     toggleRowInTable 2 sampleMergedTable
                         |> Expect.equal
@@ -148,7 +148,7 @@ suite =
                             , MergedTableRow 3 (Just 3) entry4 True
                             , MergedTableRow 4 (Just 4) entry5 True
                             ]
-            , test "toggles back in watch-1-only row" <|
+            , test "toggles back in timer-1-only row" <|
                 \() ->
                     let
                         previousData =
@@ -161,7 +161,7 @@ suite =
                     in
                     toggleRowInTable 3 previousData
                         |> Expect.equal sampleMergedTable
-            , test "toggles back in watch-2-only row" <|
+            , test "toggles back in timer-2-only row" <|
                 \() ->
                     let
                         previousData =
@@ -379,7 +379,7 @@ suite =
                                 mergedTable
                                 (TimerMatchSummary 2 0 1 0 0)
                             )
-            , test "Creating a merged table from a pair of lists of times with a time only on the first watch" <|
+            , test "Creating a merged table from a pair of lists of times with a time only on the first timer" <|
                 \() ->
                     let
                         times1 : List Int
@@ -395,16 +395,16 @@ suite =
                             merge 1 10 times1 times2
                                 |> generateInitialTable
                     in
-                    createMergedTable times1 times2 (TimerFile "watch1only1.txt" "Name1") (TimerFile "watch1only2.txt" "Name2")
+                    createMergedTable times1 times2 (TimerFile "timer1only1.txt" "Name1") (TimerFile "timer1only2.txt" "Name2")
                         |> Expect.equal
                             (DoubleTimerData times1
                                 times2
-                                (TimerFile "watch1only1.txt" "Name1")
-                                (TimerFile "watch1only2.txt" "Name2")
+                                (TimerFile "timer1only1.txt" "Name1")
+                                (TimerFile "timer1only2.txt" "Name2")
                                 mergedTable
                                 (TimerMatchSummary 2 0 0 1 0)
                             )
-            , test "Creating a merged table from a pair of lists of times with a time only on the second watch" <|
+            , test "Creating a merged table from a pair of lists of times with a time only on the second timer" <|
                 \() ->
                     let
                         times1 : List Int
@@ -420,12 +420,12 @@ suite =
                             merge 1 10 times1 times2
                                 |> generateInitialTable
                     in
-                    createMergedTable times1 times2 (TimerFile "watch2only1.txt" "Name1") (TimerFile "watch2only2.txt" "Name2")
+                    createMergedTable times1 times2 (TimerFile "timer2only1.txt" "Name1") (TimerFile "timer2only2.txt" "Name2")
                         |> Expect.equal
                             (DoubleTimerData times1
                                 times2
-                                (TimerFile "watch2only1.txt" "Name1")
-                                (TimerFile "watch2only2.txt" "Name2")
+                                (TimerFile "timer2only1.txt" "Name1")
+                                (TimerFile "timer2only2.txt" "Name2")
                                 mergedTable
                                 (TimerMatchSummary 2 0 0 0 1)
                             )
