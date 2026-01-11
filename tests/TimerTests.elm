@@ -302,6 +302,14 @@ suite =
                 \() ->
                     merge 2 10 [ 118, 126, 127 ] [ 118, 127, 127 ]
                         |> Expect.equal [ ExactMatch 118, NearMatch 126 127, ExactMatch 127 ]
+            , test "merging two lists with trailing times for timer 1 returns expected result" <|
+                \() ->
+                    merge 1 10 [ 10, 30, 50, 70, 90 ] [ 10, 30, 50 ]
+                        |> Expect.equal [ ExactMatch 10, ExactMatch 30, ExactMatch 50, OneTimerOnly TimerOne 70, OneTimerOnly TimerOne 90 ]
+            , test "merging two lists with trailing times for timer 2 returns expected result" <|
+                \() ->
+                    merge 1 10 [ 10, 30, 50 ] [ 10, 30, 50, 70, 90 ]
+                        |> Expect.equal [ ExactMatch 10, ExactMatch 30, ExactMatch 50, OneTimerOnly TimerTwo 70, OneTimerOnly TimerTwo 90 ]
             ]
         , describe "createMergedTable tests"
             [ test "Creating a merged table from an empty list generates empty data" <|
