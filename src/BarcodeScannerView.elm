@@ -6,7 +6,7 @@ import BarcodeScanner
         , BarcodeScannerFileLine
         , DeletionReason(..)
         , DeletionStatus(..)
-        , LineContents(..)
+        , LineContents
         )
 import BarcodeScannerEditing exposing (BarcodeScannerRowEditLocation)
 import Commands
@@ -45,21 +45,19 @@ deletionReasonToString reason =
 
 barcodeScannerContents : LineContents -> DeletionStatus -> List (Html Msg)
 barcodeScannerContents contents deletionStatus =
-    case contents of
-        Ordinary athlete position ->
-            let
-                athleteContents : Html Msg
-                athleteContents =
-                    case deletionStatus of
-                        NotDeleted ->
-                            athleteLink athlete
+    let
+        athleteContents : Html Msg
+        athleteContents =
+            case deletionStatus of
+                NotDeleted ->
+                    athleteLink contents.athlete
 
-                        Deleted _ ->
-                            text athlete
-            in
-            [ td [] [ athleteContents ]
-            , td [] [ text (maybeIntToString position) ]
-            ]
+                Deleted _ ->
+                    text contents.athlete
+    in
+    [ td [] [ athleteContents ]
+    , td [] [ text (maybeIntToString contents.token) ]
+    ]
 
 
 barcodeScannerViewRow : String -> BarcodeScannerFileLine -> Html Msg
@@ -72,15 +70,12 @@ barcodeScannerViewRow fileName line =
                     let
                         className : String
                         className =
-                            case line.contents of
-                                Ordinary _ Nothing ->
-                                    "barcode-scanner-row-warning"
-
-                                Ordinary "" _ ->
-                                    "barcode-scanner-row-warning"
-
-                                Ordinary _ _ ->
+                            case line.contents.token of
+                                Just _ ->
                                     "barcode-scanner-row-ok"
+
+                                Nothing ->
+                                    "barcode-scanner-row-warning"
                     in
                     [ class className
                     , onDoubleClick (ShowBarcodeScannerEditModal (BarcodeScannerRowEditLocation fileName line.lineNumber) line.contents False)
@@ -134,11 +129,8 @@ isNotDeleted line =
 
 hasMissingItem : BarcodeScannerFileLine -> Bool
 hasMissingItem line =
-    case line.contents of
-        Ordinary "" _ ->
-            isNotDeleted line
-
-        Ordinary _ Nothing ->
+    case line.contents.token of
+        Nothing ->
             isNotDeleted line
 
         _ ->

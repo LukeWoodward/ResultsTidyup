@@ -6,7 +6,7 @@ import BarcodeScanner
         , BarcodeScannerFile
         , BarcodeScannerFileLine
         , DeletionStatus(..)
-        , LineContents(..)
+        , LineContents
         , empty
         , regenerate
         )
@@ -55,7 +55,7 @@ makeBarcodeScannerData items =
     let
         lines : List BarcodeScannerFileLine
         lines =
-            List.indexedMap (\index ( position, athlete ) -> { lineNumber = index + 1, contents = Ordinary athlete (Just position), scanDateTime = "scanDateTime", deletionStatus = NotDeleted }) items
+            List.indexedMap (\index ( position, athlete ) -> { lineNumber = index + 1, contents = LineContents athlete (Just position), scanDateTime = "scanDateTime", deletionStatus = NotDeleted }) items
 
         files : List BarcodeScannerFile
         files =

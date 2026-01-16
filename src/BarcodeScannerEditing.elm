@@ -12,7 +12,7 @@ module BarcodeScannerEditing exposing
     , validate
     )
 
-import BarcodeScanner exposing (BarcodeScannerData, DeletionStatus(..), LineContents(..), updateBarcodeScannerLine)
+import BarcodeScanner exposing (BarcodeScannerData, DeletionStatus(..), LineContents, updateBarcodeScannerLine)
 import Commands exposing (ElementToFocus(..))
 import DataEntry
     exposing
@@ -53,16 +53,12 @@ type BarcodeScannerEditDetails
 
 startEditing : BarcodeScannerRowEditLocation -> LineContents -> Bool -> BarcodeScannerRowEditDetails
 startEditing location contents isDeleted =
-    case contents of
-        Ordinary athlete finishPosition ->
-            BarcodeScannerRowEditDetails location contents (integerEntryFromAthleteNumber athlete) (integerEntryFromMaybeInt finishPosition) Nothing isDeleted
+    BarcodeScannerRowEditDetails location contents (integerEntryFromAthleteNumber contents.athlete) (integerEntryFromMaybeInt contents.token) Nothing isDeleted
 
 
-elementToFocusWhenOpening : LineContents -> ElementToFocus
-elementToFocusWhenOpening contents =
-    case contents of
-        Ordinary _ _ ->
-            BarcodeScannerEditingAthleteInput
+elementToFocusWhenOpening : ElementToFocus
+elementToFocusWhenOpening =
+    BarcodeScannerEditingAthleteInput
 
 
 updateEditDetails : BarcodeScannerEditDetails -> BarcodeScannerRowEditDetails -> BarcodeScannerRowEditDetails

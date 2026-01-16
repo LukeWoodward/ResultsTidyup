@@ -413,7 +413,7 @@ update msg model =
                 | dialogDetails =
                     BarcodeScannerRowEditDialog (BarcodeScannerEditing.startEditing location contents isDeleted)
               }
-            , FocusElement (BarcodeScannerEditing.elementToFocusWhenOpening contents)
+            , FocusElement BarcodeScannerEditing.elementToFocusWhenOpening
             )
 
         BarcodeScannerEdit editChange ->

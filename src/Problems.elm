@@ -15,7 +15,7 @@ module Problems exposing
     )
 
 import Array exposing (Array)
-import BarcodeScanner exposing (BarcodeScannerData, DeletionStatus(..), LineContents(..), UnrecognisedLine)
+import BarcodeScanner exposing (BarcodeScannerData, DeletionStatus(..), UnrecognisedLine)
 import Dict exposing (Dict)
 import Set exposing (Set)
 import TimeHandling exposing (formatTime)

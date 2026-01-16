@@ -8,7 +8,7 @@ import BarcodeScanner
         , BarcodeScannerFileLine
         , DeletionReason(..)
         , DeletionStatus(..)
-        , LineContents(..)
+        , LineContents
         , allTokensUsed
         , deleteBarcodeScannerLine
         , empty
@@ -274,7 +274,7 @@ suite =
                         |> Expect.equal (",P0047,19/09/2018 09:40:09" ++ crlf)
             , test "generateDownloadText returns an empty string for a deleted record" <|
                 \() ->
-                    generateDownloadText (BarcodeScannerFile "barcodes.txt" "Name" [ BarcodeScannerFileLine 1 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted DeletedByUser) ])
+                    generateDownloadText (BarcodeScannerFile "barcodes.txt" "Name" [ BarcodeScannerFileLine 1 (LineContents "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted DeletedByUser) ])
                         |> Expect.equal ""
             , test "generateDownloadText returns the correct string for multiple items" <|
                 \() ->
@@ -285,7 +285,7 @@ suite =
                             [ ordinaryFileLine 1 "A123456" (Just 47) "14/03/2018 09:47:03"
                             , ordinaryFileLine 2 "A123456" Nothing "19/09/2018 09:33:37"
                             , ordinaryFileLine 3 "" (Just 47) "19/09/2018 09:40:09"
-                            , BarcodeScannerFileLine 5 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted DeletedByUser)
+                            , BarcodeScannerFileLine 5 (LineContents "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted DeletedByUser)
                             ]
                         )
                         |> Expect.equal
@@ -319,7 +319,7 @@ suite =
                         , BarcodeScannerFile
                             "barcodes2.txt"
                             "Name2"
-                            [ BarcodeScannerFileLine 5 (Ordinary "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted DeletedByUser)
+                            [ BarcodeScannerFileLine 5 (LineContents "A123456" (Just 47)) "14/03/2018 08:57:50" (Deleted DeletedByUser)
                             ]
                         ]
                         |> Expect.equal

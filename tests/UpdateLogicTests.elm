@@ -7,7 +7,7 @@ import BarcodeScanner
         , BarcodeScannerFileLine
         , DeletionReason(..)
         , DeletionStatus(..)
-        , LineContents(..)
+        , LineContents
         , empty
         , regenerate
         )
@@ -187,9 +187,9 @@ deleteLinesWithinFile deleter files =
 
 ifAthleteBarcode : String -> BarcodeScannerFileLine -> BarcodeScannerFileLine
 ifAthleteBarcode athlete line =
-    case line.contents of
-        Ordinary someAthlete Nothing ->
-            if someAthlete == athlete then
+    case line.contents.token of
+        Nothing ->
+            if line.contents.athlete == athlete then
                 { line | deletionStatus = Deleted (AthleteScannedWithFinishTokenElsewhere athlete) }
 
             else
@@ -214,7 +214,7 @@ makeBarcodeScannerRowEditDetails : BarcodeScannerRowEditLocation -> Maybe Int ->
 makeBarcodeScannerRowEditDetails location athlete finishPosition =
     BarcodeScannerRowEditDetails
         location
-        (Ordinary "" Nothing)
+        (LineContents "" Nothing)
         (IntegerEntry "" athlete)
         (IntegerEntry "" finishPosition)
         Nothing

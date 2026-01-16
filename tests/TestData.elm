@@ -33,7 +33,7 @@ import BarcodeScanner
         , BarcodeScannerFile
         , BarcodeScannerFileLine
         , DeletionStatus(..)
-        , LineContents(..)
+        , LineContents
         , regenerate
         )
 import Dict
@@ -98,7 +98,7 @@ defaultMatchSummary =
 
 ordinaryFileLine : Int -> String -> Maybe Int -> String -> BarcodeScannerFileLine
 ordinaryFileLine lineNumber athlete finishToken scanTime =
-    BarcodeScannerFileLine lineNumber (Ordinary athlete finishToken) scanTime NotDeleted
+    BarcodeScannerFileLine lineNumber (LineContents athlete finishToken) scanTime NotDeleted
 
 
 sampleTimerData2 : String

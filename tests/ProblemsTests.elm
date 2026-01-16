@@ -6,7 +6,6 @@ import BarcodeScanner
         , BarcodeScannerFile
         , DeletionReason(..)
         , DeletionStatus(..)
-        , LineContents(..)
         , UnrecognisedLine
         )
 import BarcodeScannerTests exposing (createBarcodeScannerData)

@@ -5,7 +5,7 @@ module BarcodeScanner exposing
     , BarcodeScannerFileLine
     , DeletionReason(..)
     , DeletionStatus(..)
-    , LineContents(..)
+    , LineContents
     , UnrecognisedLine
     , allTokensUsed
     , deleteBarcodeScannerLine
@@ -55,8 +55,10 @@ type DeletionStatus
     | Deleted DeletionReason
 
 
-type LineContents
-    = Ordinary String (Maybe Int)
+type alias LineContents =
+    { athlete : String
+    , token : Maybe Int
+    }
 
 
 type alias BarcodeScannerFileLine =
@@ -186,13 +188,13 @@ readLine lineNumber line =
                     )
 
             else if isPositionMissing then
-                okDefaultFileLine lineNumber (Ordinary athlete Nothing) time
+                okDefaultFileLine lineNumber (LineContents athlete Nothing) time
 
             else if positionNumber == Just 0 then
                 unrecognisedLine "INVALID_POSITION_ZERO" ("Invalid position record '" ++ position ++ "' found in barcode scanner file")
 
             else
-                okDefaultFileLine lineNumber (Ordinary athlete positionNumber) time
+                okDefaultFileLine lineNumber (LineContents athlete positionNumber) time
 
         _ ->
             unrecognisedLine "NOT_TWO_OR_THREE_PARTS" ("Line " ++ line ++ " does not contain the expected two or three comma-separated parts")
@@ -200,15 +202,15 @@ readLine lineNumber line =
 
 mergeEntry : BarcodeScannerFileLine -> BarcodeScannerData -> BarcodeScannerData
 mergeEntry line barcodeData =
-    case line.contents of
-        Ordinary "" _ ->
+    case ( line.contents.athlete, line.contents.token ) of
+        ( "", _ ) ->
             -- Unexpected, do nothing.
             barcodeData
 
-        Ordinary athlete Nothing ->
+        ( athlete, Nothing ) ->
             { barcodeData | athleteBarcodesOnly = List.append barcodeData.athleteBarcodesOnly [ AthleteAndTimePair athlete line.scanDateTime ] }
 
-        Ordinary athlete (Just pos) ->
+        ( athlete, Just pos ) ->
             let
                 updater : Maybe (List AthleteAndTimePair) -> Maybe (List AthleteAndTimePair)
                 updater currentValue =
@@ -341,12 +343,12 @@ regenerate barcodeScannerData =
 
 lineContentsToString : LineContents -> String
 lineContentsToString contents =
-    case contents of
-        Ordinary athlete Nothing ->
-            athlete ++ ","
+    case contents.token of
+        Nothing ->
+            contents.athlete ++ ","
 
-        Ordinary athlete (Just position) ->
-            athlete ++ "," ++ formatPosition position
+        Just position ->
+            contents.athlete ++ "," ++ formatPosition position
 
 
 lineToString : BarcodeScannerFileLine -> String
@@ -408,7 +410,7 @@ updateBarcodeScannerLine fileName lineNumber athlete finishPosition barcodeScann
     let
         updateLine : BarcodeScannerFileLine -> BarcodeScannerFileLine
         updateLine line =
-            { line | contents = Ordinary athlete finishPosition, deletionStatus = NotDeleted }
+            { line | contents = LineContents athlete finishPosition, deletionStatus = NotDeleted }
     in
     applyBarcodeScannerDataModification updateLine fileName lineNumber barcodeScannerData
 

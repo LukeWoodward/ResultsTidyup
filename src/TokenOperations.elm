@@ -22,7 +22,7 @@ import BarcodeScanner
         , BarcodeScannerFileLine
         , DeletionReason(..)
         , DeletionStatus(..)
-        , LineContents(..)
+        , LineContents
         , allTokensUsed
         , regenerate
         )
@@ -354,15 +354,15 @@ insertTokensIntoBarcodeScannerData range line =
         offset =
             range.end - range.start + 1
     in
-    case line.contents of
-        Ordinary athlete (Just token) ->
+    case line.contents.token of
+        Just token ->
             if token < range.start then
                 Just line
 
             else
-                Just { line | contents = Ordinary athlete (Just (token + offset)) }
+                Just { line | contents = LineContents line.contents.athlete (Just (token + offset)) }
 
-        Ordinary _ Nothing ->
+        Nothing ->
             Just line
 
 
@@ -373,8 +373,8 @@ removeTokensFromBarcodeScannerData range line =
         offset =
             range.end - range.start + 1
     in
-    case line.contents of
-        Ordinary athlete (Just token) ->
+    case line.contents.token of
+        Just token ->
             if token < range.start then
                 Just line
 
@@ -382,9 +382,9 @@ removeTokensFromBarcodeScannerData range line =
                 Nothing
 
             else
-                Just { line | contents = Ordinary athlete (Just (token - offset)) }
+                Just { line | contents = LineContents line.contents.athlete (Just (token - offset)) }
 
-        Ordinary _ Nothing ->
+        Nothing ->
             Just line
 
 
@@ -403,32 +403,32 @@ swapTokensInBarcodeScannerData range1 range2Start line =
         twoToOneOffset =
             -oneToTwoOffset
     in
-    case line.contents of
-        Ordinary athlete (Just token) ->
+    case line.contents.token of
+        Just token ->
             if range1.start <= token && token <= range1.end then
-                Just { line | contents = Ordinary athlete (Just (token + oneToTwoOffset)) }
+                Just { line | contents = LineContents line.contents.athlete (Just (token + oneToTwoOffset)) }
 
             else if range2Start <= token && token <= range2End then
-                Just { line | contents = Ordinary athlete (Just (token + twoToOneOffset)) }
+                Just { line | contents = LineContents line.contents.athlete (Just (token + twoToOneOffset)) }
 
             else
                 Just line
 
-        Ordinary _ Nothing ->
+        Nothing ->
             Just line
 
 
 reverseTokenRangeInBarcodeScannerData : Range -> BarcodeScannerFileLine -> Maybe BarcodeScannerFileLine
 reverseTokenRangeInBarcodeScannerData range line =
-    case line.contents of
-        Ordinary athlete (Just token) ->
+    case line.contents.token of
+        Just token ->
             if range.start <= token && token <= range.end then
-                Just { line | contents = Ordinary athlete (Just (range.start + range.end - token)) }
+                Just { line | contents = LineContents line.contents.athlete (Just (range.start + range.end - token)) }
 
             else
                 Just line
 
-        Ordinary _ Nothing ->
+        Nothing ->
             Just line
 
 

@@ -1,6 +1,6 @@
 module BarcodeScannerEditingTests exposing (suite)
 
-import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, LineContents(..))
+import BarcodeScanner exposing (BarcodeScannerData, BarcodeScannerFile, LineContents)
 import BarcodeScannerEditing
     exposing
         ( BarcodeScannerEditDetails(..)
@@ -25,7 +25,7 @@ initialDetails : BarcodeScannerRowEditDetails
 initialDetails =
     BarcodeScannerRowEditDetails
         (BarcodeScannerRowEditLocation "file.txt" 3)
-        (Ordinary "A229804" (Just 22))
+        (LineContents "A229804" (Just 22))
         (IntegerEntry "A229804" (Just 229804))
         (IntegerEntry "22" (Just 22))
         Nothing
@@ -54,11 +54,11 @@ suite =
         [ describe "startEditing tests"
             [ test "Can start editing with a complete row" <|
                 \() ->
-                    startEditing (BarcodeScannerRowEditLocation "file.txt" 34) (Ordinary "A182095" (Just 47)) False
+                    startEditing (BarcodeScannerRowEditLocation "file.txt" 34) (LineContents "A182095" (Just 47)) False
                         |> Expect.equal
                             (BarcodeScannerRowEditDetails
                                 (BarcodeScannerRowEditLocation "file.txt" 34)
-                                (Ordinary "A182095" (Just 47))
+                                (LineContents "A182095" (Just 47))
                                 (IntegerEntry "A182095" (Just 182095))
                                 (IntegerEntry "47" (Just 47))
                                 Nothing
@@ -68,7 +68,7 @@ suite =
         , describe "elementToFocusWhenOpening tests"
             [ test "Focuses athlete input when opening to edit an ordinary item" <|
                 \() ->
-                    elementToFocusWhenOpening (Ordinary "A4580442" (Just 47))
+                    elementToFocusWhenOpening
                         |> Expect.equal BarcodeScannerEditingAthleteInput
             ]
         , describe "updateEditDetails tests"
@@ -185,7 +185,7 @@ suite =
                         rowEditDetails =
                             BarcodeScannerRowEditDetails
                                 (BarcodeScannerRowEditLocation "barcodes6.txt" 1)
-                                (Ordinary "A4580442" (Just 47))
+                                (LineContents "A4580442" (Just 47))
                                 (IntegerEntry "A2022807" (Just 2022807))
                                 (IntegerEntry "37" (Just 37))
                                 Nothing

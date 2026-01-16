@@ -7,7 +7,6 @@ import BarcodeScanner
         , BarcodeScannerFileLine
         , DeletionReason(..)
         , DeletionStatus(..)
-        , LineContents(..)
         , regenerate
         )
 import Model exposing (Model)
@@ -33,15 +32,15 @@ deleteWithinFiles deleter files =
 
 deleteUnassociatedAthlete : String -> BarcodeScannerFileLine -> BarcodeScannerFileLine
 deleteUnassociatedAthlete athlete line =
-    case line.contents of
-        Ordinary someAthlete Nothing ->
-            if athlete == someAthlete then
+    case line.contents.token of
+        Nothing ->
+            if athlete == line.contents.athlete then
                 { line | deletionStatus = Deleted (AthleteScannedWithFinishTokenElsewhere athlete) }
 
             else
                 line
 
-        Ordinary _ _ ->
+        _ ->
             line
 
 
@@ -53,18 +52,16 @@ deleteUnassociatedAthlete athlete line =
 
 deleteDuplicateScansWithinLine : String -> Int -> BarcodeScannerFileLine -> Bool -> ( BarcodeScannerFileLine, Bool )
 deleteDuplicateScansWithinLine athlete position line found =
-    case line.contents of
-        Ordinary someAthlete somePosition ->
-            if someAthlete == athlete && somePosition == Just position then
-                if found then
-                    ( { line | deletionStatus = Deleted (DuplicateScan athlete position) }, True )
+    if line.contents.athlete == athlete && line.contents.token == Just position then
+        if found then
+            ( { line | deletionStatus = Deleted (DuplicateScan athlete position) }, True )
 
-                else
-                    -- The first matching record has been found.
-                    ( line, True )
+        else
+            -- The first matching record has been found.
+            ( line, True )
 
-            else
-                ( line, found )
+    else
+        ( line, found )
 
 
 deleteDuplicateScansWithinFile : String -> Int -> BarcodeScannerFile -> Bool -> ( BarcodeScannerFile, Bool )

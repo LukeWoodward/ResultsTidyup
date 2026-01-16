@@ -8,7 +8,7 @@ import BarcodeScanner
         , BarcodeScannerFileLine
         , DeletionReason(..)
         , DeletionStatus(..)
-        , LineContents(..)
+        , LineContents
         , empty
         , regenerate
         )
@@ -31,8 +31,8 @@ createBarcodeScannerDataForRemovingUnassociatedAthletes athletes =
             athletes
                 |> List.indexedMap
                     (\index athlete ->
-                        [ BarcodeScannerFileLine (index * 2 + 1) (Ordinary athlete (Just (index + 1))) "14/03/2018 09:47:03" NotDeleted
-                        , BarcodeScannerFileLine (index * 2 + 2) (Ordinary athlete Nothing) "14/03/2018 09:47:03" NotDeleted
+                        [ BarcodeScannerFileLine (index * 2 + 1) (LineContents athlete (Just (index + 1))) "14/03/2018 09:47:03" NotDeleted
+                        , BarcodeScannerFileLine (index * 2 + 2) (LineContents athlete Nothing) "14/03/2018 09:47:03" NotDeleted
                         ]
                     )
                 |> List.concat
@@ -48,7 +48,7 @@ createBarcodeScannerDataForRemovingDuplicateScans numberOfTimes =
             List.range 1 numberOfTimes
                 |> List.map
                     (\index ->
-                        BarcodeScannerFileLine index (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" NotDeleted
+                        BarcodeScannerFileLine index (LineContents "A1234" (Just 27)) "14/03/2018 09:47:03" NotDeleted
                     )
     in
     regenerate { empty | files = [ BarcodeScannerFile "barcodes1.txt" "Name" fileLines ] }
@@ -66,9 +66,9 @@ deleteLinesWithinFile deleter files =
 
 ifAthlete : String -> BarcodeScannerFileLine -> BarcodeScannerFileLine
 ifAthlete athlete line =
-    case line.contents of
-        Ordinary someAthlete Nothing ->
-            if athlete == someAthlete then
+    case line.contents.token of
+        Nothing ->
+            if athlete == line.contents.athlete then
                 { line | deletionStatus = Deleted (AthleteScannedWithFinishTokenElsewhere athlete) }
 
             else
@@ -205,7 +205,7 @@ suite =
                                     , BarcodeScannerFile
                                         "barcodes2.txt"
                                         "Name2"
-                                        [ BarcodeScannerFileLine 1 (Ordinary "A1234" (Just 27)) "14/03/2018 09:47:03" (Deleted (DuplicateScan "A1234" 27)) ]
+                                        [ BarcodeScannerFileLine 1 (LineContents "A1234" (Just 27)) "14/03/2018 09:47:03" (Deleted (DuplicateScan "A1234" 27)) ]
                                     ]
                             }
                     in

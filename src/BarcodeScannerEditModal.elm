@@ -6,7 +6,6 @@ module BarcodeScannerEditModal exposing
     , editBarcodeScannerRowModalBody
     )
 
-import BarcodeScanner exposing (LineContents(..))
 import BarcodeScannerEditing
     exposing
         ( BarcodeScannerEditDetails(..)
