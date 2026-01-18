@@ -427,7 +427,15 @@ identifyProblems timers barcodeScannerData ignoredProblems =
             Nothing
 
         else
-            replaceZeroOffset (getTimerTimeOffset timers)
+            case timers of
+                Double doubleTimerData ->
+                    replaceZeroOffset (getTimerTimeOffset doubleTimerData.times1 doubleTimerData.times2)
+
+                Single _ _ ->
+                    Nothing
+
+                None ->
+                    Nothing
     , timerTimesOutOfOrder = identifyTimerTimesOutOfOrder timers
     , athletesWithMultiplePositions = identifyAthletesWithMultiplePositions times athleteToPositionsDict
     , positionsWithMultipleAthletes = identifyPositionsWithMultipleAthletes positionToAthletesDict

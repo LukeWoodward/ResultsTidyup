@@ -14,6 +14,7 @@ module Timer exposing
     , generateInitialTable
     , header
     , merge
+    , mergeWithDefaultDistances
     , outputMergedTable
     , outputSingleTimerData
     , readTimerData
@@ -368,7 +369,7 @@ createMergedTable times1 times2 file1 file2 =
     let
         mergedDetails : List MergeEntry
         mergedDetails =
-            merge defaultMaxNearMatchDistance defaultMaxNotNearMatchDistance times1 times2
+            mergeWithDefaultDistances times1 times2
 
         mergedTable : List MergedTableRow
         mergedTable =
@@ -473,3 +474,8 @@ merge maxNearMatchDistance maxNotNearMatchDistance times1 times2 =
     in
     createTimes times1 times2
         |> addNotNearMatches maxNotNearMatchDistance
+
+
+mergeWithDefaultDistances : List Int -> List Int -> List MergeEntry
+mergeWithDefaultDistances times1 times2 =
+    merge defaultMaxNearMatchDistance defaultMaxNotNearMatchDistance times1 times2

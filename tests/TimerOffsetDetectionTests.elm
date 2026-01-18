@@ -2,8 +2,6 @@ module TimerOffsetDetectionTests exposing (suite)
 
 import Expect
 import Test exposing (Test, describe, test)
-import TestData exposing (defaultMatchSummary)
-import Timer exposing (MergeEntry(..), TimerFile, Timers(..))
 import TimerOffsetDetection exposing (findPossibleOffsets, getTimerTimeOffset)
 
 
@@ -34,31 +32,14 @@ suite =
                         |> Expect.equal [ 37, 89 ]
             ]
         , describe "getTimerTimeOffset tests"
-            [ test "getTimerTimeOffset returns Nothing for no timers" <|
-                \() ->
-                    getTimerTimeOffset None
-                        |> Expect.equal Nothing
-            , test "getTimerTimeOffset returns Nothing for a single timer" <|
-                \() ->
-                    getTimerTimeOffset (Single (TimerFile "timer1.txt" "Name1") [ 1000, 1100, 1200 ])
-                        |> Expect.equal Nothing
-            , test "getTimerTimeOffset returns zero for a double timer with identical times" <|
+            [ test "getTimerTimeOffset returns zero for a double timer with identical times" <|
                 \() ->
                     let
                         times : List Int
                         times =
                             [ 1000, 1033, 1047, 1066, 1097, 1104, 1119, 1177, 1206 ]
                     in
-                    getTimerTimeOffset
-                        (Double
-                            { times1 = times
-                            , times2 = times
-                            , file1 = TimerFile "timer1.txt" "Name1"
-                            , file2 = TimerFile "timer2.txt" "Name2"
-                            , mergedTableRows = []
-                            , matchSummary = defaultMatchSummary
-                            }
-                        )
+                    getTimerTimeOffset times times
                         |> Expect.equal (Just 0)
             , test "getTimerTimeOffset returns a nonzero number for a double timer with identical times with a fixed difference" <|
                 \() ->
@@ -71,16 +52,7 @@ suite =
                         times2 =
                             List.map (\time -> time + 19) times1
                     in
-                    getTimerTimeOffset
-                        (Double
-                            { times1 = times1
-                            , times2 = times2
-                            , file1 = TimerFile "timer1.txt" "Name1"
-                            , file2 = TimerFile "timer2.txt" "Name2"
-                            , mergedTableRows = []
-                            , matchSummary = defaultMatchSummary
-                            }
-                        )
+                    getTimerTimeOffset times1 times2
                         |> Expect.equal (Just -19)
             , test "getTimerTimeOffset returns Nothing for two unrelated sets of times" <|
                 \() ->
@@ -93,16 +65,7 @@ suite =
                         times2 =
                             [ 1104, 1165, 1202, 1204, 1222, 1239, 1248, 1258, 1269 ]
                     in
-                    getTimerTimeOffset
-                        (Double
-                            { times1 = times1
-                            , times2 = times2
-                            , file1 = TimerFile "timer1.txt" "Name1"
-                            , file2 = TimerFile "timer2.txt" "Name2"
-                            , mergedTableRows = []
-                            , matchSummary = defaultMatchSummary
-                            }
-                        )
+                    getTimerTimeOffset times1 times2
                         |> Expect.equal Nothing
             ]
         ]

@@ -2,7 +2,7 @@ module TimerOffsetDetection exposing (findPossibleOffsets, getTimerTimeOffset)
 
 import Array exposing (Array)
 import Dict exposing (Dict)
-import Timer exposing (DoubleTimerData, TimerFile, Timers(..), createMergedTable)
+import Timer exposing (DoubleTimerData, MergeEntry(..), TimerFile, Timers(..), mergeWithDefaultDistances)
 
 
 timerTimeOffsetRange : Int
@@ -55,8 +55,8 @@ scale index1 length1 length2 =
     round (toFloat index1 * (toFloat length2 - 1) / (toFloat length1 - 1) + 0.5)
 
 
-getPossibleTimerTimeOffsetsInDoubleTimerData : DoubleTimerData -> List Int
-getPossibleTimerTimeOffsetsInDoubleTimerData doubleTimerData =
+getPossibleTimerTimeOffsetsInDoubleTimerData : List Int -> List Int -> List Int
+getPossibleTimerTimeOffsetsInDoubleTimerData times1 times2 =
     {-
        The implementation of this is somewhat basic: we compare corresponding
        times that are within a given number of positions away from each other.
@@ -67,11 +67,11 @@ getPossibleTimerTimeOffsetsInDoubleTimerData doubleTimerData =
     let
         times1Array : Array Int
         times1Array =
-            Array.fromList doubleTimerData.times1
+            Array.fromList times1
 
         times2Array : Array Int
         times2Array =
-            Array.fromList doubleTimerData.times2
+            Array.fromList times2
 
         length1 : Int
         length1 =
@@ -128,18 +128,31 @@ getPossibleTimerTimeOffsetsInDoubleTimerData doubleTimerData =
     findPossibleOffsets minOffsetCountRequired timeDifferences
 
 
-getBestTimerTimeOffsetInDoubleTimerData : DoubleTimerData -> Maybe Int
-getBestTimerTimeOffsetInDoubleTimerData doubleTimerData =
+getTimerTimeOffset : List Int -> List Int -> Maybe Int
+getTimerTimeOffset times1 times2 =
     let
         possibleOffsets : List Int
         possibleOffsets =
-            getPossibleTimerTimeOffsetsInDoubleTimerData doubleTimerData
+            getPossibleTimerTimeOffsetsInDoubleTimerData times1 times2
+
+        isExactMatch : MergeEntry -> Bool
+        isExactMatch mergeEntry =
+            case mergeEntry of
+                ExactMatch _ ->
+                    True
+
+                _ ->
+                    False
+
+        countExactMatches : List MergeEntry -> Int
+        countExactMatches entries =
+            List.filter isExactMatch entries
+                |> List.length
 
         getMergedTableResult : Int -> Int
         getMergedTableResult offset =
-            createMergedTable doubleTimerData.times1 (List.map ((+) offset) doubleTimerData.times2) (TimerFile "dummy-filename1" "Dummy1") (TimerFile "dummy-filename2" "Dummy2")
-                |> .matchSummary
-                |> .exactMatches
+            mergeWithDefaultDistances times1 (List.map ((+) offset) times2)
+                |> countExactMatches
 
         allMergeResults : List ( Int, Int )
         allMergeResults =
@@ -149,16 +162,3 @@ getBestTimerTimeOffsetInDoubleTimerData doubleTimerData =
         |> List.reverse
         |> List.head
         |> Maybe.map Tuple.first
-
-
-getTimerTimeOffset : Timers -> Maybe Int
-getTimerTimeOffset timers =
-    case timers of
-        Double doubleTimerData ->
-            getBestTimerTimeOffsetInDoubleTimerData doubleTimerData
-
-        Single _ _ ->
-            Nothing
-
-        None ->
-            Nothing
