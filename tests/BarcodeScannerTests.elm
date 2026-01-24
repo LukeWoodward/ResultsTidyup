@@ -9,6 +9,7 @@ import BarcodeScanner
         , DeletionReason(..)
         , DeletionStatus(..)
         , LineContents
+        , UnrecognisedLine
         , allTokensUsed
         , deleteBarcodeScannerLine
         , empty
@@ -153,38 +154,6 @@ suite =
                                     []
                                 )
                             )
-            , test "readBarcodeScannerData of a valid single-line string with finish token only is valid but empty" <|
-                \() ->
-                    readBarcodeScannerData (AddedFile "barcodes3.txt" "Name3" ",P0047,14/03/2018 09:47:03")
-                        |> Expect.equal
-                            (Ok
-                                (BarcodeScannerData
-                                    [ BarcodeScannerFile
-                                        "barcodes3.txt"
-                                        "Name3"
-                                        [ ordinaryFileLine 1 "" (Just 47) "14/03/2018 09:47:03" ]
-                                    ]
-                                    Dict.empty
-                                    []
-                                    []
-                                )
-                            )
-            , test "readBarcodeScannerData of a valid single-line string with null athlete and finish token only is valid but empty" <|
-                \() ->
-                    readBarcodeScannerData (AddedFile "barcodes3.txt" "Name3" "null,P0047,14/03/2018 09:47:03")
-                        |> Expect.equal
-                            (Ok
-                                (BarcodeScannerData
-                                    [ BarcodeScannerFile
-                                        "barcodes3.txt"
-                                        "Name3"
-                                        [ ordinaryFileLine 1 "" (Just 47) "14/03/2018 09:47:03" ]
-                                    ]
-                                    Dict.empty
-                                    []
-                                    []
-                                )
-                            )
             , test "readBarcodeScannerData of a valid single-line string with athlete and finish token and blank lines is valid" <|
                 \() ->
                     readBarcodeScannerData (AddedFile "barcodes1.txt" "Name1" "\n\n\n\n\nA4580442,P0047,14/03/2018 09:47:03\n\n\n\n")
@@ -223,7 +192,13 @@ suite =
                     expectSingleUnrecognisedLineFor "A4580442,Nonsense,14/03/2018 09:47:03" "INVALID_POSITION_RECORD"
             , test "readBarcodeScannerData of a string with no athlete nor finish token barcode is not valid" <|
                 \() ->
-                    expectSingleUnrecognisedLineFor ",,14/03/2018 09:47:03" "ATHLETE_AND_FINISH_TOKEN_MISSING"
+                    expectSingleUnrecognisedLineFor ",,14/03/2018 09:47:03" "ATHLETE_MISSING"
+            , test "readBarcodeScannerData of a string with a finish token only is not valid" <|
+                \() ->
+                    expectSingleUnrecognisedLineFor ",P0047,14/03/2018 09:47:03" "ATHLETE_MISSING"
+            , test "readBarcodeScannerData of a string with null athlete is not valid" <|
+                \() ->
+                    expectSingleUnrecognisedLineFor "null,P0047,14/03/2018 09:47:03" "ATHLETE_MISSING"
             , test "readBarcodeScannerData of a string with one comma-separated item is not valid" <|
                 \() ->
                     expectSingleUnrecognisedLineFor "This is not valid" "NOT_TWO_OR_THREE_PARTS"

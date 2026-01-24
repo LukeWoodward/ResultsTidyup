@@ -180,11 +180,11 @@ readLine lineNumber line =
             else if hasInvalidPosition then
                 unrecognisedLine "INVALID_POSITION_RECORD" ("Invalid position record '" ++ position ++ "' found in barcode scanner file")
 
-            else if isPositionMissing && isAthleteMissing then
-                unrecognisedLine "ATHLETE_AND_FINISH_TOKEN_MISSING"
+            else if isAthleteMissing then
+                unrecognisedLine "ATHLETE_MISSING"
                     ("Barcode scanner file contains line '"
                         ++ line
-                        ++ "' with neither athlete nor finish token"
+                        ++ "' with the athlete barcode number missing"
                     )
 
             else if isPositionMissing then
