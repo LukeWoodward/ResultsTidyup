@@ -2,7 +2,7 @@ module TimerOffsetDetection exposing (findPossibleOffsets, getTimerTimeOffset)
 
 import Array exposing (Array)
 import Dict exposing (Dict)
-import Timer exposing (DoubleTimerData, MergeEntry(..), TimerFile, Timers(..), mergeWithDefaultDistances)
+import Timer exposing (MergeEntry(..), Timers(..), mergeWithDefaultDistances)
 
 
 timerTimeOffsetRange : Int
